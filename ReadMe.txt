@@ -51,6 +51,8 @@
  If you need an executable, you have to compile the package by yourself,
  or you ask someone to do so for you.
 
+/==============================================================================/
+
  For a compilation, you need a Java SDK, which is available for various platforms.
 
  All classes should work at least with Sun's JDK/J2RE 1.2.2 and higher.
@@ -59,9 +61,12 @@
 
 
  Extract all files from the received archive to a separate directory.
+ Note:  dependent on the used JDK/JRE, ensure that the directory does not start with a '!' or similars,
+        otherwise you'll get an error like 'main class not found'
 
-   sample of a compilation (may differ on your system) :
-
+   /**
+    * sample of a compilation (may differ on your system) :
+    */
    (A) open "build.bat" with an editor and check/correct the entry/path of JAVA_HOME 
        of your installed JDK 
 
@@ -96,6 +101,8 @@
 
    the compiling process doesn't take more than about 30 seconds.
 
+
+/==============================================================================/
 
  ProjectX - CVS at sourceforge.net/projects/project-x/
 
