@@ -3,7 +3,7 @@
 
 
  Project X 0.82.0  
- 15.01.2005
+ xxxxxx
 
 
    fix - GUI: nullpointerexception: {patch video basics} w/o a selected file

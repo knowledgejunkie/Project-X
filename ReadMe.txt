@@ -78,7 +78,7 @@
        Notes:
        [i]   now, we made a package for the sources,
              the file sources.lst points to every required sourcefile and its location
-       [ii]  the following libraries are required from the V 0.82.0:
+       [ii]  the following libraries are required on this place from the V 0.82.0:
              - lib/commons-net-1.2.2.jar  (compiled with JDK 1.2.2) *)
              - lib/jakarta-oro-2.0.8.jar  (compiled with JDK 1.2.2) *)
        [iii] the following libraries are optional from the V 0.82.0 :
@@ -88,7 +88,7 @@
              that's not critical, as long as an actual JDK still supports these mehods
 
        *)
-       newer versions (mostly compiled with JDK 1.4.2) you'll find at:
+       further informations and newer versions (mostly compiled with JDK 1.4.2) you'll find at:
        'jakarta.apache.org/site/binindex.cgi', look for 'Commons Net' and  'ORO'
        - using newer lib's requires an update of the 'build.bat' and 'MANIFEST.MF' !
 
