@@ -178,7 +178,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.82.0.04";
-static String version_date = "26.01.2005";
+static String version_date = "29.01.2005";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -5445,6 +5445,22 @@ public static void loadIDs(String nIDs)
 	return;
 }
 
+	/**
+	 * check whether commons-net is available, to prevent malfunctions
+	 */
+	private static String checkLibraryAccess()
+	{
+		try {
+			org.apache.commons.net.ftp.FTPClient fc = new org.apache.commons.net.ftp.FTPClient();
+			fc = null;
+
+			return null;
+		} catch (Error err) {
+			return "\ncommons-net library is not accessible! see readme.txt [ii]\nensure the correct location/classpath, related to the executed .jar\n";
+		}
+	}
+
+
 
 public static void main(String[] args)
 {
@@ -5503,6 +5519,7 @@ public static void main(String[] args)
 			System.out.println("use last config or standard ...");
 		}
 	
+
 		//load main stuff
 		X panel = new X();
 	
@@ -5557,6 +5574,13 @@ public static void main(String[] args)
 		boolean loadGUI=false;
 		boolean IDsLoaded=false;
 		boolean CutsLoaded=false;
+
+		String ret;
+
+		if ((ret = checkLibraryAccess()) != null)
+		{
+			throw new Exception(ret);
+		}
 	
 		if (args.length > 0) {
 	
@@ -9098,6 +9122,9 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 						subid = ((0xFF & push189[pes_offset]) == 0x20 && (0xFF & push189[pes_offset + 1]) == 0 && (0xFF & push189[pes_offset + 2]) == 0xF) ? 0x20 : 0;
 
 				} catch (ArrayIndexOutOfBoundsException e) {
+
+
+
 					index_error = true;
 				}
 			}
@@ -12387,6 +12414,8 @@ public boolean processAudio(String[] args)
 
 				while ( vtime[w+1] > time_counter && 
 					(double)Math.abs(vtime[w+1]-time_counter) > (double)audio.Time_length/2.0 )  {
+
+
 
 					if (options[16]==1) {				//add_copy prev. frame
 						if (audio.Layer>0 && cBox[50].isSelected()) { //DM30122003 081.6 int10 changed
@@ -18244,6 +18273,7 @@ class makeVDR
 					insert+=3; 
 					streams[0]++; 
 				} else if ((0xE0&IDt)==0xC0) { 
+
 					sys[2][0]=(byte)(sysID[1]++); 
 					mpg.write(sys[2]); 
 					insert+=3; 
