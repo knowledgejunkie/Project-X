@@ -191,7 +191,7 @@ static Audio audio = new Audio();
 static D2V d2v = new D2V();
 static TS tf = new TS();
 
-public static Settings settings = null;
+private static Settings settings = null;
 static String inidir = System.getProperty("user.dir");
 static String filesep = System.getProperty("file.separator");
 static String frametitle = "";
@@ -294,9 +294,21 @@ static double videoframerate = 3600.0;
 static double videotimecount = 0.0;
 
 
+/**
+ * Constructor of X.
+ */
 public X()
 {}
 
+/**
+ * Returns the settings of X.
+ * 
+ * @return Settings
+ */
+public static Settings getSettings()
+{
+	return settings;
+}
 
 void buildGUI()
 {

@@ -149,7 +149,7 @@ public class Resource {
 	 */
 	public static void init()
 	{
-		String language = X.settings.getProperty(LANGUAGE_PARAM);
+		String language = X.getSettings().getProperty(LANGUAGE_PARAM);
 		if (language != null){
 			locale=new Locale(language, "");
 			try {
@@ -383,7 +383,7 @@ public class Resource {
 				locale = new Locale(action, "", "");
 			}
 			JOptionPane.showMessageDialog(null, Resource.getString("msg.new.language"), Resource.getString("msg.infomessage"), JOptionPane.INFORMATION_MESSAGE);
-			X.settings.setProperty(LANGUAGE_PARAM, locale);
+			X.getSettings().setProperty(LANGUAGE_PARAM, locale);
 		}
 		
 	}
