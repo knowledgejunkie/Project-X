@@ -42,8 +42,10 @@ dvbmatt erl 20.11. - laden von Dateien via 'hinzufügen' und dann anklick für dat
          bei dragndrop geht's normal
 20.11. - doppelklick in dateiauswahlbox führt zu illegalargumentexc.
 20.11. - wie oben, Erkennung des Dateityps bei Ausführung via CLI nicht implementiert?, geht nicht
-dvbmatt erl 20.11. - CLI: extern angebenes ini-File wirkt nicht mehr (wohl seit 081.9)
+dvbmatt fix 20.11. - CLI: extern angebenes ini-File wirkt nicht mehr (wohl seit 081.9)
 dvbmatt neu 27.11. - meldungsoption zum mitloggen der verstrichenen prozesszeit
-pstorch neu 28.11. - beschleunigung der vorschau, durch externen prozessornahen code
+pstorch neu 28.11. - beschleunigung der vorschau, durch externen prozessornahen code .dll
 dvbmatt neu 28.11. - vorschau schnittleiste , magenta querstriche zur schnittpunktmarkierung, bei engen stellen sieht man sonst nix
-pstorch erl 01.12. - extract oro-2.0.8 out of commons-net-1.2.2
+pstorch erl 01.12. - extract oro-2.0.8 out of commons-net-1.2.2>>>>>>> 1.18
+dvbmatt fix 4.12. - .SUB export , frame nummer war keine Ganzzahl
+dvbmatt neu 4.12. - zusätzl. option um eine leichte video pts - rückverschiebung auszugleichen

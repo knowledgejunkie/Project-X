@@ -42,12 +42,10 @@ public class Preview
 	private ArrayList positionList, speciallist;
 	private int position[];
 	private PreviewObject preview_object;
-	private MPVD mpv_decoder;
 
-	public Preview(int loadSizeForward, MPVD mpv_decoder)
+	public Preview(int loadSizeForward)
 	{
 		this.loadSizeForward = loadSizeForward;
-		this.mpv_decoder = mpv_decoder;
 
 		position = new int[2];
 		positionList = new ArrayList();

@@ -217,7 +217,7 @@ public final class Common
 				
 				byte[] check = bao.toByteArray();
 			
-				X.TextArea.append("\r\n");
+				X.TextArea.append("\r\n\n" + Resource.getString("ac3.msg.loading.start"));
 			
 				int a=0, frame_counter=0;
 				while (a < check.length) 

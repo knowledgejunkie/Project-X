@@ -232,7 +232,7 @@ static JButton doitButton, breakButton, scanButton, pauseButton, extract, exeBut
 
 public static JRadioButton[] RButton = new JRadioButton[25];
 public static JComboBox[] comBox = new JComboBox[39];
-public static JCheckBox[] cBox = new JCheckBox[73];
+public static JCheckBox[] cBox = new JCheckBox[74];
 
 // radio buttons for look and feels in general menu
 private JRadioButtonMenuItem lf_item[] = null; 
@@ -278,20 +278,17 @@ public static LogArea TextArea, FileInfoTextArea;
 static JViewport viewport, viewport_2; //DM26032004 081.6 int18 add
 static JTabbedPane logtab; //DM26032004 081.6 int18 add
 static JButton add_files;  //DM26032004 081.6 int18 add
-//static Thread thread;  //DM26032004 081.6 int18 add //unused ATM
 
 JPopupMenu popup; //DM26032004 081.6 int18 changed
 JMenuBar menuBar; //DM20032004 081.6 int18 add
 JFrame autoload; //DM26032004 081.6 int18 add
 
 TeletextPageMatrix tpm = null;  //DM17042004 081.7 int02 add
-static MPVD MPVDecoder = null;
 
-//DM04102004 081.8.02 add
 static Chapters chapters = null;
 
-//DM20072004 081.7 int07 add
 long fakedPTS = -1;
+
 static double videoframerate = 3600.0;
 static double videotimecount = 0.0;
 
@@ -312,7 +309,6 @@ void buildGUI()
 	RButton[13] = new JRadioButton();
 
 	chooser = new X_JFileChooser(); //DM12122003 081.6 int05
-	MPVDecoder = new MPVD();
 
 	setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
@@ -332,7 +328,6 @@ void buildGUI()
 	add(Box.createRigidArea(new Dimension(1,5)));
 
 	base_time.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
-	//subpicture.picture.run();  // start Pic , DM18052004 081.7 int02 changed
 	java.util.Arrays.fill(dumpfill,(byte)0xFF);
 	
 	// now we can also build the other GUI elements
@@ -1045,6 +1040,8 @@ protected void buildAutoloadPanel()
 
 					comBox[0].setSelectedIndex(ix);
 				}
+
+
 				Object[] val = list1.getSelectedValues();
 
 				if (val.length > 0)
@@ -1555,6 +1552,12 @@ protected JPanel buildidPanel()
 	cBox[39].setPreferredSize(new Dimension(270,20));
 	cBox[39].setMaximumSize(new Dimension(270,20));
 	idPanel2.add(cBox[39]);
+
+	cBox[73] = new JCheckBox(Resource.getString("tab.specials.video.trimpts"));
+	cBox[73].setToolTipText(Resource.getString("tab.specials.video.trimpts.tip"));
+	cBox[73].setPreferredSize(new Dimension(270,20));
+	cBox[73].setMaximumSize(new Dimension(270,20));
+	idPanel2.add(cBox[73]);
 
 	//DM14052004 081.7 int02 add
 	idPanel2.add(new JLabel(Resource.getString("tab.specials.conv")));
@@ -3367,7 +3370,6 @@ class EXECUTE extends JFrame
  *************/
 class COLLECTION extends JFrame
 {
-
 	JTextField includeField, framecutfield;
 	JList includeList;
 	ArrayList dataList = new ArrayList(), previewList = new ArrayList();
@@ -3383,9 +3385,7 @@ class COLLECTION extends JFrame
 	long lastpos=0;
 	long cutPoints[]=new long[0]; //DM17012004 081.6 int11 changed, DM29012004 int12 fix
 
-	//DM24062004 081.7 int05 changed
-	Preview Preview = new Preview(loadSizeForward, MPVDecoder);
-	//PREVIEW Preview = new PREVIEW();
+	Preview Preview = new Preview(loadSizeForward);
 
 	//DM18022004 081.6 int17 new
 	class DNDListener2 implements DropTargetListener
@@ -3688,6 +3688,7 @@ class COLLECTION extends JFrame
 		}
 	}
 
+
 	public COLLECTION()
 	{
  
@@ -3705,7 +3706,7 @@ class COLLECTION extends JFrame
 		previewPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLoweredBevelBorder(), Resource.getString("collection.cutpanel"))); //DM27042004 081.7 int02 changed
 		previewPanel.setLayout ( new BorderLayout() );
 		previewPanel.setToolTipText(Resource.getString("collection.cutpanel_tip1")); //DM18052004 081.7 int02 add
-		previewPanel.add(MPVD.picture);
+		previewPanel.add(new MPVD().picture);
 
 		search = new JSlider(0, (10240000/16), 0);
 		search.setPreferredSize(new Dimension(512,24));
@@ -3752,8 +3753,8 @@ class COLLECTION extends JFrame
 
 		cutadd = new JButton(Resource.getString("collection.addpoint"));
 		cutadd.setActionCommand("addpoint");
-		cutadd.setPreferredSize(new Dimension(100,25));
-		cutadd.setMaximumSize(new Dimension(100,25));
+		cutadd.setPreferredSize(new Dimension(100,22));
+		cutadd.setMaximumSize(new Dimension(100,22));
 		CL1.add(cutadd);
 
 		jump3Panel.add(CL1);
@@ -4012,8 +4013,7 @@ class COLLECTION extends JFrame
 		cutPanel.add(Box.createRigidArea(new Dimension(1, 8)));
 
 		//DM17012004 081.6 int11 changed, DM18022004 081.6 int17 changed
-		Object[] cut_types = 
-		{ 
+		Object[] cut_types = { 
 			Resource.getString("collection.cutmode_bytepos"), 
 			Resource.getString("collection.cutmode_gop"),
 			Resource.getString("collection.cutmode_frame"),
@@ -4096,7 +4096,7 @@ class COLLECTION extends JFrame
 		return loadSizeForward;
 	}
 
-	public void preview(long pos)
+	public long preview(long pos)
 	{
 		boolean direction=false;
 
@@ -4107,7 +4107,7 @@ class COLLECTION extends JFrame
 		if (comBox[17].getSelectedIndex()!=0 || previewList.size()==0)
 		{
 			scannedPID.setText(Resource.getString("collection.preview.na"));
-			return;
+			return lastpos;
 		}
 
 		action=false;
@@ -4148,6 +4148,8 @@ class COLLECTION extends JFrame
 		setTitle(title);
 		getExpectedSize();
 		action=true;
+
+		return lastpos;
 	}
 
 	public void entry()
@@ -5248,6 +5250,7 @@ public void javaEV()
 	TextArea.append("\n" + Resource.getString("javaev.java.disk.access") + "\t" + (new RawInterface("")).GetLoadStatus());
 }
 
+
 /****************
  *load cutfile *
  ****************/
@@ -5628,6 +5631,8 @@ public static void main(String[] args)
 		{
 			e.printStackTrace();
 		}
+
+		System.exit(1);
 	}
 }   // end methode main
 
@@ -5661,7 +5666,7 @@ public static String[] getVersion()
 
 
 /**
- * messages
+ * messages of interest, also with current systems time_index
  *
  * @param1 - the msg
  * @param2 - force windows visibility
@@ -5672,7 +5677,7 @@ public static void Msg(String msg, boolean tofront)
 		return;
 
 	if (cBox[72].isSelected()) 
-		msg = "[" + Common.formatTime_1(System.currentTimeMillis() - process_time) + "] " + msg;
+		msg = "[" + Common.formatTime_1(System.currentTimeMillis()) + "] " + msg;
 
 	if (options[30] == 1) 
 		System.out.println(msg); 
@@ -7480,6 +7485,10 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 	StandardBuffer sb;
 	int source_type = ismpg;
 
+/**
+	boolean Vob_CellChange = false;
+	long Vob_PtsOffset = 0;
+**/
 	morepva:
 	while (true)
 	{
@@ -7563,27 +7572,39 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 				}
 				case 0xBF:  //split cellids
 					//DM09112003+ 081.5++
-					packlength = ((0xFF&push6[4])<<8 | (0xFF&push6[5]));
+					packlength = ((0xFF & push6[4])<<8 | (0xFF & push6[5]));
 					data = new byte[packlength];
-					in.read(data,0,packlength);
-					if (data[0]==1){
-						int cellid = 0xFF&data[0x1C];
-						int vobid = (0xFF&data[0x19])<<8 | (0xFF&data[0x1A]);
-						if ((0xFF&options[52])!=cellid || (0xFFFF&options[52]>>>16)!=vobid){
-							Msg(Resource.getString("vdrparse.split.cellids", ""+vobid, ""+cellid, ""+count, ""+clv[6], ""+options[7])); //DM30122003 081.6 int10 changed
-							/**
-							if (options[18]>0 && options[52]!=0){
-								options[52]=cellid|vobid<<16;
-								options[20]=count;
-								count += 6+packlength;
+
+					in.read(data, 0, packlength);
+
+					if (data[0] == 1)
+					{
+						int cellid = 0xFF & data[0x1C];
+						int vobid = (0xFF & data[0x19])<<8 | (0xFF & data[0x1A]);
+
+						if ((0xFF & options[52]) != cellid || (0xFFFF & options[52]>>>16) != vobid)
+						{
+							Msg(Resource.getString("vdrparse.split.cellids", "" + vobid, "" + cellid, "" + count, "" + clv[6], "" + options[7])); //DM30122003 081.6 int10 changed
+
+					/***
+							Vob_CellChange = true;
+					***/
+
+							/** meant for later auto-split
+							if (options[18] > 0 && options[52] != 0)
+							{
+								options[52] = cellid | vobid<<16;
+								options[20] = count;
+								count += 6 + packlength;
 								break morepva;
 							}
 							**/
 						}
-						options[52]=cellid|vobid<<16;
+						options[52] = cellid | vobid<<16;
 					}
-					count += 6+packlength;
+					count += 6 + packlength;
 					continue pvaloop;
+
 				case 0xBB:
 				case 0xBC: //DM02112003+ 081.5++
 				case 0xBE:
@@ -8130,14 +8151,24 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 				//DM14062004 081.7 int04 changed
 				if (ToVDR == 0)
 				{
-					if (demux.getType()==3) { 
-						if (pesID0!=demux.getID()) 
+
+	/**
+		demux.setCellOffset(Vob_CellChange, Vob_PtsOffset);
+
+	**/
+
+					if (demux.getType() == 3)
+					{ 
+						if (pesID0 != demux.getID()) 
 							continue pvaloop;
-						demux.writeVideo(nPes,options,false);
-					} else 
+
+						demux.writeVideo(nPes, options, false);
+					}
+					else 
 						demux.write(nPes,true);
-					if (demux.getPTS()>lastpts) 
-						lastpts=demux.getPTS();
+
+					if (demux.getPTS() > lastpts) 
+						lastpts = demux.getPTS();
 				}
 				else
 					options = makevdr.write(ToVDR, nPes, options, demux, 6, CUT_BYTEPOSITION);
@@ -8165,11 +8196,15 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 			in.close();
 			System.gc();
 
-			if (cBox[49].isSelected() && ToVDR==0) {
-				ptsoffset = nextFilePTS(1,ismpg,lastpts,FileNumber+1);
-				if (ptsoffset==-1) 
-					ptsoffset=0; 
-				else {
+			if (cBox[49].isSelected() && ToVDR==0)
+			{
+				ptsoffset = nextFilePTS(1, ismpg, lastpts, FileNumber + 1);
+
+				if (ptsoffset == -1) 
+					ptsoffset = 0; 
+
+				else
+				{
 					for (int a=0;a<VDRdemuxlist.size();a++) {
 						demux = (PIDdemux)VDRdemuxlist.get(a);
 						demux.PTSOffset(ptsoffset);
@@ -9018,6 +9053,9 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 
 				else if (TSPid.getDataSize() < 7)
 				{
+
+
+
 					if (demux.getPackCount() != -1) 
 						Msg(Resource.getString("rawparse.lackof.pes", Integer.toHexString(pid).toUpperCase()));
 				}
@@ -9449,28 +9487,45 @@ public long nextFilePTS(int type, int ismpg, long lastpts, int file_number) {
 		}
 	}
 
-	if (file_number==0) {  // need global offset?
+	if (file_number == 0)
+	{  // need global offset?
 		pts &= 0xFFFFFFFFL;
+
 		String x = comBox[27].getSelectedItem().toString();
-		if (x.equals("auto")) { 
-			long newpts = ((pts/324000000L)-1L)*324000000L;
-			Msg(Resource.getString("nextfile.shift.auto", ""+(newpts/324000000L)));
+
+		if (x.equals("auto"))
+		{ 
+			long newpts = ((pts / 324000000L) - 1L) * 324000000L;
+			Msg(Resource.getString("nextfile.shift.auto", "" + (newpts / 324000000L)));
+
 			return newpts;
-		} else if (!x.equals("0")) { 
+		}
+
+		else if (!x.equals("0"))
+		{ 
 			Msg(Resource.getString("nextfile.shift.manual", comBox[27].getSelectedItem()));
-			return ((long)(Double.parseDouble(comBox[27].getSelectedItem().toString())*324000000L)); //DM26022004 081.6 int18 changed
-		} else 
+
+			return ((long)(Double.parseDouble(comBox[27].getSelectedItem().toString()) * 324000000L)); //DM26022004 081.6 int18 changed
+		}
+
+		else 
 			return 0L;
-	} else {
+	}
+	else
+	{
 		pts -= options[27];
 		pts &= 0xFFFFFFFFL;
+
 		Msg(Resource.getString("nextfile.next.file.start",sms.format(new java.util.Date(pts/90L)),sms.format(new java.util.Date(lastpts/90L))));
-		if (Math.abs(pts-lastpts)<900000) //DM06022004 081.6 int15 changed
+
+		if (Math.abs(pts - lastpts) < 900000) //DM06022004 081.6 int15 changed
 			return -1L;
-		else if (pts>lastpts)  
+
+		else if (pts > lastpts)  
 			return 0L;
+
 		else 
-			return ((lastpts+1800000L)-pts); //DM09012004 081.6 int11 changed
+			return ((lastpts + 1800000L) - pts); //DM09012004 081.6 int11 changed
 	}
 }
 
@@ -10386,7 +10441,7 @@ public boolean processAudio(String[] args)
 
 		if (aa<logsize)
 		{ //DM15112003 081.5++ special4lucious
-			Msg(Resource.getString("audio.msg.pts.discard", "") + (logsize-aa));
+			Msg(Resource.getString("audio.msg.pts.discard", " " + (logsize-aa)));
 			long tmp[][] = new long[2][aa];
 			System.arraycopy(ptsval,0,tmp[0],0,aa);
 			System.arraycopy(ptspos,0,tmp[1],0,aa);
@@ -10618,7 +10673,7 @@ public boolean processAudio(String[] args)
 			{  // skip a frame
 				if (pitch[1]*pitch[0]==frame_counter)
 				{
-					Msg(Resource.getString("audio.msg.frame.discard") + frame_counter + " (" + pitch[0] + ")");
+					Msg(Resource.getString("audio.msg.frame.discard") + " " + frame_counter + " (" + pitch[0] + ")");
 					pitch[0]++;
 					continue readloopdd;
 				}
@@ -11223,7 +11278,7 @@ public boolean processAudio(String[] args)
 			/********* pitch ********/
 			if (cBox[51].isSelected()){  // skip a frame
 				if (pitch[1]*pitch[0]==frame_counter){
-					Msg(Resource.getString("audio.msg.frame.discard") + frame_counter + " (" + pitch[0] + ")");
+					Msg(Resource.getString("audio.msg.frame.discard") + " " + frame_counter + " (" + pitch[0] + ")");
 					pitch[0]++;
 					continue readloop;
 				}
@@ -12533,7 +12588,7 @@ public void processTeletext(String[] args)
 				}
 				if (aa<logsize)
 				{
-					Msg(Resource.getString("teletext.msg.discard", "" + (logsize-aa)));
+					Msg(Resource.getString("teletext.msg.discard", " " + (logsize-aa)));
 					long tmp[][] = new long[2][aa];
 					System.arraycopy(pts_value,0,tmp[0],0,aa);
 					System.arraycopy(pts_position,0,tmp[1],0,aa);
@@ -13023,8 +13078,8 @@ public void processTeletext(String[] args)
 									break;
 
 								case 3:  // SUB
-									print_buffer.print( "{" + ( Long.parseLong( write_buffer.get("in_time").toString()) / videoframerate) + "}");
-									print_buffer.print( "{" + ( Long.parseLong( write_buffer.get("out_time").toString()) / videoframerate) + "}");
+									print_buffer.print( "{" + ( (long)(Long.parseLong( write_buffer.get("in_time").toString()) / videoframerate)) + "}");
+									print_buffer.print( "{" + ( (long)(Long.parseLong( write_buffer.get("out_time").toString()) / videoframerate)) + "}");
 									break;
 
 								case 4:  // SRT
@@ -13257,8 +13312,8 @@ public void processTeletext(String[] args)
 						break;
 
 					case 3:  // SUB
-						print_buffer.print( "{" + ( Long.parseLong( write_buffer.get("in_time").toString()) / videoframerate) + "}");
-						print_buffer.print( "{" + ( Long.parseLong( write_buffer.get("out_time").toString()) / videoframerate) + "}");
+						print_buffer.print( "{" + ( (long)(Long.parseLong( write_buffer.get("in_time").toString()) / videoframerate)) + "}");
+						print_buffer.print( "{" + ( (long)(Long.parseLong( write_buffer.get("out_time").toString()) / videoframerate)) + "}");
 						break;
 
 					case 4:  // SRT
@@ -13586,7 +13641,7 @@ public void processSubpicture(String[] args)
 
 		if (aa<logsize)
 		{
-			Msg(Resource.getString("subpicture.msg.discard", "" + (logsize-aa)));
+			Msg(Resource.getString("subpicture.msg.discard", " " + (logsize-aa)));
 			long tmp[][] = new long[2][aa];
 			System.arraycopy(ptsval,0,tmp[0],0,aa);
 			System.arraycopy(ptspos,0,tmp[1],0,aa);
@@ -15260,6 +15315,20 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 		Msg(Resource.getString("video.msg.error.pts.early", "" + (clv[6]-1), "" + options[54]));
 		error=true;
 	}
+
+
+	/**
+	 * falls startpts kleiner als options[8] (lende letzte GOP) aber innerhalb toleranz, 
+	 * dann options[8] schreiben, setzen des neuen Endes aber mit ermittelter lastpts dieser gop
+	 */
+	if (cBox[73].isSelected() && startpts < options[8] && (double)(options[8] - startpts) < (videoframerate / 2.0))
+	{
+		if (options[30] == 1)
+			System.out.println("videostart trimmed to o8 " + options[8] + " /sp " + startpts);
+
+		startpts = options[8];
+	}
+
 	if (maxtref!=frame || Math.abs(lastpts-startpts)>2000)
 		error=true;
 
@@ -15337,8 +15406,6 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 
 		else{
 
-			//MPVDecoder.picture.decodeArray(gop,false,RButton[6].isSelected(),true);
-
 			//  Msg(""+origframes+"\t"+CP[0]+"\t"+CP[1]+"/"+trefcheck+"/"+maxtref+"/"+newframes+"/"+options[7]);
 			/*** check for cutout on p-frames **/
 			/**
@@ -15359,7 +15426,8 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 			startpts += (long)(trefcheck*videoframerate);
 
 			log.writeLong(startpts);
-			options[8] = startpts + (long)((maxtref-trefcheck+1)*videoframerate);
+
+			options[8] = startpts + (long)((maxtref - trefcheck + 1) * videoframerate);
 			log.writeLong(options[8]);
 
 			/** videoframetimecounter ***/
@@ -15517,6 +15585,7 @@ public static void setvideoheader(String videofile, String logfile) {
 		//DM12042004 081.7 int01 changed
 		InfoAtEnd.add(Resource.getString("video.summary", videotype[MPGVideotype], "" + options[7], "" + vt) + " " + videofile);
 	}
+
 
 	try
 	{
@@ -15792,6 +15861,17 @@ class PIDdemux {
 	boolean isPTSwritten=false; //DM09112003 081.5++
 	byte[] subpic_header = { 0x53, 0x50, 0, 0, 0, 0, 0, 0, 0, 0 }; //DM24022004 081.6 int18 new
 	byte[] pcm_header = { 0x50, 0x43, 0x4D, 0, 0, 0, 0, 0, 0, 0 }; //'PCM'+5b(pts)+2b(size) //DM24022004 081.6 int18 new
+
+/***
+	boolean Vob_CellChange = false;
+	long Vob_PtsOffset = 0;
+
+	public void demux.setCellOffset(boolean Vob_CellChange, long Vob_PtsOffset)
+	{
+		this.Vob_CellChange = Vob_CellChange;
+		this.Vob_PtsOffset = Vob_PtsOffset;
+	}
+***/
 
 	//DM14072004 081.7 int06 add, stream type preselector
 	public boolean StreamEnabled()
@@ -16079,13 +16159,13 @@ class PIDdemux {
 			pts -= options[27];
 			pts &= 0xFFFFFFFFL;
 
-			if ( (pts & 0xFF000000L)==0xFF000000L ) 
-				ptsover=true;      // bit 33 was set
-			if (ptsover && pts<0xF0000000L) 
-				pts |= 0x100000000L;
-			pts += ptsoffset;
+			if ( (pts & 0xFF000000L) == 0xFF000000L ) 
+				ptsover = true;      // bit 33 was set
 
-			//DM15072004 081.7 int06 add
+			if (ptsover && pts < 0xF0000000L) 
+				pts |= 0x100000000L;
+
+			pts += ptsoffset;
 			pts += addoffset;
 
 			//DM22122003 081.6 int09 change
@@ -16441,8 +16521,10 @@ class PIDdemux {
 
 			if ( (pts & 0xFF000000L)==0xFF000000L ) 
 				ptsover=true;      // bit 33 was set
+
 			if (ptsover && pts<0xF0000000L) 
 				pts |= 0x100000000L;
+
 			pts += ptsoffset;
 
 			if (options[30]==1) //DM131003 081.5++
@@ -16768,6 +16850,8 @@ class makeVDR
 		{ 
 			int type = demux.getType();         // read Type, 0=ac3,1=ttx,2=mpa,3=mpv
 
+
+
 			if (!writedata[0] && type==3 ) 
 				return options;       // video disabled
 
@@ -16806,6 +16890,7 @@ class makeVDR
 
 				IDs.add(""+((newID>0xDF)?newID:(0x100+newID)));
 			}
+
 
 			if (first)
 			{

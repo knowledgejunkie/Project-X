@@ -143,6 +143,7 @@ public class Picture extends JPanel {
 
 	}
 
+
 //
 private IDCTRefNative idct;
 private IDCTSseNative idctsse;
@@ -2812,14 +2813,30 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	 */
 	public long decodeArray(byte array[], boolean direction, boolean viewGOP, boolean fast)
 	{
+		return decodeArray(array, 0, direction, viewGOP, fast);
+	}
+
+	/**
+	 * returns arrays byteposition offset of 1st successful decoded GOP
+	 * interface, entry point to decode picture for preview
+	 *
+	 * @param1 - ES byte array
+	 * @param2 - start index position
+	 * @param3 - search direction
+	 * @param4 - enable GOPheader alignment
+	 * @param5 - simple_fast decode
+	 * @return
+	 */
+	public long decodeArray(byte array[], int start_position, boolean direction, boolean viewGOP, boolean fast)
+	{
 		FAST = fast; //DM08022004 081.6 int16 new
 		DIRECTION = direction;
 		ERROR1 = false;
 		ERROR2 = false;
 		buf = array;
-		BufferPos = 0;
-		BitPos = 0;
-		StartPos = 0;
+		BufferPos = start_position;
+		BitPos = BufferPos<<3;
+		StartPos = BufferPos;
 		this.viewGOP = viewGOP;
 
 		if (DIRECTION)

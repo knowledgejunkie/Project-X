@@ -79,14 +79,14 @@ public class Scan
 	ArrayList pidlist = new ArrayList();
 	boolean hasVideo=false, nullpacket=false;
 	byte[] vbasic = new byte[12];
-	Audio Audio = new Audio();
-	Video vfc = new Video();
 	int buffersize=1024000; //DM04122003 081.6_int02
 	int filetype = 0; //DM26032004 081.6_int18 add
 
 	java.text.DateFormat timeformat = new java.text.SimpleDateFormat("HH:mm:ss.SSS");
 
 	ArrayList video_streams, audio_streams, ttx_streams, pic_streams;
+
+	Audio Audio = new Audio();
 
 	//DM18062004 081.7 int05 add
 	public Scan()
@@ -592,7 +592,7 @@ public class Scan
 					System.arraycopy(check,a,vbasic,0,12);
 					bytecheck.write(check,a,20);
 
-					video_streams.add(vfc.videoformatByte(bytecheck.toByteArray()));
+					video_streams.add(Video.videoformatByte(bytecheck.toByteArray()));
 
 					return;
 				}
@@ -1213,8 +1213,7 @@ public class Scan
 								System.arraycopy(check,a,vbasic,0,12);
 								bytecheck.write(check,a,20);
 
-								//video = vfc.videoformatByte(bytecheck.toByteArray());
-								video_streams.add(vfc.videoformatByte(bytecheck.toByteArray()));
+								video_streams.add(Video.videoformatByte(bytecheck.toByteArray()));
 							}
 
 							return 9;
