@@ -2882,7 +2882,10 @@ class FileListener implements ActionListener
 		else if (actName.equals("-i"))
 		{
 			if (comBox[12].getItemCount()>0) 
-				comBox[12].removeItemAt(comBox[12].getSelectedIndex());
+			{
+				int index = comBox[12].getSelectedIndex();
+				comBox[12].removeItemAt(index);
+			}
 			inputlist();
 		}
 		else if (actName.equals("ri"))  

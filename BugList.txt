@@ -2,5 +2,5 @@
 dvbmatt erl 30.10. - gif Bild für ftp-Connection Dialog
 dvbmatt erl 30.10. - JDK1.2.2 adaption, String.split() geändert in StringTokenizer (FtpVO.java)
 30.10. - JDK1.2.2 adaption, String.replaceAll() umgehen
-31.10. - dropdown liste Vorauswahlbox, einträge > 1 lassen sich nicht auswählen
-31.10. - dropdown liste Vorauswahlbox, einträge nicht entfernbar
+pstorch erl 31.10. - dropdown liste Vorauswahlbox, einträge > 1 lassen sich nicht auswählen
+pstorch erl 31.10. - dropdown liste Vorauswahlbox, einträge nicht entfernbar

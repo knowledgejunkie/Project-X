@@ -184,4 +184,5 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 	public DirType getDirType() {
 		return dirType;
 	}
+
 }

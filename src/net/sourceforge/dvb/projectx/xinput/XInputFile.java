@@ -61,15 +61,6 @@ public class XInputFile implements XInputFileIF {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	public boolean equals(Object aObj) {
-		return impl.equals(aObj);
-	}
-
 	/**
 	 * @return
 	 */
@@ -223,6 +214,33 @@ public class XInputFile implements XInputFileIF {
 		return impl.readLong();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	public boolean equals(Object aObj) {
+		if (!(aObj instanceof XInputFile))
+		{
+			return false;
+		}
+		XInputFile other = (XInputFile)aObj;
+		if (other.getFileType().equals(impl.getFileType())
+			&& other.toString().equals(impl.toString()))
+		{
+			return true;
+		}
+		
+		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see net.sourceforge.dvb.projectx.xinput.XInputFileIF#getFileType()
+	 */
+	public FileType getFileType() {
+		return impl.getFileType();
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 

@@ -21,6 +21,13 @@ public interface XInputFileIF {
 	 * @return String representation of the object
 	 */
 	public String toString();
+	
+	/**
+	 * Gets the type of this XInputFile implementation.
+	 * 
+	 * @return FileType
+	 */
+	public FileType getFileType();
 
 	/**
 	 * Get url representation of the object.

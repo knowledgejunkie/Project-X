@@ -258,4 +258,11 @@ public class XInputFileImpl implements XInputFileIF {
 
 		return randomAccessFile.readLong();
 	}
+	
+	/* (non-Javadoc)
+	 * @see net.sourceforge.dvb.projectx.xinput.XInputFileIF#getFileType()
+	 */
+	public FileType getFileType() {
+		return fileType;
+	}
 }
