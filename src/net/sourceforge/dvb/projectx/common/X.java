@@ -175,7 +175,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "10.12.2004 23:00";
+static String version_date = "12.12.2004 14:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -2839,6 +2839,7 @@ class MenuListener implements ActionListener
 			XInputFile inputValue = null;
 			URL url = null;
 
+			loop:
 			while (true)
 			{
 				value = JOptionPane.showInputDialog(Resource.getString("dialog.input.url"));
@@ -2854,8 +2855,19 @@ class MenuListener implements ActionListener
 
 					if (protocol.equals("ftp"))
 					{
-						inputValue = new XInputFile(new net.sourceforge.dvb.projectx.xinput.ftp.FtpVO(url));
-						break;
+						XInputDirectory xid = new XInputDirectory(url);
+						XInputFile[] xif = xid.getFiles();
+
+						for (int i = 0; i < xif.length; i++)
+						{
+							if ( xif[i].toString().equals(url.toString()) )
+							{
+								inputValue = xif[i];
+								break loop;
+							}
+						}
+
+						continue loop;
 					}
 
 					else if (protocol.equals("file"))
@@ -7865,6 +7877,7 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 			while (include.length > 0)
 			{
 				for (int v=0; v < include.length; v++) 
+
 					if (pesID == include[v] || subID == include[v]) 
 						break includeloop;
 

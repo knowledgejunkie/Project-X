@@ -4,10 +4,6 @@ import java.util.StringTokenizer;
 
 import org.apache.commons.net.ftp.FTPFile;
 
-//+
-import java.net.URL;
-//-
-
 public class FtpVO implements Cloneable {
 
 	private String server = null;
@@ -29,53 +25,15 @@ public class FtpVO implements Cloneable {
 		this.directory = directory;
 		this.ftpFile = ftpFile;
 	}
+
 //+
-	public FtpVO(URL url) {
-
-		setURL(url);
-	}
-
-	public void setURL(URL url) {
-
-		String _host = url.getHost();
-		server = _host;
-		user = null;
-		password = null;
-		directory = null;
-
-		int i = _host.indexOf("@");
-		if (i != -1)
-		{
-			server = _host.substring(i + 1);
-			user = _host.substring(0, i);
-
-			i = user.indexOf(":");
-			if (i != -1)
-			{
-				password = user.substring(i + 1);
-				user = user.substring(0, i);
-			}
-		}
-
-		int _port = url.getPort();
-		port = _port != -1 ? String.valueOf(_port) : null;
-
-		String _file = url.getFile();
-
-		i = _file.lastIndexOf("/");
-		directory = _file.substring(0, i);
-
-		ftpFile = new FTPFile();
-		ftpFile.setName(_file.substring(i + 1));
-		ftpFile.setType(FTPFile.FILE_TYPE);
-
-System.out.println("sv " + server);
-System.out.println("us " + user);
-System.out.println("pw " + password);
-System.out.println("po " + port);
-System.out.println("di " + directory);
-System.out.println("fi " + ftpFile.getName());
-System.out.println("ft " + ftpFile);
+	public FtpVO(String server, String user, String password, String directory, String port, FTPFile ftpFile) {
+		this.server = server;
+		this.user = user;
+		this.password = password;
+		this.directory = directory;
+		this.port = port;
+		this.ftpFile = ftpFile;
 	}
 //-
 

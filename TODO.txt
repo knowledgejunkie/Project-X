@@ -38,11 +38,9 @@ roehrist erl 14.11. - Focusreihenfolge in FTPChooser korrigiert und TextArea ist
 roehrist in Arbeit 14.11. - Interface evt. durch abstrakte Basisklasse ersetzen.
 roehrist in Arbeit 16.11. - Performance Problem von TFRAW beheben.
 dvbmatt erl 20.11. - nullpointer bei 'patch video basics' ohne file
-20.11. - Möglichkeit der Eingabe einer URL über Menü ergänzt.
-         Problem, String muß als gültiger XInputFile-Typ akzeptiert werden
 dvbmatt erl 20.11. - laden von Dateien via 'hinzufügen' und dann anklick für dateiinfo führt zu exception, 
          bei dragndrop geht's normal
-20.11. - doppelklick in dateiauswahlbox führt zu illegalargumentexc.
+(20.11. - doppelklick in dateiauswahlbox führt zu illegalargumentexc.)
 20.11. - wie oben, Erkennung des Dateityps bei Ausführung via CLI nicht implementiert?, geht nicht
 dvbmatt fix 20.11. - CLI: extern angebenes ini-File wirkt nicht mehr (wohl seit 081.9)
 dvbmatt neu 27.11. - meldungsoption zum mitloggen der verstrichenen prozesszeit
@@ -56,3 +54,6 @@ dvbmatt 10.12. - FTP: XInputFileImpl + X : Änderung wg. Hänger durch Inputstream
                  close() durch "= null" ersetzt, sowie System.gc() ergänzt um einen ftp.disconnect zu vollziehen,
                  andrerseits wird der transfer u.U. nicht beendet und der user blockiert auf ungewisse zeit.
 dvbmatt 10.12. - final static int Streamtypen in Common ergänzt und X + Scan tlw. angepasst
+dvbmatt 12.12. - (20.11.) Möglichkeit der Eingabe einer URL über Menü ergänzt.
+	 Anpassung für gültigen XInputFile-Typ für ftp + file protocol, 
+         ftp-Portnummern und zugriffsmögl. ohne username wird von xinput noch nicht ermöglicht

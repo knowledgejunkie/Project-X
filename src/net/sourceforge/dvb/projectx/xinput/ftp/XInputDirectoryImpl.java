@@ -4,6 +4,10 @@ import net.sourceforge.dvb.projectx.xinput.DirType;
 import net.sourceforge.dvb.projectx.xinput.XInputDirectoryIF;
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
 
+//+
+import java.net.URL;
+//-
+
 public class XInputDirectoryImpl implements XInputDirectoryIF {
 
 	private DirType dirType = null;
@@ -71,6 +75,65 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 			throw new IllegalArgumentException(aFileIdentifier + " is not a correct ftp URL!");
 		}
 	}
+
+//+
+	/**
+	 * Create a XInputDirectory of type DirType.FILE_DIR.
+	 * 
+	 * @param aFileIdentifier
+	 *          Directory URL
+	 * @throws IllegalArgumentException
+	 *           If URL is not a directory
+	 */
+	public XInputDirectoryImpl(URL url) {
+
+		if (url.getProtocol().compareTo("ftp") != -1) {
+
+			String _host = url.getHost();
+
+			String server = _host;
+			String user = null;
+			String password = null;
+			String directory = null;
+			String port = null;
+
+			int i = _host.indexOf("@");
+			if (i != -1)
+			{
+				server = _host.substring(i + 1);
+				user = _host.substring(0, i);
+
+				i = user.indexOf(":");
+				if (i != -1)
+				{
+					password = user.substring(i + 1);
+					user = user.substring(0, i);
+				}
+			}
+
+			int _port = url.getPort();
+			port = _port != -1 ? String.valueOf(_port) : null;
+
+			String _file = url.getFile();
+
+			i = _file.lastIndexOf("/");
+			directory = _file.substring(0, i);
+
+			ftpVO = new FtpVO(server, user, password, directory, port, null);
+			ftpServer = new FtpServer(ftpVO);
+			dirType = DirType.FTP_DIR;
+
+			if (!test()) {
+				ftpVO = null;
+				ftpServer = null;
+				dirType = null;
+				throw new IllegalArgumentException(url + " is not a correct ftp URL!");
+			}
+		} else {
+			throw new IllegalArgumentException(url + " is not a correct ftp URL!");
+		}
+	}
+//-
 
 	/**
 	 * Get String representation of the object.
