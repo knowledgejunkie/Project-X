@@ -9,6 +9,7 @@ import java.io.PushbackInputStream;
 import java.io.RandomAccessFile;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.StringTokenizer;
 
 import net.sourceforge.dvb.projectx.common.X;
 import net.sourceforge.dvb.projectx.xinput.FileType;
@@ -17,6 +18,7 @@ import net.sourceforge.dvb.projectx.xinput.XInputStream;
 
 import net.sourceforge.dvb.projectx.gui.Dialogs;
 import net.sourceforge.dvb.projectx.common.Resource;
+import net.sourceforge.dvb.projectx.common.Common;
 
 import org.apache.commons.net.ftp.FTPFile;
 
@@ -326,7 +328,32 @@ public class XInputFileImpl implements XInputFileIF {
 		client.enterLocalPassiveMode(); //void
 		if (debug) System.out.println("rAO PASV " + client.getReplyCode());
 
+		String[] commands = getUserFTPCommand();
+
+		for (int i = 0; i < commands.length; i++)
+		{
+			if (commands[i] != null && commands[i].length() > 0)
+			{
+				client.sendCommand(commands[i]); //bool
+				if (debug) System.out.println("rAO cmd " + client.getReplyCode());
+			}
+		}
+
 		isopen = true;
+	}
+
+	/**
+	 * @throws java.io.IOException
+	 */
+	public String[] getUserFTPCommand() {
+
+		StringTokenizer st = new StringTokenizer(Common.getFTP_Command(), "|");
+		String[] tokens = new String[st.countTokens()];
+
+		for (int i = 0; st.hasMoreTokens(); i++)
+			tokens[i] = st.nextElement().toString().trim();
+
+		return tokens;
 	}
 
 	/**

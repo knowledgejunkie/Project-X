@@ -178,7 +178,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "30.12.2004 19:00";
+static String version_date = "30.12.2004 22:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -251,6 +251,7 @@ public static JTextField outfield;
 static JTextField[] d2vfield = new JTextField[10], //DM18052004 081.7 int02 changed
 	exefield = new JTextField[10];
 
+JTextField ftpcommand = null;
 
 static boolean bool=false, PureVideo=false;
 static byte[] dumpfill = new byte[16];
@@ -2065,6 +2066,29 @@ protected JPanel buildexternPanel()
 	cBox[66].setToolTipText(Resource.getString("tab.options.pesappend_tip"));
 	cBox[66].setSelected(false);
 	video2Panel.add(cBox[66]);
+
+
+	JPanel ftpPanel = new JPanel();
+	ftpPanel.setLayout(new BoxLayout(ftpPanel, BoxLayout.X_AXIS));
+
+	JLabel label_1 = new JLabel (Resource.getString("ftp.command.label"));
+	label_1.setPreferredSize(new Dimension(100,20));
+	label_1.setMaximumSize(new Dimension(100,20));
+	label_1.setToolTipText(Resource.getString("ftp.command.tip"));
+	ftpPanel.add(label_1);
+
+	ftpcommand = new JTextField(Common.getFTP_Command());
+	ftpcommand.setPreferredSize(new Dimension(160,20));
+	ftpcommand.setMaximumSize(new Dimension(160,20));
+	ftpcommand.setToolTipText(Resource.getString("ftp.command.tip"));
+	ftpcommand.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+			Common.setFTP_Command(ftpcommand.getText());
+		}
+	});
+	ftpPanel.add(ftpcommand);
+
+	video2Panel.add(ftpPanel);
 
 
 	video2.add(video2Panel);
@@ -5041,6 +5065,8 @@ public void iniload()
 			Common.setFTP_Password(path.substring(13, path.length()));
 		else if (path.startsWith("ftp.directory=")) 
 			Common.setFTP_Directory(path.substring(14, path.length()));
+		else if (path.startsWith("ftp.command=")) 
+			Common.setFTP_Command(path.substring(12, path.length()));
 
 	}
 	
@@ -5138,6 +5164,7 @@ public static void inisave() //DM26012004 081.6 int12 changed, //DM26032004 081.
 	inis.println("ftp.user=" + Common.getFTP_User()); 
 	inis.println("ftp.password=" + Common.getFTP_Password()); 
 	inis.println("ftp.directory=" + Common.getFTP_Directory()); 
+	inis.println("ftp.command=" + Common.getFTP_Command()); 
 
 	inis.close();
 	} 
@@ -18139,6 +18166,7 @@ public static int getForcedTTXLanguage()
  options[56] = quick demux mbytes
  options[57] = pcr delta
 ******************************/
+
 
 /***** options[17]
 *  bit 1,0 : if options[10]>=4,  not used anymore, but still set

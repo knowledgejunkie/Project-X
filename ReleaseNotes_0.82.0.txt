@@ -37,6 +37,7 @@
        - now implements a FTP-Client, provided by Apache's Jakarta Project libraries 'commons-net' and 'oro' 
          (both are required! take care that the compiled versions are suited to your JRE, there's no backward compatibility!)
        * supports any ports, remote rename and resume(aka. 'REST', ftp-server should provide it for preview/cut and hexviewer)
+       * supports user specific FTP commands (executed before processing) (<extern> panel)
        * simple FTP access is possible by adding a known URL in the file context menus or as a CLI argument
        * enhanced FTP access with directory listings is possible through the 'autoload panel', by choosing and testing a connection
          (ftp settings will be saved, but chosen directory listings not, because an offline server to connect on startup blocks)

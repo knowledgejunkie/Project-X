@@ -318,6 +318,7 @@ public final class Common
 	private static String ftp_user = "root";
 	private static String ftp_password = "dreambox";
 	private static String ftp_directory = "/hdd/movie";
+	private static String ftp_command = "";
 
 	public static void setFTPServer(String server, String user, String password, String directory, String port)
 	{
@@ -353,6 +354,11 @@ public final class Common
 		return ftp_directory;
 	}
 
+	public static String getFTP_Command()
+	{
+		return ftp_command;
+	}
+
 	public static void setFTP_Server(String server)
 	{
 		ftp_server = server != null ? server : ftp_server;
@@ -376,5 +382,10 @@ public final class Common
 	public static void setFTP_Directory(String directory)
 	{
 		ftp_directory = directory != null ? directory : ftp_directory;
+	}
+
+	public static void setFTP_Command(String command)
+	{
+		ftp_command = command != null ? command : ftp_command;
 	}
 }
