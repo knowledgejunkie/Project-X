@@ -891,11 +891,12 @@ public class Scan
 
 		byte[] check= new byte[buffersize];
 		ByteArrayOutputStream bytecheck = new ByteArrayOutputStream();
-   
+
 		try 
 		{
 			size = aXInputFile.length();
-			aXInputFile.randomAccessSingleRead(check, position);
+		//	aXInputFile.randomAccessSingleRead(check, position);
+			aXInputFile.getNewInstance().randomAccessSingleRead(check, position);
 
 			riffcheck:
 			for (int a=0; a<bs0; a++)  //DM30122003 081.6 int10 add, compressed as AC3,MPEG is currently better detected as ES-not RIFF

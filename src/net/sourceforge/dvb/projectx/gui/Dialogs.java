@@ -41,6 +41,11 @@ public class Dialogs
 		this.frame = frame;
 	}
 
+	public static String getUserInput(String arg1)
+	{
+		return JOptionPane.showInputDialog(arg1);
+	}
+
 	public static String getUserInput(String arg1, String arg2)
 	{
 		return JOptionPane.showInputDialog(frame, arg1 , arg2, JOptionPane.QUESTION_MESSAGE );

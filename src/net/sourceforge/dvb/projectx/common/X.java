@@ -2781,7 +2781,7 @@ class MenuListener implements ActionListener
 			loop:
 			while (true)
 			{
-				value = JOptionPane.showInputDialog(Resource.getString("dialog.input.url"));
+				value = Dialogs.getUserInput(Resource.getString("dialog.input.url"));
 
 				if (value == null)
 					return;
@@ -3348,7 +3348,6 @@ class EXECUTE extends JFrame
 		dispose(); //DM26032004 081.6 int18 changed
 	}
 }
-
 
 /*************
  * cut panel *
@@ -4157,7 +4156,8 @@ class COLLECTION extends JFrame
 		filesearch:
 		for (int a=0,b=0,type=0; a<infiles.size(); a++)
 		{
-			XInputFile xInputFile = (XInputFile)infiles.get(a);
+		//	XInputFile xInputFile = (XInputFile)infiles.get(a);
+			XInputFile xInputFile = ((XInputFile)infiles.get(a)).getNewInstance();
 			type = scan.inputInt(xInputFile);
 
 			if (b != 0 && b != type)
