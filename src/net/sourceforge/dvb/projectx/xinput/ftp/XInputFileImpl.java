@@ -59,7 +59,7 @@ import org.apache.commons.net.ftp.FTP;
 
 public class XInputFileImpl implements XInputFileIF {
 
-	private boolean debug = false;
+	private boolean debug = true;
 
 	// Members, which are type independent
 	private FileType fileType = null;
@@ -285,7 +285,12 @@ public class XInputFileImpl implements XInputFileIF {
 
 		randomAccessOpen("r");
 
+		if (debug) System.out.println("gIS name " + getName());
+
 		xIs = new XInputStream(client.retrieveFileStream(getName()));
+
+		if (debug) System.out.println("gIS retriveStream " + client.getReplyString());
+
 		xIs.setFtpFile(this);
 		return xIs;
 	}
@@ -343,21 +348,23 @@ public class XInputFileImpl implements XInputFileIF {
 
 		if (mode.compareTo("r") != 0) { throw new IllegalStateException("Illegal access mode for FileType.FTP"); }
 
+		boolean ret = false;
+
 		client = new FTPClient();
 		client.connect(ftpVO.getServer(), ftpVO.getPortasInteger()); //void
-		if (debug) System.out.println("rAO connect " + client.getReplyCode());
+		if (debug) System.out.println("rAO connect " + client.getReplyString());
 
-		client.login(ftpVO.getUser(), ftpVO.getPassword()); //bool
-		if (debug) System.out.println("rAO login " + client.getReplyCode());
+		ret = client.login(ftpVO.getUser(), ftpVO.getPassword()); //bool
+		if (debug) System.out.println("rAO login " + ret + " / " + client.getReplyString());
 
-		client.changeWorkingDirectory(ftpVO.getDirectory()); //bool
-		if (debug) System.out.println("rAO cwd " + client.getReplyCode());
+		ret = client.changeWorkingDirectory(ftpVO.getDirectory()); //bool
+		if (debug) System.out.println("rAO cwd " + ret + " / " + client.getReplyString());
 
-		client.setFileType(FTP.BINARY_FILE_TYPE); //bool
-		if (debug) System.out.println("rAO binary " + client.getReplyCode());
+		ret = client.setFileType(FTP.BINARY_FILE_TYPE); //bool
+		if (debug) System.out.println("rAO binary " + ret + " / " + client.getReplyString());
 
 		client.enterLocalPassiveMode(); //void
-		if (debug) System.out.println("rAO PASV " + client.getReplyCode());
+		if (debug) System.out.println("rAO PASV " + client.getReplyString());
 
 		String[] commands = getUserFTPCommand();
 
@@ -366,7 +373,7 @@ public class XInputFileImpl implements XInputFileIF {
 			if (commands[i] != null && commands[i].length() > 0)
 			{
 				client.sendCommand(commands[i]); //bool
-				if (debug) System.out.println("rAO cmd " + client.getReplyCode());
+				if (debug) System.out.println("rAO cmd " + client.getReplyString());
 			}
 		}
 
@@ -387,6 +394,30 @@ public class XInputFileImpl implements XInputFileIF {
 		return tokens;
 	}
 
+
+	private boolean EOF() throws IOException {
+
+		int ret;
+
+		if (in != null)
+		{
+			ret = in.read();
+
+			if (ret < 0)
+				return true;
+		}
+
+		else if (xIs != null)
+		{
+			ret = xIs.read();
+
+			if (ret < 0)
+				return true;
+		}
+
+		return false;
+	}
+
 	/**
 	 * @throws java.io.IOException
 	 */
@@ -396,8 +427,35 @@ public class XInputFileImpl implements XInputFileIF {
 
 		//no need to abort a transfer explicitly, because we logout here
 
-		client.logout();
-		if (debug) System.out.println("rAC logout " + client.getReplyCode());
+		boolean ret = false;
+		if (debug) System.out.println("rAC last " + client.getReplyCode() + " / " + client.getReplyString());
+
+		ret = client.isConnected();
+		if (debug) System.out.println("rAC isCon " + ret + " / " + client.getReplyCode() + " / " + client.getReplyString());
+
+		if ( !EOF() )
+		{
+			if (debug) System.out.println("rAC !eof ");
+
+			ret = client.abort();
+			if (debug) System.out.println("rAC abort " + ret + " / " + client.getReplyCode() + " / " + client.getReplyString());
+		}
+
+		ret = client.logout();
+		if (debug) System.out.println("rAC logout " + ret + " / " + client.getReplyCode() + " / " + client.getReplyString());
+
+		ret = client.isConnected();
+		if (debug) System.out.println("rAC isCon " + ret + " / " + client.getReplyCode() + " / " + client.getReplyString());
+
+		if (ret)
+		{
+			try {
+				client.disconnect();
+				if (debug) System.out.println("rAC disc " + client.getReplyCode() + " / " + client.getReplyString());
+			} catch (IOException e) {
+				if (debug) System.out.println("rAC disc-er " + e);
+			}
+		}
 
 		in = null;
 		xIs = null;
@@ -405,6 +463,8 @@ public class XInputFileImpl implements XInputFileIF {
 		isopen = false;
 
 		System.gc();
+
+		if (debug) System.out.println("rAC out ");
 	}
 
 	/**
@@ -416,9 +476,10 @@ public class XInputFileImpl implements XInputFileIF {
 	public void randomAccessSeek(long aPosition) throws IOException {
 
 		client.setRestartOffset(aPosition);  //void
+		if (debug) System.out.println("rAS REST " + client.getReplyString() + " /aP " + aPosition);
 
 		in = new DataInputStream(client.retrieveFileStream(getName()));
-		if (debug) System.out.println("rAS retriveStream " + client.getReplyCode());
+		if (debug) System.out.println("rAS retriveStream " + client.getReplyString());
 	}
 
 	/**

@@ -177,8 +177,8 @@ public class X extends JPanel
 {
 
 /* main version index */
-static String version_name = "ProjectX 0.82.0";
-static String version_date = "15.01.2005";
+static String version_name = "ProjectX 0.82.0.01";
+static String version_date = "16.01.2005";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -2778,6 +2778,7 @@ class MenuListener implements ActionListener
 			chooser.setMultiSelectionEnabled(true);
 
 			int retval = chooser.showDialog(frame, null);
+
 			if(retval == JFileChooser.APPROVE_OPTION)
 			{
 				File theFiles[] = chooser.getSelectedFiles();
@@ -2797,8 +2798,14 @@ class MenuListener implements ActionListener
 
  					for (int i = 0; i < theFiles.length; i++)
 						if (theFiles[i].isFile())
-							collfiles[icf].add(new XInputFile(theFiles[i]));
-						//	collfiles[icf].add(theFiles[i].getAbsolutePath());
+						{
+							/**
+							 * must use getAbsolutFile to ensure right ClassType, 
+							 * sometimes the returned Object.getClass 
+							 * from selection is NOT of java.io.File!!
+							 */
+							collfiles[icf].add(new XInputFile(theFiles[i].getAbsoluteFile()));
+						}
 
 					list3.setListData(collfiles[icf].toArray());
 				}
@@ -3023,7 +3030,12 @@ class FileListener implements ActionListener
 					if (theFile.isFile()) 
 						theFile = theFile.getParentFile();
 
-					XInputDirectory xInputDirectory = new XInputDirectory(theFile);
+					/**
+					 * must use getAbsolutFile to ensure right ClassType, 
+					 * sometimes the returned Object.getClass 
+					 * from selection is NOT of java.io.File!!
+					 */
+					XInputDirectory xInputDirectory = new XInputDirectory(theFile.getAbsoluteFile());
 
 					for (int i=0; i < comBox[12].getItemCount(); i++) {
 						if (xInputDirectory.toString().equalsIgnoreCase(comBox[12].getItemAt(i).toString()))
@@ -5282,6 +5294,7 @@ class GoListener implements ActionListener
 			options[33] = -1;
 			qinfo = true; 
 			options[56] = (0x100000L * Integer.parseInt(comBox[21].getSelectedItem().toString())); 
+
 
 
 			new WORK().start();
