@@ -59,5 +59,9 @@ dvbmatt 12.12. - (20.11.) Möglichkeit der Eingabe einer URL über Menü ergänzt.
 dvbmatt 12.12. - (20.11.) - CLI: extern angebenes ini-File wirkt nicht mehr (wohl seit 081.9)
 	 Anpassung für gültigen XInputFile-Typ für ftp + file protocol + normal filetyp, 
 	 unklar, was mit topfield dateien über die CLI passiert: TfHDRead-tool von jkit
+	14.12. Erweiterung: URL ohne User/PW wird zu "anonymous:" gewandelt.
 
--- extract PES von PVA schreibt zzt. nur in den quelldateipfad
+!- extract PES von PVA schreibt zzt. nur in den quelldateipfad, problem bei CD + ftp
+
+- FTP unterstützt auch resume (Bsp. "REST 120000" ), z.B. für Vorschau
+  jedoch nicht verfügbar über zzt benutzte openStream methode

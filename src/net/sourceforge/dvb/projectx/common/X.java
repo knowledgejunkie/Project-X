@@ -2848,13 +2848,14 @@ class MenuListener implements ActionListener
 
 						for (int i = 0; i < xif.length; i++)
 						{
-							if ( xif[i].toString().equals(url.toString()) )
+							if ( new URL(xif[i].toString()).getFile().equals(url.getFile()) )
 							{
 								inputValue = xif[i];
 								break loop;
 							}
 						}
 
+						Msg("!> URL incorrect or not accessible: " + url.toString(), true);
 						continue loop;
 					}
 
@@ -2865,7 +2866,7 @@ class MenuListener implements ActionListener
 					}
 
 					else
-						Msg("!> Protocol not yet supported: " + protocol);
+						Msg("!> Protocol not yet supported: " + protocol, true);
 
 					return;
 				}

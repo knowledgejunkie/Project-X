@@ -111,6 +111,12 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 				}
 			}
 
+			if (user == null && password == null)
+			{
+				user = "anonymous";
+				password = "";
+			}
+
 			int _port = url.getPort();
 			port = _port != -1 ? String.valueOf(_port) : null;
 
