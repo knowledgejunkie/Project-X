@@ -177,8 +177,8 @@ public class X extends JPanel
 {
 
 /* main version index */
-static String version_name = "ProjectX 0.82.0.01";
-static String version_date = "16.01.2005";
+static String version_name = "ProjectX 0.82.0.02";
+static String version_date = "18.01.2005";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;

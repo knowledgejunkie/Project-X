@@ -59,7 +59,7 @@ import org.apache.commons.net.ftp.FTP;
 
 public class XInputFileImpl implements XInputFileIF {
 
-	private boolean debug = true;
+	private boolean debug = false;
 
 	// Members, which are type independent
 	private FileType fileType = null;
