@@ -1,7 +1,7 @@
 /==============================================================================/
 
  X - a free Java based demux utility
- Copyright (C) 2001-2004 dvb.matt, All Rights Reserved
+ Copyright (C) 2001-2005 dvb.matt, All Rights Reserved
 
  It is intended for educational purposes only, as a non-commercial test project.
  It may not be used otherwise. Most parts are only experimental.
@@ -79,6 +79,8 @@
        [iii] the following libraries are optional from the V 0.82.0 :
              - lib/idct*.dll  (win32 optimized lib's for a faster preview)
              copy one of them to the systems folder or where the compiled .jar is located
+       [iv]  dependent on the used JDK, you'll encounter some 'warnings' about 'using a deprecated API'
+             that's not critical, as long as an actual JDK still supports these mehods
 
        *)
        newer versions you'll find at:
@@ -113,7 +115,9 @@
 	pstorch - i18n support
 	chrisg - Topfield disk access (AddOn)
 	jazzydane - danish translation
+        Kano / RoEn - Unix buils script
 	Eric Albert - BrowserLauncher
+        catapult - Topfield 5x00 export
 	...and all other supporters...
 
 /===============================================================================/
