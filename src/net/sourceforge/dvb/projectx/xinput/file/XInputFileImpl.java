@@ -254,7 +254,7 @@ public class XInputFileImpl implements XInputFileIF {
 	 * @return Long value read.
 	 * @throws java.io.IOException
 	 */
-	public long readLong() throws IOException {
+	public long randomAccessReadLong() throws IOException {
 
 		return randomAccessFile.readLong();
 	}

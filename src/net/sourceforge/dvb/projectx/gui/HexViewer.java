@@ -290,7 +290,7 @@ public class HexViewer extends JFrame
 	{
 		try 
 		{
-			xinputFile.randomAccessOpen("r");
+//			xinputFile.randomAccessOpen("r");
 
 			long len = xinputFile.length();
 
@@ -320,7 +320,7 @@ public class HexViewer extends JFrame
 					print(data, position);
 				}
 			}
-			xinputFile.randomAccessClose();
+//			xinputFile.randomAccessClose();
 
 		} 
 		catch (IOException e)
@@ -364,7 +364,16 @@ public class HexViewer extends JFrame
 
 		if ((xinputFile == null) || !(xinputFile.equals(aXInputFile)))
 		{
-			xinputFile = aXInputFile;
+			try {
+				xinputFile.randomAccessClose();
+			} catch (Throwable e) {
+			}
+			xinputFile = aXInputFile.getNewInstance();
+			try {
+				xinputFile.randomAccessOpen("r");
+			} catch (IOException e1) {
+				HexArea.setText(Resource.getString("hexviewer.error") + ": " + xinputFile); 
+			}
 
 			HexArea.setText("");
 			slider.setMaximum((int)(filelen / 16));
@@ -376,7 +385,7 @@ public class HexViewer extends JFrame
 				slider.setValue(0);
 		}
 
-		xinputFile = aXInputFile;
+//		xinputFile = aXInputFile;
 
 		setTitle(Resource.getString("hexviewer.file") + ": " + xinputFile);
 		flen.setText(Resource.getString("hexviewer.filesize") + ": " + filelen + " b.");

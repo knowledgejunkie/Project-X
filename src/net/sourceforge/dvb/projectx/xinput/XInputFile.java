@@ -363,11 +363,11 @@ public class XInputFile implements XInputFileIF {
 	 * @return @throws
 	 *         IOException
 	 */
-	public long readLong() throws IOException {
+	public long randomAccessReadLong() throws IOException {
 		if (debug) System.out.println("Enter XInputFile.readLong()");
 		long l = 0;
 		try {
-			l = impl.readLong();
+			l = impl.randomAccessReadLong();
 		} catch (IOException e) {
 			if (debug) System.out.println(e.getLocalizedMessage());
 			if (debug) e.printStackTrace();

@@ -1,9 +1,12 @@
 package net.sourceforge.dvb.projectx.xinput.ftp;
 
 import java.io.EOFException;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PushbackInputStream;
+import java.io.RandomAccessFile;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -22,11 +25,10 @@ public class XInputFileImpl implements XInputFileIF {
 
 	private boolean isopen = false;
 
-	private InputStream inputStream = null;
-
-	private long randomAccessCurrentPosition = 0;
-
-	private int randomAccessPushBack = -1;
+	private PushbackInputStream pbis = null;
+	private File rafFile = null;
+	private RandomAccessFile raf = null;
+	private byte[] buffer = new byte[8];
 
 	// Members used for type FileType.FTP
 	private FtpVO ftpVO = null;
@@ -133,8 +135,9 @@ public class XInputFileImpl implements XInputFileIF {
 		s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getDirectory() + "/"
 				+ ftpFile.getName() + ";type=b";
 
-	//	s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getDirectory() + "/"
-	//			+ ftpFile.getName();
+		//	s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" +
+		// ftpVO.getServer() + ftpVO.getDirectory() + "/"
+		//			+ ftpFile.getName();
 
 		return s;
 	}
@@ -254,11 +257,10 @@ public class XInputFileImpl implements XInputFileIF {
 		if (isopen) { throw new IllegalStateException("XInputFile is already open!"); }
 
 		if (mode.compareTo("r") != 0) { throw new IllegalStateException("Illegal access mode for FileType.FTP"); }
-		inputStream = getInputStream();
-		inputStream.mark(10 * 1024 * 1024);
 
-		randomAccessCurrentPosition = 0;
-		randomAccessPushBack = -1;
+		pbis = new PushbackInputStream(getInputStream());
+		rafFile = File.createTempFile("XInputFile", "");
+		raf = new RandomAccessFile(rafFile, "rw");
 		isopen = true;
 	}
 
@@ -269,14 +271,19 @@ public class XInputFileImpl implements XInputFileIF {
 
 		if (!isopen) { throw new IllegalStateException("XInputFile is already closed!"); }
 
-		if (inputStream != null) {
-			inputStream.close();
-			inputStream = null;
+		try {
+			pbis.close();
+			raf.close();
+			rafFile.delete();
+		} catch (IOException e) {
+			if (debug) System.out.println(e.getLocalizedMessage());
+			if (debug) e.printStackTrace();
+		} finally {
+			pbis = null;
+			raf = null;
+			buffer = new byte[8];
+			isopen = false;
 		}
-
-		randomAccessCurrentPosition = 0;
-		randomAccessPushBack = -1;
-		isopen = false;
 	}
 
 	/**
@@ -287,20 +294,10 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public void randomAccessSeek(long aPosition) throws IOException {
 
-		long skipped = 0;
-		long remaining = 0;
-
-		/** TODO reset eliminieren */
-		inputStream.reset();
-		remaining = aPosition;
-		do {
-			skipped = inputStream.skip(remaining);
-			if (skipped > 0) {
-				remaining -= skipped;
-			}
-		} while (remaining > 0);
-
-		randomAccessCurrentPosition += aPosition;
+		if (aPosition > raf.length()) {
+			fillRandomAccessBuffer(aPosition - raf.length());
+		}
+		raf.seek(aPosition);
 	}
 
 	/**
@@ -308,7 +305,7 @@ public class XInputFileImpl implements XInputFileIF {
 	 *         IOException
 	 */
 	public long randomAccessGetFilePointer() throws IOException {
-		return randomAccessCurrentPosition;
+		return raf.getFilePointer();
 	}
 
 	/**
@@ -316,7 +313,6 @@ public class XInputFileImpl implements XInputFileIF {
 	 *         IOException
 	 */
 	public int randomAccessRead() throws IOException {
-		byte[] buffer = new byte[1];
 		buffer[0] = -1;
 		randomAccessRead(buffer, 0, 1);
 		return (int) buffer[0];
@@ -345,44 +341,46 @@ public class XInputFileImpl implements XInputFileIF {
 	public int randomAccessRead(byte[] aBuffer, int aOffset, int aLength) throws IOException {
 		int result = 0;
 
-		if (randomAccessPushBack != -1) {
-			aBuffer[aOffset] = (byte) randomAccessPushBack;
-			randomAccessPushBack = -1;
-			randomAccessCurrentPosition += 1;
-			result = 1;
-			if (aLength > 1) {
-				result += randomAccessRead(aBuffer, aOffset + 1, aLength - 1);
-			}
-		} else {
-			result = inputStream.read(aBuffer, aOffset, aLength);
-			if (result != -1) {
-				randomAccessCurrentPosition += result;
-			}
+		if ((raf.getFilePointer() + aLength) > raf.length()) {
+			fillRandomAccessBuffer(raf.getFilePointer() + aLength - raf.length());
 		}
-		return result;
+		return raf.read(aBuffer, aOffset, aLength);
 	}
 
+	private void fillRandomAccessBuffer(long aAmount) throws IOException {
+		int read = 0;
+		long position = raf.getFilePointer();
+		int requiredBufferSize = 65000;
+		if (requiredBufferSize > buffer.length) {
+			buffer = new byte[requiredBufferSize];
+			if (debug) System.out.println("Buffer enhanced to " + requiredBufferSize + " bytes");
+		}
+		
+		for (long l = 0; l < aAmount; ) {
+			read = pbis.read(buffer, 0, requiredBufferSize);
+			if (read == -1) {
+				break;
+			}
+			raf.write(buffer, 0, read);
+			l += read;
+			if (read < requiredBufferSize) {
+				break;
+			}
+		}
+		raf.seek(position);
+		if (debug) System.out.println("RandomAccessFile enhanced to " + raf.length() + " bytes");
+	}
+	
 	/**
 	 * @return Read line
 	 * @throws IOException
 	 */
 	public String randomAccessReadLine() throws IOException {
-		StringBuffer sb = new StringBuffer();
-		int ch = 0;
-
-		do {
-			ch = randomAccessRead();
-			sb.append(ch);
-		} while ((ch != '\r') && (ch != '\n') && (ch != -1));
-		sb.deleteCharAt(sb.length() - 1);
-		if (ch == '\r') {
-			ch = randomAccessRead();
-			if (ch != '\n' && (ch != -1)) {
-				randomAccessPushBack = ch;
-				randomAccessCurrentPosition -= 1;
-			}
+		
+		if ((raf.length() - raf.getFilePointer()) < 65000) {
+			fillRandomAccessBuffer(65000);
 		}
-		return sb.toString();
+		return raf.readLine();
 	}
 
 	/**
@@ -417,14 +415,13 @@ public class XInputFileImpl implements XInputFileIF {
 	 * @return Long value read.
 	 * @throws java.io.IOException
 	 */
-	public long readLong() throws IOException {
+	public long randomAccessReadLong() throws IOException {
 
 		long l = 0;
 
-		byte[] buffer = new byte[8];
 		int bytesRead = 0;
 
-		bytesRead = randomAccessRead(buffer);
+		bytesRead = randomAccessRead(buffer, 0, 8);
 		if (bytesRead < 8) { throw new EOFException("Less than 8 bytes read"); }
 		l = ((long) buffer[1] << 56) + ((long) buffer[2] << 48) + ((long) buffer[3] << 40) + ((long) buffer[4] << 32)
 				+ ((long) buffer[5] << 24) + ((long) buffer[6] << 16) + ((long) buffer[7] << 8) + buffer[8];

@@ -6,7 +6,7 @@ import java.io.InputStream;
 
 public class XInputStream extends FilterInputStream {
 
-	private boolean debug = true;
+	private boolean debug = false;
 
 	private byte[] buffer = new byte[1];
 

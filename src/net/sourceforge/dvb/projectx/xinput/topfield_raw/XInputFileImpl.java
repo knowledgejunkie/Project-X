@@ -13,7 +13,7 @@ import net.sourceforge.dvb.projectx.xinput.XInputStream;
 
 public class XInputFileImpl implements XInputFileIF {
 
-	private boolean debug = true;
+	private boolean debug = false;
 
 	// Members, which are type independent
 	private FileType fileType = null;
@@ -206,21 +206,14 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public void randomAccessSeek(long aPosition) throws IOException {
 
-		long skipped = 0;
-		long remaining = 0;
-
-		randomAccessClose();
-		randomAccessOpen("r");
-
-		remaining = aPosition;
-		do {
-			skipped = pbis.skip(remaining);
-			if (skipped > 0) {
-				remaining -= skipped;
-			}
-		} while (remaining > 0);
-
-		randomAccessCurrentPosition += aPosition;
+		if (aPosition > randomAccessCurrentPosition) {
+			randomAccessCurrentPosition += pbis.skip(aPosition - randomAccessCurrentPosition);
+		}
+		if (aPosition < randomAccessCurrentPosition) {
+			randomAccessClose();
+			randomAccessOpen("r");
+			randomAccessCurrentPosition = pbis.skip(aPosition);
+		}
 	}
 
 	/**
@@ -326,13 +319,13 @@ public class XInputFileImpl implements XInputFileIF {
 	 * @return Long value read.
 	 * @throws java.io.IOException
 	 */
-	public long readLong() throws IOException {
+	public long randomAccessReadLong() throws IOException {
 
 		long l = 0;
 
 		int bytesRead = 0;
 
-		bytesRead = randomAccessRead(buffer);
+		bytesRead = randomAccessRead(buffer, 0, 8);
 		if (bytesRead < 8) { throw new EOFException("Less than 8 bytes read"); }
 		l = ((long) buffer[1] << 56) + ((long) buffer[2] << 48) + ((long) buffer[3] << 40) + ((long) buffer[4] << 32)
 				+ ((long) buffer[5] << 24) + ((long) buffer[6] << 16) + ((long) buffer[7] << 8) + buffer[8];
