@@ -28,12 +28,14 @@
    new - <special>: option to catch a little backward glitch in video pts  (demux only)
    new - <special>: option to handle different cell_times in VOBs (pts's in cells are not continuous) (demux only)
    new - <subtitle>: teletext: option to draw outlined text char's (if less than 4 colors/pic in source) instead of a complete half transparent background for the whole subtitle picture
-   new - <GUI menu>: online connection to verify the latest version info and availability
+   new - <GUI menu>: online connection to verify the latest version info and availability (may not work with a proxy)
    new - <CLI>: accepts a batch (txt-)file/URL as input, if it ends w/ 'bfl' or 'tpl' (then this includes one file segment per line of input). ATM, this batch file doesn't support full unicode for FTP input URLs, so keep them simple.
    new - TS export: additional PMT entry to fit AC3 to ATSC 
    new - scan fileinfo: TS: shows VPS(VBI)-PIDs and PIDs stream identifier of this service, with better sorting of multiple PIDs
    new - TS: VPS(VBI)-PIDs will now be ignored (less misinterpretation with other private data streams)
    new - preview: some code outsourced for faster decoding; usage is optional/system dependent, by copying the Win32's '.dll' in the "/lib" folder to the working or system directory
+   new - <coll spec.>: preview: option to udpate picture while scrolling
+   new - <options>: preview: buffersize is user defined
 
    new - new input interface:
        - now implements a FTP-Client, provided by Apache's Jakarta Project libraries 'commons-net' and 'oro' 

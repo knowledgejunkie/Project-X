@@ -7530,16 +7530,20 @@ public void pesparse(XInputFile aXInputFile, String vptslog, int ismpg)
 	//DM23022004 081.6 int18 changed
 	int[] lfn = new int[6];
 
-	for (int a=0;a<PESdemuxlist.size();a++) {
+	for (int a = 0; a < PESdemuxlist.size(); a++)
+	{
 		demux = (PIDdemux)PESdemuxlist.get(a);
 
-		if (demux.getType()==3) 
+		if (demux.getType() == 3) 
 			continue;
 
 		String[] values = demux.close(vptslog);
 
 		if (values[0].equals("")) 
+		{
+			Msg(Resource.getString("pesparse.msg.noexport") + Integer.toHexString(demux.getID()).toUpperCase() + ")");
 			continue;
+		}
 
 		String newfile = values[3]+ ((lfn[demux.getType()]>0) ? ("_"+lfn[demux.getType()]) : "") + "." + values[2];
 
@@ -8592,25 +8596,28 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 
 		//DM23022004 081.6 int18 changed
 		int[] lfn = new int[6]; 
-		for (int a=0;a<VDRdemuxlist.size();a++) {
+		for (int a = 0; a < VDRdemuxlist.size(); a++)
+		{
 			demux = (PIDdemux)VDRdemuxlist.get(a);
-			if (demux.getType()==3) 
-				continue;
 
-			//if (ismpg>0 && demux.getID()==0xBD && demux.subID()>>>4 != 8)
-			//	continue;
+			if (demux.getType() == 3) 
+				continue;
 
 			String[] values = demux.close(vptslog);
+
 			if (values[0].equals("")) 
+			{
+				Msg(Resource.getString("vdrparse.msg.noexport") + Integer.toHexString(demux.getID()).toUpperCase() + ")");
 				continue;
+			}
 
 			String newfile = values[3]+ ((lfn[demux.getType()]>0) ? ("_"+lfn[demux.getType()]) : "") + "." + values[2];
 
 			Common.renameTo(values[0], newfile); //DM13042004 081.7 int01 changed
-			//new File(values[0]).renameTo(new File(newfile));
 
 			values[0] = newfile;
 			values[3] = vptslog;
+
 			switch (demux.getType())
 			{
 			case 0:
@@ -9533,7 +9540,10 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 			String[] values = demux.close(vptslog);
 
 			if (values[0].equals("")) 
+			{
+				Msg(Resource.getString("rawparse.msg.noexport", Integer.toHexString(0xFF & demux.getID()).toUpperCase(), Integer.toHexString(demux.getPID()).toUpperCase()));
 				continue;
+			}
 
 			String newfile = values[3]+ ((lfn[demux.getType()]>0) ? ("_"+lfn[demux.getType()]) : "") + "." + values[2];
 
@@ -10498,22 +10508,32 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 		//DM04032004 081.6 int18 changed
 		int[] lfn = new int[3];
 		int[] IDs = { 0xC0,0x80 };
-		for (int a=0;a<PVAdemuxlist.size();a++) { //DM30122003 081.6 int10 changed
+
+		for (int a = 0; a < PVAdemuxlist.size(); a++)
+		{
 			demux = (PIDdemux)PVAdemuxlist.get(a);
+
 			if (demux.getType()==3) 
 				continue;
+
 			if (demux.getID()==0) 
 				continue;
+
 			String[] values = demux.close(vptslog);
-			if (values[0].equals("")) 
+
+			if (values[0].equals(""))
+			{
+				Msg(Resource.getString("pvaparse.msg.noexport") + Integer.toHexString(demux.getPID()).toUpperCase() + " (0x" + Integer.toHexString(demux.getID()).toUpperCase() + ")");
 				continue;
+			}
+
 			String newfile = values[3]+ ((lfn[demux.getType()]>0) ? ("_"+lfn[demux.getType()]) : "") + "." + values[2];
 
 			Common.renameTo(values[0], newfile); //DM13042004 081.7 int01 changed
-			//new File(values[0]).renameTo(new File(newfile));
 
 			values[0] = newfile;
 			values[3] = vptslog;
+
 			switch (demux.getType()) {
 			case 0: {
 				if ( demux.subID()!=0 && (0xF0&demux.subID())!=0x80 ) 
@@ -13429,6 +13449,7 @@ public void processTeletext(String[] args)
 									print_buffer.print( "in_" + timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ));
 									print_buffer.println( "|out_" + timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) )); 
 									break;
+
 
 
 								case 2:  // SC
