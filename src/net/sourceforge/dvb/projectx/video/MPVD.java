@@ -104,7 +104,6 @@ public class MPVD extends JFrame {
 	}
 
 
-
 public class Picture extends JPanel {
 
 	public Picture()
@@ -130,21 +129,25 @@ public class Picture extends JPanel {
 		});
 		//DM02092003-
 
-	//
 		idct = new IDCTRefNative();
 		idctsse = new IDCTSseNative();
 
 		if (IDCTRefNative.isLibraryLoaded())
 			idct.init();
-	//
 
+		if (IDCTRefNative.isLibraryLoaded() || IDCTSseNative.isLibraryLoaded())
+			acceleration = true;
 	}
 
+	public boolean isAccelerated()
+	{
+		return acceleration;
+	}
 
-//
 private IDCTRefNative idct;
 private IDCTSseNative idctsse;
-//
+private boolean acceleration = false;
+
 
 private JFileChooser chooser;  //DM02092003
 private int bmpCount=0; //DM02092003

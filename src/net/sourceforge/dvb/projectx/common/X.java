@@ -177,7 +177,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "19.12.2004 18:00";
+static String version_date = "22.12.2004 11:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -4225,6 +4225,9 @@ class COLLECTION extends JFrame
 		getExpectedSize(); //DM24082003 //pointscount.setText(""+comBox[14].getItemCount());
 		getType();
 		action=true;
+
+		RButton[10].setEnabled(!MPVD.picture.isAccelerated());
+
 		this.show();
 	}
 
@@ -6630,6 +6633,8 @@ public void working() {
 				{   //DM06022004 081.6 int15 changed, //DM10042004 081.7 int01 changed
 					if (options[31]==0) 
 						Msg(convertType[mpgtovdr]);
+
+
 					vptslog = vdrparse(xInputFile,1,mpgtovdr);
 					if (mpgtovdr==0) 
 						splitreset(vptslog);
@@ -12252,6 +12257,8 @@ public boolean processAudio(String[] args)
 			if (options[10]>=4) 
 				MPAD.fillAiff(newnameR,(long)(time_counter/90.0f));
 		}
+
+
 		else
 		{
 			MPAD.deleteAiff(newnameL);
