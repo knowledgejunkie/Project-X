@@ -2797,7 +2797,6 @@ class MenuListener implements ActionListener
 				else
 				{
 					Common.renameTo(inparent + inchild, inparent + inputval); //DM13042004 081.7 int01 changed
-					//new File(inparent + inchild).renameTo(new File(inparent + inputval));
 
 					inputlist();
 				}
@@ -2855,13 +2854,13 @@ class MenuListener implements ActionListener
 
 					if (protocol.equals("ftp"))
 					{
-						inputValue = new XInputFile(url.toString());
+						inputValue = new XInputFile(new net.sourceforge.dvb.projectx.xinput.ftp.FtpVO(url));
 						break;
 					}
 
 					else if (protocol.equals("file"))
 					{
-						inputValue = new XInputFile(new File(url.toString()));
+						inputValue = new XInputFile(new File(url.getHost() + url.getFile()));
 						break;
 					}
 
@@ -2884,7 +2883,8 @@ class MenuListener implements ActionListener
 			int icf = comBox[0].getSelectedIndex();
 			collfiles[icf].add(inputValue);
 
-			list3.setListData(collfiles[icf].toArray());
+			updateCollectionList(collfiles[icf].toArray());
+			//list3.setListData(collfiles[icf].toArray());
 
 			return;
 		}
@@ -3231,6 +3231,17 @@ class FileListener implements ActionListener
 
 	}
 }
+
+	/**
+	 * updates GUI JList collection list view
+	 *
+	 * param1 - array of file objects
+	 */
+	private void updateCollectionList(Object[] list)
+	{
+		list3.setListData(list);
+	}
+
 
 
 /*****************
