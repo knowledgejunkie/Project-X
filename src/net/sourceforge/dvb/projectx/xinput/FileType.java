@@ -13,17 +13,20 @@ public class FileType {
 	/**
 	 * File in a normal filesystem
 	 */
-	public final static FileType FILE = new FileType(0, "FILE", net.sourceforge.dvb.projectx.xinput.file.XInputFileImpl.class);
+	public final static FileType FILE = new FileType(0, "FILE",
+			net.sourceforge.dvb.projectx.xinput.file.XInputFileImpl.class);
 
 	/**
 	 * File on a ftp server
 	 */
-	public final static FileType FTP = new FileType(1, "FTP", net.sourceforge.dvb.projectx.xinput.ftp.XInputFileImpl.class);
+	public final static FileType FTP = new FileType(1, "FTP",
+			net.sourceforge.dvb.projectx.xinput.ftp.XInputFileImpl.class);
 
 	/**
 	 * File on a harddisk of a topfield receiver in raw format
 	 */
-	public final static FileType TFRAW = new FileType(2, "TFRAW", net.sourceforge.dvb.projectx.xinput.topfield_raw.XInputFileImpl.class);
+	public final static FileType TFRAW = new FileType(2, "TFRAW",
+			net.sourceforge.dvb.projectx.xinput.topfield_raw.XInputFileImpl.class);
 
 	/**
 	 * Default FileType

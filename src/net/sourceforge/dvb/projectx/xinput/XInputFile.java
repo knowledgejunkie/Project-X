@@ -52,7 +52,8 @@ public class XInputFile implements XInputFileIF {
 				impl = (XInputFileIF) fileType.getImplementation().getConstructor(parameterTypes).newInstance(parameterValues);
 				if (debug) System.out.println("Use FileType '" + fileType.getName() + "' for file '" + impl.toString() + "'");
 				if (debug)
-						System.out.println("Leave XInputFile.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
+						System.out
+								.println("Leave XInputFile.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
 				return;
 			} catch (Exception e) {
 				// Failed, try next type

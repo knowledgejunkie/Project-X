@@ -7,11 +7,11 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import org.apache.commons.net.ftp.FTPFile;
-
 import net.sourceforge.dvb.projectx.xinput.FileType;
 import net.sourceforge.dvb.projectx.xinput.XInputFileIF;
 import net.sourceforge.dvb.projectx.xinput.XInputStream;
+
+import org.apache.commons.net.ftp.FTPFile;
 
 public class XInputFileImpl implements XInputFileIF {
 
@@ -25,7 +25,7 @@ public class XInputFileImpl implements XInputFileIF {
 	private InputStream inputStream = null;
 
 	private long randomAccessCurrentPosition = 0;
-	
+
 	private int randomAccessPushBack = -1;
 
 	// Members used for type FileType.FTP
@@ -97,29 +97,30 @@ public class XInputFileImpl implements XInputFileIF {
 	}
 
 	/**
-	 * @return String, checked of arg1 and replaced with arg2
-	 * JDK 1.2.2 compatibility, replacement of newer String.replaceAll()
+	 * @return String, checked of arg1 and replaced with arg2 JDK 1.2.2
+	 *         compatibility, replacement of newer String.replaceAll()
 	 */
 	private String replaceStringByString(String name, String arg1, String arg2) {
 
-		if (name == null)
-			return name;
+		if (name == null) return name;
 
 		StringBuffer sb = new StringBuffer(name);
 
-		for (int i = 0; (i = sb.toString().indexOf(arg1, i)) != -1; )
-			sb.replace(i, i+2, arg2);
+		for (int i = 0; (i = sb.toString().indexOf(arg1, i)) != -1;)
+			sb.replace(i, i + 2, arg2);
 
 		return sb.toString();
-	}	
+	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see net.sourceforge.dvb.projectx.xinput.XInputFileIF#getFileType()
 	 */
 	public FileType getFileType() {
 		return fileType;
 	}
-	
+
 	/**
 	 * Get url representation of the object.
 	 * 
@@ -146,14 +147,14 @@ public class XInputFileImpl implements XInputFileIF {
 	}
 
 	/**
-	 * Time in milliseconds from the epoch.
-	 * JDK1.2.2 adaption: Date.getTime()
+	 * Time in milliseconds from the epoch. JDK1.2.2 adaption: Date.getTime()
 	 * 
 	 * @return Time in milliseconds from the epoch
 	 */
 	public long lastModified() {
 
-		// JDK 1.2.2 going trough Date.getTime(), Time is rounded or 0, but date seems correct
+		// JDK 1.2.2 going trough Date.getTime(), Time is rounded or 0, but date
+		// seems correct
 		return ftpFile.getTimestamp().getTime().getTime();
 
 		// JDK 1.4.2 return value long is not protected
@@ -314,7 +315,7 @@ public class XInputFileImpl implements XInputFileIF {
 		byte[] buffer = new byte[1];
 		buffer[0] = -1;
 		randomAccessRead(buffer, 0, 1);
-		return (int)buffer[0];
+		return (int) buffer[0];
 	}
 
 	/**
@@ -339,9 +340,9 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public int randomAccessRead(byte[] aBuffer, int aOffset, int aLength) throws IOException {
 		int result = 0;
-		
+
 		if (randomAccessPushBack != -1) {
-			aBuffer[aOffset] = (byte)randomAccessPushBack;
+			aBuffer[aOffset] = (byte) randomAccessPushBack;
 			randomAccessPushBack = -1;
 			randomAccessCurrentPosition += 1;
 			result = 1;
@@ -358,7 +359,7 @@ public class XInputFileImpl implements XInputFileIF {
 	}
 
 	/**
-	 * @return Read line 
+	 * @return Read line
 	 * @throws IOException
 	 */
 	public String randomAccessReadLine() throws IOException {

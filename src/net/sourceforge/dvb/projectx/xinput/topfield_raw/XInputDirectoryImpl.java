@@ -12,6 +12,7 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 	private DirType dirType = null;
 
 	private String testMsg = null;
+
 	private RawInterface rawInterface = null;
 
 	/**
@@ -32,16 +33,13 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 	 */
 	public XInputDirectoryImpl(DirType aDirType) {
 
-		if (aDirType != DirType.TFRAW_DIR) {
-			throw new IllegalArgumentException("aDirType is not DirType.TFRAW_DIR");
-		}
-		
+		if (aDirType != DirType.TFRAW_DIR) { throw new IllegalArgumentException("aDirType is not DirType.TFRAW_DIR"); }
+
 		dirType = aDirType;
 		rawInterface = new RawInterface("");
 
-		if (!rawInterface.rawRead.AccessEnabled()) {
-			throw new IllegalArgumentException("Topfield raw disk access is not enabled");
-		}		
+		if (!rawInterface.rawRead.AccessEnabled()) { throw new IllegalArgumentException(
+				"Topfield raw disk access is not enabled"); }
 	}
 
 	/**
@@ -124,9 +122,9 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 
 		XInputFile[] xInputFiles = new XInputFile[arrayList.size()];
 		int i = 0;
-		
+
 		for (Iterator it = arrayList.iterator(); it.hasNext();) {
-			xInputFiles[i++] = new XInputFile((String)it.next());
+			xInputFiles[i++] = new XInputFile((String) it.next());
 		}
 
 		return xInputFiles;

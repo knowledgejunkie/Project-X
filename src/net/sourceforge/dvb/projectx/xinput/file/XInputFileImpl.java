@@ -207,15 +207,15 @@ public class XInputFileImpl implements XInputFileIF {
 	 *          The offset at which the data should be written.
 	 * @param aLength
 	 *          The amount of data to be read.
-	 * @return 
-	 * @throws IOException
+	 * @return @throws
+	 *         IOException
 	 */
 	public int randomAccessRead(byte[] aBuffer, int aOffset, int aLength) throws IOException {
 		return randomAccessFile.read(aBuffer, aOffset, aLength);
 	}
 
 	/**
-	 * @return Read line 
+	 * @return Read line
 	 * @throws IOException
 	 */
 	public String randomAccessReadLine() throws IOException {
@@ -258,8 +258,10 @@ public class XInputFileImpl implements XInputFileIF {
 
 		return randomAccessFile.readLong();
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see net.sourceforge.dvb.projectx.xinput.XInputFileIF#getFileType()
 	 */
 	public FileType getFileType() {

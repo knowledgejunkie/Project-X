@@ -24,17 +24,19 @@ public class XInputDirectory implements XInputDirectoryIF {
 		Class[] parameterTypes = { aVO.getClass() };
 		Object[] parameterValues = { aVO };
 		retrieveImplementation(parameterTypes, parameterValues);
-		
+
 		if (debug) System.out.println("Leave XInputDirectory(Object '" + aVO + "')");
 	}
 
 	/**
 	 */
 	private void retrieveImplementation(Class[] parameterTypes, Object[] parameterValues) {
-		if (debug) System.out.println("Enter XInputDirectory.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
+		if (debug)
+				System.out
+						.println("Enter XInputDirectory.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
 
 		DirType dirType = null;
-		
+
 		for (Iterator dirTypes = DirType.getDirTypes().iterator(); dirTypes.hasNext();) {
 			dirType = (DirType) dirTypes.next();
 
@@ -47,7 +49,9 @@ public class XInputDirectory implements XInputDirectoryIF {
 				impl = (XInputDirectoryIF) dirType.getImplementation().getConstructor(parameterTypes).newInstance(
 						parameterValues);
 				if (debug) System.out.println("Use DirType '" + dirType.getName() + "' for file '" + impl.toString() + "'");
-				if (debug) System.out.println("Leave XInputDirectory.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
+				if (debug)
+						System.out
+								.println("Leave XInputDirectory.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
 				return;
 			} catch (Exception e) {
 				// Failed, try next type
@@ -59,14 +63,19 @@ public class XInputDirectory implements XInputDirectoryIF {
 			if (debug) System.out.println("Try default DirType '" + dirType.getName() + "'");
 			impl = (XInputDirectoryIF) dirType.getImplementation().getConstructor(parameterTypes)
 					.newInstance(parameterValues);
-			if (debug) System.out.println("Use default DirType '" + dirType.getName() + "' for file '" + impl.toString() + "'");
-			if (debug) System.out.println("Leave XInputDirectory.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
+			if (debug)
+					System.out.println("Use default DirType '" + dirType.getName() + "' for file '" + impl.toString() + "'");
+			if (debug)
+					System.out
+							.println("Leave XInputDirectory.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
 			return;
 		} catch (Exception e) {
 			// Failed, no type left, so this is final failure
 			impl = null;
 			if (debug) System.out.println("No matching DirType found or directory doesn't exist");
-			if (debug) System.out.println("XInputDirectory.Leave retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
+			if (debug)
+					System.out
+							.println("XInputDirectory.Leave retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
 			throw new IllegalArgumentException("No matching DirType found or directory doesn't exist");
 		}
 	}
@@ -83,7 +92,7 @@ public class XInputDirectory implements XInputDirectoryIF {
 			if (debug) System.out.println("Leave XInputDirectory.equals(Object '" + aObj + "') returning false");
 			return false;
 		}
-		XInputDirectory other = (XInputDirectory)aObj;
+		XInputDirectory other = (XInputDirectory) aObj;
 		if (other.getDirType().equals(getDirType()) && other.toString().equals(toString())) {
 			if (debug) System.out.println("Leave XInputDirectory.equals(Object '" + aObj + "') returning true");
 			return true;

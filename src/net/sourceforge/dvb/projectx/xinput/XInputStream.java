@@ -40,7 +40,7 @@ public class XInputStream extends FilterInputStream {
 		byte[] buffer = new byte[1];
 		buffer[0] = -1;
 		read(buffer, 0, 1);
-		return (int)buffer[0];
+		return (int) buffer[0];
 	}
 
 	/**
@@ -112,20 +112,19 @@ public class XInputStream extends FilterInputStream {
 			fw.close();
 		}
 	}
-	
+
 	/**
 	 * @see java.io.InputStream#skip(long)
 	 */
 	public long skip(long n) throws IOException {
 		long skipped = super.skip(n);
-		
-		if (skipped < n)
-		{
+
+		if (skipped < n) {
 			// TODO: maybe we should check this long to int casting
-			byte[] streamBuffer = new byte[(int)(n-skipped)];
+			byte[] streamBuffer = new byte[(int) (n - skipped)];
 			return read(streamBuffer);
 		}
-		
+
 		return skipped;
 	}
 }

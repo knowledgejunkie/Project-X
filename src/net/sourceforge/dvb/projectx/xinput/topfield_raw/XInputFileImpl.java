@@ -22,13 +22,14 @@ public class XInputFileImpl implements XInputFileIF {
 	private InputStream inputStream = null;
 
 	private long randomAccessCurrentPosition = 0;
-	
+
 	private int randomAccessPushBack = -1;
 
 	// Members used for type FileType.TFRAW
 	private RawInterface rawInterface = null;
+
 	private String fileName = null;
-	
+
 	/**
 	 * Private Constructor, don't use!
 	 */
@@ -57,7 +58,7 @@ public class XInputFileImpl implements XInputFileIF {
 		} catch (IOException e) {
 			throw new IllegalArgumentException("File is not of type FileType.TFRAW");
 		}
-		
+
 		if (debug) System.out.println("Succeeded to create XInputFile of Type TFRAW");
 	}
 
@@ -69,14 +70,16 @@ public class XInputFileImpl implements XInputFileIF {
 	public String toString() {
 		return fileName;
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see net.sourceforge.dvb.projectx.xinput.XInputFileIF#getFileType()
 	 */
 	public FileType getFileType() {
 		return fileType;
 	}
-	
+
 	/**
 	 * Get url representation of the object.
 	 * 
@@ -236,7 +239,7 @@ public class XInputFileImpl implements XInputFileIF {
 		byte[] buffer = new byte[1];
 		buffer[0] = -1;
 		randomAccessRead(buffer, 0, 1);
-		return (int)buffer[0];
+		return (int) buffer[0];
 	}
 
 	/**
@@ -261,9 +264,9 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public int randomAccessRead(byte[] aBuffer, int aOffset, int aLength) throws IOException {
 		int result = 0;
-		
+
 		if (randomAccessPushBack != -1) {
-			aBuffer[aOffset] = (byte)randomAccessPushBack;
+			aBuffer[aOffset] = (byte) randomAccessPushBack;
 			randomAccessPushBack = -1;
 			randomAccessCurrentPosition += 1;
 			result = 1;
@@ -280,7 +283,7 @@ public class XInputFileImpl implements XInputFileIF {
 	}
 
 	/**
-	 * @return Read line 
+	 * @return Read line
 	 * @throws IOException
 	 */
 	public String randomAccessReadLine() throws IOException {

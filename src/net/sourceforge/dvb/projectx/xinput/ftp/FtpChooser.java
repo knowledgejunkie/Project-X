@@ -15,8 +15,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-import net.sourceforge.dvb.projectx.xinput.XInputDirectory;
 import net.sourceforge.dvb.projectx.common.Resource;
+import net.sourceforge.dvb.projectx.xinput.XInputDirectory;
 
 /**
  * <p>

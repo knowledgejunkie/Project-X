@@ -3,13 +3,13 @@ package net.sourceforge.dvb.projectx.xinput.ftp;
 import java.io.IOException;
 import java.io.InputStream;
 
+import net.sourceforge.dvb.projectx.common.Resource;
+import net.sourceforge.dvb.projectx.xinput.XInputFile;
+
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
-
-import net.sourceforge.dvb.projectx.xinput.XInputFile;
-import net.sourceforge.dvb.projectx.common.Resource;
 
 public class FtpServer {
 
@@ -107,8 +107,8 @@ public class FtpServer {
 	}
 
 	public void close() {
-		if (!isOpen) { 
-			throw new IllegalStateException("Is already closed, must be opened before!"); 
+		if (!isOpen) {
+			throw new IllegalStateException("Is already closed, must be opened before!");
 		} else {
 			try {
 				ftpClient.logout();

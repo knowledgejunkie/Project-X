@@ -21,7 +21,7 @@ public interface XInputFileIF {
 	 * @return String representation of the object
 	 */
 	public String toString();
-	
+
 	/**
 	 * Gets the type of this XInputFile implementation.
 	 * 
@@ -133,7 +133,7 @@ public interface XInputFileIF {
 	public int randomAccessRead(byte[] aBuffer, int aOffset, int aLength) throws IOException;
 
 	/**
-	 * @return Read line 
+	 * @return Read line
 	 * @throws IOException
 	 */
 	public String randomAccessReadLine() throws IOException;

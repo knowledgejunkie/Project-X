@@ -156,9 +156,8 @@ public class FtpTest {
  * PrintCommandListener( new PrintWriter(System.out)));
  * 
  * try { int reply; ftp.connect(server); System.out.println("Connected to " +
- * server + ".");
- *  // After connection attempt, you should check the reply code to verify //
- * success. reply = ftp.getReplyCode();
+ * server + "."); // After connection attempt, you should check the reply code
+ * to verify // success. reply = ftp.getReplyCode();
  * 
  * if (!FTPReply.isPositiveCompletion(reply)) { ftp.disconnect();
  * System.err.println("FTP server refused connection."); System.exit(1); } }
@@ -171,9 +170,9 @@ public class FtpTest {
  * 
  * System.out.println("Remote system is " + ftp.getSystemName());
  * 
- * if (binaryTransfer) ftp.setFileType(FTP.BINARY_FILE_TYPE);
- *  // Use passive mode as default because most of us are // behind firewalls
- * these days. ftp.enterLocalPassiveMode();
+ * if (binaryTransfer) ftp.setFileType(FTP.BINARY_FILE_TYPE); // Use passive
+ * mode as default because most of us are // behind firewalls these days.
+ * ftp.enterLocalPassiveMode();
  * 
  * if (storeFile) { InputStream input;
  * 
@@ -188,6 +187,5 @@ public class FtpTest {
  * (ftp.isConnected()) { try { ftp.disconnect(); } catch (IOException f) { // do
  * nothing } } }
  * 
- * System.exit(error ? 1 : 0); } // end main
- *  }
+ * System.exit(error ? 1 : 0); } // end main }
  */

@@ -13,17 +13,20 @@ public class DirType {
 	/**
 	 * Directory in a normal filesystem
 	 */
-	public final static DirType FILE_DIR = new DirType(0, "FILE_DIR", net.sourceforge.dvb.projectx.xinput.file.XInputDirectoryImpl.class);
+	public final static DirType FILE_DIR = new DirType(0, "FILE_DIR",
+			net.sourceforge.dvb.projectx.xinput.file.XInputDirectoryImpl.class);
 
 	/**
 	 * Directory on a ftp server
 	 */
-	public final static DirType FTP_DIR = new DirType(1, "FTP_DIR", net.sourceforge.dvb.projectx.xinput.ftp.XInputDirectoryImpl.class);
+	public final static DirType FTP_DIR = new DirType(1, "FTP_DIR",
+			net.sourceforge.dvb.projectx.xinput.ftp.XInputDirectoryImpl.class);
 
 	/**
 	 * Directory on a harddisk of a topfield receiver in raw format
 	 */
-	public final static DirType TFRAW_DIR = new DirType(2, "TFRAW_DIR", net.sourceforge.dvb.projectx.xinput.topfield_raw.XInputDirectoryImpl.class);
+	public final static DirType TFRAW_DIR = new DirType(2, "TFRAW_DIR",
+			net.sourceforge.dvb.projectx.xinput.topfield_raw.XInputDirectoryImpl.class);
 
 	/**
 	 * Default DirType
@@ -74,7 +77,7 @@ public class DirType {
 	public static Collection getDirTypes() {
 		return dirTypes;
 	}
-	
+
 	public String toString() {
 		return getName();
 	}
