@@ -79,6 +79,13 @@ public interface XInputFileIF {
 	public InputStream getInputStream() throws FileNotFoundException, MalformedURLException, IOException;
 
 	/**
+	 * rename file
+	 * 
+	 * @return success
+	 */
+	public boolean rename() throws IOException;
+
+	/**
 	 * Opens XInputFile for random access
 	 * 
 	 * @param mode

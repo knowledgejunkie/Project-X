@@ -160,6 +160,14 @@ public class XInputFileImpl implements XInputFileIF {
 	}
 
 	/**
+	 * @return bool
+	 * not yet supported
+	 */
+	public boolean rename() throws IOException {
+		return false;
+	}
+
+	/**
 	 * Opens XInputFile for random access
 	 * 
 	 * @param mode

@@ -45,7 +45,7 @@ public class FtpServer {
 
 		try {
 			int reply;
-			ftpClient.connect(ftpVO.getServer());
+			ftpClient.connect(ftpVO.getServer(), ftpVO.getPortasInteger());
 
 			reply = ftpClient.getReplyCode();
 
@@ -130,7 +130,7 @@ public class FtpServer {
 
 		try {
 			int reply;
-			ftpClient.connect(ftpVO.getServer());
+			ftpClient.connect(ftpVO.getServer(), ftpVO.getPortasInteger());
 
 			// Check connection
 			reply = ftpClient.getReplyCode();

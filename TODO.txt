@@ -65,3 +65,6 @@ dvbmatt 12.12. - (20.11.) - CLI: extern angebenes ini-File wirkt nicht mehr (woh
 
 - FTP unterstützt auch resume (Bsp. "REST 120000" ), z.B. für Vorschau
   jedoch nicht verfügbar über zzt benutzte openStream methode
+
+dvbmatt fix 19.12. - post commands: Rückänderung in Runtime.getRuntime().exec(arguments)
+dvbmatt neu 19.12. - zusätzl. Meldungsoption, 'PES Kopf in ES' Message ausblenden (progdvb prob.)

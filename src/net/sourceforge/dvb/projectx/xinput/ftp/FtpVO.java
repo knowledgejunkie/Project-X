@@ -13,9 +13,9 @@ public class FtpVO implements Cloneable {
 	private String password = null;
 
 	private String directory = null;
-//+
+
 	private String port = null;
-//-
+
 	private FTPFile ftpFile = null;
 
 	public FtpVO(String server, String user, String password, String directory, FTPFile ftpFile) {
@@ -24,9 +24,9 @@ public class FtpVO implements Cloneable {
 		this.password = password;
 		this.directory = directory;
 		this.ftpFile = ftpFile;
+		port = null;
 	}
 
-//+
 	public FtpVO(String server, String user, String password, String directory, String port, FTPFile ftpFile) {
 		this.server = server;
 		this.user = user;
@@ -35,34 +35,38 @@ public class FtpVO implements Cloneable {
 		this.port = port;
 		this.ftpFile = ftpFile;
 	}
-//-
 
 	public void reset() {
 		server = null;
 		user = null;
 		password = null;
 		directory = null;
-//+
 		port = null;
-//-
 	}
 
 	public String toString() {
-		return "ftp://|" + server + "|" + directory + "|" + user + "|" + password;
+		return "ftp://|" + server + "|" + port + "|" + directory + "|" + user + "|" + password;
 	}
 
 	public void fromString(String string) {
 		// Don't use String.split(), because it is not available on jdk 1.2
 		StringTokenizer st = new StringTokenizer(string, "|");
-		String[] tokens = new String[5];
+		String[] tokens = new String[6];
 
-		for (int i = 0; st.hasMoreTokens() && i < 5; i++)
+		for (int i = 0; st.hasMoreTokens() && i < 6; i++)
 			tokens[i] = st.nextElement().toString();
 
 		server = tokens[1];
-		directory = tokens[2];
-		user = tokens[3];
-		password = tokens[4];
+		directory = tokens[3];
+		user = tokens[4];
+		password = tokens[5];
+
+		try {
+			Integer.parseInt(tokens[2]);
+			port = tokens[2];
+		} catch (Exception e) {
+			port = null;
+		}
 	}
 
 	/**
@@ -111,6 +115,44 @@ public class FtpVO implements Cloneable {
 	}
 
 	/**
+	 * @return Returns the port.
+	 */
+	public String getPort() {
+		if (port == null || port.trim().length() == 0)
+			return null;
+
+		return port;
+	}
+
+	/**
+	 * @return Returns the port.
+	 */
+	public String getPort(String prefix) {
+		if (port == null || port.trim().length() == 0)
+			return "";
+
+		return prefix + port;
+	}
+
+	/**
+	 * @return Returns the port.
+	 */
+	public int getPortasInteger() {
+		if (port == null)
+			return 21;
+
+		return Integer.parseInt(port);
+	}
+
+	/**
+	 * @param port
+	 *          The port to set.
+	 */
+	public void setPort(int port) {
+		this.port = String.valueOf(port);
+	}
+
+	/**
 	 * @return Returns the user.
 	 */
 	public String getUser() {
@@ -146,6 +188,6 @@ public class FtpVO implements Cloneable {
 	 * @see java.lang.Object#clone()
 	 */
 	public Object clone() {
-		return new FtpVO(server, user, password, directory, ftpFile);
+		return new FtpVO(server, user, password, directory, port, ftpFile);
 	}
 }

@@ -11,6 +11,10 @@ import java.net.MalformedURLException;
 import net.sourceforge.dvb.projectx.xinput.FileType;
 import net.sourceforge.dvb.projectx.xinput.XInputFileIF;
 
+import net.sourceforge.dvb.projectx.common.Common;
+import net.sourceforge.dvb.projectx.gui.Dialogs;
+import net.sourceforge.dvb.projectx.common.Resource;
+
 public class XInputFileImpl implements XInputFileIF {
 
 	private boolean debug = false;
@@ -24,6 +28,8 @@ public class XInputFileImpl implements XInputFileIF {
 
 	// Members used for type FileType.FILE
 	private File file = null;
+
+	private String file_separator = System.getProperty("file.separator");
 
 	private RandomAccessFile randomAccessFile = null;
 
@@ -134,6 +140,46 @@ public class XInputFileImpl implements XInputFileIF {
 	public InputStream getInputStream() throws FileNotFoundException, MalformedURLException, IOException {
 
 		return new FileInputStream(file);
+	}
+
+	/**
+	 * rename this file
+	 * @return 
+	 */
+	public boolean rename() throws IOException {
+
+		if (isopen) { throw new IllegalStateException("XInputFile is open!"); }
+
+		String parent = getParent();
+		String name = getName();
+		String newName = null;
+		boolean ret = false;
+
+		if ( !parent.endsWith(file_separator) )
+			parent += file_separator;
+
+		newName = Dialogs.getUserInput( name, Resource.getString("autoload.dialog.rename") + " " + parent + name);
+
+		if (newName != null && !newName.equals(""))
+		{
+			if (new File(parent + newName).exists())
+			{
+				ret = Dialogs.getUserConfirmation(Resource.getString("autoload.dialog.fileexists"));
+
+				if (ret)
+				{
+					new File(parent + newName).delete();
+					ret = Common.renameTo(parent + name, parent + newName);
+				}
+			}
+			else
+				ret = Common.renameTo(parent + name, parent + newName);
+		}
+
+		if (ret)
+			file = new File(parent + newName);
+
+		return ret;
 	}
 
 	/**

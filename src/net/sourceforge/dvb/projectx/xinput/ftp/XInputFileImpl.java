@@ -15,11 +15,18 @@ import net.sourceforge.dvb.projectx.xinput.FileType;
 import net.sourceforge.dvb.projectx.xinput.XInputFileIF;
 import net.sourceforge.dvb.projectx.xinput.XInputStream;
 
+import net.sourceforge.dvb.projectx.gui.Dialogs;
+import net.sourceforge.dvb.projectx.common.Resource;
+
 import org.apache.commons.net.ftp.FTPFile;
+
+import java.io.DataInputStream;
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTP;
 
 public class XInputFileImpl implements XInputFileIF {
 
-	private boolean debug = false;
+	private boolean debug = true;
 
 	// Members, which are type independent
 	private FileType fileType = null;
@@ -35,6 +42,12 @@ public class XInputFileImpl implements XInputFileIF {
 	private FtpVO ftpVO = null;
 
 	private FTPFile ftpFile = null;
+
+	private FTPClient client = null;
+
+	private DataInputStream in = null;
+
+	public XInputStream xIs = null;
 
 	/**
 	 * Private Constructor, don't use!
@@ -93,7 +106,7 @@ public class XInputFileImpl implements XInputFileIF {
 		name = replaceStringByString(name, "Ãº", "ú");
 		name = replaceStringByString(name, "Ã¹", "ù");
 
-		s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getDirectory() + "/"
+		s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getPort(":") + ftpVO.getDirectory() + "/"
 				+ name;
 
 		return s;
@@ -131,19 +144,8 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public String getUrl() {
 
-		String s;
-
-		/**
-		 * append the "type=b" string depending on the users wish, better for JRE 1.2.2 seems not parse it correctly
-		 * usually TYPE I is set as std, so we don't ever need this appending
-		 */
-		String b = X.cBox[74].isSelected() ? ";type=b" : "";
-
-	//	s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getDirectory() + "/"
-	//			+ ftpFile.getName() + ";type=b";
-
-		s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getDirectory() + "/"
-				+ ftpFile.getName() + b;
+		String s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getPort(":") + ftpVO.getDirectory() + "/"
+				+ ftpFile.getName();
 
 		return s;
 	}
@@ -248,7 +250,49 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public InputStream getInputStream() throws FileNotFoundException, MalformedURLException, IOException {
 
-		return new XInputStream((new URL(getUrl())).openConnection().getInputStream());
+		randomAccessOpen("r");
+
+		xIs = new XInputStream(client.retrieveFileStream(getName()));
+		xIs.setFtpFile(this);
+		return xIs;
+	}
+
+	/**
+	 * rename this file
+	 *
+	 * @return success
+	 */
+	public boolean rename() throws IOException {
+
+		if (isopen) { throw new IllegalStateException("XInputFile is open!"); }
+
+		randomAccessOpen("r");
+
+		String name = getName();
+		String newName = null;
+		boolean ret = false;
+
+		newName = Dialogs.getUserInput( name, Resource.getString("autoload.dialog.rename") + " " + getUrl());
+
+		if (newName != null && !newName.equals(""))
+			ret = client.rename(name, newName);
+
+		if (ret)
+		{
+			FTPFile[] aFtpFiles = client.listFiles();
+
+			for (int i = 0; i < aFtpFiles.length; i++)
+				if (aFtpFiles[i].getName().equals(newName) && aFtpFiles[i].isFile())
+				{
+					ftpFile = aFtpFiles[i];
+					ftpVO.setFtpFile(ftpFile);
+					break;
+				}
+		}
+
+		randomAccessClose();
+
+		return ret;
 	}
 
 	/**
@@ -264,9 +308,22 @@ public class XInputFileImpl implements XInputFileIF {
 
 		if (mode.compareTo("r") != 0) { throw new IllegalStateException("Illegal access mode for FileType.FTP"); }
 
-		pbis = new PushbackInputStream(getInputStream());
-		rafFile = File.createTempFile("XInputFile", "");
-		raf = new RandomAccessFile(rafFile, "rw");
+		client = new FTPClient();
+		client.connect(ftpVO.getServer(), ftpVO.getPortasInteger()); //void
+		if (debug) System.out.println("rAO connect " + client.getReplyCode());
+
+		client.login(ftpVO.getUser(), ftpVO.getPassword()); //bool
+		if (debug) System.out.println("rAO login " + client.getReplyCode());
+
+		client.changeWorkingDirectory(ftpVO.getDirectory()); //bool
+		if (debug) System.out.println("rAO cwd " + client.getReplyCode());
+
+		client.setFileType(FTP.BINARY_FILE_TYPE); //bool
+		if (debug) System.out.println("rAO binary " + client.getReplyCode());
+
+		client.enterLocalPassiveMode(); //void
+		if (debug) System.out.println("rAO PASV " + client.getReplyCode());
+
 		isopen = true;
 	}
 
@@ -277,26 +334,17 @@ public class XInputFileImpl implements XInputFileIF {
 
 		if (!isopen) { throw new IllegalStateException("XInputFile is already closed!"); }
 
-		try {
+		//no need to abort a transfer explicitly, because we logout here
 
-		//	pbis.close();
-	// close does nothing in InputStream, so we set it to null
-	pbis = null;
-	// call the GC here, otherwise the last user connection stands until next GC and blocks
-	System.gc();
+		client.logout();
+		if (debug) System.out.println("rAC logout " + client.getReplyCode());
 
-			raf.close();
-			rafFile.delete();
-		} catch (IOException e) {
-			if (debug) System.out.println(e.getLocalizedMessage());
-			if (debug) e.printStackTrace();
-		} finally {
-			pbis = null;
-			raf = null;
-			buffer = new byte[8];
-			isopen = false;
-		}
+		in = null;
+		xIs = null;
+		client = null;
+		isopen = false;
 
+		System.gc();
 	}
 
 	/**
@@ -307,10 +355,10 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public void randomAccessSeek(long aPosition) throws IOException {
 
-		if (aPosition > raf.length()) {
-			fillRandomAccessBuffer(aPosition - raf.length());
-		}
-		raf.seek(aPosition);
+		client.setRestartOffset(aPosition);  //void
+
+		in = new DataInputStream(client.retrieveFileStream(getName()));
+		if (debug) System.out.println("rAS retriveStream " + client.getReplyCode());
 	}
 
 	/**
@@ -318,6 +366,7 @@ public class XInputFileImpl implements XInputFileIF {
 	 *         IOException
 	 */
 	public long randomAccessGetFilePointer() throws IOException {
+
 		return raf.getFilePointer();
 	}
 
@@ -326,6 +375,7 @@ public class XInputFileImpl implements XInputFileIF {
 	 *         IOException
 	 */
 	public int randomAccessRead() throws IOException {
+
 		buffer[0] = -1;
 		randomAccessRead(buffer, 0, 1);
 		return (int) buffer[0];
@@ -352,48 +402,22 @@ public class XInputFileImpl implements XInputFileIF {
 	 *         IOException
 	 */
 	public int randomAccessRead(byte[] aBuffer, int aOffset, int aLength) throws IOException {
-		int result = 0;
 
-		if ((raf.getFilePointer() + aLength) > raf.length()) {
-			fillRandomAccessBuffer(raf.getFilePointer() + aLength - raf.length());
-		}
-		return raf.read(aBuffer, aOffset, aLength);
+		int bytesRead, totalBytes = aOffset;
+
+		while( (bytesRead = in.read(aBuffer, totalBytes, aLength - totalBytes)) > 0)
+			totalBytes += bytesRead;
+
+		return bytesRead;
 	}
 
-	private void fillRandomAccessBuffer(long aAmount) throws IOException {
-		int read = 0;
-		long position = raf.getFilePointer();
-		int requiredBufferSize = 65000;
-		if (requiredBufferSize > buffer.length) {
-			buffer = new byte[requiredBufferSize];
-			if (debug) System.out.println("Buffer enhanced to " + requiredBufferSize + " bytes");
-		}
-		
-		for (long l = 0; l < aAmount; ) {
-			read = pbis.read(buffer, 0, requiredBufferSize);
-			if (read == -1) {
-				break;
-			}
-			raf.write(buffer, 0, read);
-			l += read;
-			if (read < requiredBufferSize) {
-				break;
-			}
-		}
-		raf.seek(position);
-		if (debug) System.out.println("RandomAccessFile enhanced to " + raf.length() + " bytes");
-	}
-	
 	/**
 	 * @return Read line
 	 * @throws IOException
 	 */
 	public String randomAccessReadLine() throws IOException {
 		
-		if ((raf.length() - raf.getFilePointer()) < 65000) {
-			fillRandomAccessBuffer(65000);
-		}
-		return raf.readLine();
+		return in.readLine();
 	}
 
 	/**
@@ -430,15 +454,6 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public long randomAccessReadLong() throws IOException {
 
-		long l = 0;
-
-		int bytesRead = 0;
-
-		bytesRead = randomAccessRead(buffer, 0, 8);
-		if (bytesRead < 8) { throw new EOFException("Less than 8 bytes read"); }
-		l = ((long) buffer[1] << 56) + ((long) buffer[2] << 48) + ((long) buffer[3] << 40) + ((long) buffer[4] << 32)
-				+ ((long) buffer[5] << 24) + ((long) buffer[6] << 16) + ((long) buffer[7] << 8) + buffer[8];
-
-		return l;
+		return in.readLong();
 	}
 }

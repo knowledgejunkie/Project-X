@@ -175,6 +175,16 @@ public class XInputDirectory implements XInputDirectoryIF {
 	/**
 	 * @return
 	 */
+	public String getPort() {
+		if (debug) System.out.println("Enter XInputDirectory.getPort()");
+		String s = impl.getPort();
+		if (debug) System.out.println("Leave XInputDirectory.getPort() returning " + s);
+		return s;
+	}
+
+	/**
+	 * @return
+	 */
 	public String getTestMsg() {
 		if (debug) System.out.println("Enter XInputDirectory.getTestMsg()");
 		String s = impl.getTestMsg();

@@ -4,12 +4,19 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+//+
+import net.sourceforge.dvb.projectx.xinput.ftp.XInputFileImpl;
+//-
+
 public class XInputStream extends FilterInputStream {
 
 	private boolean debug = false;
 
 	private byte[] buffer = new byte[1];
 
+//+
+	private XInputFileImpl xInputFile = null;
+//-
 
 	/**
 	 * Create stream, which is able to handle special needs of the xinput package.
@@ -21,6 +28,12 @@ public class XInputStream extends FilterInputStream {
 	public XInputStream(InputStream aIs) {
 		super(aIs);
 	}
+
+//+
+	public void setFtpFile(XInputFileImpl aIf) {
+		xInputFile = aIf;
+	}
+//-
 
 	/**
 	 * Takes care, that always the full amount of data is read (if possible).
@@ -105,6 +118,14 @@ public class XInputStream extends FilterInputStream {
 	 */
 	public final void close() throws IOException {
 		if (debug) System.out.println("Enter XInputStream.close()");
+//+
+		if (xInputFile != null)
+		{
+			xInputFile.randomAccessClose();
+			xInputFile = null;
+		}
+//-
+
 		super.close();
 		if (debug) System.out.println("Leave XInputStream.close()");
 	}

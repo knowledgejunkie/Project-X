@@ -64,19 +64,21 @@ public final class Common
 	{}
 
 	// should try a while to rename with success, if file_system is blocked by another app.
-	public static void renameTo(File oldfile, File newfile)
+	public static boolean renameTo(File oldfile, File newfile)
 	{
 		for (int a = 0; a < 10000; a++)
 			if ( oldfile.renameTo(newfile) )
-				return;
+				return true;
 
-		X.Msg(Resource.getString("common.rename_error1") + " " + oldfile.toString() + " " + Resource.getString("common.rename_error2") + " " + newfile.toString());
+		X.Msg(Resource.getString("common.rename_error1") + " " + oldfile.toString() + " " + Resource.getString("common.rename_error2") + " " + newfile.toString(), true);
 		X.TextArea.setBackground(new Color(255,225,225));
+
+		return false;
 	}
 
-	public static void renameTo(String oldfile, String newfile)
+	public static boolean renameTo(String oldfile, String newfile)
 	{
-		renameTo(new File(oldfile), new File(newfile));
+		return renameTo(new File(oldfile), new File(newfile));
 	}
 
 	//DM202004 081.7 int02 add
@@ -312,13 +314,15 @@ public final class Common
 
 
 	private static String ftp_server = "192.168.0.5";
+	private static String ftp_port = "21";
 	private static String ftp_user = "root";
 	private static String ftp_password = "dreambox";
 	private static String ftp_directory = "/hdd/movie";
 
-	public static void setFTPServer(String server, String user, String password, String directory)
+	public static void setFTPServer(String server, String user, String password, String directory, String port)
 	{
 		ftp_server = server != null ? server : ftp_server;
+		ftp_port = port != null ? port : ftp_port;
 		ftp_user = user != null ? user : ftp_user;
 		ftp_password = password != null ? password : ftp_password;
 		ftp_directory = directory != null ? directory : ftp_directory;
@@ -327,6 +331,11 @@ public final class Common
 	public static String getFTP_Server()
 	{
 		return ftp_server;
+	}
+
+	public static String getFTP_Port()
+	{
+		return ftp_port;
 	}
 
 	public static String getFTP_User()
@@ -347,6 +356,11 @@ public final class Common
 	public static void setFTP_Server(String server)
 	{
 		ftp_server = server != null ? server : ftp_server;
+	}
+
+	public static void setFTP_Port(String port)
+	{
+		ftp_port = port != null ? port : ftp_port;
 	}
 
 	public static void setFTP_User(String user)

@@ -43,6 +43,15 @@ public interface XInputDirectoryIF {
 	public String getServer();
 
 	/**
+	 * Get port of the ftp server
+	 * 
+	 * @return port of the ftp server
+	 * @throws IllegalStateException
+	 *           If file type of object is not FileType.FTP_DIR
+	 */
+	public String getPort();
+
+	/**
 	 * Get user for the ftp server
 	 * 
 	 * @return User for the ftp server

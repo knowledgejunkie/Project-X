@@ -36,7 +36,6 @@ import net.sourceforge.dvb.projectx.xinput.XInputFile;
 
 import java.io.*;
 
-//DM26032004 081.6 int18 changed
 public class HexViewer extends JFrame
 {
 	private XInputFile xinputFile = null;
@@ -290,23 +289,24 @@ public class HexViewer extends JFrame
 	{
 		try 
 		{
-//			xinputFile.randomAccessOpen("r");
+			xinputFile.randomAccessOpen("r");
 
 			long len = xinputFile.length();
 
-			if (position<len)
+			if (position < len)
 			{
 				if (textonly.isSelected())
 				{
 					xinputFile.randomAccessSeek(position);
 
 					String text = "";
+					String nextLine = null;
 
 					if (position != 0) 
 						xinputFile.randomAccessReadLine();
 
-					for (int a=0; a < 24 && xinputFile.randomAccessGetFilePointer() < len; a++) 
-						text += xinputFile.randomAccessReadLine() + "\n";
+					for (int a = 0; a < 24 && (nextLine = xinputFile.randomAccessReadLine()) != null; a++) 
+						text += nextLine + "\n";
 
 					HexArea.setText(text);
 				}
@@ -320,7 +320,7 @@ public class HexViewer extends JFrame
 					print(data, position);
 				}
 			}
-//			xinputFile.randomAccessClose();
+			xinputFile.randomAccessClose();
 
 		} 
 		catch (IOException e)
@@ -364,16 +364,7 @@ public class HexViewer extends JFrame
 
 		if ((xinputFile == null) || !(xinputFile.equals(aXInputFile)))
 		{
-			try {
-				xinputFile.randomAccessClose();
-			} catch (Throwable e) {
-			}
 			xinputFile = aXInputFile.getNewInstance();
-			try {
-				xinputFile.randomAccessOpen("r");
-			} catch (IOException e1) {
-				HexArea.setText(Resource.getString("hexviewer.error") + ": " + xinputFile); 
-			}
 
 			HexArea.setText("");
 			slider.setMaximum((int)(filelen / 16));
@@ -384,8 +375,6 @@ public class HexViewer extends JFrame
 			else 
 				slider.setValue(0);
 		}
-
-//		xinputFile = aXInputFile;
 
 		setTitle(Resource.getString("hexviewer.file") + ": " + xinputFile);
 		flen.setText(Resource.getString("hexviewer.filesize") + ": " + filelen + " b.");
@@ -401,7 +390,7 @@ public class HexViewer extends JFrame
 
 	private void close()
 	{
-		dispose(); //DM26032004 081.6 int18 add
+		dispose();
 		System.gc();
 	}
 

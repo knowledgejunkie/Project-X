@@ -170,12 +170,14 @@ import net.sourceforge.dvb.projectx.xinput.XInputFile;
 import net.sourceforge.dvb.projectx.xinput.ftp.FtpChooser;
 import net.sourceforge.dvb.projectx.xinput.topfield_raw.RawInterface;
 
+import net.sourceforge.dvb.projectx.gui.Dialogs;
+
 public class X extends JPanel
 {
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "12.12.2004 21:00";
+static String version_date = "19.12.2004 18:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -341,6 +343,11 @@ void buildGUI()
 	executePane = new EXECUTE();
 	scan = new Scan();
 	chapters = new Chapters();
+
+	/**
+	 * static class for little outsourced dialogues
+	 */
+	new Dialogs(frame);
 
 	outalias = Resource.getString("working.output.std");
 
@@ -937,37 +944,11 @@ protected void buildAutoloadPanel()
 			{
 				if (e.getModifiers() == MouseEvent.BUTTON3_MASK && index > -1) // rename file
 				{
-					String inparent = ((XInputFile)list1.getSelectedValue()).getParent();
-					String inchild = ((XInputFile)list1.getSelectedValue()).getName();
-
-					if ( !inparent.endsWith(filesep) )  
-						inparent += filesep;
-
-					String inputval = JOptionPane.showInputDialog(frame, inchild , Resource.getString("autoload.dialog.rename") + " " + inparent + inchild, JOptionPane.QUESTION_MESSAGE );
-
-					if (inputval != null && !inputval.equals(""))
-					{
-						if (new File(inparent + inputval).exists())
-						{
-							int opt = JOptionPane.showConfirmDialog(frame, Resource.getString("autoload.dialog.fileexists"));
-
-							if (opt == JOptionPane.YES_OPTION)
-							{
-								new File(inparent + inputval).delete();
-
-								Common.renameTo(inparent + inchild, inparent + inputval); //DM13042004 081.7 int01 changed
-
-								inputlist();
-							}
-						}
-						else
-						{
-							Common.renameTo(inparent + inchild, inparent + inputval); //DM13042004 081.7 int01 changed
-							//new File(inparent + inchild).renameTo(new File(inparent + inputval));
-
+					try {
+						if (((XInputFile)list1.getSelectedValue()).rename())
 							inputlist();
-						}
-					}
+					} catch (IOException ioe) {}
+
 					autoload.toFront();
 				}
 				else if (e.getModifiers() == MouseEvent.BUTTON1_MASK && index > -1) // add file to coll
@@ -1396,8 +1377,14 @@ protected JPanel buildMessagePanel()
 	cBox[3].setMaximumSize(new Dimension(400, 20));
 	msgPanel_1.add(cBox[3]);
 
-	cBox[72] = new JCheckBox(Resource.getString("tab.msg.msg3"));
-	cBox[72].setToolTipText(Resource.getString("tab.msg.msg3_tip"));
+	cBox[74] = new JCheckBox(Resource.getString("tab.msg.msg3"));
+	cBox[74].setToolTipText(Resource.getString("tab.msg.msg3_tip"));
+	cBox[74].setPreferredSize(new Dimension(400, 20));
+	cBox[74].setMaximumSize(new Dimension(400, 20));
+	msgPanel_1.add(cBox[74]);
+
+	cBox[72] = new JCheckBox(Resource.getString("tab.msg.msg4"));
+	cBox[72].setToolTipText(Resource.getString("tab.msg.msg4_tip"));
 	cBox[72].setPreferredSize(new Dimension(400, 20));
 	cBox[72].setMaximumSize(new Dimension(400, 20));
 	msgPanel_1.add(cBox[72]);
@@ -2572,15 +2559,6 @@ protected JPanel buildoptionPanel() {
 	op0.add(new JLabel(Resource.getString("tab.options.startpath")));
 	op0.add(d2vfield[8]);
 
-//+
-	cBox[74] = new JCheckBox(Resource.getString("tab.options.ftp.binary"));
-	cBox[74].setToolTipText(Resource.getString("tab.options.ftp.binary.tip"));
-	cBox[74].setPreferredSize(new Dimension(250,20));
-	cBox[74].setMaximumSize(new Dimension(250,20));
-	cBox[74].setSelected(true);
-	op0.add(cBox[74]);
-//-
-
 	option.add(op0);
 
 	JPanel op2 = new JPanel();
@@ -2758,37 +2736,10 @@ class MenuListener implements ActionListener
 			if (list3.isSelectionEmpty()) //DM12042004 081.7 int01 add
 				return;
 
-			String inparent = ((XInputFile)list3.getSelectedValue()).getParent();
-			String inchild = ((XInputFile)list3.getSelectedValue()).getName();
-
-			if ( !inparent.endsWith(filesep) )  
-				inparent += filesep;
-
-			String inputval = JOptionPane.showInputDialog(frame, inchild , "rename " + inparent + inchild, JOptionPane.QUESTION_MESSAGE );
-
-			if (inputval != null && !inputval.equals(""))
-			{
-				if (new File(inparent + inputval).exists())
-				{
-					int opt = JOptionPane.showConfirmDialog(frame, "File exists! Overwrite?");
-
-					if (opt == JOptionPane.YES_OPTION)
-					{
-						new File(inparent + inputval).delete();
-
-						Common.renameTo(inparent + inchild, inparent + inputval); //DM13042004 081.7 int01 changed
-						//new File(inparent + inchild).renameTo(new File(inparent + inputval));
-
-						inputlist();
-					}
-				}
-				else
-				{
-					Common.renameTo(inparent + inchild, inparent + inputval); //DM13042004 081.7 int01 changed
-
+			try {
+				if (((XInputFile)list3.getSelectedValue()).rename())
 					inputlist();
-				}
-			}
+			} catch (IOException ioe) {}
 		}
 
 		else if (actName.equals("viewAsHex"))
@@ -5040,6 +4991,8 @@ public void iniload()
 
 		else if (path.startsWith("ftp.server=")) 
 			Common.setFTP_Server(path.substring(11, path.length()));
+		else if (path.startsWith("ftp.port=")) 
+			Common.setFTP_Port(path.substring(9, path.length()));
 		else if (path.startsWith("ftp.user=")) 
 			Common.setFTP_User(path.substring(9, path.length()));
 		else if (path.startsWith("ftp.password=")) 
@@ -5139,6 +5092,7 @@ public static void inisave() //DM26012004 081.6 int12 changed, //DM26032004 081.
 	}
 
 	inis.println("ftp.server=" + Common.getFTP_Server()); 
+	inis.println("ftp.port=" + Common.getFTP_Port()); 
 	inis.println("ftp.user=" + Common.getFTP_User()); 
 	inis.println("ftp.password=" + Common.getFTP_Password()); 
 	inis.println("ftp.directory=" + Common.getFTP_Directory()); 
@@ -6858,7 +6812,8 @@ public void working() {
 
 				try 
 				{ 
-					Runtime.getRuntime().exec(commandline.trim()); 
+				//	Runtime.getRuntime().exec(commandline.trim()); 
+					Runtime.getRuntime().exec(arguments); 
 				}
 				catch (IOException re)
 				{ 
@@ -9628,10 +9583,7 @@ public long nextFilePTS(int type, int ismpg, long lastpts, int file_number) {
 		}
 		} // end switch
 
-//		in.close();
-
-		// close does not always return!
-		in = null;
+		in.close();
 
 		} 
 		catch (IOException e) { 
@@ -15201,14 +15153,14 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 
 				java.util.Arrays.fill( gop, s, s + drop_length, (byte)0);
 
-				if (!cBox[3].isSelected())
+				if (!cBox[74].isSelected())
 					Msg(Resource.getString("video.msg.error.pesext_in_es", "" + (clv[6]-1), "" + s));
 			}
 			else
 			{
 				java.util.Arrays.fill( gop, s, s + drop_length, (byte)0);
 
-				if (!cBox[3].isSelected())
+				if (!cBox[74].isSelected())
 					Msg(Resource.getString("video.msg.error.pes_in_es", "" + (clv[6]-1), "" + s));
 			}
 

@@ -60,8 +60,16 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 			String password = aFileIdentifier.substring(posColon + 1, posAt);
 			String server = aFileIdentifier.substring(posAt + 1, posSlash);
 			String directory = aFileIdentifier.substring(posSlash);
+			String port = null;
 
-			ftpVO = new FtpVO(server, user, password, directory, null);
+			int posColon2 = server.indexOf(':');
+			if (posColon2 != -1)
+			{
+				server = server.substring(0, posColon2);
+				port = server.substring(posColon2 + 1);
+			}
+
+			ftpVO = new FtpVO(server, user, password, directory, port, null);
 			ftpServer = new FtpServer(ftpVO);
 			dirType = DirType.FTP_DIR;
 
@@ -150,7 +158,8 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 
 		String s = null;
 
-		s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getDirectory();
+	//	s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getDirectory();
+		s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getPort(":") + ftpVO.getDirectory();
 
 		return s;
 	}
@@ -187,6 +196,18 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 	public String getServer() {
 
 		return ftpVO.getServer();
+	}
+
+	/**
+	 * Get name or ip address of the ftp server
+	 * 
+	 * @return port of the ftp server
+	 * @throws IllegalStateException
+	 *           If file type of object is not DirType.FTP_DIR
+	 */
+	public String getPort() {
+
+		return ftpVO.getPort();
 	}
 
 	/**

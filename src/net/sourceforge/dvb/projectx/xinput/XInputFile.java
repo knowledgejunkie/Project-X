@@ -184,6 +184,18 @@ public class XInputFile implements XInputFileIF {
 	}
 
 	/**
+	 * rename
+	 * 
+	 * @return 
+	 */
+	public boolean rename() throws IOException {
+		if (debug) System.out.println("Enter XInputFile.rename()");
+		boolean b = impl.rename();
+		if (debug) System.out.println("Leave XInputFile.rename() returning " + b);
+		return b;
+	}
+
+	/**
 	 * @throws IOException
 	 */
 	public void randomAccessClose() throws IOException {

@@ -14,6 +14,7 @@ src/net/sourceforge/dvb/projectx/gui/AboutBox.java
 src/net/sourceforge/dvb/projectx/gui/StartUp.java
 src/net/sourceforge/dvb/projectx/gui/BRMonitor.java
 src/net/sourceforge/dvb/projectx/gui/Html.java
+src/net/sourceforge/dvb/projectx/gui/Dialogs.java
 src/net/sourceforge/dvb/projectx/io/IDDBufferedOutputStream.java
 src/net/sourceforge/dvb/projectx/io/StandardBuffer.java
 src/net/sourceforge/dvb/projectx/io/Scan.java

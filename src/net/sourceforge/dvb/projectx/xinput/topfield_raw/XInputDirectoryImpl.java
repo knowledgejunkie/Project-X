@@ -87,6 +87,18 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 	}
 
 	/**
+	 * Get port of the ftp server
+	 * 
+	 * @return port of the ftp server
+	 * @throws IllegalStateException
+	 *           If file type of object is not DirType.FTP_DIR
+	 */
+	public String getPort() {
+
+		return "";
+	}
+
+	/**
 	 * Get user for the ftp server
 	 * 
 	 * @return User for the ftp server
