@@ -60,8 +60,8 @@ public class X extends JPanel
 {
 
 static String version[] = { 
-	"ProjectX 0.81.7_int09",
-	"18.08.2004",
+	"ProjectX 0.81.8",
+	"30.08.2004",
 	"TEST PROJECT ONLY",
 	", User: " + System.getProperty("user.name")
 };
@@ -1030,8 +1030,8 @@ protected JPanel buildMainPanel()
 	control08.add(cBox[18]);
 
 	cBox[25] = new JCheckBox("post process.");
-	cBox[25].setPreferredSize(new Dimension(100,20));
-	cBox[25].setMaximumSize(new Dimension(100,20));
+	cBox[25].setPreferredSize(new Dimension(110,20));
+	cBox[25].setMaximumSize(new Dimension(110,20));
 	cBox[25].setToolTipText("enable post processing (->see external panel, if field is not empty )");
 	control08.add(cBox[25]);
 
@@ -1397,8 +1397,8 @@ protected JPanel buildidPanel()
 	cBox[36] = new JCheckBox("generate PCR/SCR from PTS");
 	cBox[36].setSelected(true);
 	cBox[36].setToolTipText("specify the PCR-Offset, DVB needs more than DVD, high bitrates needs more than low");
-	cBox[36].setPreferredSize(new Dimension(185,20));
-	cBox[36].setMaximumSize(new Dimension(185,20));
+	cBox[36].setPreferredSize(new Dimension(192,20));
+	cBox[36].setMaximumSize(new Dimension(192,20));
 
 	cBox[46] = new JCheckBox("incTScnt");
 	cBox[46].setSelected(false);
@@ -8797,6 +8797,8 @@ public String pvaparse(String pvafile,int ismpg,int ToVDR, String vptslog) {
 				/****** split size reached *****/
 				if ( options[18]>0 && options[18]<options[41] ) 
 					break pvaloop;
+
+
 
 
 
