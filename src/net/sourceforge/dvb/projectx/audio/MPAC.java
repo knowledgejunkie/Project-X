@@ -1,7 +1,7 @@
 /*
  * @(#)MPAC.java - mono<->stereo converter M1L2,48khz losless
  *
- * Copyright (c) 2002-2004 by dvb.matt, All rights reserved.
+ * Copyright (c) 2002-2005 by dvb.matt, All rights reserved.
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.

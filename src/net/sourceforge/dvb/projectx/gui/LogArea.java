@@ -1,7 +1,7 @@
 /*
  * @(#)LOGAREA.java - extern logwindow definition
  *
- * Copyright (c) 2002-2004 by dvb.matt. 
+ * Copyright (c) 2002-2005 by dvb.matt. 
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.

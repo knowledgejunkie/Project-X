@@ -1,7 +1,7 @@
 /*
  * @(#)PatchPanel.java - patching video basics
  *
- * Copyright (c) 2001-2004 by dvb.matt, All rights reserved.
+ * Copyright (c) 2001-2005 by dvb.matt, All rights reserved.
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.

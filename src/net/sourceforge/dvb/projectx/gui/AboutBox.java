@@ -1,7 +1,7 @@
 /*
  * @(#)StartUp.java - about box of Project-X, with terms of condition and credits
  *
- * Copyright (c) 2004 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2004-2005 by pstorch, All Rights Reserved. 
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.

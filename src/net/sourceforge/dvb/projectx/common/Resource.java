@@ -1,7 +1,7 @@
 /*
  * @(#)Resource.java - resource and i18n
  *
- * Copyright (c) 2001-2004 by dvb.matt, All rights reserved.
+ * Copyright (c) 2004-2005 by pstorch, All rights reserved.
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.
