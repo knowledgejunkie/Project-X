@@ -29,6 +29,7 @@ src\net\sourceforge\dvb\projectx\thirdparty\D2V.java
 src\net\sourceforge\dvb\projectx\thirdparty\Chapters.java
 src\net\sourceforge\dvb\projectx\thirdparty\TS.java
 src\net\sourceforge\dvb\projectx\video\MPVD.java
+src\net\sourceforge\dvb\projectx\video\IDCTRefNative.java
 src\net\sourceforge\dvb\projectx\video\Video.java
 src\net\sourceforge\dvb\projectx\video\WSS.java
 src\net\sourceforge\dvb\projectx\video\Preview.java
