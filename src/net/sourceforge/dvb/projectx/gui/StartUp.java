@@ -63,6 +63,9 @@ public class StartUp extends JFrame
 
 			if (actName.equals("agree")) 
 			{
+				if (!agree.isEnabled())
+					return;
+
 				setVisible(false);
 				X.setButton(1, true);
 				X.setVisible0(true);
@@ -140,8 +143,7 @@ public class StartUp extends JFrame
 
 	public void set( boolean agreement)
 	{
-		//DM16042004 081.7 int01 add
-		agree.setEnabled(true);
+		agree.setEnabled(!agreement);
 
 		this.agreement = agreement;
 		agree.setSelected(agreement);
