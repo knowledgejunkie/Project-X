@@ -178,7 +178,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "29.12.2004 10:00";
+static String version_date = "30.12.2004 19:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -16288,36 +16288,28 @@ class PIDdemux {
 		switch(newID>>>4)
 		{
 		case 0xE:  //video
-			if (cBox[55].isSelected())
-				return true;
+			return cBox[55].isSelected();
 
 		case 0xC:  //mpa
 		case 0xD:
-			if (cBox[56].isSelected())
-				return true;
+			return cBox[56].isSelected();
 
 		case 0x8:  //ac3,mpg
-			if (cBox[57].isSelected())
-				return true;
+			return cBox[57].isSelected();
 
 		case 0xA:  //lpcm,mpg
-			if (cBox[58].isSelected())
-				return true;
+			return cBox[58].isSelected();
 
 		case 0x9:  //ttx
-			if (cBox[59].isSelected())
-				return true;
+			return cBox[59].isSelected();
 
 		case 0x2:  //subpic
 		case 0x3: 
-			if (cBox[60].isSelected())
-				return true;
+			return cBox[60].isSelected();
 
 		default:
 			return false;
 		}
-
-		//return false;
 	}
 
 

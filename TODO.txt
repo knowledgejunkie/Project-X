@@ -143,3 +143,4 @@ dvbmatt änderg 28.12. - scan fileinfo: mehrere TS-PIDs lt. PMT nun je Typ untere
 
 dvbmatt änderg 29.12. - CLI: batchfile-liste (für eine Coll) auch via FTP ladbar (achtung: kein voller unicode support wg. datainputstream)
 
+dvbmatt fix 30.12. - stream type deselector funktionierte nicht mehr im merge
