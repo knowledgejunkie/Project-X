@@ -34,6 +34,7 @@
 package net.sourceforge.dvb.projectx.audio;
 
 import net.sourceforge.dvb.projectx.common.X;
+import net.sourceforge.dvb.projectx.common.Resource;
 
 public class MPAC
 {
@@ -84,6 +85,7 @@ public class MPAC
 	private int Sizes[];
 	private int BRindex[] = new int[3];
 	private int Restart = 0;
+	private int error_flag = 0;
 	private Audio Audio;
 
 	//init
@@ -108,6 +110,7 @@ public class MPAC
 			BRindex[a]=(int)(0xF & options[17]>>>(4 + (a<<2)));
 
 		Restart = 0;
+		error_flag = 0;
 
 		int transcode = (int)options[10];
 
@@ -118,7 +121,7 @@ public class MPAC
 			System.arraycopy(AudioFrame,0,newAudioFrames[0],0,AudioFrame.length);
 			System.arraycopy(AudioFrame,0,newAudioFrames[1],0,AudioFrame.length); // copy frame
 
-			X.Msg("!> source frame does not fit the transcode criteria, function deactivated..");
+			X.Msg(Resource.getString("audio.msg.convert.disabled", "" + (options[17]>>>18)));
 
 			options[17] |= 0x1000CL;
 
@@ -155,7 +158,15 @@ public class MPAC
 
 		options[17] |= Restart<<2;
 
+		if (error_flag > 0)
+			X.Msg(Resource.getString("audio.msg.convert.error", "" + error_flag, "" + (options[17]>>>18)));
+
 		return newAudioFrames;
+	}
+
+	private void setError(int error)
+	{
+		error_flag |= error;
 	}
 
 	//check to pass BR
@@ -373,116 +384,120 @@ public class MPAC
 				int allocation[] = new int[Bal_length];
 				int scfsi[] = new int[Bal_length];
 
-				// copy BAL
-				for (int a=0; a < Bal_length; a++)
-				{
-					for (int b=0; b < Bal[a]; b++)
+				try {
+					// copy BAL
+					for (int a=0; a < Bal_length; a++)
 					{
-						if (input[i + b])
-						{
-							output[o + b] = true;
-
-							if (transcode == 2 || a < 4)
-								output[o + Bal[a] + b] = true;
-
-							allocation[a] |= 1<<(Bal[a] - 1 - b);
-						}
-					}
-
-					i += Bal[a];
-					o += (transcode == 2 || a < 4) ? (Bal[a]<<1) : Bal[a]; 
-				}
-
-				// copy SCFSI
-				for (int a=0; a < Bal_length; a++)
-				{
-					if (allocation[a] != 0)
-					{
-						for (int b=0; b < 2; b++)
+						for (int b=0; b < Bal[a]; b++)
 						{
 							if (input[i + b])
 							{
 								output[o + b] = true;
-								output[o + b + 2] = true;
-								scfsi[a] |= 1<<(1 - b);
+
+								if (transcode == 2 || a < 4)
+									output[o + Bal[a] + b] = true;
+
+								allocation[a] |= 1<<(Bal[a] - 1 - b);
 							}
 						}
 
-						i += 2; 
-						o += 4;
+						i += Bal[a];
+						o += (transcode == 2 || a < 4) ? (Bal[a]<<1) : Bal[a]; 
 					}
-				}
 
-				// copy Scalefactors
-				for (int a=0, b=0; a < Bal_length; a++)
-				{
-					if (allocation[a] != 0)
-					{
-						switch (scfsi[a])
-						{
-							case 0:
-								b = 18;
-								break;
-
-							case 1:
-							case 3:
-								b = 12;
-								break;
-
-							case 2:
-								b = 6;
-						}
-
-						System.arraycopy(input, i, output, o, b);
-						System.arraycopy(input, i, output, o + b, b);
-						i += b; 
-						o += b<<1; 
-					}
-				}
-
-				// copy Samples
-				for (int x=0; x < 12; x++)
-				{
+					// copy SCFSI
 					for (int a=0; a < Bal_length; a++)
 					{
 						if (allocation[a] != 0)
 						{
-							int j = Allocation[a][allocation[a]];
-							int k = getbits[j];
-
-							if (grouping[j] > 0)
+							for (int b=0; b < 2; b++)
 							{
-								System.arraycopy(input, i, output, o, k); 
-								o += k;
-
-								if (transcode == 2 || a < 4)
-								{ 
-									System.arraycopy(input, i, output, o, k); 
-									o += k; 
+								if (input[i + b])
+								{
+									output[o + b] = true;
+									output[o + b + 2] = true;
+									scfsi[a] |= 1<<(1 - b);
 								}
-
-								i += k;
 							}
 
-							else
-							{
-								System.arraycopy(input, i, output, o, (3 * k)); 
-								o += (3 * k);
+							i += 2; 
+							o += 4;
+						}
+					}
 
-								if (transcode == 2 || a < 4)
-								{ 
-									System.arraycopy(input, i, output, o, (3 * k)); 
-									o += (3 * k); 
+					// copy Scalefactors
+					for (int a=0, b=0; a < Bal_length; a++)
+					{
+						if (allocation[a] != 0)
+						{
+							switch (scfsi[a])
+							{
+								case 0:
+									b = 18;
+									break;
+
+								case 1:
+								case 3:
+									b = 12;
+									break;
+
+								case 2:
+									b = 6;
+							}
+
+							System.arraycopy(input, i, output, o, b);
+							System.arraycopy(input, i, output, o + b, b);
+							i += b; 
+							o += b<<1; 
+						}
+					}
+
+					// copy Samples
+					for (int x=0; x < 12; x++)
+					{
+						for (int a=0; a < Bal_length; a++)
+						{
+							if (allocation[a] != 0)
+							{
+								int j = Allocation[a][allocation[a]];
+								int k = getbits[j];
+
+								if (grouping[j] > 0)
+								{
+									System.arraycopy(input, i, output, o, k); 
+									o += k;
+
+									if (transcode == 2 || a < 4)
+									{ 
+										System.arraycopy(input, i, output, o, k); 
+										o += k; 
+									}
+
+									i += k;
 								}
 
-								i += (3 * k);
+								else
+								{
+									System.arraycopy(input, i, output, o, (3 * k)); 
+									o += (3 * k);
+
+									if (transcode == 2 || a < 4)
+									{ 
+										System.arraycopy(input, i, output, o, (3 * k)); 
+										o += (3 * k); 
+									}
+
+									i += (3 * k);
+								}
 							}
 						}
 					}
-			}
+				} catch (Exception e) {
+					setError(1);
+				}
 
-			setChannelMode(output,1 & transcode); //set to stereo/jstereo
-			setBitRateIndex(output, o, channel); //set BR_index 
+				setChannelMode(output,1 & transcode); //set to stereo/jstereo
+				setBitRateIndex(output, o, channel); //set BR_index 
 		}
 
 		return output;
@@ -508,155 +523,159 @@ public class MPAC
 		if (bound == 32) 
 			bound = Bal_length;
 
-		//copy BAL
-		for (int a=0; a < bound; a++)
-		{
-			for (int ch=0; ch < 2; ch++)
-			{
-				for (int b=0; b < Bal[a]; b++)
-				{
-					if (input[i + b])
-					{
-						allocation[ch][a] |= 1<<(Bal[a] - 1 - b); 
-						output[ch][o[ch] + b] = true; 
-					}
-				}
-
-				i += Bal[a]; 
-				o[ch] += Bal[a]; 
-			}
-		}
-
-		for (int a=bound; a < Bal_length; a++)
-		{
-			for (int b=0; b < Bal[a]; b++)
-			{
-				if (input[i + b])
-				{
-					for (int ch=0; ch < 2; ch++)
-					{
-						allocation[ch][a] |= 1<<(Bal[a] - 1 - b);
-						output[ch][o[ch] + b] = true;
-					}
-				}
-			}
-
-			i += Bal[a]; 
-
-			for (int ch=0; ch < 2; ch++)
-				o[ch] += Bal[a]; 
-		}
-
-		//copy SCFSI
-		for (int a=0; a < Bal_length; a++)
-		{
-			for (int ch=0; ch < 2; ch++)
-			{
-				if (allocation[ch][a] != 0)
-				{
-					for (int b=0; b < 2; b++)
-					{
-						if (input[i + b])
-						{
-							scfsi[ch][a] |= 1<<(1 - b);
-							output[ch][o[ch] + b] = true;
-						}
-					}
-
-					i += 2; 
-					o[ch] += 2; 
-				}
-			}
-		}
-
-		//copy Scalefactors
-		for (int a=0, b=0; a < Bal_length; a++)
-		{
-			for (int ch=0; ch < 2; ch++)
-			{
-				if (allocation[ch][a] != 0)
-				{
-					switch (scfsi[ch][a])
-					{
-						case 0:
-							b = 18;
-							break;
-
-						case 1:
-						case 3:
-							b = 12;
-							break;
-
-						case 2:
-							b = 6;
-					}
-
-					System.arraycopy(input, i, output[ch], o[ch], b);
-					i += b;
-					o[ch] += b; 
-				}
-			}
-		}
-
-		//copy Samples
-		for (int x=0; x < 12; x++)
-		{
+		try {
+			//copy BAL
 			for (int a=0; a < bound; a++)
 			{
 				for (int ch=0; ch < 2; ch++)
 				{
-					if (allocation[ch][a] != 0)
+					for (int b=0; b < Bal[a]; b++)
 					{
-						int j = Allocation[a][allocation[ch][a]];
-						int k = getbits[j];
-
-						if (grouping[j] > 0)
+						if (input[i + b])
 						{
-							System.arraycopy(input, i, output[ch], o[ch], k);
-							i += k;
-							o[ch] += k; 
-						}
-
-						else
-						{
-							System.arraycopy(input, i, output[ch], o[ch], (3 * k));
-							i += (3 * k);
-							o[ch] += (3 * k); 
+							allocation[ch][a] |= 1<<(Bal[a] - 1 - b); 
+							output[ch][o[ch] + b] = true; 
 						}
 					}
+
+					i += Bal[a]; 
+					o[ch] += Bal[a]; 
 				}
 			}
 
 			for (int a=bound; a < Bal_length; a++)
 			{
-				if (allocation[0][a] != 0)
+				for (int b=0; b < Bal[a]; b++)
 				{
-					int j = Allocation[a][allocation[0][a]];
-					int k = getbits[j];
-
-					if (grouping[j] > 0)
+					if (input[i + b])
 					{
 						for (int ch=0; ch < 2; ch++)
 						{
-							System.arraycopy(input, i, output[ch], o[ch], k);
-							o[ch] += k; 
+							allocation[ch][a] |= 1<<(Bal[a] - 1 - b);
+							output[ch][o[ch] + b] = true;
 						}
-
-						i+=k;
 					}
+				}
 
-					else
+				i += Bal[a]; 
+
+				for (int ch=0; ch < 2; ch++)
+					o[ch] += Bal[a]; 
+			}
+
+			//copy SCFSI
+			for (int a=0; a < Bal_length; a++)
+			{
+				for (int ch=0; ch < 2; ch++)
+				{
+					if (allocation[ch][a] != 0)
 					{
-						for (int ch=0; ch < 2; ch++)
+						for (int b=0; b < 2; b++)
 						{
-							System.arraycopy(input, i, output[ch], o[ch], (3 * k));
-							o[ch] += (3 * k); 
+							if (input[i + b])
+							{
+								scfsi[ch][a] |= 1<<(1 - b);
+								output[ch][o[ch] + b] = true;
+							}
 						}
 
-						i += (3 * k);
+						i += 2; 
+						o[ch] += 2; 
 					}
 				}
 			}
+
+			//copy Scalefactors
+			for (int a=0, b=0; a < Bal_length; a++)
+			{
+				for (int ch=0; ch < 2; ch++)
+				{
+					if (allocation[ch][a] != 0)
+					{
+						switch (scfsi[ch][a])
+						{
+							case 0:
+								b = 18;
+								break;
+
+							case 1:
+							case 3:
+								b = 12;
+								break;
+
+							case 2:
+								b = 6;
+						}
+
+						System.arraycopy(input, i, output[ch], o[ch], b);
+						i += b;
+						o[ch] += b; 
+					}
+				}
+			}
+
+			//copy Samples
+			for (int x=0; x < 12; x++)
+			{
+				for (int a=0; a < bound; a++)
+				{
+					for (int ch=0; ch < 2; ch++)
+					{
+						if (allocation[ch][a] != 0)
+						{
+							int j = Allocation[a][allocation[ch][a]];
+							int k = getbits[j];
+
+							if (grouping[j] > 0)
+							{
+								System.arraycopy(input, i, output[ch], o[ch], k);
+								i += k;
+								o[ch] += k; 
+							}
+
+							else
+							{
+								System.arraycopy(input, i, output[ch], o[ch], (3 * k));
+								i += (3 * k);
+								o[ch] += (3 * k); 
+							}
+						}
+					}
+				}
+
+				for (int a=bound; a < Bal_length; a++)
+				{
+					if (allocation[0][a] != 0)
+					{
+						int j = Allocation[a][allocation[0][a]];
+						int k = getbits[j];
+
+						if (grouping[j] > 0)
+						{
+							for (int ch=0; ch < 2; ch++)
+							{
+								System.arraycopy(input, i, output[ch], o[ch], k);
+								o[ch] += k; 
+							}
+
+							i+=k;
+						}
+
+						else
+						{
+							for (int ch=0; ch < 2; ch++)
+							{
+								System.arraycopy(input, i, output[ch], o[ch], (3 * k));
+								o[ch] += (3 * k); 
+							}
+
+							i += (3 * k);
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			setError(2);
 		}
 
 		for (int ch=0; ch < 2; ch++)

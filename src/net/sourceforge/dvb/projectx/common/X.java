@@ -178,7 +178,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "25.12.2004 18:00";
+static String version_date = "25.12.2004 21:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -10585,11 +10585,11 @@ public void mpt(String[] args) {
 		options[17] &= ~0xCL;
 
 		Msg(" ");
-		Msg(Resource.getString("audio.restart") + " " + (options[17]>>>18));
+		Msg(Resource.getString("audio.restart") + " " + ((options[17]>>>18) - 1));
 		yield();
 
-		if ( (0x10000L&options[17])!=0) 
-			options[10]=0;
+		if ( (0x10000L & options[17]) != 0) 
+			options[10] = 0;
 	}
 
 	options[17] &= 3L;
@@ -11475,9 +11475,14 @@ public boolean processAudio(String[] args)
 				break bigloop;
 			}
 
+			/**
+			 * updates global audio_error and framecounter variable
+			 */
+			options[17] = (0x3FFFFL & options[17]) | ((long)frame_counter)<<18; 
+
 			/********* fix VBR & restart processing ********/
-			if ((0xCL&options[17]) != 0 || MPAD.RESET) { 
-				options[17] = (0x3FFFFL&options[17]) | ((long)frame_counter)<<18; 
+			if ((0xCL & options[17]) != 0 || MPAD.RESET) { 
+				//  options[17] = (0x3FFFFL & options[17]) | ((long)frame_counter)<<18; 
 				return true; 
 			}
 
@@ -11685,7 +11690,8 @@ public boolean processAudio(String[] args)
 								audiooutL.write(MPAD.decodeArray(copyframe[0]));
 								if (options[10]>=4) 
 									audiooutR.write(MPAD.get2ndArray());
-							} else if (audio.Layer>1 && options[10]>0) {
+						//	} else if (audio.Layer>1 && options[10]>0) {
+							} else if (options[10]>0) {
 								newframes = MPAConverter.modifyframe(copyframe[0],options); 
 								audiooutL.write(newframes[0]); 
 								if (options[10]>=4) 
@@ -11711,7 +11717,8 @@ public boolean processAudio(String[] args)
 								audiooutL.write(MPAD.decodeArray(silent_Frame[(padding_counter>0)?0:1]));
 								if (options[10]>=4) 
 									audiooutR.write(MPAD.get2ndArray());
-							} else if (audio.Layer>1 && options[10]>0) {
+						//	} else if (audio.Layer>1 && options[10]>0) {
+							} else if (options[10]>0) {
 								newframes = MPAConverter.modifyframe(silent_Frame[(padding_counter>0)?0:1],options);
 								audiooutL.write(newframes[0]);
 								if (options[10]>=4) 
@@ -11838,7 +11845,8 @@ public boolean processAudio(String[] args)
 					audiooutL.write(MPAD.decodeArray(frame));
 					if (options[10]>=4) 
 						audiooutR.write(MPAD.get2ndArray());
-				} else if (audio.Layer>1 && options[10]>0) {
+			//	} else if (audio.Layer>1 && options[10]>0) {
+				} else if (options[10]>0) {
 					newframes = MPAConverter.modifyframe(frame,options);
 					audiooutL.write(newframes[0]);
 					if (options[10]>=4) 
@@ -11875,7 +11883,8 @@ public boolean processAudio(String[] args)
 					audiooutL.write(MPAD.decodeArray(frame));
 					if (options[10]>=4) 
 						audiooutR.write(MPAD.get2ndArray());
-				} else if (audio.Layer>1 && options[10]>0) {
+			//	} else if (audio.Layer>1 && options[10]>0) {
+				} else if (options[10]>0) {
 					newframes = MPAConverter.modifyframe(frame,options);
 					audiooutL.write(newframes[0]);
 					if (options[10]>=4) 
@@ -11983,7 +11992,8 @@ public boolean processAudio(String[] args)
 								audiooutL.write(MPAD.decodeArray(copyframe[0]));
 								if (options[10]>=4) 
 									audiooutR.write(MPAD.get2ndArray());
-							} else if (audio.Layer>1 && options[10]>0) {
+						//	} else if (audio.Layer>1 && options[10]>0) {
+							} else if (options[10]>0) {
 								newframes = MPAConverter.modifyframe(copyframe[0],options); 
 								audiooutL.write(newframes[0]);
 								if (options[10]>=4) 
@@ -12010,7 +12020,8 @@ public boolean processAudio(String[] args)
 								audiooutL.write(MPAD.decodeArray(silent_Frame[(padding_counter>0)?0:1]));
 								if (options[10]>=4) 
 									audiooutR.write(MPAD.get2ndArray());
-							} else if (audio.Layer>1 && options[10]>0) {
+						//	} else if (audio.Layer>1 && options[10]>0) {
+							} else if (options[10]>0) {
 								newframes = MPAConverter.modifyframe(silent_Frame[(padding_counter>0)?0:1],options);
 								audiooutL.write(newframes[0]);
 								if (options[10]>=4) 
@@ -12092,7 +12103,8 @@ public boolean processAudio(String[] args)
 							audiooutL.write(MPAD.decodeArray(copyframe[0]));
 							if (options[10]>=4) 
 								audiooutR.write(MPAD.get2ndArray());
-						} else if (audio.Layer>1 && options[10]>0) {		//modify frame
+					//	} else if (audio.Layer>1 && options[10]>0) {		//modify frame
+						} else if (options[10]>0) {		//modify frame
 							newframes = MPAConverter.modifyframe(copyframe[0],options); 
 							audiooutL.write(newframes[0]);
 							if (options[10]>=4) 
@@ -12122,7 +12134,8 @@ public boolean processAudio(String[] args)
 							audiooutL.write(MPAD.decodeArray(silent_Frame[(padding_counter>0)?0:1]));
 							if (options[10]>=4) 
 								audiooutR.write(MPAD.get2ndArray());
-						} else if (audio.Layer>1 && options[10]>0) {		//modify frame
+					//	} else if (audio.Layer>1 && options[10]>0) {		//modify frame
+						} else if (options[10]>0) {		//modify frame
 							newframes = MPAConverter.modifyframe(silent_Frame[(padding_counter>0)?0:1],options);
 							audiooutL.write(newframes[0]);
 							if (options[10]>=4) 
@@ -14503,6 +14516,7 @@ public void processLPCM(String[] args)
 		if (ptsdata)
 		{
 			write = vptsdata ? false : true;
+
 
 
 			rangeloop:

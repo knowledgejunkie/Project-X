@@ -128,3 +128,5 @@ dvbmatt fix? 24.12. - split bei ES-MPV ging nicht richtig
 dvbmatt änd 24.12. - ptsoffset bei wechsel in nä. 'fremde' datei ist nun statt 20000ms, 19200ms (= vielfaches der üblichsten framelängen), daher evtl. weniger audio'abbruch', beobachten
 
 dvbmatt neu 25.12. - SDE patch/ergänzung der Auflösung, manche SA-Player machen Probleme bei nicht DVD-konformer Auflösung und/oder Fehlen dieser Extension (z.b. kein Vollbild)
+
+dvbmatt fix 25.12. - mpac: mpa konvertierung mono/stereo etc. hat seit umstellung fehler/formatunstimmigkeiten nicht mehr gemeldet und führte u.U. zu fehlerhaften Ausgaben ohne jeden Hinweis.
