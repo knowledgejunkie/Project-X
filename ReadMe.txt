@@ -53,7 +53,7 @@
        big troubles with some versions of JRE's on different OS's.
 
 
-   Extract all files from the received archive to a separate directory.
+ Extract all files from the received archive to a separate directory.
 
    sample of a compilation (may differ on your system) :
 
@@ -66,7 +66,7 @@
        copies the resource files from the resource folder into the new .jar,
 
        Note: now, we made a package for the sources
-             the file source.lst points to all required sourcefiles and its location
+             the file source.lst points to any required sourcefile and its location
 
    (C) additional received resource files (e.g. other language files) can be added 
        to the .jar file, later, 

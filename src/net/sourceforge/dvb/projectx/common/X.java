@@ -178,7 +178,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "27.12.2004 16:00";
+static String version_date = "28.12.2004 20:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -7890,6 +7890,8 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 			pesID = 0xFF & push6[3];
 			packlength = ((0xFF & push6[4])<<8 | (0xFF & push6[5]));
 
+
+
 			in.unread(push6);
 
 			boolean packlen0=false;
@@ -8672,10 +8674,10 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 		{
 			Msg(Resource.getString("rawparse.sid")+Integer.toHexString(pids[0]).toUpperCase());
 			Msg(Resource.getString("rawparse.pmt.refers", Integer.toHexString(pids[1]).toUpperCase()));
-			Msg(Resource.getString("rawparse.video") + scan.getVideo());
-			Msg(Resource.getString("rawparse.audio") + scan.getAudio());
-			Msg(Resource.getString("rawparse.teletext") + scan.getText());
-			Msg(Resource.getString("rawparse.subpic") + scan.getPics());  //DM28042004 081.7 int02 add
+			Msg(Resource.getString("scaninfo.video") + "\t" + scan.getVideo());
+			Msg(Resource.getString("scaninfo.audio") + "\t" + scan.getAudio());
+			Msg(Resource.getString("scaninfo.teletext") + "\t" + scan.getText());
+			Msg(Resource.getString("scaninfo.subpicture") + "\t" + scan.getPics());  //DM28042004 081.7 int02 add
 			Msg("");
 
 			for (int a=2; a<pids.length;a++)

@@ -657,10 +657,10 @@ public class Scan
 				addInfo += " (SID 0x" + Integer.toHexString(sid).toUpperCase() + " ,PMT 0x" + Integer.toHexString(pmtpid).toUpperCase() + ")";
 			}
 
-			video = "PIDs:";
-			audio = "PIDs:";
-			text = "PIDs:"; //DM10032004 081.6 int18 add
-			pics = "PIDs:"; //DM28042004 081.7 int02 add
+			video = "";
+			audio = "";
+			text = "";
+			pics = "";
 
 			int pmt_len = (0xF&pmt[2])<<8 | (0xFF&pmt[3]);  //DM30122003 081.6 int10 add
 
@@ -825,29 +825,29 @@ public class Scan
 				}
 			}
 
-			String out = " 0x" + Integer.toHexString(pid).toUpperCase();
+			String out = "PID: 0x" + Integer.toHexString(pid).toUpperCase();
 
 			switch (type)
 			{
-			case 0x59:  //DM28042004 081.7 int02 add
-				pics += out + str;
+			case 0x59:
+				pic_streams.add(out + str);
 				break;
 
 			case 0x56:
-				text += out + str;
+				ttx_streams.add(out + str);
 				break;
 
 			case 2:
 			case 0xC3:
-				video += out + str;
+				video_streams.add(out + str);
 				break;
 
 			case 4:
-				audio += out + str;
+				audio_streams.add(out + str);
 				break;
 
 			default:
-				audio += out + str + "_PD";
+				audio_streams.add(out + str + "_PD");
 			}
 
 		}
