@@ -178,7 +178,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "01.01.2005 18:00";
+static String version_date = "07.01.2005 21:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -6954,63 +6954,83 @@ public void working() {
 		brm.surf.stop();
 		Msg("");
 
-		//***** print created files summary
+		/**
+		 * print created files summary
+		 */
 		lastlist = InfoAtEnd.toArray();
 		java.util.Arrays.sort(lastlist);
+
 		Msg(Resource.getString("working.summary"));
-		for (int l=0;l<lastlist.length;l++)
-			Msg(""+lastlist[l]);
+
+		for (int l = 0; l < lastlist.length; l++)
+			Msg("" + lastlist[l]);
 
 		InfoAtEnd.clear();
 		yield();
 
 
-		/*** post execution ***/
-		//DM30122003 081.6 int10 changed
+		/**
+		 * post commands
+		 */
 		if (!qinfo && cBox[25].isSelected())
 		{
-			String com = exefield[3+comBox[19].getSelectedIndex()].getText().toString().trim();
+			String cmdl = exefield[3 + comBox[19].getSelectedIndex()].getText().toString().trim();
 
-			if (com.length() > 0 && lastlist.length > 0)
+			if (cmdl.length() > 0 && lastlist.length > 0)
 			{
-				int mn = com.lastIndexOf(" ?");
 				ArrayList argList = new ArrayList();
 
-				if (mn > -1)
+				String append_str = "";
+				boolean isQuoted = false;
+
+				int appending = cmdl.lastIndexOf(" \"?");
+
+				if (appending < 0)
+					appending = cmdl.lastIndexOf(" ?");
+				else
+					isQuoted = true;
+
+				if (appending < 0)
+					argList.add(cmdl.trim());
+
+				else
 				{
-					mn = Integer.parseInt(com.substring(mn+2));
-					argList.add(mn>-1 ? com.substring(0,com.lastIndexOf(" ?")) : com.trim());
+					append_str = cmdl.substring(appending).replace('"', ' ').trim();
 
-					if (mn==0 || mn>lastlist.length) 
-						mn = lastlist.length;
+					cmdl = cmdl.substring(0, appending).trim();
+					argList.add(cmdl);
 
-					for (int l=0; l < lastlist.length && l < mn; l++)
+					appending = Integer.parseInt(append_str.substring(1));
+
+					if (appending == 0 || appending > lastlist.length) 
+						appending = lastlist.length;
+
+					for (int l = 0; l < lastlist.length && l < appending; l++)
 					{
-						String fn = lastlist[l].toString();
+						String str = lastlist[l].toString();
+						str = str.substring(str.indexOf("'") + 1, str.length() - 1);
 
-						if (com.startsWith("\""))
-							argList.add("" + (char)34 + (fn.substring(fn.lastIndexOf("\t ") + 2)).trim() + (char)34);
+						if (isQuoted)
+							argList.add("" + (char)34 + str + (char)34);
 						else
-							argList.add("" + (fn.substring(fn.lastIndexOf("\t ") + 2)).trim());
+							argList.add(str);
 					}
 				}
-				else
-					argList.add(com.trim());
 
-				String commandline="";
-				String arguments[] = new String[argList.size()];
+				String commandline = "";
+				String[] arguments = new String[argList.size()];
 
-				for (int l=0; l < arguments.length; l++)
+				for (int l = 0; l < arguments.length; l++)
 				{
 					arguments[l] = argList.get(l).toString();
-					commandline += ("" + arguments[l] + (char)32);
+					commandline += l == 0 ? "" : " ";
+					commandline += arguments[l];
 				}
 
-				Msg(Resource.getString("working.post.command") + " " + commandline.trim());
+				Msg(Resource.getString("working.post.command") + " {" + commandline + "}");
 
 				try 
 				{ 
-				//	Runtime.getRuntime().exec(commandline.trim()); 
 					Runtime.getRuntime().exec(arguments); 
 				}
 				catch (IOException re)
@@ -9030,21 +9050,26 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 			// PSI id, if packet start
 			psiID = (start) ? pesID>>>16 : 0;
 
-			//DM27042004 081.7 int02 changed++
+	/**
+			boolean index_error = false;
+
 			ttx = false;
 			subid = 0;
 			if (pesID == 0x1BD) 
 			{
-				int pes_extension_size = 0xFF & push189[12 + addlength];
-				int pes_offset = 13 + addlength + pes_extension_size;
-				ttx = (pes_extension_size == 0x24 && (0xFF & push189[pes_offset])>>>4 == 1) ? true : false;
+				try {
+					int pes_extension_size = 0xFF & push189[12 + addlength];
+					int pes_offset = 13 + addlength + pes_extension_size;
+					ttx = (pes_extension_size == 0x24 && (0xFF & push189[pes_offset])>>>4 == 1) ? true : false;
 
-				if (!ttx)
-					subid = ((0xFF & push189[pes_offset]) == 0x20 && (0xFF & push189[pes_offset + 1]) == 0 && (0xFF & push189[pes_offset + 2]) == 0xF) ? 0x20 : 0;
+					if (!ttx)
+						subid = ((0xFF & push189[pes_offset]) == 0x20 && (0xFF & push189[pes_offset + 1]) == 0 && (0xFF & push189[pes_offset + 2]) == 0xF) ? 0x20 : 0;
+
+				} catch (ArrayIndexOutOfBoundsException e) {
+					index_error = true;
+				}
 			}
-			//DM27042004 081.7 int02 changed--
-			//DM18092003-
-
+	**/
 			int pidcheck=-1;
 			for (int a=0;a<TSPidlist.size();a++) {      // find PID object
 				TSPid = (TSPID)TSPidlist.get(a);
@@ -9065,7 +9090,8 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 			}
 
 			if (options[30]==1) 
-				System.out.println(""+packet+"/"+Integer.toHexString(pid)+"/"+Integer.toHexString(pesID)+"/"+TSPid.isneeded()+"/"+ttx+"/"+error+"/"+start+"/"+scram+"/"+addfield+"/"+addlength);
+			//	System.out.println(""+packet+"/"+Integer.toHexString(pid)+"/"+Integer.toHexString(pesID)+"/"+TSPid.isneeded()+"/"+ttx+"/"+error+"/"+start+"/"+scram+"/"+addfield+"/"+addlength);
+				System.out.println("pk " + packet + " /pid " + Integer.toHexString(pid) + " /pes " + Integer.toHexString(pesID) + " /tn " + TSPid.isneeded() + " /er " + error + " /st " + start + " /sc " + scram + " /ad " + addfield + " /al " + addlength);
 
 			// PID not of interest
 			if (!TSPid.isneeded()) 
@@ -9124,6 +9150,35 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 			}
 			else
 			{
+
+//
+				ttx = false;
+				subid = 0;
+
+				if (TSPid.getID()==-1 && pesID == 0x1BD) 
+				{
+					int pes_extension_size = 0;
+					int pes_offset = 0;
+
+					try {
+						pes_extension_size = 0xFF & push189[12 + addlength];
+						pes_offset = 13 + addlength + pes_extension_size;
+						ttx = (pes_extension_size == 0x24 && (0xFF & push189[pes_offset])>>>4 == 1) ? true : false;
+
+						if (!ttx)
+							subid = ((0xFF & push189[pes_offset]) == 0x20 && (0xFF & push189[pes_offset + 1]) == 0 && (0xFF & push189[pes_offset + 2]) == 0xF) ? 0x20 : 0;
+
+					} catch (ArrayIndexOutOfBoundsException e) {
+						Msg(Resource.getString("rawparse.io.error") + " " + e + " / " + pes_extension_size + " / " + pes_offset);
+						TSPid.reset();
+						TSPid.setStarted(false);
+
+						continue pvaloop;
+					}
+				}
+//
+
+
 				TSPid.setStarted(true);
 
 				// create new demux object
@@ -9369,8 +9424,8 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 					else
 					{
 						type += " (" + (count-188) + " #" + packet + ") ";  // pos + packno
-						Msg(Resource.getString("rawparse.pid.has.pes",Integer.toHexString(pid).toUpperCase(), Integer.toHexString(0xff & pesID).toUpperCase(), "" + type));
-						usedPIDs.add("0x"+Integer.toHexString(pid));
+						Msg(Resource.getString("rawparse.pid.has.pes", Integer.toHexString(pid).toUpperCase(), Integer.toHexString(0xff & pesID).toUpperCase(), "" + type));
+						usedPIDs.add("0x" + Integer.toHexString(pid));
 					}
 				}
 
@@ -12600,7 +12655,7 @@ public boolean processAudio(String[] args)
 			//audioout1.renameTo(ac3name); 
 
 			Msg(Resource.getString("msg.newfile", "") + " " + ac3name); 
-			InfoAtEnd.add(comparedata+"\t "+ac3name);
+			InfoAtEnd.add(comparedata + "\t'" + ac3name + "'");
 		}
 		if (audioout2.length()<100) 
 			audioout2.delete();
@@ -12619,7 +12674,7 @@ public boolean processAudio(String[] args)
 			//audioout1.renameTo(mp3name); 
 
 			Msg(Resource.getString("msg.newfile", "") + " " + mp3name); 
-			InfoAtEnd.add(comparedata+"\t "+mp3name);
+			InfoAtEnd.add(comparedata + "\t'" + mp3name + "'");
 		}
 		if (audioout2.length()<100) 
 			audioout2.delete();
@@ -12647,7 +12702,7 @@ public boolean processAudio(String[] args)
 				Common.renameTo(audioout2, mp2nameR); //DM13042004 081.7 int01 changed
 
 				Msg(Resource.getString("msg.newfile", Resource.getString("audio.msg.newfile.right")) + " " + mp2nameR); 
-				InfoAtEnd.add(comparedata + "\t " + mp2nameR); 
+				InfoAtEnd.add(comparedata + "\t'" + mp2nameR + "'"); 
 			}
 
 			if (audioout1.length() < 100) 
@@ -12658,7 +12713,7 @@ public boolean processAudio(String[] args)
 				Common.renameTo(audioout1, mp2nameL); //DM13042004 081.7 int01 changed
 
 				Msg(Resource.getString("msg.newfile", Resource.getString("audio.msg.newfile.left")) + " " + mp2nameL); 
-				InfoAtEnd.add(comparedata + "\t " + mp2nameL); 
+				InfoAtEnd.add(comparedata + "\t'" + mp2nameL + "'"); 
 			}
 
 			audiooutL.renameIddTo(mp2nameL);
@@ -12679,7 +12734,7 @@ public boolean processAudio(String[] args)
 				//audioout1.renameTo(mp2name); 
 
 				Msg(Resource.getString("msg.newfile", "") + " " + mp2name); 
-				InfoAtEnd.add(comparedata+"\t "+mp2name); 
+				InfoAtEnd.add(comparedata + "\t'" + mp2name + "'"); 
 			}
 
 			if (audioout2.length()<100) 
@@ -12702,7 +12757,7 @@ public boolean processAudio(String[] args)
 			//audioout1.renameTo(mp1name); 
 
 			Msg(Resource.getString("msg.newfile", "") + " " + mp1name); 
-			InfoAtEnd.add(comparedata+"\t "+mp1name); 
+			InfoAtEnd.add(comparedata + "\t'" + mp1name + "'"); 
 		}
 		if (audioout2.length()<100) 
 			audioout2.delete();
@@ -12722,7 +12777,7 @@ public boolean processAudio(String[] args)
 			//audioout1.renameTo(dtsname); 
 
 			Msg(Resource.getString("msg.newfile", "") + " " + dtsname); 
-			InfoAtEnd.add(comparedata+"\t "+dtsname);
+			InfoAtEnd.add(comparedata + "\t'" + dtsname + "'");
 		}
 		if (audioout2.length()<100) 
 			audioout2.delete();
@@ -12741,7 +12796,7 @@ public boolean processAudio(String[] args)
 			Common.renameTo(audioout1, wavname); //DM13042004 081.7 int01 changed
 
 			Msg(Resource.getString("msg.newfile", "") + " " + wavname); 
-			InfoAtEnd.add(comparedata+"\t "+wavname);
+			InfoAtEnd.add(comparedata + "\t'" + wavname + "'");
 		}
 		if (audioout2.length()<100) 
 			audioout2.delete();
@@ -13830,7 +13885,7 @@ public void processTeletext(String[] args)
 
 				//DM04032004 081.6 int18 changed
 				//DM15072004 081.7 int06 changed
-				InfoAtEnd.add(Resource.getString("teletext.summary", "" + (NoOfPictures++), "" + seiten, "" + page, infoPTSMatch(args, vptsdata, ptsdata)) + " " + ttxfile1);
+				InfoAtEnd.add(Resource.getString("teletext.summary", "" + (NoOfPictures++), "" + seiten, "" + page, infoPTSMatch(args, vptsdata, ptsdata)) + "'" + ttxfile1 + "'");
 			}
 
 			}  // end try
@@ -14334,7 +14389,7 @@ public void processSubpicture(String[] args)
 		options[39] += subfile1.length();
 
 		//DM15072004 081.7 int06 changed
-		InfoAtEnd.add(Resource.getString("subpicture.summary", "" + (NoOfPictures++), "" + pics, infoPTSMatch(args, vptsdata, ptsdata)) + subfile1);
+		InfoAtEnd.add(Resource.getString("subpicture.summary", "" + (NoOfPictures++), "" + pics, infoPTSMatch(args, vptsdata, ptsdata)) + "'" + subfile1 + "'");
 	}
 
 	progress.setValue(100);
@@ -14710,7 +14765,7 @@ public void processLPCM(String[] args)
 		options[39] += pcmfile1.length();
 
 		//DM15072004 081.7 int06 changed
-		InfoAtEnd.add(Resource.getString("lpcm.summary", "" + (NoOfPictures++), "" + samples, infoPTSMatch(args, vptsdata, ptsdata)) + pcmfile1);
+		InfoAtEnd.add(Resource.getString("lpcm.summary", "" + (NoOfPictures++), "" + samples, infoPTSMatch(args, vptsdata, ptsdata)) + "'" + pcmfile1 + "'");
 	}
 
 	yield();
@@ -16068,7 +16123,7 @@ public static void setvideoheader(String videofile, String logfile)
 			Msg(Resource.getString("video.error.pts.same", "" + clv[8]));
 
 		//DM12042004 081.7 int01 changed
-		InfoAtEnd.add(Resource.getString("video.summary", videotype[MPGVideotype], "" + options[7], "" + vt) + " " + videofile);
+		InfoAtEnd.add(Resource.getString("video.summary", videotype[MPGVideotype], "" + options[7], "" + vt) + "'" + videofile + "'");
 	}
 
 
@@ -16664,7 +16719,7 @@ class PIDdemux {
 			}
 
 			if (options[30]==1) //DM131003 081.5++
-				System.out.print(" pda PTS: "+pts+"/ "+addoffset+"/ "+target);
+				System.out.println(" pda PTS: "+pts+"/ "+addoffset+"/ "+target);
 
 			lastPTS=pts; //DM22122003 081.6 int09 new
 		} 
@@ -18096,7 +18151,7 @@ class makeVDR
 				name = out.renameVdrTo(new File(name).getParent()+filesep,name);
 
 			Msg(Resource.getString("msg.newfile") + " " + name);
-			InfoAtEnd.add(Resource.getString("makeVDR.summary") + "\t" + name);
+			InfoAtEnd.add(Resource.getString("makeVDR.summary") + "\t'" + name + "'");
 		}
 
 		}

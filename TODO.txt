@@ -153,4 +153,6 @@ dvbmatt änder 31.12. - abfrage der install. fonts mit fehlerabfangen, IIRC unix-
 
 dvbmatt neu 31.12. - VTX SUP-UT-Export mit neuer Option für Textumrandung, viel bessere Optik bei weniger als 3 Sprecherfarben pro Bild (eh selten), bei mehr als 2 wie bisher kompletter Hintergrund
 
-dvbmatt fix 31.12.  ptsoffset wurde nicht angewandt, wenn neuer stream erst nach einer Änderung im pts_offset auftauchte (nur bei mpg1/2,vdr,pva hauptstreams von belang)
+dvbmatt fix 31.12. - ptsoffset wurde nicht angewandt, wenn neuer stream erst nach einer Änderung im pts_offset auftauchte (nur bei mpg1/2,vdr,pva hauptstreams von belang)
+
+dvbmatt fix 05.01.  - dekodierproblem bei dvb-subpics, wirft neue Probs auf, evtl. später zu lösen

@@ -6,18 +6,19 @@
  xxxxxx
 
 
-   fix - nullpointerexception: {patch video basics} w/o a selected file
-   fix - nullpointerexception: stream processing w/o or disabled content
-   fix - video gop-summary: always shown 'interlaced & progressive pictures', independent from content
-   fix - post commands: now back to V0.81.8 handling, Java's own parsing of commandline sometimes failed
-   fix - mp2 conversions: now better handling of exceptions and type mismatchs
-   fix - split output: didn't work for ES-video; to prevent lost of sync, it always start analysis from pos.0
-   fix - stream pts offsets didn't affect new stream content (IDs) found after a change of this offset
+   fix - GUI: nullpointerexception: {patch video basics} w/o a selected file
+   fix - all: nullpointerexception: stream processing w/o or disabled content
+   fix - demux: video gop-summary: always shown 'interlaced & progressive pictures', independent from content
+   fix - demux: mp2 conversions: now better handling of exceptions and type mismatchs
+   fix - demux: split output: didn't work for ES-video; to prevent lost of sync, it always start analysis from pos.0
+   fix - demux: stream pts offsets didn't affect new stream content (IDs) found after a change of this offset
+   fix - demux: dvb subpictures: decoding errors on some streams
 
    change - preview cutpoints: additional mark by magenta lines on the 'timeline'
    change - scan fileinfo: adaption for MPG=>sPES special stream types content
    change - concatenate diff. files: pts offset value changed
    change - processing: check, whether write access is possible to specified output directory, stops processing if that check fails
+   change - post commands: now back to V0.81.8 handling, Java's own parsing of commandline sometimes failed; now set "?x" quoted to quote all arguments, too
    change - a lot internals
 
    new - <messages>: option to append the current process time index to any log info 
@@ -35,10 +36,10 @@
    new - TS: VPS(VBI)-PIDs will now be ignored (less misinterpretation with other private data streams)
    new - preview: some code outsourced for faster decoding; usage is optional/system dependent, by copying the Win32's '.dll' in the "/lib" folder to the working or system directory
    new - <coll spec.>: preview: option to udpate picture while scrolling
-   new - <options>: preview: buffersize is user defined
+   new - <options>: preview: buffersize is user defined, lower values store less data to find next I-Frame
 
    new - new input interface:
-       - now implements a FTP-Client, provided by Apache's Jakarta Project libraries 'commons-net' and 'oro' 
+       - now implements a FTP-Client (ATM read access only), provided by Apache's Jakarta Project libraries 'commons-net' and 'oro' 
          (both are required! take care that the compiled versions are suited to your JRE, there's no backward compatibility!)
        * supports any ports, remote rename and resume(aka. 'REST', ftp-server should provide it for preview/cut and hexviewer)
        * supports user specific FTP commands (executed before processing) (<extern> panel)

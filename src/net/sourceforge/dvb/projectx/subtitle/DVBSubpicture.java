@@ -1,7 +1,7 @@
 /*
  * @(#)DVBSubpicture.java - decodes DVB subtitles
  *
- * Copyright (c) 2004 by dvb.matt, All rights reserved
+ * Copyright (c) 2005 by dvb.matt, All rights reserved
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.
@@ -27,7 +27,7 @@
 /*
  * example of a basic implementation of a DVB subtitle decoder
  * 
- * it does not implement yet export of encoded string characters, only bitmapped pictures
+ * it does not yet implement export of encoded string characters, only bitmapped pictures
  * 
  */
 
@@ -177,13 +177,18 @@ public class DVBSubpicture
 		BytePosition = BitPosition>>>3;
 	}
 
-	private void alignBits()
+	private void alignToByte()
 	{
-		if ((1 & BitPosition>>>2) != 0)
-			flushBits(4);
+		alignToByte(2);
 	}
 
-	private void alignBytes()
+	private void alignToByte(int N)
+	{
+		while ( (7 & BitPosition) != 0 )
+			flushBits(N);
+	}
+
+	private void alignToWord()
 	{
 		if ((1 & BytePosition) != 0)
 			flushBits(8);
@@ -213,6 +218,7 @@ public class DVBSubpicture
 		flushBits(8); //padding
 		int stream_ident = getBits(8); // 0 = std
 		int segment_type = 0;
+		int sync_byte = 0;
 
 		//DM30072004 081.7 int07 changed
 		while ( nextBits(8) == 0x0F )
@@ -327,7 +333,7 @@ public class DVBSubpicture
 		int segment_end = getBits(16) + BytePosition;
 		int segment_type = 0x10;
 
-		int time_out = getBits(8) * 100; //page_time_out, milliseconds 'til disappearing without another erase event
+		int time_out = getBits(8) * 100; //page_time_out, milliseconds (here ticks) 'til disappearing without another erase event
 
 		page.setVersionNumber(getBits(4)); //page_version_number, if number exists, update isn't necessary
 
@@ -338,7 +344,7 @@ public class DVBSubpicture
 
 		flushBits(2);
 
-		addBigMessage("pagecomp: state " + page.getState() + " /page " + page.getId() + " /pv " + page.getVersionNumber());
+		addBigMessage("pagecomp: state " + page.getState() + " /page " + page.getId() + " /pv " + page.getVersionNumber() + " /to " + time_out);
 
 		if (page.getState() > 0)
 		{
@@ -356,6 +362,12 @@ public class DVBSubpicture
 				X.Msg(Resource.getString("subpicture.msg.error.dvbdecoding", "" + region.getErrors(), "" + region.getId(), "" + page.getTimeIn()));
 				//region.setActive(false);
 			}
+
+			addBigMessage("enum: region " + region.getId() + " /err " + region.getErrors() + " /acti " + region.isActive() + " /chng " + region.isChanged() + " /ti_o " + time_out);
+//
+			if ( page.getState() == 0 && time_out > 6000 )
+				continue;
+//
 
 			region.setError(0); //DM23062004 081.7 int05 add
 
@@ -550,6 +562,12 @@ public class DVBSubpicture
 		object.setNonModify(getBits(1)); //non_modifying_colour_flag
 		flushBits(1);
 
+		/**
+		 * modify user_table here, if no clut definition were sent
+		 */
+		if (user_table_enabled && clut.getModifyFlags() == 0)
+			setUserClut();
+
 		if (object_coding_method == 0) //pixels
 		{
 			int top_field_data_block_end = getBits(16);
@@ -567,7 +585,7 @@ public class DVBSubpicture
 			while (BytePosition < bottom_field_data_block_end) //if 0-length, copy top field line
 				pixel_block();
 
-			alignBytes(); // flush 8 bits if not aligned
+			alignToWord(); // flush 8 bits if not aligned
 		}
 
 		if (object_coding_method == 1) //text chars
@@ -595,7 +613,7 @@ public class DVBSubpicture
 			while (pixel_code_string_2bit() > 0)
 			{}
 
-			alignBits(); // flush 2 bits if not aligned
+			alignToByte(); // flush 2 bits if not aligned
 		}
 
 		else if (data_type == 0x11)
@@ -603,7 +621,7 @@ public class DVBSubpicture
 			while (pixel_code_string_4bit() > 0)
 			{}
 
-			alignBits(); //flush 4 bits if not aligned
+			alignToByte(); //flush 4 bits if not aligned
 		}
 
 		else if (data_type == 0x12)
@@ -1017,7 +1035,7 @@ public class DVBSubpicture
 
 		case 4:
 			if (depth == 2)
-				color_index = object.getMapTable_2to4bit()[color_index];
+				color_index = (object != null) ? object.getMapTable_2to4bit()[color_index] : color_index;
 
 			else if (depth == 8)
 				color_index >>>= 4;
@@ -1026,10 +1044,10 @@ public class DVBSubpicture
 
 		case 8:
 			if (depth == 2)
-				color_index = object.getMapTable_2to8bit()[color_index];
+				color_index = (object != null) ? object.getMapTable_2to8bit()[color_index] : color_index;
 
 			else if (depth == 4)
-				color_index = object.getMapTable_4to8bit()[color_index];
+				color_index = (object != null) ? object.getMapTable_4to8bit()[color_index] : color_index;
 		}
 
 		return color_index;
@@ -1040,6 +1058,9 @@ public class DVBSubpicture
 	{
 		int model = Integer.parseInt(user_table.get("model").toString().trim());
 		int max_indices = model > 2 ? (model > 4 ? 256 : 16) : 4;
+
+		if (region.getDepth() < model)
+			max_indices = region.getDepth();
 
 		for (int i = 0; i < max_indices; i++)
 		{
