@@ -7,7 +7,7 @@ dvbmatt erl 31.10. - Hänger bei XInput mit FTP -> xinputdirectory wurde vor mess
 31.10. - Bessere Fehlermeldungen bei XInput
 31.10. - commons-net-1.1.0.jar Ort festlegen + MANISFEST.MF und/oder build.bat -> Entscheidung (damit es wieder geht wurde vorerst die MANIFEST.MF angepasst)
 dvbmatt erl - 31.10. - FTPChooser: Internationalisierung,
-31.10. - FTPChooser: Speichern der Einstellungen
+pstorch erl 31.10. - FTPChooser: Speichern der Einstellungen
 31.10. - Leer- und Sonderzeichen in FTP Pfaden (
          Was ist damit? Hat bei mir auf Dreambox noch nie ein Problem gemacht. (roehrist)
 roehrist in Arbeit 31.10. - XInput und RawInterface
