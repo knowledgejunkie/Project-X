@@ -70,19 +70,16 @@ import java.awt.event.WindowEvent;
 import java.awt.image.MemoryImageSource;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PushbackInputStream;
 import java.util.ArrayList;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import net.sourceforge.dvb.projectx.common.*;
-import net.sourceforge.dvb.projectx.video.IDCTRefNative;
-import net.sourceforge.dvb.projectx.video.IDCTSseNative;
+import net.sourceforge.dvb.projectx.common.Resource;
+import net.sourceforge.dvb.projectx.common.X;
 
 
 
@@ -137,7 +134,7 @@ public class Picture extends JPanel {
 		idct = new IDCTRefNative();
 		idctsse = new IDCTSseNative();
 
-		if (idct.isLibraryLoaded())
+		if (IDCTRefNative.isLibraryLoaded())
 			idct.init();
 	//
 
@@ -2242,10 +2239,10 @@ public void motion_compensation(int MBA[], int macroblock_type[], int motion_typ
 		/* ISO/IEC 13818-2 section Annex A: inverse DCT */
 
 //
-		if (idctsse.isLibraryLoaded())
+		if (IDCTSseNative.isLibraryLoaded())
 			idctsse.referenceIDCT(block[comp]);
 
-		else if (idct.isLibraryLoaded())
+		else if (IDCTRefNative.isLibraryLoaded())
 			idct.referenceIDCT(block[comp]);
 
 		else
