@@ -32,127 +32,106 @@ import java.io.*;
 import java.util.*;
 
 import net.sourceforge.dvb.projectx.common.Resource;
-import net.sourceforge.dvb.projectx.xinput.XInputFile;
 
 public class RawInterface
 {
-	private RawReadIF rawread;
-	long stream_size;
+	private RawReadIF rawRead;
+	private long stream_size;
 
 	public RawInterface()
 	{
 		try {
 			Class rawReadClass = Class.forName("RawRead");
-			rawread = (RawReadIF)rawReadClass.newInstance();
+			rawRead = (RawReadIF)rawReadClass.newInstance();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		stream_size = 0;
 	}
 
-	public void add_native_files(ArrayList arraylist)
-	{
-		if (rawread.AccessEnabled())
-			rawread.add_native_files(arraylist);
+	public void add_native_files(ArrayList arraylist) {
+		if (rawRead.AccessEnabled())
+			rawRead.add_native_files(arraylist);
 
 		else
 			return;
 	}
 
-	public String GetLoadStatus()
-	{
-		if (rawread != null && rawread.AccessEnabled())
-			return rawread.GetLoadStatus();
+	public String GetLoadStatus() {
+		if (rawRead.AccessEnabled())
+			return rawRead.GetLoadStatus();
 
 		else
 			return Resource.getString("rawread.msg1");
 	}
 
-	public boolean isAccessibleDisk(XInputFile aXInputFile)
-	{
-		return rawread.isAccessibleDisk(aXInputFile.getName());  // TODO: check if this is ok
+	public boolean isAccessibleDisk(String sourcefile) {
+		return rawRead.isAccessibleDisk(sourcefile);
 	}
 
-	public long getFileSize(XInputFile aXInputFile)
-	{
-		if (isAccessibleDisk(aXInputFile))
-			return rawread.getFileSize(aXInputFile.getName()); // TODO: check if this is ok
+	public long getFileSize(String sourcefile) {
+		if (isAccessibleDisk(sourcefile))
+			return rawRead.getFileSize(sourcefile);
 
-		else if (aXInputFile.exists())
-			return (aXInputFile.length());
+		else if (new File(sourcefile).exists())
+			return (new File(sourcefile).length());
 
 		else
 			return -1L;
 	}
 
-	public String getFileDate(XInputFile aXInputFile)
-	{
-		if (isAccessibleDisk(aXInputFile))
-		{
-			long datetime = rawread.lastModified(aXInputFile.getName().substring(1)); // TODO: check if this is ok
-			return java.text.DateFormat.getDateInstance(java.text.DateFormat.LONG).format(new java.util.Date(datetime)) + "  " + java.text.DateFormat.getTimeInstance(java.text.DateFormat.LONG).format(new java.util.Date(datetime));
-		}
-		else
-			return java.text.DateFormat.getDateInstance(java.text.DateFormat.LONG).format(new java.util.Date(aXInputFile.lastModified()))+"  "+java.text.DateFormat.getTimeInstance(java.text.DateFormat.LONG).format(new java.util.Date(aXInputFile.lastModified()));
+	public String getFileDate(String sourcefile) {
+		if (isAccessibleDisk(sourcefile)) {
+			long datetime = rawRead.lastModified(sourcefile.substring(1));
+			return java.text.DateFormat.getDateInstance(java.text.DateFormat.LONG).format(new java.util.Date(datetime))
+					+ "  " + java.text.DateFormat.getTimeInstance(java.text.DateFormat.LONG).format(new java.util.Date(datetime));
+		} else
+			return java.text.DateFormat.getDateInstance(java.text.DateFormat.LONG).format(
+					new java.util.Date(new File(sourcefile).lastModified()))
+					+ "  "
+					+ java.text.DateFormat.getTimeInstance(java.text.DateFormat.LONG).format(
+							new java.util.Date(new File(sourcefile).lastModified()));
 	}
 
-	public boolean getScanData(XInputFile aXInputFile, byte data[]) throws IOException
-	{
-		return getScanData(aXInputFile, data, 0);
-	}
-
-	public boolean getScanData(XInputFile aXInputFile, byte data[], long position) throws IOException
-	{
-		if (isAccessibleDisk(aXInputFile))
-		{
-			RawFileInputStream rawin = new RawFileInputStream(rawread, aXInputFile.getName()); // TODO: check if this is ok
-
-			rawin.skip(position);
+	public boolean getScanData(String sourcefile, byte data[]) throws IOException {
+		if (isAccessibleDisk(sourcefile)) {
+			RawFileInputStream rawin = new RawFileInputStream(rawRead, sourcefile);
 			rawin.read(data, 0, data.length);
 			rawin.close();
 
 			return true;
-		}
-		else
+		} else
 			return false;
 	}
 
-	public boolean getData(XInputFile aXInputFile, byte data[], long skip_size, int read_offset, int size) throws IOException
-	{
-		if (isAccessibleDisk(aXInputFile))
-		{
-			RawFileInputStream rawin = new RawFileInputStream(rawread, aXInputFile.getName());
+	public boolean getData(String sourcefile, byte data[], long skip_size, int read_offset, int size) throws IOException {
+		if (isAccessibleDisk(sourcefile)) {
+			RawFileInputStream rawin = new RawFileInputStream(rawRead, sourcefile);
 			rawin.skip(skip_size);
 			rawin.read(data, read_offset, size);
 			rawin.close();
 
 			return true;
-		}
-		else
+		} else
 			return false;
 	}
 
-	public PushbackInputStream getStream(XInputFile aXInputFile, int buffersize) throws IOException
-	{
+	public PushbackInputStream getStream(String sourcefile, int buffersize) throws IOException {
 		PushbackInputStream stream = null;
 
-		if (isAccessibleDisk(aXInputFile))
-		{
-			RawFileInputStream rawin = new RawFileInputStream(rawread, aXInputFile.getName());
+		if (isAccessibleDisk(sourcefile)) {
+			RawFileInputStream rawin = new RawFileInputStream(rawRead, sourcefile);
 			stream = new PushbackInputStream(rawin, buffersize);
 			stream_size = rawin.streamSize();
-		}
-		else
-		{
-			stream = new PushbackInputStream(aXInputFile.getInputStream(), buffersize);
-			stream_size = aXInputFile.length();
+		} else {
+			stream = new PushbackInputStream(new FileInputStream(sourcefile), buffersize);
+			stream_size = new File(sourcefile).length();
 		}
 
 		return stream;
 	}
 
-	public long getStreamSize()
-	{
+	public long getStreamSize() {
 		return stream_size;
 	}
 }

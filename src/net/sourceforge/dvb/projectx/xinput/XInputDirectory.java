@@ -65,17 +65,13 @@ public class XInputDirectory implements XInputDirectoryIF {
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	public boolean equals(Object aObj) {
-		if (!(aObj instanceof XInputDirectory))
-		{
+		if (!(aObj instanceof XInputDirectory)) {
 			return false;
 		}
 		XInputDirectory other = (XInputDirectory)aObj;
-		if (other.getDirType().equals(impl.getDirType())
-			&& other.toString().equals(impl.toString()))
-		{
+		if (other.getDirType().equals(getDirType()) && other.toString().equals(toString())) {
 			return true;
 		}
-		
 		return false;
 	}
 

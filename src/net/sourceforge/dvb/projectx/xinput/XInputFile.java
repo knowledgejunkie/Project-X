@@ -220,17 +220,13 @@ public class XInputFile implements XInputFileIF {
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	public boolean equals(Object aObj) {
-		if (!(aObj instanceof XInputFile))
-		{
+		if (!(aObj instanceof XInputFile)) {
 			return false;
 		}
 		XInputFile other = (XInputFile)aObj;
-		if (other.getFileType().equals(impl.getFileType())
-			&& other.toString().equals(impl.toString()))
-		{
+		if (other.getFileType().equals(getFileType()) && other.toString().equals(toString())) {
 			return true;
 		}
-		
 		return false;
 	}
 

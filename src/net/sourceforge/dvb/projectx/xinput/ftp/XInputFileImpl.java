@@ -31,14 +31,6 @@ public class XInputFileImpl implements XInputFileIF {
 	// Members used for type FileType.FTP
 	private FtpVO ftpVO = null;
 
-	
-	/* (non-Javadoc)
-	 * @see net.sourceforge.dvb.projectx.xinput.XInputFileIF#getFileType()
-	 */
-	public FileType getFileType() {
-		return fileType;
-	}
-	
 	private FTPFile ftpFile = null;
 
 	/**
@@ -103,7 +95,14 @@ public class XInputFileImpl implements XInputFileIF {
 
 		return s;
 	}
-
+	
+	/* (non-Javadoc)
+	 * @see net.sourceforge.dvb.projectx.xinput.XInputFileIF#getFileType()
+	 */
+	public FileType getFileType() {
+		return fileType;
+	}
+	
 	/**
 	 * Get url representation of the object.
 	 * 

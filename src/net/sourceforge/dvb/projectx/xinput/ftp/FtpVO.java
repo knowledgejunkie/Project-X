@@ -36,6 +36,7 @@ public class FtpVO implements Cloneable {
 
 
 	public void fromString(String string) {
+		// Don't use String.split(), because it is not available on jdk 1.2	
 		StringTokenizer st = new StringTokenizer(string, "|");
 		String[] tokens = new String[5];
 
@@ -47,17 +48,6 @@ public class FtpVO implements Cloneable {
 		user = tokens[3];
 		password = tokens[4];
 	}
-
-	/** not available on jdk1.2 **/
-	/**
-	public void fromString(String string) {
-		String[] tokens = string.split("|");
-		server = tokens[1];
-		directory = tokens[2];
-		user = tokens[3];
-		password = tokens[4];
-	}
-	**/
 
 	/**
 	 * @return Returns the directory.

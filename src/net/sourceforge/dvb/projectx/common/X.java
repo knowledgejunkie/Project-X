@@ -164,7 +164,6 @@ import net.sourceforge.dvb.projectx.xinput.XInputFile;
 import net.sourceforge.dvb.projectx.xinput.ftp.FtpChooser;
 import net.sourceforge.dvb.projectx.xinput.topfield_raw.RawInterface;
 
-
 public class X extends JPanel
 {
 
@@ -174,8 +173,6 @@ static String version_date = "29.10.2004";
 
 public static boolean CLI_mode = false;
 
-//DM18062004 081.7 int05 add
-RawInterface raw_interface = new RawInterface();
 static int loadSizeForward = 2560000;
 
 static BRMonitor brm;
@@ -3262,7 +3259,7 @@ class COLLECTION extends JFrame
 	long cutPoints[]=new long[0]; //DM17012004 081.6 int11 changed, DM29012004 int12 fix
 
 	//DM24062004 081.7 int05 changed
-	Preview Preview = new Preview(loadSizeForward, MPVDecoder, raw_interface);
+	Preview Preview = new Preview(loadSizeForward, MPVDecoder);
 	//PREVIEW Preview = new PREVIEW();
 
 	//DM18022004 081.6 int17 new
@@ -4046,7 +4043,7 @@ class COLLECTION extends JFrame
 
 				//DM18062004 081.7 int05 changed
 				start = end;
-				end += raw_interface.isAccessibleDisk(xInputFile) ? raw_interface.getFileSize(xInputFile) : xInputFile.length();
+				end += xInputFile.length();
 				previewList.add(new PreviewObject(start, end, type, xInputFile));
 				break;
 
@@ -4708,12 +4705,9 @@ public void ScanInfo(XInputFile aXInputFile)
 	values += Resource.getString("scaninfo.location") + "\t" + aXInputFile.getParent() + "\n";
 	values += Resource.getString("scaninfo.name") + "\t" + aXInputFile.getName() + "\n";
 
-	int source = raw_interface.isAccessibleDisk(aXInputFile) ? 2 : (aXInputFile.exists() ? 1 : 0);
-	long size = source == 2 ? raw_interface.getFileSize(aXInputFile) : aXInputFile.length();
-
-	if (source > 0)
+	if (aXInputFile.exists())
 	{
-		values += Resource.getString("scaninfo.size") + "\t" + (size / 1048576) + " MB (" + size + " " + Resource.getString("scaninfo.bytes") + ")" + "\n";
+		values += Resource.getString("scaninfo.size") + "\t" + (aXInputFile.length() / 1048576) + " MB (" + aXInputFile.length() + " " + Resource.getString("scaninfo.bytes") + ")" + "\n";
 		String type = Resource.getString("scaninfo.type") + "\t" + scan.Type(aXInputFile) + "\n"; // must be first when scanning
 		values += Resource.getString("scaninfo.date") + "\t" + scan.Date(aXInputFile) + "\n";
 		values += "\n";
@@ -4724,10 +4718,10 @@ public void ScanInfo(XInputFile aXInputFile)
 		values += Resource.getString("scaninfo.subpicture") + "\t" + scan.getPics()+ "\n"; //DM28042004 081.7 int02 add
 		values += Resource.getString("scaninfo.playtime") + "\t" + scan.getPlaytime()+ "\n";
 		FileInfoTextArea.setBackground(scan.isSupported() ? new Color(225,255,225) : new Color(255,225,225));
-	}
-
-	else
+	}	else 
+	{
 		values += "\n" + Resource.getString("scaninfo.notfound") + "\n";
+	}
 
 	FileInfoTextArea.setText(values);
 }
@@ -4988,7 +4982,8 @@ public void inputlist()
 
 	// Get all Topfield files (instead of a full XInputDirectory integration)
 	/* TODO Ist das genug? */
-	raw_interface.add_native_files(arraylist);
+	/** TODO Direkte Benutzung von RawInterface noch ändern */
+	(new RawInterface()).add_native_files(arraylist);
 
 	if (arraylist.size() > 0) 
 		inputfiles = arraylist.toArray();
@@ -5084,7 +5079,8 @@ public void javaEV()
 	TextArea.append("\n" + Resource.getString("javaev.java.ini.file") + "\t" + inifile);
 
 	//DM18062004 081.7 int05 add
-	TextArea.append("\n" + Resource.getString("javaev.java.disk.access") + "\t" + raw_interface.GetLoadStatus());
+	/** TODO Direkte Benutzung von RawInterface noch ändern */
+	TextArea.append("\n" + Resource.getString("javaev.java.disk.access") + "\t" + (new RawInterface()).GetLoadStatus());
 }
 
 /****************
@@ -6221,11 +6217,9 @@ public void working() {
 		{
 			XInputFile xInputFile = (XInputFile)workinglist.get(h);
 
-			//DM22062004 081.7 int05 changed++
-			long file_size = raw_interface.getFileSize(xInputFile);
 			Msg("\r\n" + Resource.getString("working.file", "" + h, xInputFile, "" + xInputFile.length()));
 
-			if (file_size < 0)
+			if (!xInputFile.exists())
 			{
 				Msg(Resource.getString("working.file.not.found"));
 				continue argsloop;
@@ -6583,11 +6577,8 @@ public void pesparse(XInputFile aXInputFile, String vptslog, int ismpg)
 	try 
 	{
 
-	//long size = aXInputFile.length();
-
-	//DM18062004 081.7 int05 changed
-	PushbackInputStream in = raw_interface.getStream(aXInputFile, bs);
-	long size = raw_interface.getStreamSize();
+	PushbackInputStream in = new PushbackInputStream(aXInputFile.getInputStream(),bs);
+	long size = aXInputFile.length();
 
 	progress.setString(Resource.getString("pesparse.demux.pes") + " " + aXInputFile.getName());
 	progress.setStringPainted(true);
@@ -7187,8 +7178,8 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 		Msg(Resource.getString("vdrparse.continue")+": "+aXInputFile);
 
 	//DM18062004 081.7 int05 changed
-	PushbackInputStream in = raw_interface.getStream(aXInputFile, bs);
-	size = count + raw_interface.getStreamSize();
+	PushbackInputStream in = new PushbackInputStream(aXInputFile.getInputStream(),bs);
+	size = count + aXInputFile.length();
 	long base = count;
 
 	while (count < startPoint)
@@ -7911,13 +7902,8 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 			count = size;
 			base = count;
 
-			//size += nextXInputFile.length();
-			//in = new PushbackInputStream(nextXInputFile.getInputStream(),bs);
-
-			//DM18062004 081.7 int05 changed
-			in = raw_interface.getStream(nextXInputFile, bs);
-			size += raw_interface.getStreamSize();
-
+			size += nextXInputFile.length();
+			in = new PushbackInputStream(nextXInputFile.getInputStream(),bs);
 
 			Msg(Resource.getString("vdrparse.actual.written") + " "+options[7]);
 			Msg(Resource.getString("vdrparse.switch")+" "+nextXInputFile);
@@ -8208,9 +8194,8 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 
 	long base = count;
 
-	//DM18062004 081.7 int05 changed
-	PushbackInputStream in = raw_interface.getStream(xInputFile, 200);
-	size = count + raw_interface.getStreamSize();
+	PushbackInputStream in = new PushbackInputStream(xInputFile.getInputStream(),200);
+	size = count + xInputFile.length();
 
 
 	while (count < startPoint)
@@ -8824,9 +8809,8 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 			XInputFile nextXInputFile = (XInputFile)combvideo.get(++FileNumber);
 			count = size;
 
-			//DM18062004 081.7 int05 changed++
-			in = raw_interface.getStream(nextXInputFile, 200);
-			long fsize = raw_interface.getStreamSize();
+			in = new PushbackInputStream(nextXInputFile.getInputStream(),200);
+			long fsize = nextXInputFile.length();
 
 			//Ghost23012004 081.6 int11 changed
 			size += fsize;
@@ -9376,19 +9360,13 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 	aPvaXInputFile = (XInputFile)combvideo.get(FileNumber);
 	count = starts[FileNumber];
 
-	//size = count + aPvaXInputFile.length();
-
 	if (FileNumber>0)
 		Msg(Resource.getString("pvaparse.continue")+" "+aPvaXInputFile);
 
 	long base = count;
 
-	//PushbackInputStream in = new PushbackInputStream(aPvaXInputFile.getInputStream(),bs);
-
-	//DM18062004 081.7 int05 changed
-	PushbackInputStream in = raw_interface.getStream(aPvaXInputFile, 65600);
-	size = count + raw_interface.getStreamSize();
-
+	PushbackInputStream in = new PushbackInputStream(aPvaXInputFile.getInputStream(),65600);
+	size = count + aPvaXInputFile.length();
 
 	while (count < startPoint) {
 		count += in.skip(startPoint-count);
@@ -9788,14 +9766,9 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 			XInputFile nextXInputFile = (XInputFile)combvideo.get(++FileNumber);
 			count = size;
 
-			//size += nextXInputFile.length();
-			//in = new PushbackInputStream(nextXInputFile.getInputStream(),bs-1000000);
-
-			//DM18062004 081.7 int05 changed
-			in = raw_interface.getStream(nextXInputFile, 65600);
-			size += raw_interface.getStreamSize();
+			in = new PushbackInputStream(nextXInputFile.getInputStream(),65600);
+			size += nextXInputFile.length();
 			base = count;
-
 
 			Msg(Resource.getString("pvaparse.actual.vframes")+" "+options[7]);
 			Msg(Resource.getString("pvaparse.continue")+" "+nextXInputFile);

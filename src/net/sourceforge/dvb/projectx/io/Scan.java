@@ -28,7 +28,9 @@ package net.sourceforge.dvb.projectx.io;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
@@ -37,7 +39,6 @@ import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.X;
 import net.sourceforge.dvb.projectx.video.Video;
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
-import net.sourceforge.dvb.projectx.xinput.topfield_raw.RawInterface;
 
 public class Scan
 {
@@ -85,16 +86,11 @@ public class Scan
 
 	java.text.DateFormat timeformat = new java.text.SimpleDateFormat("HH:mm:ss.SSS");
 
-	//DM18062004 081.7 int05 add
-	RawInterface raw_interface;
-
 	ArrayList video_streams, audio_streams, ttx_streams, pic_streams;
 
 	//DM18062004 081.7 int05 add
 	public Scan()
 	{
-		raw_interface = new RawInterface();
-
 		video_streams = new ArrayList();
 		audio_streams = new ArrayList();
 		ttx_streams = new ArrayList();
@@ -127,7 +123,9 @@ public class Scan
 	//DM18062004 081.7 int05 changed
 	public String Date(XInputFile aXInputFile)
 	{
-		return raw_interface.getFileDate(aXInputFile);
+		return DateFormat.getDateInstance(DateFormat.LONG).format(new Date(aXInputFile.lastModified()))
+		       + "  "
+					 + DateFormat.getTimeInstance(DateFormat.LONG).format(new Date(aXInputFile.lastModified()));
 	}
  
 	private String readStreams(ArrayList streams, String str)
@@ -185,11 +183,7 @@ public class Scan
 	//DM18062004 081.7 int05 changed
 	public boolean isEditable()
 	{
-		if (raw_interface.isAccessibleDisk(origFile))
-			return hasVideo;
-
-		else
-			return (origFile.exists() && hasVideo);
+		return (origFile.exists() && hasVideo);
 	}
 
 	public XInputFile getFile()
@@ -899,12 +893,8 @@ public class Scan
    
 		try 
 		{
-			//DM18062004 081.7 int05 changed
-			if (!raw_interface.getScanData(aXInputFile, check, position))
-			{
-				size = aXInputFile.length();
-				aXInputFile.randomAccessSingleRead(check, 0);
-			}
+			size = aXInputFile.length();
+			aXInputFile.randomAccessSingleRead(check, position);
 
 			riffcheck:
 			for (int a=0; a<bs0; a++)  //DM30122003 081.6 int10 add, compressed as AC3,MPEG is currently better detected as ES-not RIFF
