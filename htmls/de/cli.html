@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+  <title>CL-Interface</title>
+</head>
+<body alink="#ff0000" bgcolor="#e0e0e0" link="#0000ee" text="#000000"
+ vlink="#551a8b">
+<blockquote>
+  <center><a href="index.html"><img alt="" src="../images/up.gif"
+ style="border: 0px solid ; width: 16px; height: 16px;"></a>&nbsp;&nbsp;<a
+ href="faq.html"><img alt="" src="../images/right.gif"
+ style="border: 0px solid ; width: 16px; height: 16px;"></a></center>
+  <b>CL-Interface:</b> <br>
+  <i>[Optionen] &lt;Quelldatei 1&gt;...[&lt;Quelldatei x&gt;]</i>
+  <p><u>Anm:</u> <br>
+CL l&auml;dt alle GUI Komponenten, ohne diese jedoch anzuzeigen
+(Ausnahme
+[-g]). <br>
+Eingaben &uuml;ber das CL-I gelten als 1 Job. </p>
+  <p><i><u>keine Optionen</u></i> <br>
+startet das GUI <br>
+es wird die Standard-ini-Datei im aktuellen Pfad gelesen (falls
+vorhanden)
+und beim Beenden &uuml;berschrieben. </p>
+  <p><i><u>Optionen:</u></i> <br>
+  <b>-c &lt;ini_file&gt;</b> <br>
+die zum Laden mit vollst&auml;ndigem Pfad anzugebene &lt;ini-Datei&gt;
+&uuml;berschreibt alle Standardeinstellungen mit den darin enthaltenen.
+  <br>
+es m&uuml;ssen nicht alle Settings enthalten sein, bei fehlenden wird
+der Standard gesetzt. <br>
+alle Optionen des GUI einschlie&szlig;lich post-commands sind direkt
+&uuml;ber die ini-Datei steuerbar, ausgenommen Benutzervariablen wie
+[-n,p,i]/Quelldatei.. </p>
+  <p><b>-dvx1</b> <br>
+setzt die 2.Option zur Erzeugung einer .d2v Projektdatei </p>
+  <p><b>-dvx2</b> <br>
+setzt die 2.Option zur Erzeugung einer .d2v Projektdatei <br>
+setzt die Option zum Anf&uuml;gen eines RIFF Wave Headers bei AC3
+Dateien </p>
+  <p><b>-dvx3</b> <br>
+setzt die 2.Option zur Erzeugung einer .d2v Projektdatei <br>
+setzt die Option zum Anf&uuml;gen eines RIFF Wave Headers bei MPEG
+Audio Dateien </p>
+  <p><b>-dvx4</b> <br>
+setzt die 2.Option zur Erzeugung einer .d2v Projektdatei <br>
+setzt die Option zum Anf&uuml;gen eines RIFF Wave Headers bei AC3
+Dateien <br>
+setzt die Option zum Anf&uuml;gen eines RIFF Wave Headers bei MPEG
+Audio Dateien </p>
+  <p>die o.g. Optionen k&ouml;nnen nicht gemeinsam verwendet werden! <br>
+die u.g. sind wahlfrei, m&uuml;ssen aber den o.g. (falls diese optional
+verwendet werden) oder direkt dem Programmnamen folgen. </p>
+  <p><b>-o &lt;path&gt;</b> <br>
+&uuml;berschreibt die aktuellen Einstellungen zum &lt;Ausgabepfad&gt;,
+der vollst&auml;ndig angegeben werden muss. </p>
+  <p><b>-n &lt;filename&gt;</b> <br>
+erzwingt f&uuml;r alle erstellten Dateien diesen &lt;Basisnamen&gt;
+(ohne
+Pfad). <br>
+(Option ist im GUI nicht verf&uuml;gbar) </p>
+  <p><b>-p &lt;file&gt;</b> <br>
+die zum Laden mit vollst&auml;ndigem Pfad anzugebene &lt;cut-Datei&gt;
+(text, zeilenorientiert) &uuml;bergibt die vorher festgelegten
+Schnittpunkte. <br>
+Auswertung erfolgt entsprechend dem aktuellen Schnitt-Modus -&gt;
+ini-Datei,
+std = bytepos. cut </p>
+  <p><b>-i &lt;token1,token2,..&gt;</b> <br>
+&uuml;bergibt vorausgew&auml;hlte (P)IDs zur gefilterten Bearbeitung,
+mehrere getrennt mit Komma, die dann exklusiv verwendet werden. </p>
+  <p><b>-l</b> <br>
+erstellt die Standard Logdatei </p>
+  <p><b>-g</b> <br>
+startet das GUI mit allen &uuml;bergebenen Parametern anstatt den Job
+auf der Kommandozeile zu starten. <br>
+beim Beenden werden &Auml;nderungen im GUI, wie auch &uuml;ber das
+CLI, nicht in der ini-Datei gespeichert. </p>
+  <p><b>&lt;Quelldatei 1..x&gt;</b> <br>
+die Quelldateien einschlie&szlig;lich Pfad dieses einen Jobs
+m&uuml;ssen
+am Ende in der vorgesehen Bearbeitungsreihenfolge stehen. <br>
+&nbsp; </p>
+  <p>Zum Erzeugen einer bestimmten ini-Datei alle Grundeinstellungen im
+GUI
+vornehmen und nach Programmende unter einem anderen (beliebigen) Namen
+speichern. </p>
+  <center><a href="index.html"><img alt="" src="../images/up.gif"
+ style="border: 0px solid ; width: 16px; height: 16px;"></a>&nbsp;&nbsp;<a
+ href="faq.html"><img alt="" src="../images/right.gif"
+ style="border: 0px solid ; width: 16px; height: 16px;"></a></center>
+</blockquote>
+</body>
+</html>

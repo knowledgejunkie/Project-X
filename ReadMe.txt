@@ -41,90 +41,61 @@
 
  This program is provided in sourcecode form only,
  because it is meant for educational purposes.
- Binaries will not be included.
+ Binaries of this project itself will not be included.
 
  If you need an executable, you have to compile the package by yourself,
  or you ask someone to do so for you.
 
  For a compilation, you need a Java SDK, which is available for various platforms.
 
- All classes should work with Sun's JDK/J2RE 1.2.2 and higher.
+ All classes should work at least with Sun's JDK/J2RE 1.2.2 and higher.
  Note: under special circumstances, some graphic drivers/locales cause 
        big troubles with some versions of JRE's on different OS's.
 
 
- Extract all files from the received archive to a separate directory.
- the archive contains:
+   Extract all files from the received archive to a separate directory.
 
-	COPYING
-	readme.txt
-	ReleaseNotes.txt
-	ac3.bin      - optional, copy to the same place as your compiled version of X
-	colours.tbl  - optional, copy to the same place as your compiled version of X
+   sample of a compilation (may differ on your system) :
 
-	htmls/.. 
-	index.html   - optional, copy to the same place as your compiled version of X
+   (A) open "build.bat" with an editor an check/correct the entry/path of JAVA_HOME 
+       of your installed JDK 
 
-	src/..
-	Audio.java
-	AudioFrameConstants.java
-	Bitmap.java
-	BMP.java
-	BRMonitor.java
-	CharSet.java
-	Common.java
-	CRC.java
-	D2V.java
-	DVBSubpicture.java
-	HexViewer.java
-	Html.java
-	IDDBufferedOutputStream.java
-	Ifo.java
-	LogArea.java
-	MPAC.java
-	MPAD.java
-	MPVD.java
-	Preview.java
-	PreviewObject.java
-	RawInterface.java
-	RawFileInputStream.java	 - symbolical class
-	RawRead.java	         - symbolical class
-	RIFFHeader.java
-	Scan.java
-	StartUp.java
-	SubPicture.java
-	Teletext.java
-	TeletextPageMatrix.java
-	TS.java
-	UISwitchListener.java
-	Video.java
-	WSS.java
-	X.java
-	MANIFEST.MF	- manifest (refers to the main class and JDK version)
+   (B) execute the "build.bat" on its place.
+       that will compile all sources, 
+       build the .jar file and
+       copies the resource files from the resource folder into the new .jar,
+
+       Note: now, we made a package for the sources
+             the file source.lst points to all required sourcefiles and its location
+
+   (C) additional received resource files (e.g. other language files) can be added 
+       to the .jar file, later, 
+       or you put them into the same folder where the compiled .jar is executed.
 
 
-	sample of a compilation (may differ on your system) :
+   the compiling process doesn't take more than about 30 seconds.
 
-	(A) compile the sources:
-		your_extract_path/src> [location_of_javac]javac [-O] *.java
 
-	(B) create an .jar archive:
-		your_extract_path/src> [location_of_jar]jar cfvm <new archive_name.jar> MANIFEST.MF *.class
-
-	Note:	the .jar archive shall only contain the .class files without any path
-		plus the manifest in  META-INF\MANIFEST.MF
-
-	(C) execute the <new archive_name.jar>
-		your_extract_path/src> [location_of_java]java -jar <new archive_name.jar>
-
-	the compiling process doesn't take more than about 30 seconds.
+ ProjectX - CVS at sourceforge.net/projects/project-x/
 
 /==============================================================================/
 
  CREDITS
 
-    -  thanx to all the people, who gave hints, files and other things
-       to the discontinued "father" of X and this new project
+	-  thanx to all the people, who gave hints, files and other things to this project:
+
+	dvb.matt - father of Project-X
+	Lucike - forum hoster, documentation
+	TheHorse - keyboardcontrol of preview
+	java.lang - conditional patch of H-resolution
+	R-One - DTS support
+	ghost - dreambox file segment completion
+	roehrist - CVS, X-input
+	pstorch - i18n support
+	chrisg - Topfield disk access (AddOn)
+	jazzydane - danish translation
+	Eric Albert - BrowserLauncher
+	...and all other supporters...
 
 /===============================================================================/
 

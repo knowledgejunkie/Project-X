@@ -1,0 +1,66 @@
+//project X optional file
+//user colour table definition for DVB subpictures, creating a .sup file, as a replacement of the internal remapping
+
+//required entries of a table:
+//table=list name
+//model=final colour link depth of this table in bits (2, 4, 8) (means max. 4, 16, 256 paletized colours, best value depends on broadcasters std. table)
+//0..x=ARGB (alpha,red,green,blue as 32bit uimsbf, 8bit each)  (undefined colour links are fully transparent)
+
+//you can add as many tables you wish
+
+table=SVT
+model=4
+0=0
+1=FF101000
+2=0
+3=FF101010
+4=FF101010
+5=FF101010
+6=FF101010
+7=FF101010
+8=FF101010
+9=FF101010
+10=FF101010
+11=FF989898
+12=FF989898
+13=FF989898
+14=FFDCDCDC
+15=FFDCDCDC
+
+table=NRK
+model=4
+0=0
+1=D4101010
+2=D4101010
+3=D4101010
+4=D4101010
+5=D4101010
+6=D4101010
+7=D4101010
+8=D4101010
+9=D4101010
+10=FF7C7C7C
+11=FF7C7C7C
+12=FF7C7C7C
+13=FFDCDCDC
+14=FFDCDCDC
+15=FFDCDCDC
+
+table=YLE
+model=4
+0=0
+1=FF010101
+2=FF010101
+3=FF010101
+4=FF010101
+5=FF010101
+6=FF010101
+7=FF9C9C9C
+8=FF9C9C9C
+9=FFD0D0D0
+10=FFD0D0D0
+11=FFD0D0D0
+12=FFD0D0D0
+13=FFD0D0D0
+14=FFD0D0D0
+15=FFD0D0D0

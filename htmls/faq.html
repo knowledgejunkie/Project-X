@@ -1,219 +1,196 @@
-<HTML>
-<HEAD>
-   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
-   <TITLE>faq</TITLE>
-</HEAD>
-<BODY TEXT="#000000" BGCOLOR="#D1D7DC" LINK="#0000EE" VLINK="#551A8B" ALINK="#FF0000">
-<BLOCKQUOTE>
-<CENTER><A HREF="index.html"><IMG SRC="images/up.gif" HEIGHT=16 WIDTH=16></A>&nbsp;&nbsp;<A HREF="cli.html"><IMG SRC="images/right.gif" HEIGHT=16 WIDTH=16></A></CENTER>
-<B><FONT SIZE=+1>NAQs &amp; FAQs</FONT></B>
-
-<P><B>im folgenden werden f&uuml;r diejenigen, die dem 'Geist' von Projekt
-X folgen und sich mit der Materie auseinandersetzen m&ouml;chten, in loser
-Folge ein paar Anregungen und Denkanst&ouml;&szlig;e zum Studieren und
-Ausprobieren gegeben.</B><B></B>
-
-<P><B>im &uuml;brigen kann man sich weitergehenden Problemen nur annehmen,
-wenn diese auch im Forum ge&auml;u&szlig;ert werden. Andernfalls werden
-diese ungel&ouml;st bleiben.</B>
-<BR><B>Die F&uuml;lle an verf&uuml;gbarer Hard- und Software mit all ihren
-Eigenheiten zum Mitschnitt von DVB-Aufnahmen erfordert u.U. eine Abweichung
-von den Allgemeineinstellungen in Pj. X .</B>
-<BR>&nbsp;
-<BR>&nbsp;
-
-<P><B><FONT COLOR="#009900">1.) Ich bin geh&ouml;rlos und m&ouml;chte gern
-die Teletext-Untertitel aus einer aufgezeichneten Sendung mit auf meine
-DVD &uuml;bernehmen.&nbsp;</FONT></B>
-
-<P><U>Voraussetzungen:</U>
-<BR>1) Untertitel werden im Teletext mit &uuml;bertragen. (z.B. Tafel 149,
-150, 888, ...)
-<BR>2) Das Aufzeichnungsprogramm muss in der Lage sein, den Bild-/Ton-und
-Teletext-Datenstrom unver&auml;ndert als separate Datei(en) oder alles
-inklusive aufzuzeichnen.
-<BR>3) Die Sendeanstalten &uuml;bertragen die zur sp&auml;teren Bild-Synchronisation
-wichtigen Zeitangaben. Nicht alle tun dies oder nicht richtig!
-<BR>4) Ein Authoringprogramm, dass eines der Untertitelformate unterst&uuml;tzt.
-
-<P><U>Vorgehensweise:</U>
-<BR>1) Aufzeichnen der Sendung.
-<BR>2) Einladen der Dateien als eine Collection in Projekt X, wobei eine/mehrere
-separate Teletextdatei(en) zuletzt stehen.
-<BR>3) im Reiter {teletext}die Tafel(n) mit den Untertiteln von Interesse
-(max. 6) ausw&auml;hlen bzw. eingeben.
-<BR>Zus&auml;tzlich das Ausgabeformat entsprechend dem Authoringprogramm
-ausw&auml;hlen.
-<BR>4) falls n&ouml;tig, Schnittpunkte &uuml;ber die {collection specials}
-setzen und weitere Einstellungen vornehmen.
-<BR>5) im Reiter {main} {demux} w&auml;hlen und {Go}.
-<BR>6) DVD mit den neu erzeugten Dateien authoren.
-
-<P><U>Hinweise:</U>
-<BR>Der einfachste und sicherste Weg f&uuml;r diesen Zweck ist die Kette:
-Aufnahme -> Projekt X -> ifoedit -> DVD.
-<BR>Das im Ergebnis kein Startmen&uuml; vorliegt, l&auml;sst sich verschmerzen.
-
-<P>vorher ist jedoch einmalig Einiges einzustellen und das Ergebnis zu
-testen:
-<BR>1) in Projekt X im Reiter {teletext} das Format {SUP} w&auml;hlen,
-dazu {show preview} aktivieren und einen {Textfont} w&auml;hlen.
-<BR>2) entsprechend o.g. Vorgehensweise den Vorgang starten.
-<BR>3) in der {subtitle preview} ist zu subjektiv beurteilen, ob einem
-die gew&auml;hlte Schriftart zusagt und der Text im allgemeinen den schwarzen
-Hintergrund gut ausf&uuml;llt jedoch nicht &uuml;berschreibt. Entsprechend
-sind die speziellen SUP-Werte lt. Pj.X Dokumentation zu variieren.
-<BR>+ Es ist zu beachten, das die Plazierung der UTs im Bild von der Aufl&ouml;sung
-der Bilddatei abh&auml;ngen! Die Vorgaben entsprechen hierbei alle dem
-&uuml;blichen D1 Standard von 720*576 .
-<BR>4) in ifoedit sind nun nacheinander die Videodatei, Audiodatei und
-UT-Datei ( xyz[X].sup ) und evtl. Kapiteldatei zu laden und mit {ok} als
-DVD zu kompilieren.
-<BR>5) Da die erzeugten .IFO-Dateien noch Standard-Farbwerte f&uuml;r Men&uuml;s/Untertitel
-enthalten, m&uuml;ssen diese -abgesehen von anderen notwendigen Einstellungen,
-die jedoch nicht mit den UTs im Zusammenhang stehen- im Nachhinein f&uuml;r
-die Teletextfarben angepasst werden.
-<BR>+ zus&auml;tzlich zu den erzeugten .IFOs ist noch, falls vorhanden,
-eine spezielle vorgefertigte COLORS.IFO mit den 'neuen' Farben zu laden
-und dort im Men&uuml; VTS_PGCITI der Eintrag VTS_PGC_1 zu w&auml;hlen und
-dann im ifoedit-Men&uuml; der Punkt {subtitle colors} {copy colors..},
-andernfalls m&uuml;ssen alle Farbwerte manuell eingegeben werden.
-<BR>+ In der neuen VTS_xx_0.IFO ist derselbe Eintrag zu w&auml;hlen, dann
-jedoch statt {copy...} {paste colors...}! Die &Auml;nderungen sind in dieser
-.IFO zu speichern.
-<BR>6) das erzeugte Titleset auf eine -RW brennen bzw. in einem Softwarespieler
-testen.
-
-<P><U>Besonderheiten:</U>
-<BR>1) das SUP und SSA Format &uuml;bernehmen die Vordergrundfarben weitestgehend
-so wie im Teletext. Im SUP Format sind jedoch nur 4 Farben je Einblendung
-zul&auml;ssig (zumeist halbtransparenter Text-Hintergrund eingeschlossen),
-wodurch sich ggfs. zwangsl&auml;ufig &Auml;nderungen in der Darstellung
-ergeben. Ab der V.081.6 int10 werden Schriften, die im Original nicht schwarz
-hinterlegt sind, zur besseren Unterscheidung kursiv dargestellt, so es
-die gew&auml;hlte Schriftart auch unterst&uuml;tzt.
-<BR>2) Synchronit&auml;t: (siehe auch Voraussetzung 3)
-<BR>+ abh&auml;ngig von Sender und Tafel, sind die Ergebnisse tlw. sehr
-unterschiedlich.
-<BR>+ unm&ouml;glich ist es derzeit mangels notwendiger Daten bei: Kabel1,
-NDR, ...
-<BR>Anm: mit der V.081.7 wurde die Teletextausgabe &uuml;berarbeitet und
-sollte nun (korrekte Insertion in den jeweiligen DPC's vorausgesetzt) genauso
-synchron sein wie bei der Live-ausgabe (Schnitte eingeschlossen)
-<BR>3) auch Untertitel unterliegen dem Urheberrecht. Bei der weiteren Verwendung
-ist das zu beachten.
-<BR>&nbsp;
-
-<P><B><FONT COLOR="#009900">2.) Ich habe eine 2 Kanalton Aufnahme von z.B.
-Worldnet, eine mit Audiodescription z.B. von 3sat bzw. eine, bei der zwar
-in 2Kanal gesendet wird, mich aber nur ein Kanal interessiert, und m&ouml;chte
-die Kan&auml;le trennen.</FONT></B>
-
-<P>Dazu gibt es in der Kartei {audio} die Option {2channel to 2*single}.
-<BR>Das funktioniert allerdings nur beim Ausgangsformat: MPEG-1 Audio Layer2
-48kHz zw. 112...384kbps.
-<BR>Dabei wird die Bitrate in den neuen 1Kanal Dateien so niedrig wie m&ouml;glich,
-aber konstant gehalten.
-<BR>Geschehen kann das bei allen Bearbeitungsschritten, die eine MPEG Audiodatei
-&uuml;berpr&uuml;fen.
-<BR>Wenn bei bestimmten Dateien die Zielbitrate f&uuml;r 1Kanal ausserhalb
-zul&auml;ssiger Werte liegt, werden diese automatisch ins StereoFormat
-gewandelt.
-<BR>&nbsp;
-
-<P><B><FONT COLOR="#009900">3.) Ich habe eine Aufnahme, die (mehrfach)
-zwischen verschiedenen Bitraten und/oder mono/stereo etc. wechselt. Beim
-Wandeln nach *.wav o&auml;. bricht mein Programm immer ab oder sie klingt
-wie "Mickey Mouse".</FONT></B>
-
-<P>Dazu gibt es in der Kartei {audio} die Optionen {single to ....}.
-<BR>M&ouml;chte man eine Stereodatei, ist die Option {single to jointstereo}
-bzw. {single to jointstereo} zu w&auml;hlen.
-<BR>Dabei werden mono-Teile zu stereo(2fach mono) gewandelt. Die Ausgangsdatei
-erh&auml;lt dabei &uuml;ber die gesamte L&auml;nge eine einheitliche Bitrate
-(wenn n&ouml;tig auch der bereits stereo-Teil).
-<BR>Das funktioniert allerdings nur beim Ausgangsformat: MPEG-1 Audio Layer2
-48kHz zw. 56...192kbps.
-<BR>Geschehen kann das bei allen Bearbeitungsschritten, die eine MPEG Audiodatei
-&uuml;berpr&uuml;fen.
-
-<P>Reicht stattdessen eine Monodatei, ist die Option {2channel to 2*single}
-zu w&auml;hlen.
-<BR>Mono-Teile werden dabei direkt kopiert und die Bitrate/Modi wenn n&ouml;tig
-angepasst, 2kanalige wie beschrieben gewandelt.
-
-<P>Enth&auml;lt die Aufnahme von der Wandlung nicht unterst&uuml;tzte Frames,
-wird die gesamte Wandlung nicht durchgef&uuml;hrt.
-<BR>Stattdessen kann dies dann aber &uuml;ber die Wandlung nach PCM erfolgen.
-<BR>&nbsp;
-
-<P><B><FONT COLOR="#009900">4.) Ich habe eine (S)VCD, und dort werden massenhaft
-Fehler gemeldet</FONT></B>
-
-<P>Pj. X ist in erster Linie f&uuml;r DVB Daten gedacht.
-<BR>(S)VCD sind zwar MPEG Daten, aber in einem speziellen CD-XA Container
-speziell f&uuml;r transportable Datentr&auml;ger verpackt und m&uuml;ssen
-daher vorher entpackt werden.
-<BR>Weiters ist u.U. bei {specials2} {get only enclosed PES packs..} zu
-deaktivieren.
-<BR>(S)VCDs nach dem jap./amerik. Standard werden jedoch zudem noch nicht
-unterst&uuml;tzt.
-<BR>&nbsp;
-
-<P><B><FONT COLOR="#009900">5.) Ich habe eine PVA-Aufnahme mit vielen Audiofehlern
-(inserts) in der 'Hauptspur'. Das Abspielen scheint aber fehlerfrei</FONT></B>
-
-<P>Es ist bei {specials2} {strictly PVA specs for Audio..} zu aktivieren.
-<BR>Sollte so &uuml;berhaupt keine Audiospur gefunden werden, erzeugt das
-Aufzeichnungsprogramm keine konforme PVA-Tonspur.
-<BR>Treten die Fehler bei aktivierter Option auf, erzeugt das Aufzeichnungsprogramm
-ebenso keine konforme PVA-Tonspur, jedoch l&auml;&szlig;t sich das mit
-dem Deaktivieren der Option umgehen.
-<BR>&nbsp;
-
-<P><B><FONT COLOR="#009900">6.) Ich habe eine PVA-Aufnahme mit mehreren
-Tonspuren, jedoch mit vielen Audiofehlern (inserts) nur in den zus&auml;tzlichen.
-Die 'Hauptspur' ist o.k.</FONT></B>
-
-<P>Es ist bei {main} {i} einmal zu dr&uuml;cken.
-<BR>Anschlie&szlig;end nacheinander die in der darunter erstellten Liste
-eine ID nach der anderen (von den zus&auml;tzl. Tonspuren) zu w&auml;hlen
-und mit {e} in eine neue Datei zu speichern.
-<BR>Die neuen Dateien dann der aktuellen Collection hinzuf&uuml;gen und
-den normalen Vorgang starten.
-<BR>Die in der PVA-Datei noch vorhandenen Tonspuren sollten vorher &uuml;ber
-die spezielle PID-Liste abgew&auml;hlt werden.
-<BR>&nbsp;
-
-<P><B><FONT COLOR="#009900">7.) Ich habe eine TS-Aufnahme, jedoch bricht
-der Vorgang bereits fr&uuml;hzeitig mit der Meldung "PID scrambled, ignored"
-ab. Die Aufnahme ist aber nicht verschl&uuml;sselt.</FONT></B>
-
-<P>Es ist bei {specials1} {ignore scrambled TS packets} zu deaktivieren.
-Wenngleich X auch ohnedies weiterhin nach unverschl&uuml;sselt markierten
-Paketen weitersucht, um daraus verwertbare Daten zu erhalten.
-
-<P>Wird stattdessen auf der erwarteten PID eine Meldung wie "PID xyz (payload
-...) -> ignored" ausgegeben, sind in der {collection specials} {PIDlist}
-diese und alle weitern wesentlichen PIDs einzugeben, um in diesen nach
-verwertbaren Daten zu suchen.
-<BR>Selbst wenn die TS-Pakete ztw. verschl&uuml;sselte Daten enthalten,
-jedoch nicht als "scrambled" markiert sind, wird die Suche nach Daten fortgesetzt
-und solange nicht ignoriert, bis bekannte Startcodes erkannt werden die
-einen Abbruch bzw. das 'Weitersammeln' rechtfertigen.
-<BR>&nbsp;
-
-<P><B><FONT COLOR="#009900">8.) Ich habe eine Radio-Aufnahme, die an manchen
-Stellen St&ouml;rungen hat. Beim Demux werden diese Stellen mit Stille
-o.&auml;. zum Sync-Erhalt aufgef&uuml;llt. Kann man das verhindern?</FONT></B>
-
-<P>Es ist bei {specials2} {take only 1st audio PTS...} zu aktivieren. Dann
-werden die Fehlstellen ohne weiteren Ausgleich der Audiospur-eigenen Zeitlinie
-&uuml;bergangen.
-<BR>&nbsp;
-
-<P>...
-<CENTER><A HREF="index.html"><IMG SRC="images/up.gif" HEIGHT=16 WIDTH=16></A>&nbsp;&nbsp;<A HREF="cli.html"><IMG SRC="images/right.gif" HEIGHT=16 WIDTH=16></A></CENTER>
-</BLOCKQUOTE>
-</BODY>
-</HTML>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+  <title>faq</title>
+</head>
+<body alink="#ff0000" bgcolor="#e0e0e0" link="#0000ee" text="#000000"
+ vlink="#551a8b">
+<blockquote>
+  <center><a href="index.html"><img alt="" src="images/up.gif"
+ style="border: 0px solid ; width: 16px; height: 16px;"></a>&nbsp;&nbsp;<a
+ href="cli.html"><img alt="" src="images/right.gif"
+ style="border: 0px solid ; width: 16px; height: 16px;"></a></center>
+  <b><font size="+1">NAQs &amp; FAQs</font></b>
+  <p><b>For those following the 'spirit' of Project X, who want to
+learn more about this topic, we provide some loosely coupled thoughts
+and tips which might be useful.</b> </p>
+  <p><b>Further problems can only be solved if they are discussed in
+the forum. Otherwise they might never be solved.<br>
+  </b><b>The overwhelming presents of different hard- and software for
+DVB recording might require settings which are different from the
+standard</b><b> in Project X</b><b>.</b> <br>
+&nbsp; <br>
+&nbsp;<br>
+  </p>
+  <p><b><font color="#009900">1.) I'm deaf and I want to transfer the
+teletext-subtitles from a recorded broadcasting to a DVD.&nbsp;</font></b>
+  </p>
+  <p><u>Preconditions:</u> <br>
+1) Subtitles are transmitted via teletext. (e.g. page 149,
+150, 888, ...) <br>
+2) The recording software must be capable to capture the Video-/Audio-
+and Teletext stream without a change to one ore several files. <br>
+3) The broadcasting company transmits the timestamps to synchronize the
+texts with the picture. Not all of them are doing this or not
+correctly! <br>
+4) A DVD-Authoring application which is supporting subtitle formats. </p>
+  <p><u>Walk through:</u> <br>
+1) record the broadcast. <br>
+2) load the file as one collection into Project X, where one or more
+teletext files are given at the end. <br>
+3) choose in the tab {teletext}the page(s) with the subtitles you want
+(max. 6). <br>
+Additionally you have to choose the output format according to your
+authoring application. <br>
+4) if necessary: set cut-point via {collection specials} and set
+additional options. <br>
+5) choose {demux} in the main window and push {Go}. <br>
+6) author your new DVD with the created files.<br>
+  </p>
+  <p><u>Hint:</u> <br>
+The easiest and best way for this purpose is the following processing
+chain: record -&gt; Project X -&gt; ifoedit -&gt; DVD. <br>
+The missing start menu is not important. </p>
+  <p>before you start you have to set some properties and to check the
+result: <br>
+1) choose the format {SUP} in the tab {teletext} in Project X. Activate
+{show preview} and choose a {Text font}. <br>
+2) start the process according the the steps given above. <br>
+3) you have to check if the chosen font in the {subtitle preview} is as
+you like and if the text fills the black background but not doesn't
+exceeds the borders. You have to adjust the special SUP-values
+according to the Project X documentation. <br>
++ take into consideration that the position of the subtitles within the
+picture depends on the resolution of the picture file. The default
+values fit the common D1 standard of 720*576. <br>
+4) in ifoedit you have to load the video file, audio file,
+subtitle-file ( xyz[X].sup ) and optionally a chapter file and finally
+compile this with {ok} to a DVD file structure. <br>
+5) the created .IFO-files have default color values for menus and
+subtitles. These have to be adjusted to the teletext colors. <br>
++ additionally to the created .IFOs you have to load a COLORS.IFO (if
+existing) with the 'new' colors. In the menu VTS_PGCITI choose the
+entry VTS_PGC_1 and
+in the ifoedit-menu the entry {subtitle colors} {copy colors..},
+otherwise you have to set all color-values manually. <br>
++ you have to choose the same entry in the new VTS_xx_0.IFO, but
+instead of {copy...} choose {paste colors...}! These changes have to be
+saved in this .IFO. <br>
+6) the created title set has to be burned on a -RW and tested with your
+standalone DVD-player. </p>
+  <><u>Particularities:</u> <br>
+1) the SUP and the SSA format take the text colors as far as possible
+from the teletext. There are only 4 colors valid In the SUP format for
+each occurance (mostly half-transparent text-background included),
+this might cause differences in the result. From the V.081.6 int10
+onwards fonts, which are not provided with a black background are
+displayed in Italic (if supported by the font) to state the difference.<br>
+2) Synchronization: (see Preconditions 3) <br>
++ the results are (very) differently dependent on the station and page<br>
++ because of missing data it's impossible for the stations: Kabel1,
+NDR, ... <br>
+Comment: the teletext output was reworked in V.081.7 and should be as
+synchrony as the live output (including cuts) provided that correct
+insertions are made into the appropriate DPC's.<br>
+3) please take into account the subtitles are protected by copyright. <br>
+&nbsp; </>
+  <p><b><font color="#009900">2.) I have a 2 audio channel record from
+e.g.
+Worldnet, a audio description e.g. from 3sat or a recording where only
+1 channel is of interest and want to separate the channels.</font></b> </p>
+  <p>Therefor we have the tab {audio} and the option {2channel to
+2*single}. <br>
+This works only with the output format: MPEG-1 Audio
+Layer2
+48kHz between 112...384kbps. <br>
+The bitrate in the new 1 channel files is kept as low but as constant
+as possible. <br>
+This can be done with all jobs which check a MPEG audio file. <br>
+If the target bitrate exceeds valid values the file format is
+automatically transformed to stereo. <br>
+&nbsp; </p>
+  <p><b><font color="#009900">3.) I have a recording which changes
+(many times) between different bitrates and/or mono/stereo. The program
+crashes during processing or the result sounds like "Mickey Mouse".</font></b>
+  </p>
+  <p>Therefor we have the tab {audio} and the option {single to ....}. <br>
+If you want a stereo file you have to chose the option {single to
+jointstereo}
+or {single to jointstereo}. <br>
+With these options the mono parts are transformed to (2 times mono).
+The output file is then created with a constant bitrate over the full
+length (if necessary also the stereo parts). <br>
+This works only with the output format: MPEG-1 Audio
+Layer2
+48kHz between 56...192kbps. <br>
+This can be done with all jobs which check a MPEG audio file. </p>
+  <p>If a mono-file is sufficient you can chose the option {2channel to
+2*single}. <br>
+Mono parts are copied directly and the bitrate is adjusted if
+necessary. 2 channel parts are transformed as described. </p>
+  <p>If the recording contains non supported frames the whole
+transformation is not performed. <br>
+Instead this can be achieved via transformation to PCM. <br>
+&nbsp; </p>
+  <p><b><font color="#009900">4.) I have a (S)VCD with a lot of errors</font></b>
+  </p>
+  <p>Project X is made for DVB data primarily. <br>
+(S)VCD contains MPEG data, but in a special CD-XA container
+especially made for portable media. These must be extracted before.<br>
+You might have to deactivate the {get only enclosed PES packs..} option
+in {specials2}. <br>
+(S)VCDs according to the jap./amerik. standard are not yet supported. <br>
+&nbsp; </p>
+  <p><b><font color="#009900">5.) I have a PVA-Recording with a lot of
+audio errors (inserts) in the 'mainstream'. I don't recognize errors
+during play.</font></b> </p>
+  <p>Your have to activate the {strictly PVA specs for Audio..} option
+in {specials2}. <br>
+If there can't be found any audio stream the recording application
+created a non-standard PVA audio stream. <br>
+If the errors occour with activated option then the recording
+application produces a non-standard PVA audio stream but this can be
+worked around with deactivating this option. <br>
+&nbsp; </p>
+  <p><b><font color="#009900">6.) I have a PVA-Recording with several
+audio stream with a lot of error (inserts). But only in the additional
+stream the main audio stream is o.k.</font></b> </p>
+  <p>First click {i} in the main window. <br>
+Then you have to choose one ID after the other (of the additional
+streams) and save them in a new file. <br>
+Then add these new files to the collection and start the job again. <br>
+The additional audio stream in the PVA file should be deselected before
+processing. <br>
+&nbsp; </p>
+  <p><b><font color="#009900">7.) I have a TS-Recording where the job
+stops with the message "PID scrambled,
+ignored", but this recording is not scrambled.</font></b> </p>
+  <p>Deactivate {ignore scrambled TS packets} in {specials1}. X looks
+anyway for unscrambled packets for processing. </p>
+  <p>If the message "PID xyz
+(payload
+...) -&gt; ignored" is given while parsing an expected PID, you have to
+enter these and any other PIDs you want in the {PIDlist}
+in {collection specials}.&nbsp; Then X is searching these PIDs for
+usable data.<br>
+Even if the TS-Pakets contain scrambled data from time to time, but the
+pakets are not marked as "scrambled", the search doesn't ignore these
+pakets until well known startcodes are recoknized which cause a stop. <br>
+&nbsp; </p>
+  <p><b><font color="#009900">8.) I have a radio recording which has
+disturbances. While demuxing these parts are filled with silence or
+something like that for synchronization. Can this behavior be disabled?</font></b>
+  </p>
+  <p>Activate the option {take only 1st audio PTS...} in {specials2}.
+Then these parts are ignored without further compensation. <br>
+&nbsp; </p>
+  <p>... </p>
+  <center><a href="index.html"><img alt="" src="images/up.gif"
+ style="border: 0px solid ; width: 16px; height: 16px;"></a>&nbsp;&nbsp;<a
+ href="cli.html"><img alt="" src="images/right.gif"
+ style="border: 0px solid ; width: 16px; height: 16px;"></a></center>
+</blockquote>
+</body>
+</html>

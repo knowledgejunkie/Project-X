@@ -1,0 +1,91 @@
+/*
+ * @(#)Chapters.java
+ *
+ * Copyright (c) 2004 by dvb.matt, All Rights Reserved.
+ *
+ * This file is part of X, a free Java based demux utility.
+ * X is intended for educational purposes only, as a non-commercial test project.
+ * It may not be used otherwise. Most parts are only experimental.
+ * 
+ *
+ * This program is free software; you can redistribute it free of charge
+ * and/or modify it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
+package net.sourceforge.dvb.projectx.thirdparty;
+
+import java.io.*;
+import java.util.Arrays;
+import java.util.ArrayList;
+
+public class Chapters
+{
+	boolean active = false;
+	ArrayList list;
+
+	public Chapters()
+	{
+		list = new ArrayList();
+	}
+
+	public void init(boolean b)
+	{
+		active = b;
+		list.clear();
+	}
+
+	public void addChapter(String time)
+	{
+		if (!active)
+			return;
+
+		list.add(time);
+	}
+
+	public void addChapter(String time, String comment)
+	{
+		if (!active)
+			return;
+
+		list.add(time + " ; " + comment);
+	}
+
+	public void finish(String str) throws IOException
+	{
+		if (!active && list.size() == 0)
+			return;
+
+		str += ".chp.txt";
+
+		Object chapters[] = list.toArray();
+
+		Arrays.sort(chapters);
+
+		write(str, chapters);
+
+		list.clear();
+	}
+		
+	private void write(String str, Object chapters[]) throws IOException
+	{
+		PrintWriter out = new PrintWriter(new FileOutputStream(str));
+
+		for (int a=0; a < chapters.length; a++)
+			out.println(chapters[a]);
+
+		out.flush();
+		out.close();
+	}
+}
