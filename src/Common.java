@@ -29,7 +29,7 @@
 import java.io.*;
 import java.awt.*;
 import javax.swing.*;
-
+import java.util.*;
 import java.util.zip.*;
 
 //DM13042004 081.7 int01 introduced
@@ -103,6 +103,69 @@ public final class Common
 		String time_str = time_format_2.format(new java.util.Date(time_value));
 
 		return (time_str.substring(0, time_str.length() - 3) + adaptString((Integer.parseInt(time_str.substring(time_str.length() - 3)) * 90 / (int)frame_rate), 2));
+	}
+
+
+	//DM13062004 081.7 int04 add
+	public static Object[] checkUserColourTable(String file) throws IOException
+	{
+		if ( !(new File(file).exists()) )
+			return null;
+
+		BufferedReader table = new BufferedReader( new FileReader(file));
+		ArrayList list = new ArrayList();
+		String line;
+
+		while( (line = table.readLine()) != null)
+		{
+			if ( line.trim().length() == 0 )
+				continue;
+
+			if ( line.startsWith("table") )
+				list.add( (line.substring( line.indexOf("=") + 1)).trim() );
+		}
+
+		table.close();
+
+		return list.toArray();
+	}
+
+	//DM13062004 081.7 int04 add
+	public static Hashtable getUserColourTable(String file, String model) throws IOException
+	{
+		Hashtable user_table = new Hashtable();
+
+		if ( !(new File(file).exists()) )
+			return user_table;
+
+		BufferedReader table = new BufferedReader( new FileReader(file));
+		String line;
+		boolean table_match = false;
+
+		while( (line = table.readLine()) != null)
+		{
+			if ( line.trim().length() == 0 )
+				continue;
+
+			if ( line.startsWith("table") )
+				table_match = line.substring( line.indexOf("=") + 1).trim().equals(model) ? true : false;
+
+			else if (table_match)
+			{
+				if ( line.startsWith("model") )
+					user_table.put( "model", line.substring( line.indexOf("=") + 1).trim() );
+
+				else
+					user_table.put( line.substring(0, line.indexOf("=")).trim(), line.substring( line.indexOf("=") + 1).trim() );
+			}
+		}
+
+		table.close();
+
+		if ( !user_table.isEmpty() && !user_table.containsKey("model") )
+			user_table.put( "model", "16");
+
+		return user_table;
 	}
 
 }

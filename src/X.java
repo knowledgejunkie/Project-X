@@ -60,8 +60,8 @@ public class X extends JPanel
 {
 
 static String version[] = { 
-	"ProjectX 0.81.7_int03",
-	"31.05.2004",
+	"ProjectX 0.81.7_int04",
+	"14.06.2004",
 	"TEST PROJECT ONLY",
 	", User: " + System.getProperty("user.name")
 };
@@ -91,7 +91,7 @@ Audio Audio = new Audio();
 static D2V d2v = new D2V();
 static TS tf = new TS();
 
-static String inifile = "";
+static String inifile = "", ColourTablesFile = ""; //DM13062004 081.7 int04 add
 static String inidir = System.getProperty("user.dir");
 static String filesep = System.getProperty("file.separator");
 static String frametitle = "";
@@ -180,6 +180,7 @@ Hashtable Options = new Hashtable();  //DM26032004 081.6 int18 add, intended for
 
 TeletextPageMatrix tpm = new TeletextPageMatrix();  //DM17042004 081.7 int02 add
 
+
 public X()	//DM20032004 081.6 int18 changed
 {
 
@@ -195,6 +196,8 @@ public X()	//DM20032004 081.6 int18 changed
 		inidir += filesep;
 	inifile = inidir + "X.ini";
 
+	//DM13062004 081.7 int04 add
+	ColourTablesFile = inidir + "colours.tbl";
 
 	setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
@@ -991,10 +994,18 @@ protected JPanel buildMainPanel()
 	control08.add(control06);
 	control08.add(Box.createRigidArea(new Dimension(1,5)));
 
-	Object[] convertTo = { "demux","to VDR","to M2P","to PVA","to TS" };
+	//DM14062004 081.7 int04 changed
+	Object[] convertTo = { 
+		"demux",
+		"to VDR",
+		"to M2P",
+		"to PVA",
+		"to TS",
+		"PIDfilter"
+	};
 	comBox[19] = new JComboBox(convertTo);
-	comBox[19].setPreferredSize(new Dimension(100,20));
-	comBox[19].setMaximumSize(new Dimension(100,20));
+	comBox[19].setPreferredSize(new Dimension(100,22));
+	comBox[19].setMaximumSize(new Dimension(100,22));
 	comBox[19].setSelectedIndex(0);
 	control08.add(comBox[19]);
 
@@ -2909,6 +2920,20 @@ class PATCH extends JDialog {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 		JButton cancelbutton = new JButton("cancel");
 		cancelbutton.addActionListener(patchAction);
 		grid.add(cancelbutton);
@@ -4515,12 +4540,24 @@ public void ScanInfo(String file)
 /****************
  * load inifile * 
  ****************/
-public void iniload()    //DM26032004 081.6 int18 changed
+//DM26032004 081.6 int18 changed
+//DM13062004 081.7 int04 changed
+public void iniload()
 {
-	if (new File(inifile).exists())
-	{
 	try 
 	{
+
+		//DM13062004 081.7 int04 add
+		Object table_indices[] = Common.checkUserColourTable(ColourTablesFile);
+		if (table_indices != null)
+		{
+			for (int i = 0; i < table_indices.length; i++)
+				comBox[11].addItem(table_indices[i]);
+		}
+
+	if (new File(inifile).exists())
+	{
+
 	BufferedReader inis = new BufferedReader(new FileReader(inifile));
 	String path="", ck=""; 
 	boolean val = false;
@@ -4595,12 +4632,13 @@ public void iniload()    //DM26032004 081.6 int18 changed
 		else if (path.startsWith("wh")) 
 			framelocation[3]=Integer.parseInt(path.substring(2,path.length()));
 		}
+
 		inis.close();
 		inputlist();
 
-		} 
-		catch (IOException e1) {}
 	}
+	} 
+	catch (IOException e1) {}
 }   
 
 
@@ -5580,7 +5618,9 @@ public void working() {
 	boolean vdr=true, pva=true, mpg2=true, mpg1=true, mpgts=true, raw=true;
 
 	int mpgtovdr = comBox[19].getSelectedIndex();
-	String[] convertType = { "=> demux ","=> make a VDR (A/V PES)","=> make a MPG2","=> make a PVA","=> make a TS" };
+
+	//DM14062004 081.7 int04 changed
+	String[] convertType = { "=> demux ","=> make a VDR (A/V PES)","=> make a MPG2","=> make a PVA","=> make a TS", "=> simple packet filter" };
 
 	for (int k=0; k<workinglist.size(); k++) {
 		int ft = scan.inputInt(workinglist.get(k).toString());
@@ -6357,6 +6397,10 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 	else if (ToVDR==4) 
 		makevdr.init(fparent+".ts",options,bs,ToVDR,(int)options[19]);
 
+	//DM14062004 081.7 int04 add
+	else if (ToVDR==5) 
+		makevdr.init(fparent + "[filtered].pes", options, bs, ToVDR, (int)options[19]);
+
 	try 
 	{
 
@@ -6401,8 +6445,6 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 		startPoint = options[20]-(comBox[25].getSelectedIndex()*1048576L);
 
 	//*** jump near to first cut-in point to collect more audio
-
-
 	if (comBox[17].getSelectedIndex()==0 && ctemp.size()>0 && cutcount==0 && (!RButton[6].isSelected() || ToVDR>0)) //DM28112003 081.5++
 		startPoint = Long.parseLong(ctemp.get(cutcount).toString())-((ToVDR==0)?2048000:0);
 
@@ -6546,12 +6588,6 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 				case 0xF3:
 				case 0xF4:
 				case 0xF5:
-
-
-
-
-
-
 				case 0xF6:
 				case 0xF7:
 				case 0xF8:
@@ -6601,9 +6637,32 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 				int a=9;
 				int b=packsize0_buffer-6;
 				nps:
-				for (; a<b; a++) {
-					if (data2[a]!=0 || data2[a+1]!=0 || data2[a+2]!=1) 
+				for (; a<b; a++)
+				{
+					//DM04062004 081.7 int04 add
+					if (data2[a + 2] != 1)
+					{
+						if (data2[a + 2] != 0)
+							a += 2;
+
+						else if (data2[a + 1] != 0)
+							a++;
+
 						continue nps;
+					}
+					else if (data2[a + 1] != 0)
+					{
+						a++;
+						continue nps;
+					}
+					else if (data2[a] != 0) 
+					{
+						continue nps;
+					}
+
+					//if (data2[a]!=0 || data2[a+1]!=0 || data2[a+2]!=1) 
+					//	continue nps;
+
 					if ((0xff&data2[a+3])>0xB8){
 						nextpack=true;
 						break nps;
@@ -6665,6 +6724,13 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 				for (int v=0; v<include.length; v++) 
 					if (pesID==include[v] || subID==include[v]) 
 						break includeloop;
+				continue pvaloop;
+			}
+
+			//DM14062004 081.7 int04 add
+			if (ToVDR == 5)
+			{
+				makevdr.writePacket(data, 0, 6 + packlength);
 				continue pvaloop;
 			}
 
@@ -6916,7 +6982,10 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 					options = makevdr.writePVA(nPes,options,demux,6);
 				else if (ToVDR==4) 
 					options = makevdr.writeTS(nPes,options,demux,6);
-				else {
+
+				//DM14062004 081.7 int04 changed
+				else if (ToVDR == 0)
+				{
 					if (demux.getType()==3) { 
 						if (pesID0!=demux.getID()) 
 							continue pvaloop;
@@ -7136,6 +7205,7 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 
 	//DM18022004 081.6 int17 changed
 	makeVDR makevdr = new makeVDR();
+
 	if (ToVDR==1) 
 		makevdr.init(fparent+".vdr",options,bs,ToVDR,(int)options[19]);
 	else if (ToVDR==2) 
@@ -7144,6 +7214,10 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 		makevdr.init(fparent+".pva",options,bs,ToVDR,(int)options[19]);
 	else if (ToVDR==4) 
 		makevdr.init(fparent+"(ts).ts",options,bs,ToVDR,(int)options[19]); //DM24092003
+
+	//DM14062004 081.7 int04 add
+	else if (ToVDR==5) 
+		makevdr.init(fparent + "[filtered].ts", options, bs, ToVDR, (int)options[19]);
 
 	TSPID TSPid = new TSPID();
 	PIDdemux demux;
@@ -7371,6 +7445,13 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 				continue pvaloop;
 			}
 
+			//DM14062004 081.7 int04 add
+			if (ToVDR == 5)
+			{
+				makevdr.writePacket(push189, 0, 188);
+				continue pvaloop;
+			}
+
 			if ((addfield&1)==0)
 				continue pvaloop;
 
@@ -7540,6 +7621,7 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 						{
 							type += " -> ignored";
 							TSPid.setneeded(false);
+
 						}
 
 						if (ToVDR > 1 && !ttx) 
@@ -7674,7 +7756,7 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 							options = makevdr.writePVA(set,options,demux,0);
 						else if (ToVDR==4) 
 							options = makevdr.writeTS(set,options,demux,0);
-						else
+						else if (ToVDR == 0) //DM14062004 081.7 int04 changed
 						{
 							if (demux.getType()==3)
 							{
@@ -7831,11 +7913,6 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 	/*** on qinfo load usable PIDs in specaillist, if list was empty ***/
 	activecoll=currentcoll;
 	ArrayList xyz = (ArrayList)speciallist.get(activecoll);
-
-
-
-
-
 
 
 	if (qinfo && !(xyz.size()>1)) {
@@ -8170,6 +8247,11 @@ public String pvaparse(String pvafile,int ismpg,int ToVDR, String vptslog) {
 	else if (ToVDR==4) 
 		makevdr.init(fparent+".ts",options,bs,ToVDR,(int)options[19]);
 
+	//DM14062004 081.7 int04 add
+	else if (ToVDR == 5) 
+		makevdr.init(fparent + "[filtered].pva", options, bs, ToVDR, (int)options[19]);
+
+
 	/*** d2v project ***/
 	if (cBox[29].isSelected() || cBox[30].isSelected()) {
 		String[] d2vopt = new String[d2vfield.length];
@@ -8407,6 +8489,19 @@ public String pvaparse(String pvafile,int ismpg,int ToVDR, String vptslog) {
 			data = new byte[packlength];
 			in.read(data);
 			count+=packlength;
+
+			//DM14062004 081.7 int04 add
+			if (ToVDR == 5)
+			{
+				makevdr.writePacket(push8, 0, 8);
+
+				if (pid == 1 && cpts)
+					makevdr.writePacket(push4, 0, 4);
+
+				makevdr.writePacket(data, 0, packlength);
+
+				continue pvaloop;
+			}
 
 			int pidcheck=-1;
 			for (int a=0;a<PVAPidlist.size();a++) {
@@ -11901,7 +11996,18 @@ public void processSubpicture(String[] args)
 
 	boolean DVBpicture = false;
 
-	subpicture.picture.dvb.setIRD(2<<comBox[11].getSelectedIndex(), (options[30]==1 ? true : false), d2vfield[9].getText().toString());
+	try 
+	{
+
+	//DM13062004 081.7 int04 add++
+	Hashtable user_table = new Hashtable();
+
+	if (comBox[11].getSelectedIndex() > 2)
+		user_table = Common.getUserColourTable(ColourTablesFile, comBox[11].getSelectedItem().toString());
+	//DM13062004 081.7 int04 add--
+
+	//DM13062004 081.7 int04 changed
+	subpicture.picture.dvb.setIRD(2<<comBox[11].getSelectedIndex(), user_table, (options[30]==1 ? true : false), d2vfield[9].getText().toString());
 
 	Msg("-> selected DVB subpicture color model: " + comBox[11].getSelectedItem() + " ; fixed to page id: " + d2vfield[9].getText().toString());
 
@@ -11912,9 +12018,6 @@ public void processSubpicture(String[] args)
 	}
 
 	Msg("-> export format: " + subfile.substring(subfile.length() - 3));
-
-	try 
-	{
 
 	PushbackInputStream in = new PushbackInputStream(new FileInputStream(filename),65536);
 	IDDBufferedOutputStream out = new IDDBufferedOutputStream(new FileOutputStream(subfile),65536);
@@ -12830,8 +12933,30 @@ public String rawvideo(String args) {
 
 			}
 
-			if ( vload[a]!=0 || vload[a+1]!=0 || vload[a+2]!=1 ) 
+
+			//if ( vload[a]!=0 || vload[a+1]!=0 || vload[a+2]!=1 ) 
+			//	continue arrayloop;
+
+			//DM04062004 081.7 int04 add
+			if (vload[a + 2] != 1)
+			{
+				if (vload[a + 2] != 0)
+					a += 2;
+
+				else if (vload[a + 1] != 0)
+					a++;
+
 				continue arrayloop;
+			}
+			else if (vload[a + 1] != 0)
+			{
+				a++;
+				continue arrayloop;
+			}
+			else if (vload[a] != 0) 
+			{
+				continue arrayloop;
+			}
 
 			//DM06022004 081.6 int15 changed
 			int start_code = 0xFF & vload[a+3];
@@ -13264,13 +13389,36 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 	ArrayList newPics=new ArrayList(); //DM05112003 081.5++
 	long TC=0, lTC=options[53]; //DM12112003 081.5++
 
+
 	/* gop check */
 	goploop:
-	for ( ; s<(gop.length-10); s++ ) {
+	for ( ; s<(gop.length-10); s++ )
+	{
+		//DM04062004 081.7 int04 add
+		if (gop[s + 2] != 1)
+		{
+			if (gop[s + 2] != 0)
+				s += 2;
+
+			else if (gop[s + 1] != 0)
+				s++;
+
+			continue goploop;
+		}
+		else if (gop[s + 1] != 0)
+		{
+			s++;
+			continue goploop;
+		}
+		else if (gop[s] != 0) 
+		{
+			continue goploop;
+		}
+
 
 		/****+ 0x000001 *****/
-		if ( gop[s]!=0 || gop[s+1]!=0 || gop[s+2]!=1 ) 
-			continue goploop;
+		//if ( gop[s]!=0 || gop[s+1]!=0 || gop[s+2]!=1 ) 
+		//	continue goploop;
 
 		else if ((0xF0 & gop[s+3]) == 0xE0)  //DM20032004 081.6 int18 add -- inofficial! shit progdvb_data check
 		{
@@ -13913,27 +14061,33 @@ public static int[] getVideoBasics()
 /**********************
  * raw file from pva *
  **********************/
-class RAWFILE {
-	BufferedOutputStream out;
+class RAWFILE
+{
+	IDDBufferedOutputStream out;
 	String name="";
 
-	public void init(String name, int buffersize) throws IOException {
+	public void init(String name, int buffersize) throws IOException
+	{
 		this.name = name;
-		out = new BufferedOutputStream(new FileOutputStream(name),buffersize);
+		out = new IDDBufferedOutputStream( new FileOutputStream(name), buffersize);
 
 	}
 
-	public void write(byte[] data) throws IOException {
+	public void write(byte[] data) throws IOException
+	{
 		out.write(data);
 	}
 
-	public void close() throws IOException { 
+	public void close() throws IOException
+	{ 
 		out.flush();
 		out.close();
-		if (new File(name).length()<10) 
+
+		if (new File(name).length() < 10) 
 			new File(name).delete();
+
 		else 
-			Msg("===> new File "+name);
+			Msg("===> new File " + name);
 	} 
 }
 
@@ -13959,6 +14113,8 @@ class TSPID {
 		return pidscram; 
 	}
 	public void setID(int ID1) { 
+
+
 		ID=ID1;
 	}
 	public int getID() { 
@@ -14647,6 +14803,7 @@ class PIDdemux {
 
 				vidbuf.write(data,t,s);  //DM20032004 081.6 int18 changed
 
+			/***
 				//DM26052004 081.7 int03 add++
 				byte vidbuf_array[] = vidbuf.toByteArray();
 				byte vptsbytes_array[] = vptsbytes.toByteArray();
@@ -14655,8 +14812,16 @@ class PIDdemux {
 				vidbuf.reset(); 
 
 				if (!first) 
-					goptest( out, vidbuf_array, vptsbytes_array, log, parentname);
+					goptest( out, vidbuf.toByteArray(), vptsbytes.toByteArray(), log, parentname);
+					//goptest( out, vidbuf_array, vptsbytes_array, log, parentname);
 				//DM26052004 081.7 int03 changed--
+			***/
+
+				if (!first) 
+					goptest( out, vidbuf.toByteArray(), vptsbytes.toByteArray(), log, parentname);
+
+				vptsbytes.reset();
+				vidbuf.reset(); 
 
 				/****** split size reached *****/
 				if ( options[18]>0 && options[18]<options[41] ) 
@@ -15228,6 +15393,8 @@ class makeVDR {
 				if (newID==(0xFF&Integer.parseInt(IDs.get(i).toString()))) 
 					break;
 
+
+
 			}
 
 			datalength = data.length-overhead;
@@ -15442,6 +15609,18 @@ class makeVDR {
 	}
 
 
+	//simple write the packet
+	//DM14062004 81.7 int04 add
+	public long[] writePacket(byte[] data, int off, int len) throws IOException
+	{
+		out.write(data, off, len); 
+		options[39] += len; 
+		options[41] += len;
+
+		return options;
+	}
+
+
 	public void close() { 
 		try 
 		{
@@ -15531,6 +15710,7 @@ class makeVDR {
 
 			RandomAccessFile ts = new RandomAccessFile(name,"rw");
 			ts.seek(0);
+
 			ts.writeShort((short)event[2]);
 			ts.writeByte((byte)datum.get(11));
 			ts.writeByte((byte)datum.get(12));

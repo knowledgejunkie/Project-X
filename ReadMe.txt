@@ -52,12 +52,13 @@
  Extract all files from the received archive to a separate directory.
  the archive contains:
 
-	ac3.bin   - optional, copy to the same place as your compiled version of X
 	COPYING
 	readme.txt
+	ac3.bin      - optional, copy to the same place as your compiled version of X
+	colours.tbl  - optional, copy to the same place as your compiled version of X
 
-	htmls/..  - optional, copy to the same place as your compiled version of X
-	index.html
+	htmls/.. 
+	index.html   - optional, copy to the same place as your compiled version of X
 
 	src/..
 	AUDIO.java

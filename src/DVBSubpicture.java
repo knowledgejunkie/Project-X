@@ -63,16 +63,28 @@ public class DVBSubpicture
 	private boolean preview_visible = false;
 	private int fix_page_id;
 
+	//DM13062004 081.7 int04 add
+	private Hashtable user_table = new Hashtable();
+	private boolean user_table_enabled;
 
 	public DVBSubpicture()
 	{
 		table_CLUT_8bit = generateDefaultCLUT_8Bits();
-		setIRD(8, false, "");
+		setIRD(8, user_table, false, ""); 	//DM13062004 081.7 int04 changed
 	}
 
-	public void setIRD(int val, boolean log, String page_id_str)
+	public void setIRD(int val, Hashtable table, boolean log, String page_id_str)
 	{
 		IRD = val;  //2,4,8 = 4,16,256-color support
+
+		//DM13062004 081.7 int04 add++
+		user_table = table;
+		user_table_enabled = user_table.isEmpty() ? false : true;
+
+		if (user_table_enabled)
+			IRD = Integer.parseInt(user_table.get("model").toString().trim());
+		//DM13062004 081.7 int04 add--
+
 		biglog = log;
 		resetEpoch();
 
@@ -412,6 +424,15 @@ public class DVBSubpicture
 		addBigMessage("clutcomp: " + clut.getId() + " /v " + clut.getVersionNumber());
 
 		flushBits(4);
+
+		//user table
+		//DM13062004 081.7 int04 add
+		if (user_table_enabled)
+		{
+			setUserClut();
+			flushBits( (segment_end - BytePosition) * 8);
+			return;
+		}
 
 		while (BytePosition < segment_end)
 		{
@@ -951,6 +972,24 @@ public class DVBSubpicture
 
 		return color_index;
 	}
+
+	//DM13062004 081.7 int04 add
+	private void setUserClut()
+	{
+		int model = Integer.parseInt(user_table.get("model").toString().trim());
+		int max_indices = model > 2 ? (model > 4 ? 256 : 16) : 4;
+
+		for (int i = 0; i < max_indices; i++)
+		{
+			if (user_table.containsKey("" + i))
+			{
+				addBigMessage("addUserClut: " + i + " /ARGB " + user_table.get("" + i));
+
+				clut.setClutEntry(mapColorIndex(i, region.getDepth(), model), model, (int)Long.parseLong(user_table.get("" + i).toString().trim(), 16));
+			}
+		}
+	}
+
 
 	private Epoch setEpoch(int epoch_id)
 	{
