@@ -5160,243 +5160,268 @@ public static void loadIDs(String nIDs)
 
 public static void main(String[] args)
 {
+	StartUp startup = null; 
 	boolean iniSet = false;
 
-	// first check and load ini file
-	int aaa1 = 0;
-
-	if (args.length > 0)
+	try
 	{
-		aaa1 = 0;
-
-		if ( args[0].equalsIgnoreCase("-c") )
+		// first check and load ini file
+		int aaa1 = 0;
+	
+		if (args.length > 0)
 		{
-			if ( args.length == 1)
-			{
-				System.out.println("stopped, no config file ...");
-				System.exit(0);
-			}
-
-			inifile = args[1];
-
-			if ( !(new File(inifile).exists()) )
-			{
-				System.out.println("stopped, config file " + inifile + " not found ...");
-				System.exit(0);
-			} 
-
-			System.out.println("use config file " + inifile + " ...");
-			aaa1 = 2;
-			iniSet = true;
-		}
-
-		CLI_mode = true;
-
-		// check "force gui" option from CLI
-		for (int i = 0; i < args.length; i++)
-			if (args[i].equalsIgnoreCase("-g"))
-			{
-				CLI_mode = false;
-				break;
-			}
-	}
+			aaa1 = 0;
 	
-	if (!iniSet)
-	{
-		System.out.println("use last config or standard ...");
-	}
-
-	//load main stuff
-	X panel = new X();
-
-	// initialize language
-	Resource.loadLang(inifile);
-
-	String[] version = getVersion();
-	System.out.println(version[0]+"/"+version[1]+" "+version[2]+" "+version[3]);
-	System.out.println();
-
-	System.out.println(Resource.getString("usage"));
-	System.out.println(" ");
-	System.out.println("java.version\t"+System.getProperty("java.version"));
-	System.out.println("java.vendor\t"+System.getProperty("java.vendor"));
-	System.out.println("java.home\t"+System.getProperty("java.home"));
-	System.out.println("java.vm.version\t"+System.getProperty("java.vm.version"));
-	System.out.println("java.vm.vendor\t"+System.getProperty("java.vm.vendor"));
-	System.out.println("java.vm.name\t"+System.getProperty("java.vm.name"));
-	System.out.println("java.class.vers\t"+System.getProperty("java.class.version"));
-	System.out.println("java.class.path\t"+System.getProperty("java.class.path"));
-
-	if ( args.length>0 && args[0].equalsIgnoreCase("-?") )
-		System.exit(0);
-
-	System.out.println();
-
-	System.out.println(Resource.getString("terms"));
-
-	//DM15022004 081.6 int17 new
-	StartUp startup = new StartUp();
-	if (args.length == 0)
-		startup.show();
-
-	panel.buildGUI();
+			if ( args[0].equalsIgnoreCase("-c") )
+			{
+				if ( args.length == 1)
+				{
+					System.out.println("stopped, no config file ...");
+					System.exit(0);
+				}
 	
-	comchange=true;
-	UIManager.LookAndFeelInfo[] lfi =  UIManager.getInstalledLookAndFeels();
-
-	for (int a=0;a<lfi.length;a++) 
-		comBox[16].addItem(lfi[a].getClassName());
-
-	comchange=false;
-
-	panel.iniload();
-
-	frametitle = version[0]+"/"+version[1]+" "+version[2]+" "+version[3];
-	frame.setTitle(frametitle); //DM20032004 081.6 int18 changed
-
-	//DM28112003 081.5++
-	boolean loadGUI=false;
-	boolean IDsLoaded=false;
-	boolean CutsLoaded=false;
-
-	if (args.length > 0) {
-
-		if ( args[0].equalsIgnoreCase("-c") ) {
-			// already done
-		} else if ( args[0].equalsIgnoreCase("-dvx1") ) {
-			aaa1=1;
-			cBox[30].setSelected(true);
-		} else if ( args[0].equalsIgnoreCase("-dvx2") ) {
-			aaa1=1;
-			cBox[30].setSelected(true);
-			cBox[12].setSelected(true);
-		} else if ( args[0].equalsIgnoreCase("-dvx3") ) {
-			aaa1=1;
-			cBox[30].setSelected(true);
-			cBox[4].setSelected(true);
-		} else if ( args[0].equalsIgnoreCase("-dvx4") ) {
-			aaa1=1;
-			cBox[30].setSelected(true);
-			cBox[12].setSelected(true);
-			cBox[4].setSelected(true);
-		}
-
-		if (RButton[0].isSelected() || !RButton[1].isSelected()) {
-			System.out.println("-> to agree to these terms you have to start the GUI first");
-			//System.exit(0);
-		}
-
-		for (int f=aaa1;f<args.length-1;f++) {
-			if ( args[f].equalsIgnoreCase("-g") ) {
-				loadGUI=true;
-				aaa1++;
-			} else if ( args[f].equalsIgnoreCase("-o") ) {
-				outchange=true;
-				if (new File(args[f+1]).exists()) 
-					comBox[13].insertItemAt(args[f+1],0);
-				outchange=false;
-				aaa1+=2;
-			} else if ( args[f].equalsIgnoreCase("-n") ) {
-				newOutName = args[f+1];
-				aaa1+=2;
-			} else if ( args[f].equalsIgnoreCase("-l") ) {
-				cBox[21].setSelected(true);
-				aaa1++;
-			} else if ( args[f].equalsIgnoreCase("-p") ) {
-				if (new File(args[f+1]).exists())
-					loadCutPoints(args[f+1]);
-				CutsLoaded=true;
-				aaa1+=2;
-			} else if ( args[f].equalsIgnoreCase("-i") ) {
-				loadIDs(args[f+1]);
-				IDsLoaded=true;
-				aaa1+=2;
+				inifile = args[1];
+	
+				if ( !(new File(inifile).exists()) )
+				{
+					System.out.println("stopped, config file " + inifile + " not found ...");
+					System.exit(0);
+				} 
+	
+				System.out.println("use config file " + inifile + " ...");
+				aaa1 = 2;
+				iniSet = true;
 			}
+	
+			CLI_mode = true;
+	
+			// check "force gui" option from CLI
+			for (int i = 0; i < args.length; i++)
+				if (args[i].equalsIgnoreCase("-g"))
+				{
+					CLI_mode = false;
+					break;
+				}
 		}
-
-		panel.updateState();
-
-		//DM22062004 081.7 int05 changed
-		Common.loadAC3(); 
-
-		cBox[11].setSelected(false);
-		options[30]=0;
+		
+		if (!iniSet)
+		{
+			System.out.println("use last config or standard ...");
+		}
+	
+		//load main stuff
+		X panel = new X();
+	
+		// initialize language
+		Resource.loadLang(inifile);
+	
+		String[] version = getVersion();
+		System.out.println(version[0]+"/"+version[1]+" "+version[2]+" "+version[3]);
+		System.out.println();
+	
+		System.out.println(Resource.getString("usage"));
+		System.out.println(" ");
+		System.out.println("java.version\t"+System.getProperty("java.version"));
+		System.out.println("java.vendor\t"+System.getProperty("java.vendor"));
+		System.out.println("java.home\t"+System.getProperty("java.home"));
+		System.out.println("java.vm.version\t"+System.getProperty("java.vm.version"));
+		System.out.println("java.vm.vendor\t"+System.getProperty("java.vm.vendor"));
+		System.out.println("java.vm.name\t"+System.getProperty("java.vm.name"));
+		System.out.println("java.class.vers\t"+System.getProperty("java.class.version"));
+		System.out.println("java.class.path\t"+System.getProperty("java.class.path"));
+	
+		if ( args.length>0 && args[0].equalsIgnoreCase("-?") )
+			System.exit(0);
+	
+		System.out.println();
+	
+		System.out.println(Resource.getString("terms"));
+	
+		if (args.length == 0)
+		{
+			startup = new StartUp();
+			startup.show();
+		}
+	
+		panel.buildGUI();
+		
 		comchange=true;
-		comBox[0].addItem("0"); 
-		collfiles = new ArrayList[1];
-		collfiles[0] = new ArrayList();
-
-		for (int a=aaa1; a < args.length; a++) 
-			collfiles[0].add(args[a]);
-
-		if (comBox[13].getItemCount()>0) 
-			collout.add(comBox[13].getItemAt(0));
-		else 
-			collout.add(outalias);
-
-		if (!IDsLoaded)
-			speciallist.add(new ArrayList());
-		if (!CutsLoaded)
-			cutlist.add(new ArrayList());
+		UIManager.LookAndFeelInfo[] lfi =  UIManager.getInstalledLookAndFeels();
+	
+		for (int a=0;a<lfi.length;a++) 
+			comBox[16].addItem(lfi[a].getClassName());
+	
 		comchange=false;
-		comBox[0].setSelectedIndex(comBox[0].getItemCount()-1); //DM26032004 081.6 int18 changed
-
-		if (!loadGUI){ //DM28112003 081.5++
-			running = true;
-			doitButton.doClick();
-		}
-
-	}
-
-	if (args.length == 0 || loadGUI) {
-	/***** loading GUI ******/
-
-		if (loadGUI){ //DM28112003 081.5++
-			frame.addWindowListener (new WindowAdapter() { 
-				public void windowClosing(WindowEvent e) { 
-					System.exit(0); 
-				}
-			});
-		}else{
-			frame.addWindowListener (new WindowAdapter() { 
-				public void windowClosing(WindowEvent e) { 
-					X.inisave();
-					System.exit(0); 
-				}
-			});
-		}
-		frame.addComponentListener(new ComponentListener() {
-			public void componentHidden(ComponentEvent e) {} 
-			public void componentMoved(ComponentEvent e) {} 
-			public void componentShown(ComponentEvent e) {} 
-			public void componentResized(ComponentEvent e) {
-				Component c = e.getComponent();
-				Dimension preferred = new Dimension(714, 460), current = c.getSize();  //DM26032004 081.6 int18 changed
-				double newHeight = (preferred.getHeight() > current.getHeight()) ? preferred.getHeight() : current.getHeight();
-				double newWidth = (preferred.getWidth() > current.getWidth()) ? preferred.getWidth() : current.getWidth();
-				c.setSize(new Dimension((int)newWidth, (int)newHeight));
+	
+		panel.iniload();
+	
+		frametitle = version[0]+"/"+version[1]+" "+version[2]+" "+version[3];
+		frame.setTitle(frametitle); //DM20032004 081.6 int18 changed
+	
+		//DM28112003 081.5++
+		boolean loadGUI=false;
+		boolean IDsLoaded=false;
+		boolean CutsLoaded=false;
+	
+		if (args.length > 0) {
+	
+			if ( args[0].equalsIgnoreCase("-c") ) {
+				// already done
+			} else if ( args[0].equalsIgnoreCase("-dvx1") ) {
+				aaa1=1;
+				cBox[30].setSelected(true);
+			} else if ( args[0].equalsIgnoreCase("-dvx2") ) {
+				aaa1=1;
+				cBox[30].setSelected(true);
+				cBox[12].setSelected(true);
+			} else if ( args[0].equalsIgnoreCase("-dvx3") ) {
+				aaa1=1;
+				cBox[30].setSelected(true);
+				cBox[4].setSelected(true);
+			} else if ( args[0].equalsIgnoreCase("-dvx4") ) {
+				aaa1=1;
+				cBox[30].setSelected(true);
+				cBox[12].setSelected(true);
+				cBox[4].setSelected(true);
 			}
-		});
-
-		frame.getContentPane().add(panel);
-
-		frame.setLocation(framelocation[0],framelocation[1]);
-		frame.setSize(new Dimension(framelocation[2],framelocation[3]));
-
-		brm.surf.start();
-
-		panel.updateState();
-		panel.javaEV();
-
-		//DM22062004 081.7 int05 changed
-		Common.loadAC3(); 
-
-		startup.set(RButton[1].isSelected());
-
-		if (startup.get())
+	
+			if (RButton[0].isSelected() || !RButton[1].isSelected()) {
+				System.out.println("-> to agree to these terms you have to start the GUI first");
+				//System.exit(0);
+			}
+	
+			for (int f=aaa1;f<args.length-1;f++) {
+				if ( args[f].equalsIgnoreCase("-g") ) {
+					loadGUI=true;
+					aaa1++;
+				} else if ( args[f].equalsIgnoreCase("-o") ) {
+					outchange=true;
+					if (new File(args[f+1]).exists()) 
+						comBox[13].insertItemAt(args[f+1],0);
+					outchange=false;
+					aaa1+=2;
+				} else if ( args[f].equalsIgnoreCase("-n") ) {
+					newOutName = args[f+1];
+					aaa1+=2;
+				} else if ( args[f].equalsIgnoreCase("-l") ) {
+					cBox[21].setSelected(true);
+					aaa1++;
+				} else if ( args[f].equalsIgnoreCase("-p") ) {
+					if (new File(args[f+1]).exists())
+						loadCutPoints(args[f+1]);
+					CutsLoaded=true;
+					aaa1+=2;
+				} else if ( args[f].equalsIgnoreCase("-i") ) {
+					loadIDs(args[f+1]);
+					IDsLoaded=true;
+					aaa1+=2;
+				}
+			}
+	
+			panel.updateState();
+	
+			//DM22062004 081.7 int05 changed
+			Common.loadAC3(); 
+	
+			cBox[11].setSelected(false);
+			options[30]=0;
+			comchange=true;
+			comBox[0].addItem("0"); 
+			collfiles = new ArrayList[1];
+			collfiles[0] = new ArrayList();
+	
+			for (int a=aaa1; a < args.length; a++) 
+				collfiles[0].add(args[a]);
+	
+			if (comBox[13].getItemCount()>0) 
+				collout.add(comBox[13].getItemAt(0));
+			else 
+				collout.add(outalias);
+	
+			if (!IDsLoaded)
+				speciallist.add(new ArrayList());
+			if (!CutsLoaded)
+				cutlist.add(new ArrayList());
+			comchange=false;
+			comBox[0].setSelectedIndex(comBox[0].getItemCount()-1); //DM26032004 081.6 int18 changed
+	
+			if (!loadGUI){ //DM28112003 081.5++
+				running = true;
+				doitButton.doClick();
+			}
+	
+		}
+		
+		if (args.length == 0 || loadGUI) {
+		/***** loading GUI ******/
+	
+			if (loadGUI){ //DM28112003 081.5++
+				frame.addWindowListener (new WindowAdapter() { 
+					public void windowClosing(WindowEvent e) { 
+						System.exit(0); 
+					}
+				});
+			}else{
+				frame.addWindowListener (new WindowAdapter() { 
+					public void windowClosing(WindowEvent e) { 
+						X.inisave();
+						System.exit(0); 
+					}
+				});
+			}
+			frame.addComponentListener(new ComponentListener() {
+				public void componentHidden(ComponentEvent e) {} 
+				public void componentMoved(ComponentEvent e) {} 
+				public void componentShown(ComponentEvent e) {} 
+				public void componentResized(ComponentEvent e) {
+					Component c = e.getComponent();
+					Dimension preferred = new Dimension(714, 460), current = c.getSize();  //DM26032004 081.6 int18 changed
+					double newHeight = (preferred.getHeight() > current.getHeight()) ? preferred.getHeight() : current.getHeight();
+					double newWidth = (preferred.getWidth() > current.getWidth()) ? preferred.getWidth() : current.getWidth();
+					c.setSize(new Dimension((int)newWidth, (int)newHeight));
+				}
+			});
+	
+			frame.getContentPane().add(panel);
+	
+			frame.setLocation(framelocation[0],framelocation[1]);
+			frame.setSize(new Dimension(framelocation[2],framelocation[3]));
+	
+			brm.surf.start();
+	
+			panel.updateState();
+			panel.javaEV();
+	
+			//DM22062004 081.7 int05 changed
+			Common.loadAC3(); 
+	
+			if (startup != null)
+			{
+				startup.set(RButton[1].isSelected());
+		
+				if (startup.get())
+				{
+					setVisible0(true);
+					startup.close();
+				}
+			}
+		}
+	}
+	catch(Exception e)
+	{
+		if (startup != null)
 		{
-			setVisible0(true);
 			startup.close();
+		}
+		if (!CLI_mode)
+		{
+			StringWriter sw = new StringWriter();
+			e.printStackTrace(new PrintWriter(sw));
+			JOptionPane.showMessageDialog(null, Resource.getString("startup.error") + "\n\n"+sw.toString(), Resource.getString("startup.error.title"), JOptionPane.ERROR_MESSAGE);
+		}
+		else
+		{
+			e.printStackTrace();
 		}
 	}
 }   // end methode main

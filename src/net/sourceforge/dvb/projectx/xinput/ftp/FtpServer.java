@@ -68,7 +68,7 @@ public class FtpServer {
 
 			isSuccessful = true;
 
-		} catch (IOException e) {
+		} catch (Exception e) {
 			if (ftpClient.isConnected()) {
 				try {
 					ftpClient.disconnect();
@@ -95,8 +95,8 @@ public class FtpServer {
 				ftpInputFiles[i] = new XInputFile(tempFtpVO);
 			}
 
-		} catch (IOException e) {
-			ftpInputFiles = null;
+		} catch (Exception e) {
+			ftpInputFiles = new XInputFile[0];
 		}
 		return ftpInputFiles;
 	}
@@ -105,17 +105,19 @@ public class FtpServer {
 		return ftpClient.retrieveFileStream(aFileName);
 	}
 
-	public void close() {
-		if (!isOpen) { throw new IllegalStateException("Is already closed, must be opened before!"); }
+	public void close() 
+	{
+		if (!isOpen) // if not alread closed, close it now 
+		{ 
+			try {
+				ftpClient.logout();
+				ftpClient.disconnect();
+			} catch (Exception e) {
+				// do nothing
+			}
 
-		try {
-			ftpClient.logout();
-			ftpClient.disconnect();
-		} catch (Exception e) {
-			// do nothing
+			isOpen = false;
 		}
-
-		isOpen = false;
 	}
 
 	public boolean test() {
