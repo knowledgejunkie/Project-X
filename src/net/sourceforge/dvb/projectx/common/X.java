@@ -5407,19 +5407,27 @@ public static void main(String[] args)
 			}
 		}
 	}
-	catch(Exception e)
+	catch(Exception e) // catch all other unhandled exception
 	{
-		if (startup != null)
+		if (!CLI_mode) // in GUI mode clean GUI and show GUI message
 		{
-			startup.close();
-		}
-		if (!CLI_mode)
-		{
+			// close startup
+			if (startup != null)
+			{
+				startup.close();
+			}
+			// close main frame
+			if (frame != null)
+			{
+				frame.setVisible(false);
+			}
+
+			// show exception messge
 			StringWriter sw = new StringWriter();
 			e.printStackTrace(new PrintWriter(sw));
 			JOptionPane.showMessageDialog(null, Resource.getString("startup.error") + "\n\n"+sw.toString(), Resource.getString("startup.error.title"), JOptionPane.ERROR_MESSAGE);
 		}
-		else
+		else // in CLI mode simply show stackTrace
 		{
 			e.printStackTrace();
 		}
