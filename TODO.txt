@@ -34,3 +34,4 @@ roehrist erl 14.11 - skip() gefixt in XInputStream, es fehlten Retries, bis alle
 14.11. - Unterstützung von rename() in XInput
 roehrist erl 14.11. - Focusreihenfolge in FTPChooser korrigiert und TextArea ist nicht mehr editierbar
 roehrist in Arbeit 14.11. - Interface evt. durch abstrakte Basisklasse ersetzen.
+roehrist in Arbeit 16.11. - Performance Problem von TFRAW beheben.
