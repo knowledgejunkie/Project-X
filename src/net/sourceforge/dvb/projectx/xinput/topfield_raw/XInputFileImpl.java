@@ -134,7 +134,6 @@ public class XInputFileImpl implements XInputFileIF {
 	 * @return Name of file
 	 */
 	public String getName() {
-		/** TODO Substring einführen, um Pfad abzutrennen - Wie ist fileName aufgebaut? */
 		return fileName;
 	}
 
@@ -144,8 +143,7 @@ public class XInputFileImpl implements XInputFileIF {
 	 * @return Path of parent
 	 */
 	public String getParent() {
-		/** TODO Substring einführen, um Dateinamen abzutrennen - Wie ist fileName aufgebaut? */
-		return fileName;
+		return "";
 	}
 
 	/**
@@ -188,7 +186,8 @@ public class XInputFileImpl implements XInputFileIF {
 			try {
 				inputStream.close();
 			} catch (IOException e) {
-				// Do nothing
+				if (debug) System.out.println(e.getLocalizedMessage());
+				if (debug) e.printStackTrace();
 			}
 			inputStream = null;
 		}

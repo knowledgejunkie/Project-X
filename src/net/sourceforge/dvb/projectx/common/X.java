@@ -172,7 +172,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "12.11.2004";
+static String version_date = "14.11.2004";
 
 public static boolean CLI_mode = false;
 
@@ -862,7 +862,7 @@ protected void buildAutoloadPanel()
 	bb.add(add_input);
 
 	// Button to add a ftp server directory to the autoload list
-	JButton add_inputftp = new JButton(Resource.loadIcon("ftp.gif")); // TODO: localize or use gif
+	JButton add_inputftp = new JButton(Resource.loadIcon("ftp.gif"));
 	add_inputftp.setActionCommand("+iftp");
 	add_inputftp.setPreferredSize(new Dimension(50,28));
 	add_inputftp.setMaximumSize(new Dimension(50,24));
