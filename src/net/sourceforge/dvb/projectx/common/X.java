@@ -175,7 +175,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "12.12.2004 14:00";
+static String version_date = "12.12.2004 21:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -5499,13 +5499,15 @@ public static void main(String[] args)
 						BufferedReader d = new BufferedReader(new InputStreamReader(fstream));
 
 						while(d.ready())
-							collfiles[0].add(d.readLine());
+							collfiles[0].add(addInputFile(d.readLine()));
+							//collfiles[0].add(d.readLine());
 
 						d.close();
 					}
 
 					else
-						collfiles[0].add(args[a]);
+						collfiles[0].add(addInputFile(args[a]));
+						//collfiles[0].add(args[a]);
 				} 
 				catch (Exception e)
 				{
@@ -5646,6 +5648,56 @@ public static String[] getVersion()
 		Resource.getString("version.user") + System.getProperty("user.name")
 	};
 }
+
+
+	/**
+	 * should support loading of supported URLs/files via CLI
+	 */
+	private static XInputFile addInputFile(String value)
+	{
+		XInputFile inputValue = null;
+		URL url = null;
+
+		if (value == null)
+			return null;
+
+		try
+		{
+			url = new URL(value);
+
+			String protocol = url.getProtocol();
+
+			if (protocol.equals("ftp"))
+			{
+				XInputDirectory xid = new XInputDirectory(url);
+				XInputFile[] xif = xid.getFiles();
+
+				for (int i = 0; i < xif.length; i++)
+				{
+					if ( xif[i].toString().equals(url.toString()) )
+					{
+						inputValue = xif[i];
+						break;
+					}
+				}
+			}
+
+			else if (protocol.equals("file"))
+				inputValue = new XInputFile(new File(url.getHost() + url.getFile()));
+
+			else
+				System.out.println("!> Protocol not yet supported: " + protocol);
+
+			return inputValue;
+		}
+		catch (Exception u1)
+		{}
+
+		if (new File(value).exists())
+			return new XInputFile(new File(value));
+
+		return null;
+	}
 
 
 /**
@@ -6131,7 +6183,7 @@ public void run() {
 			if ( !workouts.endsWith(filesep) ) 
 				workouts += filesep;
 
-			Msg(Resource.getString("run.write.raw") + ": " + workouts);
+			Msg(Resource.getString("run.write.raw") + " " + workouts);
  
 			String fchilds = (new File(firstfile).getName()).toString();
 

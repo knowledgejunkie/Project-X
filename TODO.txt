@@ -42,7 +42,6 @@ dvbmatt erl 20.11. - laden von Dateien via 'hinzufügen' und dann anklick für dat
          bei dragndrop geht's normal
 (20.11. - doppelklick in dateiauswahlbox führt zu illegalargumentexc.)
 20.11. - wie oben, Erkennung des Dateityps bei Ausführung via CLI nicht implementiert?, geht nicht
-dvbmatt fix 20.11. - CLI: extern angebenes ini-File wirkt nicht mehr (wohl seit 081.9)
 dvbmatt neu 27.11. - meldungsoption zum mitloggen der verstrichenen prozesszeit
 pstorch neu 28.11. - beschleunigung der vorschau, durch externen prozessornahen code .dll
 dvbmatt neu 28.11. - vorschau schnittleiste , magenta querstriche zur schnittpunktmarkierung, bei engen stellen sieht man sonst nix
@@ -57,3 +56,8 @@ dvbmatt 10.12. - final static int Streamtypen in Common ergänzt und X + Scan tlw
 dvbmatt 12.12. - (20.11.) Möglichkeit der Eingabe einer URL über Menü ergänzt.
 	 Anpassung für gültigen XInputFile-Typ für ftp + file protocol, 
          ftp-Portnummern und zugriffsmögl. ohne username wird von xinput noch nicht ermöglicht
+dvbmatt 12.12. - (20.11.) - CLI: extern angebenes ini-File wirkt nicht mehr (wohl seit 081.9)
+	 Anpassung für gültigen XInputFile-Typ für ftp + file protocol + normal filetyp, 
+	 unklar, was mit topfield dateien über die CLI passiert: TfHDRead-tool von jkit
+
+-- extract PES von PVA schreibt zzt. nur in den quelldateipfad
