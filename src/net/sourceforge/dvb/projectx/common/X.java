@@ -178,7 +178,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "24.12.2004 11:00";
+static String version_date = "25.12.2004 18:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -236,7 +236,7 @@ static JButton doitButton, breakButton, scanButton, pauseButton, extract, exeBut
 
 public static JRadioButton[] RButton = new JRadioButton[25];
 public static JComboBox[] comBox = new JComboBox[39];
-public static JCheckBox[] cBox = new JCheckBox[77];
+public static JCheckBox[] cBox = new JCheckBox[78];
 
 // radio buttons for look and feels in general menu
 private JRadioButtonMenuItem lf_item[] = null; 
@@ -249,7 +249,7 @@ static JLabel msoff, audiostatusLabel, splitLabel, cutnum, ttxheaderLabel, ttxvp
 static JProgressBar progress;
 public static JTextField outfield;
 static JTextField[] d2vfield = new JTextField[10], //DM18052004 081.7 int02 changed
-	exefield = new JTextField[9];
+	exefield = new JTextField[10];
 
 
 static boolean bool=false, PureVideo=false;
@@ -1767,10 +1767,40 @@ protected JPanel buildvideo1Panel() {
 	video2Panel.add(cBox[13]);
 
 	cBox[75] = new JCheckBox(Resource.getString("tab.video.endcode2"));
-	cBox[75].setPreferredSize(new Dimension(250,20));
-	cBox[75].setMaximumSize(new Dimension(250,20));
+	cBox[75].setPreferredSize(new Dimension(270,20));
+	cBox[75].setMaximumSize(new Dimension(270,20));
 	cBox[75].setToolTipText(Resource.getString("tab.video.endcode2.tip"));
 	video2Panel.add(cBox[75]);
+
+	cBox[27] = new JCheckBox(Resource.getString("tab.video.add.sequence"));
+	cBox[27].setPreferredSize(new Dimension(270,20));
+	cBox[27].setMaximumSize(new Dimension(270,20));
+	cBox[27].setSelected(false);
+	cBox[27].setToolTipText(Resource.getString("tab.video.add.sequence.tip"));
+	video2Panel.add(cBox[27]);
+
+	JPanel SdePanel = new JPanel();
+	SdePanel.setLayout(new BoxLayout(SdePanel, BoxLayout.X_AXIS));
+
+	cBox[77] = new JCheckBox(Resource.getString("tab.video.patch.sde"));
+	cBox[77].setPreferredSize(new Dimension(180,20));
+	cBox[77].setMaximumSize(new Dimension(180,20));
+	cBox[77].setToolTipText(Resource.getString("tab.video.patch.sde.tip"));
+	SdePanel.add(cBox[77]);
+
+	exefield[9] = new JTextField("");
+	exefield[9].setPreferredSize(new Dimension(80,20));
+	exefield[9].setMaximumSize(new Dimension(80,20));
+	SdePanel.add(exefield[9]);
+
+	video2Panel.add(SdePanel);
+
+	cBox[35] = new JCheckBox(Resource.getString("tab.video.patch.cdf"));
+	cBox[35].setPreferredSize(new Dimension(270,20));
+	cBox[35].setMaximumSize(new Dimension(270,20));
+	cBox[35].setSelected(true);
+	cBox[35].setToolTipText(Resource.getString("tab.video.patch.cdf.tip"));
+	video2Panel.add(cBox[35]);
 
 	cBox[31] = new JCheckBox(Resource.getString("tab.video.patch.progr"));
 	cBox[31].setPreferredSize(new Dimension(250,20));
@@ -1795,20 +1825,6 @@ protected JPanel buildvideo1Panel() {
 	cBox[45].setToolTipText(Resource.getString("tab.video.patch.fieldorder.tip"));
 	video2Panel.add(cBox[45]);
 
-	cBox[27] = new JCheckBox(Resource.getString("tab.video.add.sequence"));
-	cBox[27].setPreferredSize(new Dimension(260,20));
-	cBox[27].setMaximumSize(new Dimension(260,20));
-	cBox[27].setSelected(false);
-	cBox[27].setToolTipText(Resource.getString("tab.video.add.sequence.tip"));
-	video2Panel.add(cBox[27]);
-
-	//DM29082004 081.7 int10 add
-	cBox[35] = new JCheckBox(Resource.getString("tab.video.patch.cdf"));
-	cBox[35].setPreferredSize(new Dimension(260,20));
-	cBox[35].setMaximumSize(new Dimension(260,20));
-	cBox[35].setSelected(true);
-	cBox[35].setToolTipText(Resource.getString("tab.video.patch.cdf.tip"));
-	video2Panel.add(cBox[35]);
 
 	//JLA14082003+
 	JPanel hPPanel = new JPanel();
@@ -1823,8 +1839,8 @@ protected JPanel buildvideo1Panel() {
 		Resource.getString("tab.video.patch.resol.val3")
 	};
 	comBox[35]= new JComboBox(cHorizontalPatch);
-	comBox[35].setPreferredSize(new Dimension(150,20));
-	comBox[35].setMaximumSize(new Dimension(150,20));
+	comBox[35].setPreferredSize(new Dimension(160,20));
+	comBox[35].setMaximumSize(new Dimension(160,20));
 	hPPanel.add(comBox[35]);
 
 	video2Panel.add(hPPanel);
@@ -6464,6 +6480,14 @@ private void messageSettings()
 		if (cBox[13].isSelected())
 			Msg("-> " + cBox[13].getText().toString());
 
+		//Sequ_endcode on changes
+		if (cBox[75].isSelected())
+			Msg("-> " + cBox[75].getText().toString());
+
+		//SDE
+		if (cBox[77].isSelected())
+			Msg("-> " + cBox[77].getText().toString() + " " + exefield[9].getText());
+
 		//add missing sequ_header
 		if (cBox[27].isSelected())
 			Msg("-> " + cBox[27].getText().toString());
@@ -7068,7 +7092,6 @@ public void pesparse(XInputFile aXInputFile, String vptslog, int ismpg)
 	options[6]=0;
 	options[7]=0;
 	options[8]=-10000;
-	options[12]=200;
 	options[13]=1;
 	options[41]=0;
 	options[50]=0;
@@ -7587,7 +7610,6 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 	options[6]=0;
 	options[7]=0;
 	options[8]=-10000;
-	options[12]=(ismpg==1)?10:200;
 	options[13]=1;
 	options[41]=0;
 	options[50]=0;
@@ -8583,7 +8605,6 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 	options[6]=0;
 	options[7]=0;
 	options[8]=-10000;
-	options[12]=200;
 	options[13]=1;
 	options[41]=0;
 	options[50]=0;
@@ -9751,6 +9772,9 @@ public long nextFilePTS(int type, int ismpg, long lastpts, int file_number, long
 		if (ret >= 0)
 			Msg(Resource.getString("nextfile.next.file.start", Common.formatTime_1(pts / 90L), Common.formatTime_1(lastpts / 90L)));
 
+		if (ret > 0)
+			Msg(Resource.getString("nextfile.next.file.start.adaption", Common.formatTime_1(ret / 90L)));
+
 		return ret;
 	}
 }
@@ -9874,7 +9898,6 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 	options[6]=0;
 	options[7]=0;
 	options[8]=-10000;
-	options[12]=200;
 	options[13]=1;
 	options[41]=0;
 	options[50]=0;
@@ -14481,6 +14504,7 @@ public void processLPCM(String[] args)
 		{
 			write = vptsdata ? false : true;
 
+
 			rangeloop:
 			while (vptsdata && v < vptsval.length)  //sample_start_pts must be in range ATM
 			{ 
@@ -14661,7 +14685,6 @@ public String rawvideo(XInputFile aXInputFile)
 	options[6] = 0;
 	options[7] = 0;
 	options[8] = -10000;
-	options[12] = 50;
 	options[41] = 0;
 	options[50] = 0;
 	MPGVideotype = 0;
@@ -15181,54 +15204,68 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 	else 
 		frametypebuffer.write((byte)0x80);
 
-	if (options[18]>0 && options[13]==0 && options[7]==0) {
-		byte[] newgop = new byte[headerrescue.length+gop.length];
-		System.arraycopy(headerrescue,0,newgop,0,headerrescue.length);
-		System.arraycopy(gop,0,newgop,headerrescue.length,gop.length);
-		gop = new byte[newgop.length];
-		gop=newgop; 
-		newgop=null;
-		options[13]=1;
-		for (int a=0; a<vpts[1].length; a++) 
-			vpts[1][a]+=headerrescue.length;
+	if (options[18] > 0 && options[13] == 0 && options[7] == 0)
+	{
+		byte[] newgop = new byte[headerrescue.length + gop.length];
 
-	} else if (!ctemp.isEmpty() && options[13]==0 && !bool) {
-		byte[] newgop = new byte[headerrescue.length+gop.length];
-		System.arraycopy(headerrescue,0,newgop,0,headerrescue.length);
-		System.arraycopy(gop,0,newgop,headerrescue.length,gop.length);
-		gop = new byte[newgop.length];
-		gop=newgop; 
-		newgop=null;
-		options[13]=1;
-		for (int a=0; a<vpts[1].length; a++) 
-			vpts[1][a]+=headerrescue.length;
+		System.arraycopy(headerrescue, 0, newgop, 0, headerrescue.length);
+		System.arraycopy(gop, 0, newgop, headerrescue.length, gop.length);
 
-	} else if (options[13]==0 && cBox[27].isSelected()) {  // ** 0.62c Seqhead for each gop
-		byte[] newgop = new byte[headerrescue.length+gop.length];
-		System.arraycopy(headerrescue,0,newgop,0,headerrescue.length);
-		System.arraycopy(gop,0,newgop,headerrescue.length,gop.length);
 		gop = new byte[newgop.length];
-		gop=newgop; 
-		newgop=null;
-		options[13]=1;
-		for (int a=0; a<vpts[1].length; a++) 
-			vpts[1][a]+=headerrescue.length;
+		gop = newgop; 
+
+		newgop = null;
+		options[13] = 1;
+
+		for (int a = 0; a < vpts[1].length; a++) 
+			vpts[1][a] += headerrescue.length;
+
+	}
+	else if (!ctemp.isEmpty() && options[13] == 0 && !bool)
+	{
+		byte[] newgop = new byte[headerrescue.length + gop.length];
+
+		System.arraycopy(headerrescue, 0, newgop, 0, headerrescue.length);
+		System.arraycopy(gop, 0, newgop, headerrescue.length, gop.length);
+
+		gop = new byte[newgop.length];
+		gop = newgop; 
+
+		newgop = null;
+		options[13] = 1;
+
+		for (int a = 0; a < vpts[1].length; a++) 
+			vpts[1][a] += headerrescue.length;
+
+	}
+	else if (options[13] == 0 && cBox[27].isSelected())   // ** 0.62c Seqhead for each gop
+	{
+		byte[] newgop = new byte[headerrescue.length + gop.length];
+
+		System.arraycopy(headerrescue, 0, newgop, 0, headerrescue.length);
+		System.arraycopy(gop, 0, newgop, headerrescue.length, gop.length);
+
+		gop = new byte[newgop.length];
+		gop = newgop; 
+
+		newgop = null;
+		options[13] = 1;
+
+		for (int a = 0; a < vpts[1].length; a++) 
+			vpts[1][a] += headerrescue.length;
 	}
 
 	/* header check */
-	if (options[13]==1)
+	if (options[13] == 1)
 	{
 
-		videoframerate = fps_tabl2[15 & gop[s+7]];  // framerateconstant
-		options[15] = 16*1024*( (31 & gop[s+10])<<5 | (248 & gop[s+11])>>>3 );
-
-		if ( ((15&gop[s+5])<<8 | gop[s+6]) <480 ) 
-			options[12]=options[12]/2; 
+		videoframerate = fps_tabl2[15 & gop[s + 7]];  // framerateconstant
+		options[15] = 16 * 1024 * ( (31 & gop[s + 10])<<5 | (248 & gop[s + 11])>>>3 );
 
 		String[] vbasics = { ""+((255&gop[s+4])<<4 | (240&gop[s+5])>>>4),""+((15&gop[s+5])<<8 | (255&gop[s+6])),(fps_tabl1[15&gop[s+7]]),aspratio[(255&gop[s+7])>>>4] };
-		clv[7] = ((255&gop[s+7])>>>4)-1;
+		clv[7] = ((255 & gop[s + 7])>>>4) - 1;
 
-		if (newvideo || options[7]==0)
+		if (newvideo || options[7] == 0)
 		{
 			nv = Resource.getString("video.msg.basics", "" + vbasics[0]+"*"+vbasics[1]+" @ "+vbasics[2]+" @ "+vbasics[3]+" @ "+( ((255&gop[s+8])<<10 | (255&gop[s+9])<<2 | (192 & gop[s+10])>>>6)*400  )) + " " + ( (31&gop[s+10])<<5 | (248&gop[s+11])>>>3 );
 
@@ -15273,6 +15310,9 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 	ArrayList newPics=new ArrayList(); //DM05112003 081.5++
 	long TC=0, lTC=options[53]; //DM12112003 081.5++
 
+	boolean sequenceheader_complete = false;
+	boolean SDE_found = false;
+	int SDE_marker = -1;
 
 	/* gop check */
 	goploop:
@@ -15299,12 +15339,7 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 			continue goploop;
 		}
 
-
-		/****+ 0x000001 *****/
-		//if ( gop[s]!=0 || gop[s+1]!=0 || gop[s+2]!=1 ) 
-		//	continue goploop;
-
-		else if ((0xF0 & gop[s+3]) == 0xE0)  //DM20032004 081.6 int18 add -- inofficial! shit progdvb_data check
+		else if ((0xF0 & gop[s+3]) == 0xE0)  //shit progdvb_data check
 		{
 			int drop_length = 4;	
 
@@ -15332,39 +15367,57 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 			continue goploop;
 		}
 
-		else if (!mpegtype && gop[s+3]==(byte)0xb5 && gop[s+4]>>>4==1) {   /*** 0xb5 MPEG-2 extension ***/
+		else if (!mpegtype && gop[s+3]==(byte)0xb5 && gop[s+4]>>>4==1)    /*** 0xb5 sequence extension ***/
+		{
+			MPGVideotype = 1; 
+			mpegtype = true; 
+			prog_seq = s + 5;
+			SDE_marker = s + 10;
+			s += 9;
 
-			MPGVideotype=1; 
-			mpegtype=true; 
-			prog_seq=s+5;
-			s+=3;
-			//DM04032004 081.6 int18 add
-			if (options[13]==1 && frametypebuffer.size()==1)
+
+			if (options[13] == 1 && frametypebuffer.size() == 1)
 			{
 				frametypebuffer.reset();
 				frametypebuffer.write((byte)(8 | (8 & gop[prog_seq])<<4));
 			}
+		}
 
-		} else if ( (255 & gop[s+3])==0xb8 ) {   /*** 0xb8 set timecode ***/
+		else if (!sequenceheader_complete && gop[s + 3] == (byte)0xB5 && gop[s + 4]>>>4 == 2)    /*** 0xb5 MPEG-2 seq dis extension ***/
+		{
+			if (cBox[77].isSelected() && options[13] == 1)
+				Video.setSequenceDisplayExtension( gop, s, exefield[9].getText(), VBASIC);
 
-			closedgop=s+7;
-			writeframe=true;
-			broken_link=(0x20&gop[s+7])!=0?true:false; 
+			SDE_found = true;
+
+			s += 8;
+		}
+
+		else if ( (0xFF & gop[s + 3]) == 0xB8 )    /*** 0xb8 gop timecode ***/
+		{
+			sequenceheader_complete = true;
+
+			closedgop = s + 7;
+			writeframe = true;
+			broken_link = (0x20 & gop[s + 7]) != 0 ? true : false; 
 
 			//DM12112003  gop TC 081.5++ 
 			TC = 90L* (3600000L*((0x7C&gop[s+4])>>>2) + 
 				60000L*((3&gop[s+4])<<4 | (0xF0&gop[s+5])>>>4) +
 				1000L* ((7&gop[s+5])<<3 | (0xE0&gop[s+6])>>>5) +
 				(long)(((0x1F&gop[s+6])<<1 | (0x80&gop[s+7])>>>7)*(double)(videoframerate/90.0f)) );
-			if (Math.abs(TC-options[53])<videoframerate || origframes==0)
-				options[53]=TC;
 
-			if (options[30]==1) //DM131003 081.5++
-				System.out.println("\n//b8 "+TC+"/ "+Integer.toHexString((0x80&gop[s+4]) | (0x7F&gop[s+7]))+"/ "+s+"/ "+options[13]);
-			if (options[13]==1)
+			if (Math.abs(TC - options[53]) < videoframerate || origframes == 0)
+				options[53] = TC;
+
+			if (options[30] == 1)
+				System.out.println("\n//b8 " + TC + "/ " + Integer.toHexString((0x80&gop[s+4]) | (0x7F&gop[s+7])) + "/ " + s + "/ " + options[13]);
+
+			if (options[13] == 1)
+			{
 				headerrescue = new byte[s];
-			System.arraycopy(gop,0,headerrescue,0,s); //!!copy ever sequ_hader??
-
+				System.arraycopy(gop, 0, headerrescue, 0, s);
+			}
 
 
 			java.util.Date videotime = new java.util.Date((long)((options[7])*(double)(videoframerate/90.0f)));
@@ -15378,7 +15431,11 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 
 			s+=6;
 
-		} else if ( gop[s+3]==0 ) {   /* 0x0 new frame */
+		}
+
+		else if ( gop[s+3] == 0 )    /* 0x0 new frame */
+		{
+			sequenceheader_complete = true;
 
 			tref = ((255 & gop[s+4]) << 2) | (192 & gop[s+5])>>>6;  // timerefence of picture
 			frametype = (56&gop[s+5])>>>3;
@@ -15511,8 +15568,6 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 
 			if (iframe || !changegop || (changegop && writeframe)) 
 				frametypebuffer.write((byte)(frametype | progressive));
-
-			//s += (iframe) ? 950 : (int)options[12];
 
 			s += 8; //DM14122003 081.6 int06  // slices B min 5, I min 50, p min 25
 			iframe = false;
@@ -15810,7 +15865,19 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 				if (format_changed && cBox[75].isSelected())
 					video_sequence.write(Video.getSequenceEndCode());
 
-				video_sequence.write(gop);
+				if (cBox[77].isSelected() && !SDE_found && options[13] == 1)
+				{
+					int offs = SDE_marker != -1 ? SDE_marker : headerrescue.length;
+
+					video_sequence.write(gop, 0, offs);
+					video_sequence.write(Video.setSequenceDisplayExtension( exefield[9].getText(), VBASIC));
+					video_sequence.write(gop, offs, gop.length - offs);
+
+					options[39] += 9;
+				}
+				else
+					video_sequence.write(gop);
+
 				options[39] += gop.length;
 
 				showOutSize();
@@ -17957,7 +18024,7 @@ public static int getForcedTTXLanguage()
  options[9] = -c delete CRC flag and 2 bytes in MPEG1+2 audio layer 1+2 : 0 or 1
  options[10] = 0; MPEG audio layer1+2 ,  1 = force to dual, 2 = force to stereo, 3 = force to jointstereo, 4 = 2chanel to 2*mono
  options[11] = pure Audio files : 0 or 1 (= another file.extension)
- options[12] = initial loopcounter for frame search in gop :  200...
+ options[12] **** unused ! initial loopcounter for frame search in gop :  200...
  options[13] = 0, 1 = gopcheck called from completed sequence
  options[14] = sequence _frameconstants,  25fps = 3600
  options[15] = vbvbuffer , ~112 (1136)
@@ -17971,7 +18038,7 @@ public static int getForcedTTXLanguage()
  options[23] = vbvdelay
  options[24] = aspectratio
  options[25] = first vpts for simple audio split
- options[26] = **** unused ! //write video = bit 0 set, write audio = bit  set
+ options[26] **** unused ! //write video = bit 0 set, write audio = bit  set
  options[27] = nextfilepts
  options[28] = audio offset
  options[29] = ac3 patch

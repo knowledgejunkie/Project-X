@@ -26,6 +26,8 @@
 
 package net.sourceforge.dvb.projectx.video;
 
+import java.util.StringTokenizer;
+
 public class Video {
 
 	final static String[] aspratio = { 
@@ -91,5 +93,64 @@ public class Video {
 		byte[] b = { 0, 0, 1, (byte)0xB7 };
 
 		return b;
+	}
+
+	/**
+	 * returns std Sequence Display Ext as array
+	 *
+	 * @return
+	 */
+	public static byte[] setSequenceDisplayExtension( String str, String[] videobasics)
+	{
+		byte[] b = { 0, 0, 1, (byte)0xB5, 0x2B, 2, 2, 2, 0, 0, 0, 0 };
+
+		setSequenceDisplayExtension( b, 0, str, videobasics);
+
+		return b;
+	}
+
+	/**
+	 * returns std Sequence Display Ext as array
+	 *
+	 * @return
+	 */
+	public static void setSequenceDisplayExtension( byte[] b, int offs, String str, String[] videobasics) throws ArrayIndexOutOfBoundsException
+	{
+		int[] size = getHVSize( str, videobasics);
+
+		offs += (1 & b[4]) != 0 ? 8 : 5;
+
+		b[offs] = (byte) (0xFF & size[0]>>>6);
+		b[offs + 1] = (byte) (0xFC & size[0]<<2);
+		b[offs + 1] |= 2;
+		b[offs + 1] |= (byte) (1 & size[0]>>>13);
+		b[offs + 2] = (byte) (0xFF & size[1]>>>5);
+		b[offs + 3] = (byte) (0xF8 & size[1]<<3);
+	}
+
+	private static int[] getHVSize(String str, String[] videobasics)
+	{
+		StringTokenizer st = new StringTokenizer(str, "*");
+		int[] tokens = { 720, 576 };
+
+		for (int i = 0, val; i < 2; i++)
+		{
+			try {
+				val = Integer.parseInt(videobasics[i].trim());
+				tokens[i] = val;
+			} catch (Exception e) {
+			}
+		}
+
+		for (int i = 0, val; st.hasMoreTokens() && i < 2; i++)
+		{
+			try {
+				val = Integer.parseInt(st.nextElement().toString().trim());
+				tokens[i] = val;
+			} catch (Exception e) {
+			}
+		}
+
+		return tokens;
 	}
 }
