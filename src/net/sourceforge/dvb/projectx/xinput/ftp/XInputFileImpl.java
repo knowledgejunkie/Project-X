@@ -264,7 +264,9 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public boolean rename() throws IOException {
 
-		if (isopen) { throw new IllegalStateException("XInputFile is open!"); }
+	//	if (isopen) { throw new IllegalStateException("XInputFile is open!"); }
+		if (isopen)
+			return false;
 
 		randomAccessOpen("r");
 
