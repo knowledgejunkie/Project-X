@@ -36,7 +36,8 @@ public class Video {
 		"forbidden fps" , "23.976fps" , "24fps" , "25fps" , "29.97fps" , "30fps" , "50fps" , 
 		"59.94fps" , "60fps" , "n.def." , "n.def." ,	"n.def." , "n.def." , "n.def." , "n.def." , "n.def."
 	};
-	// int[] fps_tabl2 = {0,3753,3750,3600,3003,3000,1800,1501,1500,0,0,0,0,0,0,0};
+	// for info only: int[] fps_tabl2 = {0,3753,3750,3600,3003,3000,1800,1501,1500,0,0,0,0,0,0,0};
+
 
 	/**
 	 * returns formatted display from sequence header
@@ -78,5 +79,17 @@ public class Video {
 			pts &= 0xFFFFFFFFL;
 
 		return pts;
+	}
+
+	/**
+	 * returns Sequence End Code as array
+	 *
+	 * @return
+	 */
+	public static byte[] getSequenceEndCode()
+	{
+		byte[] b = { 0, 0, 1, (byte)0xB7 };
+
+		return b;
 	}
 }

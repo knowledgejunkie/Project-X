@@ -103,8 +103,6 @@ dvbmatt erl 12.12. - (20.11.) - CLI: extern angebenes ini-File wirkt nicht mehr 
 	 unklar, was mit topfield dateien über die CLI passiert: TF-Tool
 	14.12. Erweiterung: URL ohne User/PW wird zu "anonymous:" gewandelt.
 
-!- extract PES von PVA schreibt zzt. nur in den quelldateipfad, problem bei CD + ftp
-
 dvbmatt fix 19.12. - post commands: Rückänderung in Runtime.getRuntime().exec(arguments)
 
 dvbmatt neu 19.12. - zusätzl. Meldungsoption, 'PES Kopf in ES' Message ausblenden (progdvb prob.)
@@ -113,3 +111,13 @@ dvbmatt änd. 19.12. - xinput mit Port + rename ergänzt, ftp-impl. getinputstream
            neu - Dialogs Klasse enthält ausgelagert ein paar standard GUI Benutzerdialoge        
 
 dvbmatt änd. 21.12. - xinput getnewinstance für preview/scan/hexviewer, um kollisionen zu vermeiden
+
+dvbmatt fix. 22.12. - gop-summary interlaced/progressive hatte nur einen Wert
+
+dvbmatt änd  23.12. - erweiterte Prüfung auf schreibmöglichkeit in def. ausgabepfad (existenz + schreibzugriff)
+              bei zugriffsproblemen Abbruch der Verarbeitung, kein home/alternativlaufwerk mehr
+      erl --> änderung export wie normaler Ablauf  - extract PES von PVA schreibt zzt. nur in den quelldateipfad, problem bei CD + ftp
+
+dvbmatt neu 23.12. - wechsel in den PTS (nicht fortlaufend) bei neuer Cell/Vob ID in .VOB mitzusätzl. Option (spez.) behandelbar
+
+dvbmatt neu 23.12. - zusätzl. option (video), zusätzl. einfügen eines sequenzendcodes beim wechsel des videoformats während demux, konformer

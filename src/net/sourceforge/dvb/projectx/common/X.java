@@ -171,16 +171,18 @@ import net.sourceforge.dvb.projectx.xinput.ftp.FtpChooser;
 import net.sourceforge.dvb.projectx.xinput.topfield_raw.RawInterface;
 
 import net.sourceforge.dvb.projectx.gui.Dialogs;
+import net.sourceforge.dvb.projectx.video.Video;
 
 public class X extends JPanel
 {
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "22.12.2004 11:00";
+static String version_date = "23.12.2004 20:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
+public static boolean ProcessIsActive = false;
 
 static int loadSizeForward = 2560000;
 
@@ -235,7 +237,7 @@ static JButton doitButton, breakButton, scanButton, pauseButton, extract, exeBut
 
 public static JRadioButton[] RButton = new JRadioButton[25];
 public static JComboBox[] comBox = new JComboBox[39];
-public static JCheckBox[] cBox = new JCheckBox[75];
+public static JCheckBox[] cBox = new JCheckBox[77];
 
 // radio buttons for look and feels in general menu
 private JRadioButtonMenuItem lf_item[] = null; 
@@ -252,7 +254,7 @@ static JTextField[] d2vfield = new JTextField[10], //DM18052004 081.7 int02 chan
 
 
 static boolean bool=false, PureVideo=false;
-static byte[] dumpfill = new byte[16], SEndCode = { 0,0,1,(byte)0xb7 };
+static byte[] dumpfill = new byte[16];
 
 static int ERRORCODE=0;
 static int currentcoll=0;
@@ -1419,6 +1421,13 @@ protected JPanel buildidPanel()
 	cBox[28].setSelected(true);
 	idPanel3.add(cBox[28]);
 
+	cBox[76] = new JCheckBox(Resource.getString("tab.specials.vob.resetpts"));
+	cBox[76].setToolTipText(Resource.getString("tab.specials.vob.resetpts.tip"));
+	cBox[76].setPreferredSize(new Dimension(270,20));
+	cBox[76].setMaximumSize(new Dimension(270,20));
+	cBox[76].setSelected(true);
+	idPanel3.add(cBox[76]);
+
 	cBox[38] = new JCheckBox(Resource.getString("tab.specials.ts.scramble"));
 	cBox[38].setToolTipText(Resource.getString("tab.specials.ts.scramble.tip"));
 	cBox[38].setPreferredSize(new Dimension(270,20));
@@ -1470,8 +1479,8 @@ protected JPanel buildidPanel()
 		Resource.getString("tab.specials.ts.header2") 
 	};
 	comBox[20] = new JComboBox(ts_headers);
-	comBox[20].setPreferredSize(new Dimension(270,22));
-	comBox[20].setMaximumSize(new Dimension(270,22));
+	comBox[20].setPreferredSize(new Dimension(270,20));
+	comBox[20].setMaximumSize(new Dimension(270,20));
 	idPanel3.add(comBox[20]);
 
 	cBox[37] = new JCheckBox(Resource.getString("tab.specials.ts.mainac3"));
@@ -1750,6 +1759,108 @@ protected JPanel buildvideo1Panel() {
 	video2Panel.setLayout( new ColumnLayout() );
 	video2Panel.setBorder( BorderFactory.createTitledBorder(Resource.getString("tab.video.title1")) );
 
+
+	cBox[13] = new JCheckBox(Resource.getString("tab.video.endcode"));
+	cBox[13].setPreferredSize(new Dimension(250,20));
+	cBox[13].setMaximumSize(new Dimension(250,20));
+	cBox[13].setSelected(true);
+	cBox[13].setToolTipText(Resource.getString("tab.video.endcode.tip"));
+	video2Panel.add(cBox[13]);
+
+	cBox[75] = new JCheckBox(Resource.getString("tab.video.endcode2"));
+	cBox[75].setPreferredSize(new Dimension(250,20));
+	cBox[75].setMaximumSize(new Dimension(250,20));
+	cBox[75].setToolTipText(Resource.getString("tab.video.endcode2.tip"));
+	video2Panel.add(cBox[75]);
+
+	cBox[31] = new JCheckBox(Resource.getString("tab.video.patch.progr"));
+	cBox[31].setPreferredSize(new Dimension(250,20));
+	cBox[31].setMaximumSize(new Dimension(250,20));
+	cBox[31].setActionCommand("prog1");
+	cBox[31].setSelected(false);
+	cBox[31].setToolTipText(Resource.getString("tab.video.patch.progr.tip"));
+	video2Panel.add(cBox[31]);
+
+	cBox[44] = new JCheckBox(Resource.getString("tab.video.patch.interlaced"));
+	cBox[44].setPreferredSize(new Dimension(250,20));
+	cBox[44].setMaximumSize(new Dimension(250,20));
+	cBox[44].setActionCommand("prog2");
+	cBox[44].setSelected(false);
+	cBox[44].setToolTipText(Resource.getString("tab.video.patch.interlaced.tip"));
+	video2Panel.add(cBox[44]);
+
+	cBox[45] = new JCheckBox(Resource.getString("tab.video.patch.fieldorder"));
+	cBox[45].setPreferredSize(new Dimension(250,20));
+	cBox[45].setMaximumSize(new Dimension(250,20));
+	cBox[45].setSelected(false);
+	cBox[45].setToolTipText(Resource.getString("tab.video.patch.fieldorder.tip"));
+	video2Panel.add(cBox[45]);
+
+	cBox[27] = new JCheckBox(Resource.getString("tab.video.add.sequence"));
+	cBox[27].setPreferredSize(new Dimension(260,20));
+	cBox[27].setMaximumSize(new Dimension(260,20));
+	cBox[27].setSelected(false);
+	cBox[27].setToolTipText(Resource.getString("tab.video.add.sequence.tip"));
+	video2Panel.add(cBox[27]);
+
+	//DM29082004 081.7 int10 add
+	cBox[35] = new JCheckBox(Resource.getString("tab.video.patch.cdf"));
+	cBox[35].setPreferredSize(new Dimension(260,20));
+	cBox[35].setMaximumSize(new Dimension(260,20));
+	cBox[35].setSelected(true);
+	cBox[35].setToolTipText(Resource.getString("tab.video.patch.cdf.tip"));
+	video2Panel.add(cBox[35]);
+
+	//JLA14082003+
+	JPanel hPPanel = new JPanel();
+	hPPanel.setLayout(new BoxLayout(hPPanel, BoxLayout.X_AXIS));
+	hPPanel.setToolTipText(Resource.getString("tab.video.patch.resol.tip"));
+	hPPanel.add(new JLabel (Resource.getString("tab.video.patch.resol")));
+
+	Object[] cHorizontalPatch = { 
+		Resource.getString("tab.video.patch.resol.val0"),
+		Resource.getString("tab.video.patch.resol.val1"),
+		Resource.getString("tab.video.patch.resol.val2"),
+		Resource.getString("tab.video.patch.resol.val3")
+	};
+	comBox[35]= new JComboBox(cHorizontalPatch);
+	comBox[35].setPreferredSize(new Dimension(150,20));
+	comBox[35].setMaximumSize(new Dimension(150,20));
+	hPPanel.add(comBox[35]);
+
+	video2Panel.add(hPPanel);
+
+	Object[] reso = { "352","384","480","528","544","576","640","704","720" };
+	comBox[22] = new JComboBox(reso);
+	comBox[22].setPreferredSize(new Dimension(50,20));
+	comBox[22].setMaximumSize(new Dimension(50,20));
+	comBox[22].setSelectedIndex(0);
+
+	video2Panel.add(comBox[22]);
+
+	comBox[35].addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+			comBox[22].setEnabled(comBox[35].getSelectedIndex()!=0);
+		}
+	});
+	comBox[35].setSelectedIndex(0);
+	//JLA14082003-
+
+	cBox[13].addActionListener(mytabListener);
+	cBox[31].addActionListener(mytabListener);
+	cBox[44].addActionListener(mytabListener);
+
+	video1.add(video2Panel);
+	//DM30122003 081.6 int10 moved-
+
+
+	JPanel video3 = new JPanel();
+	video3.setLayout( new GridLayout(2, 1) );
+
+	JPanel video2 = new JPanel();
+	video2.setLayout(new ColumnLayout());
+	video2.setBorder( BorderFactory.createTitledBorder(Resource.getString("tab.video.title1")) );
+
 	JPanel vbvsPanel = new JPanel();
 	vbvsPanel.setLayout(new BoxLayout(vbvsPanel, BoxLayout.X_AXIS));
 	vbvsPanel.setToolTipText(Resource.getString("tab.video.vbvbuf.tip"));
@@ -1806,101 +1917,15 @@ protected JPanel buildvideo1Panel() {
 	aspPanel.add(label_3);
 	aspPanel.add(comBox[6]);
 
-	cBox[13] = new JCheckBox(Resource.getString("tab.video.endcode"));
-	cBox[13].setPreferredSize(new Dimension(250,20));
-	cBox[13].setMaximumSize(new Dimension(250,20));
-	cBox[13].setSelected(true);
-	cBox[13].setToolTipText(Resource.getString("tab.video.endcode.tip"));
-
-	cBox[31] = new JCheckBox(Resource.getString("tab.video.patch.progr"));
-	cBox[31].setPreferredSize(new Dimension(250,20));
-	cBox[31].setMaximumSize(new Dimension(250,20));
-	cBox[31].setActionCommand("prog1");
-	cBox[31].setSelected(false);
-	cBox[31].setToolTipText(Resource.getString("tab.video.patch.progr.tip"));
-
-	cBox[44] = new JCheckBox(Resource.getString("tab.video.patch.interlaced"));
-	cBox[44].setPreferredSize(new Dimension(250,20));
-	cBox[44].setMaximumSize(new Dimension(250,20));
-	cBox[44].setActionCommand("prog2");
-	cBox[44].setSelected(false);
-	cBox[44].setToolTipText(Resource.getString("tab.video.patch.interlaced.tip"));
-
-	cBox[45] = new JCheckBox(Resource.getString("tab.video.patch.fieldorder"));
-	cBox[45].setPreferredSize(new Dimension(250,20));
-	cBox[45].setMaximumSize(new Dimension(250,20));
-	cBox[45].setSelected(false);
-	cBox[45].setToolTipText(Resource.getString("tab.video.patch.fieldorder.tip"));
-
-	cBox[27] = new JCheckBox(Resource.getString("tab.video.add.sequence"));
-	cBox[27].setPreferredSize(new Dimension(260,20));
-	cBox[27].setMaximumSize(new Dimension(260,20));
-	cBox[27].setSelected(false);
-	cBox[27].setToolTipText(Resource.getString("tab.video.add.sequence.tip"));
-
-	//DM29082004 081.7 int10 add
-	cBox[35] = new JCheckBox(Resource.getString("tab.video.patch.cdf"));
-	cBox[35].setPreferredSize(new Dimension(260,20));
-	cBox[35].setMaximumSize(new Dimension(260,20));
-	cBox[35].setSelected(true);
-	cBox[35].setToolTipText(Resource.getString("tab.video.patch.cdf.tip"));
-
-
-
-	video2Panel.add(vbvsPanel);
-	video2Panel.add(vbvdPanel);
-	video2Panel.add(aspPanel);
-	video2Panel.add(cBox[13]);
-	video2Panel.add(cBox[31]);
-	video2Panel.add(cBox[44]);
-	video2Panel.add(cBox[45]);
-	video2Panel.add(cBox[27]);
-	video2Panel.add(cBox[35]); //DM29082004 081.7 int10 add
-
-	//JLA14082003+
-	JPanel hPPanel = new JPanel();
-	hPPanel.setLayout(new BoxLayout(hPPanel, BoxLayout.X_AXIS));
-	hPPanel.setToolTipText(Resource.getString("tab.video.patch.resol.tip"));
-	hPPanel.add(new JLabel (Resource.getString("tab.video.patch.resol")));
-
-	Object[] cHorizontalPatch = { 
-		Resource.getString("tab.video.patch.resol.val0"),
-		Resource.getString("tab.video.patch.resol.val1"),
-		Resource.getString("tab.video.patch.resol.val2"),
-		Resource.getString("tab.video.patch.resol.val3")
-	};
-	comBox[35]= new JComboBox(cHorizontalPatch);
-	comBox[35].setPreferredSize(new Dimension(150,20));
-	comBox[35].setMaximumSize(new Dimension(150,20));
-	hPPanel.add(comBox[35]);
-
-	video2Panel.add(hPPanel);
-
-	Object[] reso = { "352","384","480","528","544","576","640","704","720" };
-	comBox[22] = new JComboBox(reso);
-	comBox[22].setPreferredSize(new Dimension(50,20));
-	comBox[22].setMaximumSize(new Dimension(50,20));
-	comBox[22].setSelectedIndex(0);
-
-	video2Panel.add(comBox[22]);
-
-	comBox[35].addActionListener(new ActionListener() {
-		public void actionPerformed(ActionEvent e) {
-			comBox[22].setEnabled(comBox[35].getSelectedIndex()!=0);
-		}
-	});
-	comBox[35].setSelectedIndex(0);
-	//JLA14082003-
-
 	comBox[5].addActionListener(mytabListener);
 	comBox[4].addActionListener(mytabListener);
 	comBox[6].addActionListener(mytabListener);
-	cBox[13].addActionListener(mytabListener);
-	cBox[31].addActionListener(mytabListener);
-	cBox[44].addActionListener(mytabListener);
 
-	video1.add(video2Panel);
-	//DM30122003 081.6 int10 moved-
+	video2.add(vbvsPanel);
+	video2.add(vbvdPanel);
+	video2.add(aspPanel);
+
+	video3.add(video2);
 
 
 	JPanel newBrPanel = new JPanel();
@@ -1925,7 +1950,7 @@ protected JPanel buildvideo1Panel() {
 	newBrPanel.add(new JLabel(Resource.getString("tab.video.patch.bitrate1")));
 	newBrPanel.add(comBox[3]);
 
-        comBox[3].addActionListener(mytabListener);
+	comBox[3].addActionListener(mytabListener);
 
 	Object BRperFile[] = {
 		Resource.getString("tab.video.patch.bitrate2.val0"),
@@ -1943,7 +1968,9 @@ protected JPanel buildvideo1Panel() {
 
 	comBox[15].addActionListener(mytabListener);
 
-	video1.add(newBrPanel);
+	video3.add(newBrPanel);
+
+	video1.add(video3);
 
 	return video1;
 }
@@ -4813,18 +4840,9 @@ public void updateState() {
 			cBox[1].setEnabled(false); 
 	} 
 
-	if (cBox[6].isSelected()) 
-		options[26]|=1; 
-	else 
-		options[26]&=~1;
-
-	if (cBox[7].isSelected()) 
-		options[26]|=2; 
-	else
-		options[26]&=~2;
-
 	if (cBox[50].isSelected()) 
 		cBox[4].setSelected(false);
+
 	if (cBox[4].isSelected()) 
 		cBox[50].setSelected(false);
 
@@ -5186,16 +5204,24 @@ class GoListener implements ActionListener
 
 		if (actName.equals("go") && comBox[0].getItemCount()>0)
 		{
+			if (ProcessIsActive)
+				return;
+
 			comBox[9].removeAllItems();
-			options[33]=-1;
+			options[33] = -1;
+
 			new WORK().start();
 		}
 		else if (actName.equals("infoscan") && comBox[0].getItemCount()>0)
 		{
+			if (ProcessIsActive)
+				return;
+
 			comBox[9].removeAllItems();
-			options[33]=-1;
-			qinfo=true; 
-			options[56]= (0x100000L * Integer.parseInt(comBox[21].getSelectedItem().toString())); 
+			options[33] = -1;
+			qinfo = true; 
+			options[56] = (0x100000L * Integer.parseInt(comBox[21].getSelectedItem().toString())); 
+
 			new WORK().start();
 		}
 		else if (actName.equals("cancel"))
@@ -5223,9 +5249,12 @@ class GoListener implements ActionListener
 		}
 		else if (actName.equals("extract") && comBox[9].getItemCount()>0)
 		{
-			options[31]=1; 
-			options[30]=0;
-			options[33]=Integer.parseInt(comBox[9].getSelectedItem().toString(),16);
+			if (ProcessIsActive)
+				return;
+
+			options[31] = 1; 
+			options[30] = 0;
+			options[33] = Integer.parseInt(comBox[9].getSelectedItem().toString(),16);
 
 			TextArea.setText(null);
 			Msg(Resource.getString("golistener.msg.extracting") + comBox[9].getSelectedItem().toString() + "...");
@@ -5731,140 +5760,142 @@ public static String[] getVersion()
 	}
 
 
-/**
- * messages of interest, also with current systems time_index
- *
- * @param1 - the msg
- * @param2 - force windows visibility
- */
-public static void Msg(String msg, boolean tofront)
-{
-	if (msg == null) 
-		return;
-
-	if (cBox[72].isSelected()) 
-		msg = "[" + Common.formatTime_1(System.currentTimeMillis()) + "] " + msg;
-
-	if (options[30] == 1) 
-		System.out.println(msg); 
-
-	if (running) 
-		System.out.println("\r" + msg); 
-
-	else
+	/**
+	 * messages of interest, also with current systems time_index
+	 *
+	 * @param1 - the msg
+	 * @param2 - force windows visibility
+	 */
+	public static void Msg(String msg, boolean tofront)
 	{
-		TextArea.append("\r\n" + msg);
-		viewport.setViewPosition(new Point(0, TextArea.getHeight()));
+		if (msg == null) 
+			return;
 
-		/**
-		 * ensure Logmsg is visible in GUI mode
-		 */
-		if (tofront)
-			logtab.setSelectedIndex(0);
+		if (cBox[72].isSelected()) 
+			msg = "[" + Common.formatTime_1(System.currentTimeMillis()) + "] " + msg;
+
+		if (options[30] == 1) 
+			System.out.println(msg); 
+
+		if (running) 
+			System.out.println("\r" + msg); 
+
+		else
+		{
+			TextArea.append("\r\n" + msg);
+			viewport.setViewPosition(new Point(0, TextArea.getHeight()));
+
+			/**
+			 * ensure Logmsg is visible in GUI mode
+			 */
+			if (tofront)
+				logtab.setSelectedIndex(0);
+		}
+
+		messagelog += "\r\n" + msg;
 	}
 
-	messagelog += "\r\n" + msg;
-}
-
-/**
- * messages
- *
- * @param1 - the msg
- */
-public static void Msg(String msg)
-{
-	Msg(msg, false);
-}
-
-
-/**********************
- * show output MB *
- **********************/
-public static void showOutSize()
-{
-	outSize.setText(""+(options[39]/1048576L)+"MB");
-
-} 
-
-/*****************************************
- * video timelength read from ptslogfile *
- *****************************************/
-public static long calcvideotime(String logfile)
-{
-	long vtime=0;
-
-	try 
+	/**
+	 * messages
+	 *
+	 * @param1 - the msg
+	 */
+	public static void Msg(String msg)
 	{
-		long vlogsize = new File(logfile).length();
-		RandomAccessFile vlog = new RandomAccessFile(logfile,"r");
-		vlog.seek(vlogsize-8);
-		vtime = vlog.readLong();
-		vlog.close();
-	}
-	catch (IOException e)
-	{
-		Msg(Resource.getString("msg.ptsfile.error") + " " + e);
+		Msg(msg, false);
 	}
 
-	return vtime;
-}
 
-
-
-// parse cut field value
-//DM17012004 081.6 int11 new
-//DM29012004 081.6 int12 changed
-//DM12102004 081.8.02 changed
-public static long parseValue(String value, boolean demux)
-{
-	if (value == null)
-		return 0;
-
-	value = value.trim();
-
-	int i;
-	if ( (i = value.indexOf(" ")) > -1)
-		value = value.substring(0, i);
-
-	value = value.replace('.',':');
-
-	if (value.indexOf(":") < 0)
-		return Long.parseLong(value);
-
-	StringTokenizer st = new StringTokenizer(value, ":");
-	String str = null;
-	long val = 0, frametime = !demux ? 90 : (long)videoframerate;
-	long mp[] = { 324000000L,5400000L,90000L,frametime }; //h,m,s,f
-
-	for (int a=0; st.hasMoreTokens() && a < 4; a++)
+	/**
+	 * print output MBs
+	 */
+	public static void showOutSize()
 	{
-		str = st.nextToken();
-		val += (mp[a] * Long.parseLong(str));
+		outSize.setText("" + (options[39] / 1048576L) + "MB");
+
+	} 
+
+	/**
+	 * video timelength read from ptslogfile
+	 */
+	public static long calcvideotime(String logfile)
+	{
+		long vtime = 0;
+
+		try 
+		{
+			long vlogsize = new File(logfile).length();
+			RandomAccessFile vlog = new RandomAccessFile(logfile, "r");
+			vlog.seek(vlogsize - 8);
+			vtime = vlog.readLong();
+			vlog.close();
+		}
+		catch (IOException e)
+		{
+			Msg(Resource.getString("msg.ptsfile.error") + " " + e);
+		}
+
+		return vtime;
 	}
 
-	return val;
-}
 
-//DM29012004 081.6 int12 new
-public static String parseValue(long value){
-	if (comBox[17].getSelectedIndex()<4)
-		return String.valueOf(value);
+	/**
+	 * parse cut field value
+	 */
+	public static long parseValue(String value, boolean demux)
+	{
+		if (value == null)
+			return 0;
 
-	String str="";
-	long frametime = 1;
-	value/=90;
+		value = value.trim();
 
-	java.text.DateFormat time = new java.text.SimpleDateFormat("H:mm:ss:");
-	time.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
+		int i;
+		if ( (i = value.indexOf(" ")) > -1)
+			value = value.substring(0, i);
 
-	java.util.Calendar cal = java.util.Calendar.getInstance();
-	cal.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
-	cal.setTime(new java.util.Date(value));
-	int frame = (cal.get(14) / ((int)frametime));
-	str = time.format(new java.util.Date(value)) + (frame<10?"0":"") + frame;
+		value = value.replace('.',':');
 
-	return str;
-}
+		if (value.indexOf(":") < 0)
+			return Long.parseLong(value);
+
+		StringTokenizer st = new StringTokenizer(value, ":");
+		String str = null;
+		long val = 0, frametime = !demux ? 90 : (long)videoframerate;
+		long mp[] = { 324000000L,5400000L,90000L,frametime }; //h,m,s,f
+
+		for (int a=0; st.hasMoreTokens() && a < 4; a++)
+		{
+			str = st.nextToken();
+			val += (mp[a] * Long.parseLong(str));
+		}
+
+		return val;
+	}
+
+
+	/**
+	 * parse cut field value
+	 */
+	public static String parseValue(long value)
+	{
+		if (comBox[17].getSelectedIndex() < 4)
+			return String.valueOf(value);
+
+		String str = "";
+		long frametime = 1;
+		value /= 90;
+
+		java.text.DateFormat time = new java.text.SimpleDateFormat("H:mm:ss:");
+		time.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
+
+		java.util.Calendar cal = java.util.Calendar.getInstance();
+		cal.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
+		cal.setTime(new java.util.Date(value));
+		int frame = (cal.get(14) / ((int)frametime));
+		str = time.format(new java.util.Date(value)) + (frame<10?"0":"") + frame;
+
+		return str;
+	}
 
 
 
@@ -6013,6 +6044,7 @@ class WORK extends Thread {
 /** normal process **/ 
 public void run() {
 
+	ProcessIsActive = true;
 	boolean stop_on_error = false;
 
 	try 
@@ -6090,10 +6122,10 @@ public void run() {
 				if (workouts.equals(outalias))
 					workouts = new File(firstfile).getParent();
 
-				if (workouts == null || !(new File(workouts).exists()))
+				if (!checkWriteAccess(workouts))
 				{
-					workouts = inidir;
-					Msg(Resource.getString("run.write.output.notexists"));
+					Msg(Resource.getString("golistener.msg.cancelled"));
+					break;
 				}
 
 				if ( !workouts.endsWith(filesep) ) 
@@ -6206,28 +6238,52 @@ public void run() {
 		currentcoll = comBox[0].getSelectedIndex();
 		workinglist = (ArrayList)collfiles[currentcoll].clone();
 
-		if (workinglist.size() > 0)
+		TextArea.setText(null);
+
+		Msg(java.text.DateFormat.getDateInstance(java.text.DateFormat.FULL).format(new Date())+"  "+java.text.DateFormat.getTimeInstance(java.text.DateFormat.FULL).format(new Date()));
+		Msg(version_name + " (" + version_date + ")");
+		Msg("");
+		Msg(Resource.getString("run.session.infos"));
+		Msg("");
+		Msg(Resource.getString("run.working.coll") + " " + currentcoll);
+
+		for (;;)
 		{
-			String firstfile = workinglist.get(0).toString();
-			workouts = new File(firstfile).getParent();
+			if (workinglist.size() > 0)
+			{
+				workouts = collout.get(currentcoll).toString();
+				String firstfile = workinglist.get(0).toString();
 
-			if ( !workouts.endsWith(filesep) ) 
-				workouts += filesep;
+				if (workouts.equals(outalias))
+					workouts = new File(firstfile).getParent();
 
-			Msg(Resource.getString("run.write.raw") + " " + workouts);
+				if (!checkWriteAccess(workouts))
+				{
+					Msg(Resource.getString("golistener.msg.cancelled"));
+					break;
+				}
+
+				if ( !workouts.endsWith(filesep) ) 
+					workouts += filesep;
+
+				Msg(Resource.getString("run.write.raw") + " " + workouts);
  
-			String fchilds = (new File(firstfile).getName()).toString();
+				String fchilds = (new File(firstfile).getName()).toString();
 
-			if ( fchilds.lastIndexOf(".") != -1 )
-				fchilds = fchilds.substring(0,fchilds.lastIndexOf("."));
+				if ( fchilds.lastIndexOf(".") != -1 )
+					fchilds = fchilds.substring(0,fchilds.lastIndexOf("."));
 
-			working();
-			options[33]=0;
-			inputlist();
+				working();
+
+				options[33]=0;
+				inputlist();
+			}
+
+			else
+				Msg(Resource.getString("run.coll.empty"));
+
+			break;
 		}
-
-		else
-			Msg(Resource.getString("run.coll.empty"));
 	} 
 
 	progress.setString(Resource.getString("run.done", "" + d) + " " + Common.formatTime_1(System.currentTimeMillis() - process_time));
@@ -6306,8 +6362,43 @@ public void run() {
 
 	frame.setTitle(frametitle);
 
+	ProcessIsActive = false;
 }  
 
+
+/**
+ * check write access
+ */
+private boolean checkWriteAccess(String path)
+{
+	File _path = new File(path);
+	String _file = path + System.getProperty("file.separator") + "~$pjx$.tmp";
+
+	if (path == null || !_path.exists())
+	{
+		Msg(Resource.getString("run.write.output.notexists") + ":");
+		Msg("\"" + path + "\"");
+
+		return false;
+	}
+
+	try
+	{
+		RandomAccessFile raf = new RandomAccessFile(_file, "rw");
+		raf.close();
+
+		new File(_file).delete();
+	}
+	catch (IOException e)
+	{
+		Msg(Resource.getString("run.write.output.nowriteaccess") + ":");
+		Msg("\"" + path + "\"");
+
+		return false;
+	}
+
+	return true;
+}
 
 
 //list settings on start
@@ -6633,6 +6724,8 @@ public void working() {
 				{   //DM06022004 081.6 int15 changed, //DM10042004 081.7 int01 changed
 					if (options[31]==0) 
 						Msg(convertType[mpgtovdr]);
+
+
 
 
 					vptslog = vdrparse(xInputFile,1,mpgtovdr);
@@ -7594,10 +7687,6 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 	StandardBuffer sb;
 	int source_type = ismpg;
 
-/**
-	boolean Vob_CellChange = false;
-	long Vob_PtsOffset = 0;
-**/
 	morepva:
 	while (true)
 	{
@@ -7695,9 +7784,29 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 						{
 							Msg(Resource.getString("vdrparse.split.cellids", "" + vobid, "" + cellid, "" + count, "" + clv[6], "" + options[7])); //DM30122003 081.6 int10 changed
 
-					/***
-							Vob_CellChange = true;
-					***/
+							if (cBox[76].isSelected())
+							{
+								ptsoffset = nextFilePTS( 1, ismpg, lastpts, FileNumber, count);
+
+								if (ptsoffset == -1) 
+									ptsoffset = 0; 
+
+								else
+								{
+									for (int a = 0; a < VDRdemuxlist.size(); a++)
+									{
+										demux = (PIDdemux)VDRdemuxlist.get(a);
+										demux.PTSOffset(ptsoffset);
+
+										if (demux.getID() == pesID0) 
+											demux.resetVideo();
+									}
+
+									options[13] = 1;
+									newvideo = true;  // global boolean
+									cell.add("" + (options[7]));
+								}
+							}
 
 							/** meant for later auto-split
 							if (options[18] > 0 && options[52] != 0)
@@ -8261,12 +8370,6 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 				//DM14062004 081.7 int04 changed
 				if (ToVDR == 0)
 				{
-
-	/**
-		demux.setCellOffset(Vob_CellChange, Vob_PtsOffset);
-
-	**/
-
 					if (demux.getType() == 3)
 					{ 
 						if (pesID0 != demux.getID()) 
@@ -9393,35 +9496,51 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 
 
 
+/**
+ * nextfile PTS check
+ * 
+ * returns new pts offset to append
+ */
+public long nextFilePTS(int type, int ismpg, long lastpts, int file_number)
+{
+	return nextFilePTS( type, ismpg, lastpts, file_number, 0L);
+}
 
-/**********************
- * nextfile PTS check *
- **********************/
-public long nextFilePTS(int type, int ismpg, long lastpts, int file_number) {
+
+/**
+ * nextfile PTS check
+ * 
+ * returns new pts offset to append
+ */
+public long nextFilePTS(int type, int ismpg, long lastpts, int file_number, long startPoint)
+{
 	long pts = 0, count = 0;
 	byte[] push25 = new byte[25];
-	java.text.DateFormat sms = new java.text.SimpleDateFormat("HH:mm:ss.SSS");
-	sms.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
 
 	lastpts &= 0xFFFFFFFFL; //DM30092004 081.8.02 add, fix, ignore bit33 of lastpts
 
 	if (combvideo.size() > file_number)
 	{
-		try 
-		{
-		//DM13082004 081.7 int09 changed
-		long filesize = ((XInputFile)combvideo.get(file_number)).length();
+		try {
+
+		XInputFile aXinputFile = ((XInputFile)combvideo.get(file_number)).getNewInstance();
+
+		long filesize = aXinputFile.length();
 		long buffersize = Long.parseLong(comBox[37].getSelectedItem().toString());
+		long end = startPoint + buffersize;
 
-		if (filesize > buffersize) //DM19122003 081.6_int07 changed
-			filesize = buffersize;
+		if (end > filesize)
+			end = filesize;
 
-		PushbackInputStream in = new PushbackInputStream(((XInputFile)combvideo.get(file_number)).getInputStream(),6500);
+		PushbackInputStream in = new PushbackInputStream( aXinputFile.getInputStream(), 6500);
+
+		while (count < startPoint)
+			count += in.skip(startPoint - count);
 
 		switch (type) {
 		case 0: {    // pva
 			pvaloop:
-			while (count < filesize) {
+			while (count < end) {
 
 				in.read(push25,0,25);
 
@@ -9470,7 +9589,7 @@ public long nextFilePTS(int type, int ismpg, long lastpts, int file_number) {
 			byte[] push9 = new byte[9];
 
 			pvaloop:
-			while (count < filesize) {
+			while (count < end) {
 				in.read(push9);
 
 				/*** check 0x000001  ***/
@@ -9496,7 +9615,6 @@ public long nextFilePTS(int type, int ismpg, long lastpts, int file_number) {
 					continue pvaloop; 
 				}
 
-				type = 255&push9[3];     // 0xe0 is Video1, 0xc0 is Audio1, 0xbd is ac3
 				if (ismpg==1) {
 					packlength = ((255 & push9[4])<<8 | (255 & push9[5]));    // av pack length bytes to follow
 					in.unread(push9,6,3); 
@@ -9559,24 +9677,31 @@ public long nextFilePTS(int type, int ismpg, long lastpts, int file_number) {
 						}
 						}
 					}
-				} else {
+				}
+				else
+				{
 					cpts = ( (0x80 & push9[7]) !=0 ) ? true : false;
 					ptslength = 0xff & push9[8]; 
 					count+=9;
 					packlength = ((255 & push9[4])<<8 | (255 & push9[5]));
-					if (packlength==0) 
-						nullpacket=true;
-					packlength = packlength-3-ptslength;
+
+					if (packlength == 0) 
+						nullpacket = true;
+
+					packlength = packlength - 3 - ptslength;
 				}
-				if (cpts) {
+
+				if (cpts)
+				{
 					byte[] ptsdata = new byte[ptslength];
-					in.read(ptsdata,0,ptslength);
-					pts = 0xFFFFFFFFL & ( (6&ptsdata[0])<<29 | (255&ptsdata[1])<<22 | (254&ptsdata[2])<<14 |
-							(255&ptsdata[3])<<7 | (254&ptsdata[4])>>>1 );
-				} else  
+					in.read(ptsdata, 0, ptslength);
+					pts = 0xFFFFFFFFL & ( (6 & ptsdata[0])<<29 | (255 & ptsdata[1])<<22 | (254 & ptsdata[2])<<14 |
+							(255 & ptsdata[3])<<7 | (254 & ptsdata[4])>>>1 );
+				}
+				else  
 					in.skip(ptslength);
 
-				count+=ptslength+packlength;
+				count += ptslength + packlength;
 				in.skip(packlength);
 
 				if (nullpacket) 
@@ -9596,7 +9721,7 @@ public long nextFilePTS(int type, int ismpg, long lastpts, int file_number) {
 		}
 	}
 
-	if (file_number == 0)
+	if (file_number == 0 && startPoint == 0)
 	{  // need global offset?
 		pts &= 0xFFFFFFFFL;
 
@@ -9625,16 +9750,21 @@ public long nextFilePTS(int type, int ismpg, long lastpts, int file_number) {
 		pts -= options[27];
 		pts &= 0xFFFFFFFFL;
 
-		Msg(Resource.getString("nextfile.next.file.start",sms.format(new java.util.Date(pts/90L)),sms.format(new java.util.Date(lastpts/90L))));
+		long ret = 0L;
 
-		if (Math.abs(pts - lastpts) < 900000) //DM06022004 081.6 int15 changed
-			return -1L;
+		if (Math.abs(pts - lastpts) < 900000)
+			ret = -1L;
 
 		else if (pts > lastpts)  
-			return 0L;
+			ret = 0L;
 
 		else 
-			return ((lastpts + 1800000L) - pts); //DM09012004 081.6 int11 changed
+			ret = ((lastpts + 1800000L) - pts);
+
+		if (ret >= 0)
+			Msg(Resource.getString("nextfile.next.file.start", Common.formatTime_1(pts / 90L), Common.formatTime_1(lastpts / 90L)));
+
+		return ret;
 	}
 }
 
@@ -12259,6 +12389,7 @@ public boolean processAudio(String[] args)
 		}
 
 
+
 		else
 		{
 			MPAD.deleteAiff(newnameL);
@@ -14499,7 +14630,6 @@ public String rawvideo(XInputFile aXInputFile)
 
 	String logfile = "-1";
 	boolean valid=false;
-	byte[] SEQUENCE_END_CODE = { 0,0,1,(byte)0xb7 };
 	byte[] vgl = new byte[4];
 	String[] videoext = { ".mpv",".mpv",".m1v",".m2v" };
 
@@ -14710,9 +14840,9 @@ public String rawvideo(XInputFile aXInputFile)
 					String newpart = fparent+"["+part+"].mpv";
 
 					/*** sequence end code ***/
-					if ( (1L&options[26])!=0 && options[32]==1 && options[7]>0 )
+					if ( cBox[6].isSelected() && options[32]==1 && options[7]>0 )
 					{
-						vstream.write(SEQUENCE_END_CODE);
+						vstream.write(Video.getSequenceEndCode());
 						options[39]+=4;
 					}
 					options[41]+=4;
@@ -14786,8 +14916,8 @@ public String rawvideo(XInputFile aXInputFile)
 
 
 	/*** sequence end code ***/
-	if ( (1L&options[26])!=0 && options[32]==1 && options[7]>0 ) {
-		vstream.write(SEQUENCE_END_CODE);
+	if ( cBox[6].isSelected() && options[32]==1 && options[7]>0 ) {
+		vstream.write(Video.getSequenceEndCode());
 		options[39]+=4;
 	}
 
@@ -14814,7 +14944,7 @@ public String rawvideo(XInputFile aXInputFile)
 	if ( newfile.length()<20 ) 
 
 		newfile.delete();
-	else if ( (1L&options[26])==0 ) 
+	else if ( !cBox[6].isSelected() ) 
 		newfile.delete();
 	else {
 		int ot = (cBox[32].isSelected() || cBox[29].isSelected() || cBox[30].isSelected()) ? 0 : 2;
@@ -14905,7 +15035,7 @@ public static byte[] searchHeader(byte[] data, int type, int overhead)
 /************************
 * gop changing/testing *
 ************************/
-public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts, DataOutputStream log, String dumpname)
+public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, byte[] pts, DataOutputStream log, String dumpname)
 {
 
 	//DM14092003+ fix
@@ -15026,6 +15156,8 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 	String ct = sms.format(new java.util.Date((long)( options[7] * (double)(videoframerate / 90.0f))));
 	String nv = "";
 
+	boolean format_changed = false;
+
 	if (options[13]==1) 
 		frametypebuffer.write((byte)0x88);
 	else 
@@ -15084,11 +15216,16 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 
 			infos.add(nv);
 
-			if (options[7]==0)
+			/**
+			 * no frames written 'til now
+			 */
+			if (options[7] == 0)
 			{
-				d2vinsert=true;
-				d2vframerate=gop[s+7];
+				d2vinsert = true;
+				d2vframerate = gop[s + 7];
 			}
+			else
+				format_changed = true;
 
 			VBASIC = vbasics;
 		}
@@ -15101,6 +15238,8 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 			Msg(str);
 
 			chapters.addChapter(ct, str);
+
+			format_changed = true;
 
 			VBASIC = vbasics;
 		}
@@ -15471,7 +15610,7 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 			dump.write(pts); 
 			dump.write(dumpfill); 
 			dump.write(gop); 
-			dump.write(SEndCode);
+			dump.write(Video.getSequenceEndCode());
 			dump.flush(); 
 			dump.close();
 			Msg(Resource.getString("video.msg.error.gop.dump") + " " + dumpname);
@@ -15618,28 +15757,48 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 			//DM12042004 081.7 int01 changed
 			brm.surf.update(vbr, ftb, sms.format(new java.util.Date((options[48]+options[42])/90)).substring(0,8));
 
+			/**
+			 * add chapter index of 
+			 */
 			if (newvideo && infos.size() > 0)
 				chapters.addChapter(ct, nv);
 
-
-			for (int a=0;a<infos.size();a++) {
+			/**
+			 * print cached messages
+			 */
+			for (int a = 0; a < infos.size(); a++)
+			{
 				Msg(infos.get(a).toString());
-				newvideo=false;
+				newvideo = false;
 			}
 
-			if (d2vinsert && (cBox[29].isSelected() || cBox[30].isSelected())) { 
+			/**
+			 * d2v project, update framerate
+			 */
+			if (d2vinsert && (cBox[29].isSelected() || cBox[30].isSelected()))
+			{ 
 				d2v.FrameRate(d2vframerate);
-				d2vinsert=false;
+				d2vinsert = false;
 			}
 
-			if ((1L&options[26])!=0) { 
-				vseq.write(gop);
+			/**
+			 * if write is enabled, write gop
+			 */
+			if (cBox[6].isSelected())
+			{ 
+				if (format_changed && cBox[75].isSelected())
+					video_sequence.write(Video.getSequenceEndCode());
+
+				video_sequence.write(gop);
 				options[39] += gop.length;
+
 				showOutSize();
 			}
 
-			/*** d2v project ***/
-			d2v.addGOP(options[50],newframes);
+			/**
+			 * d2v project, update gop line
+			 */
+			d2v.addGOP(options[50], newframes);
 
 			options[50] += gop.length;
 			options[41] += gop.length;
@@ -15663,28 +15822,26 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 
 
 
-/**********************
- * set 1. videoheader *
- **********************/
-//DM04032004 081.6 int18 changed
-public static void setvideoheader(String videofile, String logfile) {
+/**
+ * set 1. videoheader
+ */
+public static void setvideoheader(String videofile, String logfile)
+{
 
-	java.text.DateFormat sms = new java.text.SimpleDateFormat("HH:mm:ss.SSS");
-	sms.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
 	long time = 0;
 	String videotype[] = { "(m1v)", "(m2v)" }; //DM12042004 081.7 int01 add
 
 	//DM12042004 081.7 int01 add
 	String frames_used[] = { 
-		Resource.getString("video.msg.io"), 
-		Resource.getString("video.msg.io"), 
-		Resource.getString("video.msg.io"), 
-		Resource.getString("video.msg.io")
+		Resource.getString("video.msg.io.non"), 
+		Resource.getString("video.msg.io.int"), 
+		Resource.getString("video.msg.io.pro"), 
+		Resource.getString("video.msg.io.int_pro")
 	};
 
 	if (new File(logfile).exists()) {
 		time = (calcvideotime(logfile)/90);
-		String vt = sms.format( new java.util.Date(( time/10*10 )) );
+		String vt = Common.formatTime_1( time / 10 * 10 );
 
 		//DM12042004 081.7 int01 changed
 		Msg(Resource.getString("video.msg.length", "" + options[7]) + " " + vt);
@@ -15712,7 +15869,7 @@ public static void setvideoheader(String videofile, String logfile) {
 	} else if (options[30]==1) 
 		System.out.println();
 
-	if ( (1L&options[26])==0 ) {
+	if (!cBox[6].isSelected()) {
 		pv2.close(); 
 		return; 
 	}
@@ -15969,21 +16126,9 @@ class PIDdemux {
 	ByteArrayOutputStream vidbuf, vptsbytes, packet;
 	DataOutputStream vpts;
 	long pts=-1, lastPTS=-1; //DM18022004 081.6 int17 changed
-	byte[] endcode= { 0,0,1,(byte)0xb7 };
 	boolean isPTSwritten=false; //DM09112003 081.5++
 	byte[] subpic_header = { 0x53, 0x50, 0, 0, 0, 0, 0, 0, 0, 0 }; //DM24022004 081.6 int18 new
 	byte[] pcm_header = { 0x50, 0x43, 0x4D, 0, 0, 0, 0, 0, 0, 0 }; //'PCM'+5b(pts)+2b(size) //DM24022004 081.6 int18 new
-
-/***
-	boolean Vob_CellChange = false;
-	long Vob_PtsOffset = 0;
-
-	public void demux.setCellOffset(boolean Vob_CellChange, long Vob_PtsOffset)
-	{
-		this.Vob_CellChange = Vob_CellChange;
-		this.Vob_PtsOffset = Vob_PtsOffset;
-	}
-***/
 
 	//DM14072004 081.7 int06 add, stream type preselector
 	public boolean StreamEnabled()
@@ -16033,7 +16178,7 @@ class PIDdemux {
 		sourcetype=sourcetype1;
 		name=name1+source[sourcetype]+lfn;
 		addoffset = options[28];                           // time offset for data
-		writedata = ((2L&options[26])!=0) ? true : false;  // do write?
+		writedata = cBox[7].isSelected() ? true : false;  // do write?
 		try 
 		{
 		out = new IDDBufferedOutputStream(new FileOutputStream(name),buffersize);
@@ -16049,7 +16194,7 @@ class PIDdemux {
 		name=name1+source[sourcetype]+lfn;
 		addoffset = options[28];                           // time offset for data
 		target=0;
-		writedata = ((2L&options[26])!=0) ? true : false;  // do write?
+		writedata = cBox[7].isSelected() ? true : false;  // do write?
 		try 
 		{
 		out = new IDDBufferedOutputStream(new FileOutputStream(name),buffersize);
@@ -16427,7 +16572,7 @@ class PIDdemux {
 		name=name1+source[sourcetype]+lfn;
 		format=3;
 		MPGVideotype=0;
-		writedata = ((1L&options[26])!=0) ? true : false;  // do write?
+		writedata = cBox[6].isSelected() ? true : false;  // do write?
 		try 
 		{
 		out = new IDDBufferedOutputStream(new FileOutputStream(name),buffersize);
@@ -16448,7 +16593,7 @@ class PIDdemux {
 	public void initVideo2(String name1, long[] options) {
 		parentname=name1;
 		name=name1+source[sourcetype]+lfn;
-		writedata = ((1L&options[26])!=0) ? true : false;  // do write?
+		writedata = cBox[6].isSelected() ? true : false;  // do write?
 		first=true;
 		MPGVideotype=0;
 		try 
@@ -16472,7 +16617,7 @@ class PIDdemux {
 		try 
 		{
 		if (options[32]==1 && options[7]>0) {
-			out.write(endcode);
+			out.write(Video.getSequenceEndCode());
 			options[39]+=4;
 			options[41]+=4;
 		}
@@ -16731,8 +16876,8 @@ class PIDdemux {
 					String newpart = parentname+"["+part+"].mpv";
 
 					/*** sequence end code ***/
-					if ( (1L&options[26])!=0 && options[32]==1 && options[7]>0 ) {
-						out.write(endcode);
+					if ( cBox[6].isSelected() && options[32]==1 && options[7]>0 ) {
+						out.write(Video.getSequenceEndCode());
 						options[39]+=4;
 						options[41]+=4;
 					}
@@ -16873,8 +17018,8 @@ class makeVDR
 		packBA1[2]=0; 
 		time[0]=-1; 
 		scr=0;
-		writedata[0] = ((1L&options[26])!=0) ? true : false;  // do write video?
-		writedata[1] = ((2L&options[26])!=0) ? true : false;  // do write audio?
+		writedata[0] = cBox[6].isSelected() ? true : false;  // do write video?
+		writedata[1] = cBox[7].isSelected() ? true : false;  // do write audio?
 		java.util.Arrays.fill(fills,(byte)0xff);
 
 		brokenlink = false;
@@ -17805,7 +17950,7 @@ public static int getForcedTTXLanguage()
  options[23] = vbvdelay
  options[24] = aspectratio
  options[25] = first vpts for simple audio split
- options[26] = write video = bit 0 set, write audio = bit  set
+ options[26] = **** unused ! //write video = bit 0 set, write audio = bit  set
  options[27] = nextfilepts
  options[28] = audio offset
  options[29] = ac3 patch
