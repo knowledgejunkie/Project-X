@@ -16,6 +16,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import net.sourceforge.dvb.projectx.xinput.XInputDirectory;
+import net.sourceforge.dvb.projectx.common.Resource;
 
 /**
  * <p>
@@ -107,46 +108,46 @@ public class FtpChooser extends JDialog {
 
 		this.getContentPane().setLayout(gridBagLayout1);
 		jPanel1.setLayout(gridBagLayout2);
-		jLabel1.setToolTipText("Name or IP adress of ftp server");
-		jLabel1.setText("Server:");
-		jLabel2.setToolTipText("User for ftp connection");
-		jLabel2.setText("User:");
-		jLabel3.setToolTipText("Password for ftp connection");
-		jLabel3.setText("Password:");
-		jLabel4.setToolTipText("Directory on ftp server");
-		jLabel4.setText("Directory:");
+		jLabel1.setToolTipText(Resource.getString("ftpchooser.server.tip"));
+		jLabel1.setText(Resource.getString("ftpchooser.server"));
+		jLabel2.setToolTipText(Resource.getString("ftpchooser.user.tip"));
+		jLabel2.setText(Resource.getString("ftpchooser.user"));
+		jLabel3.setToolTipText(Resource.getString("ftpchooser.password.tip"));
+		jLabel3.setText(Resource.getString("ftpchooser.password"));
+		jLabel4.setToolTipText(Resource.getString("ftpchooser.directory.tip"));
+		jLabel4.setText(Resource.getString("ftpchooser.directory"));
 		tfServer.setMinimumSize(new Dimension(80, 21));
 		tfServer.setPreferredSize(new Dimension(80, 21));
-		tfServer.setToolTipText("Name or IP adress of ftp server");
-		tfServer.setText("192.168.0.5");
+		tfServer.setToolTipText(Resource.getString("ftpchooser.server.tip"));
+		tfServer.setText(Resource.getString("ftpchooser.server.entry"));
 		tfServer.addFocusListener(new FtpChooser_tfServer_focusAdapter(this));
-		tfUser.setToolTipText("User for ftp connection");
-		tfUser.setText("root");
+		tfUser.setToolTipText(Resource.getString("ftpchooser.user.tip"));
+		tfUser.setText(Resource.getString("ftpchooser.user.entry"));
 		tfUser.addFocusListener(new FtpChooser_tfUser_focusAdapter(this));
-		tfPassword.setToolTipText("Password for ftp connection");
-		tfPassword.setText("dreambox");
+		tfPassword.setToolTipText(Resource.getString("ftpchooser.password.tip"));
+		tfPassword.setText(Resource.getString("ftpchooser.password.entry"));
 		tfPassword.addFocusListener(new FtpChooser_tfPassword_focusAdapter(this));
 		tfDirectory.setMinimumSize(new Dimension(153, 21));
 		tfDirectory.setPreferredSize(new Dimension(153, 21));
-		tfDirectory.setToolTipText("Directory on ftp server");
-		tfDirectory.setText("/hdd/movie");
+		tfDirectory.setToolTipText(Resource.getString("ftpchooser.directory.tip"));
+		tfDirectory.setText(Resource.getString("ftpchooser.directory.entry"));
 		tfDirectory.addFocusListener(new FtpChooser_tfDirectory_focusAdapter(this));
-		testButton.setText("Test");
+		testButton.setText(Resource.getString("ftpchooser.test"));
 		testButton.addActionListener(new FtpChooser_testButton_actionAdapter(this));
-		jLabel5.setToolTipText("");
-		jLabel5.setText("State:");
+		jLabel5.setToolTipText(Resource.getString("ftpchooser.state.tip"));
+		jLabel5.setText(Resource.getString("ftpchooser.state"));
 		tfState.setEditable(false);
-		tfState.setText("untested");
+		tfState.setText(Resource.getString("ftpchooser.untested"));
 		okButton.setEnabled(false);
-		okButton.setText("OK");
+		okButton.setText(Resource.getString("ftpchooser.ok"));
 		okButton.addActionListener(new FtpChooser_okButton_actionAdapter(this));
-		cancelButton.setText("Cancel");
+		cancelButton.setText(Resource.getString("ftpchooser.cancel"));
 		cancelButton.addActionListener(new FtpChooser_cancelButton_actionAdapter(this));
 		spState.setViewportView(taState);
 		jPanel1.setMinimumSize(new Dimension(600, 266));
 		jPanel1.setPreferredSize(new Dimension(600, 266));
 		this.setModal(true);
-		this.setTitle("choose ftp server");
+		this.setTitle(Resource.getString("ftpchooser.title"));
 		jPanel1.add(jLabel1, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
 				new Insets(10, 10, 5, 5), 0, 0));
 		jPanel1.add(jLabel2, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,

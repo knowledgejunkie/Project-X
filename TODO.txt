@@ -6,7 +6,8 @@ pstorch erl 31.10. - dropdown liste Vorauswahlbox, Einträge nicht entfernbar
 31.10. - Hänger bei XInput mit FTP -> muss noch untersucht werden
 31.10. - Bessere Fehlermeldungen bei XInput
 31.10. - commons-net-1.1.0.jar Ort festlegen + MANISFEST.MF und/oder build.bat -> Entscheidung (damit es wieder geht wurde vorerst die MANIFEST.MF angepasst)
-31.10. - FTPChooser: Internationalisierung, Speichern der Einstellungen
+dvbmatt erl - 31.10. - FTPChooser: Internationalisierung,
+31.10. - FTPChooser: Speichern der Einstellungen
 31.10. - Leer- und Sonderzeichen in FTP Pfaden (
 roehrist in Arbeit 31.10. - XInput und RawInterface
 31.10. - Source Kommentare und Codeconventions -> Festlegung / Entscheidung

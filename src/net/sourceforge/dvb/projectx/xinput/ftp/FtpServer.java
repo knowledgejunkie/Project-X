@@ -9,6 +9,7 @@ import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
 
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
+import net.sourceforge.dvb.projectx.common.Resource;
 
 public class FtpServer {
 
@@ -135,24 +136,24 @@ public class FtpServer {
 			reply = ftpClient.getReplyCode();
 			if (!FTPReply.isPositiveCompletion(reply)) {
 				ftpClient.disconnect();
-				testMsg = "Can't connect.";
+				testMsg = Resource.getString("ftpchooser.msg.noconnect");
 				return false;
 			}
 
 			// Login
 			if (!ftpClient.login(ftpVO.getUser(), ftpVO.getPassword())) {
 				ftpClient.logout();
-				testMsg = "Can't login.";
+				testMsg = Resource.getString("ftpchooser.msg.nologin");
 				return false;
 			}
 
 			// Change directory
 			if (!ftpClient.changeWorkingDirectory(ftpVO.getDirectory())) {
-				testMsg = "Can't change to directory";
+				testMsg = Resource.getString("ftpchooser.msg.nodirectory");
 				return false;
 			}
 
-			testMsg = "Everything is fine.";
+			testMsg = Resource.getString("ftpchooser.msg.success");
 			ftpClient.logout();
 
 		} catch (IOException ex) {
