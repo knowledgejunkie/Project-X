@@ -178,7 +178,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "28.12.2004 20:00";
+static String version_date = "29.12.2004 10:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -5564,23 +5564,53 @@ public static void main(String[] args)
 				try
 				{
 					String str = args[a].toLowerCase();
+					XInputFile xif = null;
 
 					if(str.endsWith("bfl") || str.endsWith("tpl"))
 					{
+				/**
 						FileInputStream fstream = new FileInputStream(args[a]);
 						BufferedReader d = new BufferedReader(new InputStreamReader(fstream));
 
 						while(d.ready())
-							collfiles[0].add(addInputFile(d.readLine()));
-							//collfiles[0].add(d.readLine());
+						{
+							xif = getInputFile(d.readLine());
+
+							if (xif != null)
+								collfiles[0].add(xif);
+						}
 
 						d.close();
+				**/
+
+						XInputFile _xif = getInputFile(args[a]);
+
+						if (_xif != null)
+						{
+							_xif.randomAccessOpen("r");
+							_xif.randomAccessSeek(0);
+
+							/**
+							 * note: readline does not yet support full unicode here
+							 */
+							while ( (str = _xif.randomAccessReadLine()) != null)
+							{
+								xif = getInputFile(str);
+
+								if (xif != null)
+									collfiles[0].add(xif);
+							}
+
+							_xif.randomAccessClose();
+						}
 					}
 
 					else
 					{
-						collfiles[0].add(addInputFile(args[a]));
-						//collfiles[0].add(args[a]);
+						xif = getInputFile(args[a]);
+
+						if (xif != null)
+							collfiles[0].add(xif);
 					}
 				} 
 				catch (Exception e)
@@ -5727,7 +5757,7 @@ public static String[] getVersion()
 	/**
 	 * should support loading of supported URLs/files via CLI
 	 */
-	private static XInputFile addInputFile(String value)
+	private static XInputFile getInputFile(String value)
 	{
 		XInputFile inputValue = null;
 		URL url = null;
@@ -5749,7 +5779,6 @@ public static String[] getVersion()
 				for (int i = 0; i < xif.length; i++)
 				{
 					if ( new URL(xif[i].toString()).getFile().equals(url.getFile()) )
-					//if ( xif[i].toString().equals(url.toString()) )
 					{
 						inputValue = xif[i];
 						break;
@@ -7889,6 +7918,7 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 
 			pesID = 0xFF & push6[3];
 			packlength = ((0xFF & push6[4])<<8 | (0xFF & push6[5]));
+
 
 
 
