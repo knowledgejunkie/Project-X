@@ -236,9 +236,8 @@ public class Picture extends JPanel implements Runnable
 	private ArrayList user_color_table = new ArrayList();
 	private Bitmap bitmap;
 	private boolean read_from_Image = false;
-
-	//DM25072004 081.7 int07 add
 	private int isforced_status = 0;
+	private boolean global_error = false;
 
 	public DVBSubpicture dvb = new DVBSubpicture(); //DM24042004 081.7 int02 new
 
@@ -764,14 +763,26 @@ public class Picture extends JPanel implements Runnable
 	{
 		int Pos, Val;
 		Pos = BPos[1]>>>3;
-		Val =   (0xFF&buf[Pos])<<24 |
-			(0xFF&buf[Pos+1])<<16 |
-			(0xFF&buf[Pos+2])<<8 |
-			(0xFF&buf[Pos+3]);
+
+		if (Pos >= buf.length - 4)
+		{
+			global_error = true;
+			BPos[1] += N;
+			BPos[0] = BPos[1]>>>3;
+			return 0;
+		}
+
+		Val =(0xFF & buf[Pos])<<24 |
+			(0xFF & buf[Pos + 1])<<16 |
+			(0xFF & buf[Pos + 2])<<8 |
+			(0xFF & buf[Pos + 3]);
+
 		Val <<= BPos[1] & 7;
 		Val >>>= 32-N;
+
 		BPos[1] += N;
 		BPos[0] = BPos[1]>>>3;
+
 		return Val;
 	}
 
@@ -780,12 +791,21 @@ public class Picture extends JPanel implements Runnable
 	{
 		int Pos, Val;
 		Pos = BPos[1]>>>3;
-		Val =   (0xFF&buf[Pos])<<24 |
-			(0xFF&buf[Pos+1])<<16 |
-			(0xFF&buf[Pos+2])<<8 |
-			(0xFF&buf[Pos+3]);
+
+		if (Pos >= buf.length - 4)
+		{
+			global_error = true;
+			return 0;
+		}
+
+		Val =(0xFF & buf[Pos])<<24 |
+			(0xFF & buf[Pos + 1])<<16 |
+			(0xFF & buf[Pos + 2])<<8 |
+			(0xFF & buf[Pos + 3]);
+
 		Val <<= BPos[1] & 7;
-		Val >>>= 32-N;
+		Val >>>= 32 - N;
+
 		return Val;
 	}
 
@@ -840,6 +860,7 @@ public class Picture extends JPanel implements Runnable
 	public int decode_picture(byte packet[], int off, boolean decode, long pts, boolean save, boolean visible)
 	{
 		read_from_Image = false;
+		global_error = false;
 
 		boolean simple_picture = false;
 		int picture_length = packet.length;
@@ -947,6 +968,9 @@ public class Picture extends JPanel implements Runnable
 		if (BPos[0] != picture_length)
 			return -9;
 
+		if (global_error)
+			return -3;
+
 		if (!decode)
 			return (playtime * 1000); //DM26052004 081.7 int03 changed , 900
 
@@ -1013,6 +1037,9 @@ public class Picture extends JPanel implements Runnable
 		}
 
 		repaint();
+
+		if (global_error)
+			return -3;
 
 		return (playtime * 1000); //DM26052004 081.7 int03 changed, 900
 	}

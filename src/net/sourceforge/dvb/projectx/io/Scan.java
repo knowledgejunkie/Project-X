@@ -1026,7 +1026,8 @@ public class Scan
 				else if ( (0xC0 & check[a+4])==0x40 )
 				{
 					if (more) 
-						loadMPG2(check, a, false, false, bs1); 
+					//	loadMPG2(check, a, false, false, bs1); 
+						loadMPG2(check, a, X.cBox[14].isSelected(), false, bs1); 
 
 					return 3;
 				}

@@ -90,6 +90,8 @@ import java.io.PrintWriter;
 import java.io.PushbackInputStream;
 import java.io.RandomAccessFile;
 import java.io.StringWriter;
+import java.io.InputStreamReader;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -222,16 +224,14 @@ static String[] workfiles = {""}, VBASIC = new String[4];
 static String messagelog="";
 
 static JButton doitButton, breakButton, scanButton, pauseButton, extract, exeButton, picButton;
+
 public static JRadioButton[] RButton = new JRadioButton[25];
 public static JComboBox[] comBox = new JComboBox[38];
+public static JCheckBox[] cBox = new JCheckBox[72];
 
 // radio buttons for look and feels in general menu
 private JRadioButtonMenuItem lf_item[] = null; 
 	
-//DM14072004 081.7 int06 changed
-//DM20072004 081.7 int07 changed
-//DM01102004 081.8.02 changed
-static JCheckBox[] cBox = new JCheckBox[72];
 
 public static JList list1, list3, list4;
 static X_JFileChooser chooser; //DM12122003 081.6 int05
@@ -5355,8 +5355,35 @@ public static void main(String[] args)
 			collfiles = new ArrayList[1];
 			collfiles[0] = new ArrayList();
 	
-			for (int a=aaa1; a < args.length; a++) 
-				collfiles[0].add(args[a]);
+			//jrmann1999, patch to work with batch file list (.bfl, .tpl)
+			for (int a=aaa1; a < args.length; a++)
+			{
+				try
+				{
+					String str = args[a].toLowerCase();
+
+					if(str.endsWith("bfl") || str.endsWith("tpl"))
+					{
+						FileInputStream fstream = new FileInputStream(args[a]);
+						BufferedReader d = new BufferedReader(new InputStreamReader(fstream));
+
+						while(d.ready())
+							collfiles[0].add(d.readLine());
+
+						d.close();
+					}
+
+					else
+						collfiles[0].add(args[a]);
+				} 
+				catch (Exception e)
+				{
+					System.err.println("File input error");
+				}
+			}
+
+	//		for (int a=aaa1; a < args.length; a++) 
+	//			collfiles[0].add(args[a]);
 	
 			if (comBox[13].getItemCount()>0) 
 				collout.add(comBox[13].getItemAt(0));
@@ -5750,6 +5777,8 @@ public void run() {
 
 	//thread = this.currentThread(); //DM26032004 081.6 int18 add //unused ATM
 
+	boolean stop_on_error = false;
+
 	try 
 	{
 
@@ -5967,6 +5996,7 @@ public void run() {
 	progress.setString(Resource.getString("run.done", ""+d) + " "+sms.format(new java.util.Date(timeneeded)));
 	progress.setStringPainted(true);
 
+/**
 	doitButton.setEnabled(true);
 	scanButton.setEnabled(true);
 	pauseButton.setEnabled(false);
@@ -5974,43 +6004,80 @@ public void run() {
 	yield();
 	options[30]=0;
 	options[31]=0;
+**/
 	}
-	catch (Exception e8) {
-		//TextArea.setForeground(new Color(200,0,0));
+
+	catch (Exception e8)
+	{
 		Msg(Resource.getString("run.stopped"));
 		StringWriter aa = new StringWriter();
 		e8.printStackTrace(new PrintWriter(aa));
-		Msg(""+aa.toString());
+		Msg("" + aa.toString());
 		TextArea.setBackground(new Color(255,225,225)); //DM26032004 081.6 int18 add
+
+		stop_on_error = true;
 	}
-	catch (Error e9) {
-		//TextArea.setForeground(new Color(200,0,0));
+
+	catch (Error e9)
+	{
 		Msg(Resource.getString("run.stopped"));
 		StringWriter aa = new StringWriter();
 		e9.printStackTrace(new PrintWriter(aa));
-		Msg(""+aa.toString());
+		Msg("" + aa.toString());
 		TextArea.setBackground(new Color(255,225,225)); //DM26032004 081.6 int18 add
+
+		stop_on_error = true;
 	}
 
 	doitButton.setEnabled(true);
 	scanButton.setEnabled(true);
 	pauseButton.setEnabled(false);
 	breakButton.setEnabled(false);
+
 	options[30]=0;
 	options[31]=0;
+
 	if (qinfo) 
 		Msg(Resource.getString("run.end.quick.info"));
+
 	qpause=false;
 	qbreak=false;
+
 	yield();
 
-	if (comBox[9].getItemCount()>0) 
+	if (comBox[9].getItemCount() > 0) 
 		extract.setEnabled(true);
 
 	qinfo=false;
+
+	if (stop_on_error)
+	{
+		if (cBox[11].isSelected())
+			logging.close();
+
+		if (cBox[21].isSelected())
+		{
+			try 
+			{
+				PrintWriter nlf = new PrintWriter(new FileOutputStream(loggin2));
+				nlf.print(messagelog);
+				nlf.close();
+			} 
+
+			catch (IOException e)
+			{ 
+				Msg(Resource.getString("working.log.error2") + " " + e); 
+			}
+		}
+
+		messagelog = "";
+	}
+
 	if (running) 
 		System.exit(0);
+
 	frame.setTitle(frametitle);
+
 }  
 
 
@@ -7731,6 +7798,11 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 						switch(subID>>>4)
 						{
 							case 0:
+								if (ismpg == 0)
+									demux.setnewID(newID[2]++);
+
+								break;
+
 							case 8:
 								demux.setnewID(newID[2]++);
 								break;
@@ -7782,7 +7854,7 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 					{
 						if (ismpg > 0 && subID>>>4 != 8)
 						{ 
-							IDtype+=Resource.getString("idtype.ignored"); 
+							IDtype += Resource.getString("idtype.ignored"); 
 							demux.setType(4); //ändern
 						}
 					}
@@ -7792,7 +7864,6 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 				Msg(Resource.getString("vdrparse.found.pesid")+Integer.toHexString(pesID).toUpperCase()+" "+IDtype+" @ "+options[20]); //DM02022004 081.6 int14 changed
 
 			}
-
 
 			//DM14072004 081.7 int06 add
 			if (!demux.StreamEnabled())
@@ -15572,39 +15643,40 @@ class PIDdemux {
 	//DM14072004 081.7 int06 add, stream type preselector
 	public boolean StreamEnabled()
 	{
+
 		switch(newID>>>4)
 		{
-		case 0xE:
+		case 0xE:  //video
 			if (cBox[55].isSelected())
 				return true;
-			break;
-		case 0xC:
+
+		case 0xC:  //mpa
 		case 0xD:
 			if (cBox[56].isSelected())
 				return true;
-			break;
-		case 0x8:
+
+		case 0x8:  //ac3,mpg
 			if (cBox[57].isSelected())
 				return true;
-			break;
-		case 0xA:
+
+		case 0xA:  //lpcm,mpg
 			if (cBox[58].isSelected())
 				return true;
-			break;
-		case 0x9:
+
+		case 0x9:  //ttx
 			if (cBox[59].isSelected())
 				return true;
-			break;
-		case 0x2:
-		case 0x3: //DM23072004 081.7 int07 add
+
+		case 0x2:  //subpic
+		case 0x3: 
 			if (cBox[60].isSelected())
 				return true;
-			break;
+
 		default:
-			return true;
+			return false;
 		}
 
-		return false;
+		//return false;
 	}
 
 
