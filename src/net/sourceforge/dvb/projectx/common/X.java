@@ -178,7 +178,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "26.12.2004 10:00";
+static String version_date = "27.12.2004 14:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -16406,6 +16406,7 @@ class PIDdemux {
 	public void write(byte[] data, boolean header) {    // data = 1 pespacket from demux
 		pack++;
 		int datalength=0, ptslength=0, ttx=0, shift=0;
+		boolean isAligned = false;
 
 		if (!header)
 			datalength=data.length;
@@ -16420,6 +16421,7 @@ class PIDdemux {
 
 			ID = 0xFF&data[3];
 			datalength = ((0xFF&data[4])<<8 | (0xFF&data[5]));    // av pack length bytes to follow
+			isAligned = (4 & data[6]) != 0 ? true : false;
 
 			if (ismpg==1)
 			{
@@ -16480,14 +16482,25 @@ class PIDdemux {
 			case 0xA: //LPCM from MPG-PS
 				format=4;
 				break;
+
 			case 2:   //SubPic 0-31 from MPG-PS
 			case 3:   //SubPic 32-63 from MPG-PS
 				format=5;
 				break;
+
 			case 8:   //AC3-DTS from MPG-PS
 			case 1:   //TTX
 			case 0:   //AC3-DTS from PES/VDR
 				break;
+
+			case 9:   //VBI from TS,MPG2
+				if (isAligned)
+				{
+					format=6;
+					return;
+				}
+				break;
+
 			default:
 				return;
 			}

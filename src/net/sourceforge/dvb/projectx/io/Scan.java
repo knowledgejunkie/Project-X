@@ -680,13 +680,13 @@ public class Scan
 				{
 				case 1 : //DM10032004 081.6 int18 add
 				case 2 :
-					getIsoLanguage(pmt, b+5, (b += 4+ (0xFF & pmt[b+4])), pid, 2);
+					getDescriptor(pmt, b+5, (b += 4+ (0xFF & pmt[b+4])), pid, 2);
 					pidlist.add("" + pid); 
 					break; 
 
 				case 3 :
 				case 4 :
-					getIsoLanguage(pmt, b+5, (b += 4+ (0xFF & pmt[b+4])), pid, 4);
+					getDescriptor(pmt, b+5, (b += 4+ (0xFF & pmt[b+4])), pid, 4);
 					pidlist.add("" + pid); 
 					break; 
 
@@ -695,7 +695,7 @@ public class Scan
 				case 0x82: 
 				case 0x83: 
 				case 6 :
-					getIsoLanguage(pmt, b+5, (b += 4+ (0xFF & pmt[b+4])), pid, 6);
+					getDescriptor(pmt, b+5, (b += 4+ (0xFF & pmt[b+4])), pid, 6);
 					pidlist.add("" + pid); 
 					break; 
 
@@ -713,7 +713,7 @@ public class Scan
 
 	//DM10032004 081.6 int18 new
 	//DM04052004 081.7 int02 fix
-	private void getIsoLanguage(byte check[], int off, int end, int pid, int type)
+	private void getDescriptor(byte check[], int off, int end, int pid, int type)
 	{
 		String str = "";
 		int chunk_end = 0;
@@ -767,7 +767,10 @@ public class Scan
 					}
 
 					str += ")";
-					break loop;
+					//break loop;
+					off++;
+					off += (0xFF & check[off]);
+					break;
 
 				case 0xA:  //ISO 639 language descriptor
 					str += "(";
@@ -782,6 +785,27 @@ public class Scan
 
 				case 0x6A:  //ac3 descriptor
 					str += "(AC-3)";
+					off++;
+					off += (0xFF & check[off]);
+					break;
+
+				case 0xC3:  //VBI descriptor
+					off++;
+
+					if  ((0xFF & check[off + 1]) == 4)
+					{
+						str += "(VPS)";
+						type = 0xC3;
+					}
+					else
+						str += "(VBI)";
+
+					off += (0xFF & check[off]);
+					break;
+
+				case 0x52:  //ID of service
+					chunk_end = off + 2 + (0xFF & check[off+1]);
+					str += "(#" + (0xFF & check[off + 2]) + ")";
 					off++;
 					off += (0xFF & check[off]);
 					break;
@@ -814,6 +838,7 @@ public class Scan
 				break;
 
 			case 2:
+			case 0xC3:
 				video += out + str;
 				break;
 

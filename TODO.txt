@@ -132,3 +132,7 @@ dvbmatt neu 25.12. - SDE patch/ergänzung der Auflösung, manche SA-Player machen 
 dvbmatt fix 25.12. - mpac: mpa konvertierung mono/stereo etc. hat seit umstellung fehler/formatunstimmigkeiten nicht mehr gemeldet und führte u.U. zu fehlerhaften Ausgaben ohne jeden Hinweis.
 
 dvbmatt neu 25.12. - programm nach durchlauf selbst beenden mit inisave
+
+dvbmatt ergä 27.12. - fileinfo, anzeige von VPS(VBI)-PIDs und lfd. Streamnummer des Service
+            - bei TS demux wird bei erkennung eines VBI datenstroms dieser nicht exportiert und am Ende 'übergangen' (keine Meldung) (misdeutungen ac3)
+            - bei mpg2 erscheint bereits subid '0x99' -> ignoriert
