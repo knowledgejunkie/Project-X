@@ -112,4 +112,20 @@ public class XInputStream extends FilterInputStream {
 			fw.close();
 		}
 	}
+	
+	/**
+	 * @see java.io.InputStream#skip(long)
+	 */
+	public long skip(long n) throws IOException {
+		long skipped = super.skip(n);
+		
+		if (skipped < n)
+		{
+			// TODO: maybe we should check this long to int casting
+			byte[] streamBuffer = new byte[(int)(n-skipped)];
+			return read(streamBuffer);
+		}
+		
+		return skipped;
+	}
 }
