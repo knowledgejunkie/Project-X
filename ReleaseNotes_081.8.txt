@@ -3,9 +3,17 @@
  30.08.2004
 
 
+ history of 081.7:
 
- history from 081.7:
+ 0.81.7 int10 / not rel., taken for 081.8
 
+ modified sources:  X,MPVD
+
+	- change: preview left in YUV format, for an tiny speed up 
+	- new option: <video> remove composite display flagged information, seems to solve the 'green picture' problem of some old HW decoder chipsets
+
+
+ -------------------------
  0.81.7 int09 / 18.08.2004
 
  modified sources:  X

@@ -199,10 +199,6 @@ public X()	//DM20032004 081.6 int18 changed
 	RButton[0] = new JRadioButton();
 	RButton[1] = new JRadioButton();
 
-	/*** unused ***/
-	//DM09082004 081.7 int08 moved
-	cBox[35] = new JCheckBox();
-
 
 	chooser = new X_JFileChooser(); //DM12122003 081.6 int05
 
@@ -1642,10 +1638,19 @@ protected JPanel buildvideo1Panel() {
 	cBox[45].setToolTipText("toggle the Top_field_first bit");
 
 	cBox[27] = new JCheckBox("ensure each GOP has a sequenceheader");
-	cBox[27].setPreferredSize(new Dimension(250,20));
-	cBox[27].setMaximumSize(new Dimension(250,20));
+	cBox[27].setPreferredSize(new Dimension(260,20));
+	cBox[27].setMaximumSize(new Dimension(260,20));
 	cBox[27].setSelected(false);
 	cBox[27].setToolTipText("re-init (resol. & q_matrix) of Picturedecoding on each GOP boundary (automatically on split)");
+
+	//DM29082004 081.7 int10 add
+	cBox[35] = new JCheckBox("patch c.d.flagged infos of pictures");
+	cBox[35].setPreferredSize(new Dimension(260,20));
+	cBox[35].setMaximumSize(new Dimension(260,20));
+	cBox[35].setSelected(false);
+	cBox[35].setToolTipText("may solve the 'green picture' prob. of some old HW decoder chipsets");
+
+
 
 	video2Panel.add(vbvsPanel);
 	video2Panel.add(vbvdPanel);
@@ -1655,6 +1660,7 @@ protected JPanel buildvideo1Panel() {
 	video2Panel.add(cBox[44]);
 	video2Panel.add(cBox[45]);
 	video2Panel.add(cBox[27]);
+	video2Panel.add(cBox[35]); //DM29082004 081.7 int10 add
 
 	//JLA14082003+
 	JPanel hPPanel = new JPanel();
@@ -8803,6 +8809,7 @@ public String pvaparse(String pvafile,int ismpg,int ToVDR, String vptslog) {
 
 
 
+
 				continue pvaloop;
 			}
 
@@ -13932,15 +13939,12 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 			options[7]++;
 			frame++;
 			newframes++;
-			progressive=0x80;         /* 0xb5 interlaced extension */
+			progressive=0x80;         /* 0xb5 pic coding extension */
 
-			for ( int a=s+6; a<s+15 && a+8<gop.length; a++ ) {
-				if ( gop[a]!=0 || gop[a+1]!=0 || gop[a+2]!=1 || gop[a+3]!=(byte)0xb5 || (0xF0&gop[a+4])!=0x80) 
+			for ( int a = s + 6; a < s + 15 && a + 8 < gop.length; a++ )
+			{
+				if ( gop[a] != 0 || gop[a+1] != 0 || gop[a+2] != 1 || gop[a+3] != (byte)0xb5 || (0xF0 & gop[a+4]) != 0x80) 
 					continue;
-
-
-
-
 
 				progressive = (0x80 & gop[a+8]);
 
@@ -13951,6 +13955,14 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 
 				if (cBox[45].isSelected()) 
 					gop[a+7] ^= (byte)0x80;  // toggle top field first
+
+				//DM29082004 081.7 int10 add
+				if (cBox[35].isSelected() && (0x40 & gop[a+8]) != 0)
+				{   // zero'es the comp.disp.flag infos
+					gop[a+8] &= (byte)0x80;
+					gop[a+9]  = 0;
+					gop[a+10] = 0;
+				}
 
 				break;
 			}

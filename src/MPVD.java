@@ -1049,7 +1049,8 @@ public void sequence_header(){
 	extension_and_user_data();
 
 	//DM06052004 081.7 int02 add
-	info_3 = ", " + (bit_rate_value * 400) + "bps, vbv " + vbv_buffer_size + ", cpf=" + constrained_parameters_flag;
+	//DM29082004 081.7 int10 changed
+	info_3 = ", " + (bit_rate_value * 400) + "bps, vbv " + vbv_buffer_size + (constrained_parameters_flag > 0 ? ", cpf" : "");
 }
 
 /* decode group of pictures header */
@@ -1263,7 +1264,7 @@ public void picture_display_extension(){
 		Flush_Bits(1);	// marker bit
 
 		//DM24062004 081.7 int05 add
-		info_3 += ",(" + frame_center_horizontal_offset[i] + "," + frame_center_vertical_offset[i] + ")";
+		info_3 += ", (" + frame_center_horizontal_offset[i] + "," + frame_center_vertical_offset[i] + ")";
 	}
 }
 
@@ -1301,6 +1302,9 @@ public void picture_coding_extension(){
 		sub_carrier       = Get_Bits(1);
 		burst_amplitude   = Get_Bits(7);
 		sub_carrier_phase = Get_Bits(8);
+
+		//DM29082004 081.7 int10 add
+		info_3 += ", cdf";
 	}
 }
 
