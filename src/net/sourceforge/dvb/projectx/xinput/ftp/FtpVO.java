@@ -40,7 +40,7 @@ public class FtpVO implements Cloneable {
 		StringTokenizer st = new StringTokenizer(string, "|");
 		String[] tokens = new String[5];
 
-		for (int i=0; st.hasMoreTokens(); i++)
+		for (int i=0; st.hasMoreTokens() && i < 5; i++)
 			tokens[i] = st.nextElement().toString();
 
 		server = tokens[1];
