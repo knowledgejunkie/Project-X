@@ -121,3 +121,8 @@ dvbmatt änd  23.12. - erweiterte Prüfung auf schreibmöglichkeit in def. ausgabep
 dvbmatt neu 23.12. - wechsel in den PTS (nicht fortlaufend) bei neuer Cell/Vob ID in .VOB mitzusätzl. Option (spez.) behandelbar
 
 dvbmatt neu 23.12. - zusätzl. option (video), zusätzl. einfügen eines sequenzendcodes beim wechsel des videoformats während demux, konformer
+
+dvbmatt fix? 24.12. - split bei ES-MPV ging nicht richtig
+             um sync zum audio nicht zu verlieren, wird nu je splitteil immer wieder von vorn begonnen, aber erst ab dem splitpunkt exportiert
+
+dvbmatt änd 24.12. - ptsoffset bei wechsel in nä. 'fremde' datei ist nun statt 20000ms, 19200ms (= vielfaches der üblichsten framelängen), daher evtl. weniger audio'abbruch', beobachten

@@ -178,11 +178,10 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "23.12.2004 20:00";
+static String version_date = "24.12.2004 11:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
-public static boolean ProcessIsActive = false;
 
 static int loadSizeForward = 2560000;
 
@@ -5204,9 +5203,6 @@ class GoListener implements ActionListener
 
 		if (actName.equals("go") && comBox[0].getItemCount()>0)
 		{
-			if (ProcessIsActive)
-				return;
-
 			comBox[9].removeAllItems();
 			options[33] = -1;
 
@@ -5214,9 +5210,6 @@ class GoListener implements ActionListener
 		}
 		else if (actName.equals("infoscan") && comBox[0].getItemCount()>0)
 		{
-			if (ProcessIsActive)
-				return;
-
 			comBox[9].removeAllItems();
 			options[33] = -1;
 			qinfo = true; 
@@ -5249,9 +5242,6 @@ class GoListener implements ActionListener
 		}
 		else if (actName.equals("extract") && comBox[9].getItemCount()>0)
 		{
-			if (ProcessIsActive)
-				return;
-
 			options[31] = 1; 
 			options[30] = 0;
 			options[33] = Integer.parseInt(comBox[9].getSelectedItem().toString(),16);
@@ -6044,7 +6034,6 @@ class WORK extends Thread {
 /** normal process **/ 
 public void run() {
 
-	ProcessIsActive = true;
 	boolean stop_on_error = false;
 
 	try 
@@ -6361,8 +6350,6 @@ public void run() {
 		System.exit(0);
 
 	frame.setTitle(frametitle);
-
-	ProcessIsActive = false;
 }  
 
 
@@ -9759,7 +9746,7 @@ public long nextFilePTS(int type, int ismpg, long lastpts, int file_number, long
 			ret = 0L;
 
 		else 
-			ret = ((lastpts + 1800000L) - pts);
+			ret = ((lastpts + 1728000L) - pts); // offset is multiple of 40,24,32,33.1,8ms
 
 		if (ret >= 0)
 			Msg(Resource.getString("nextfile.next.file.start", Common.formatTime_1(pts / 90L), Common.formatTime_1(lastpts / 90L)));
@@ -10284,6 +10271,7 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 					System.arraycopy(pes2,0,data2,0,14);
 					System.arraycopy(data,0,data2,14,data.length);
 				} else {
+
 					pes1[4] = (byte)((packlength+3)>>>8);
 					pes1[5] = (byte)(0xFF&(packlength+3));
 
@@ -13368,6 +13356,7 @@ public void processTeletext(String[] args)
 									if ( !write_buffer.containsKey("" + a) )
 										continue;
 
+
 									String str = write_buffer.get("" + a).toString();
 
 									switch (subtitle_type)
@@ -14694,18 +14683,35 @@ public String rawvideo(XInputFile aXInputFile)
 		d2v.Init(fparent);
 	}
 
+	boolean doWrite = true;
+	long startPoint = 0L;
+
 	/*** split skipping first ***/
-	/** if you do so, there's no common entry point with audio anymore
-	** therefor only one inputfile allowed **
-	if (options[18]>0) {
-		long startPoint = options[20]-(comBox[25].getSelectedIndex()*1048576L); //go back for overlapping output
+	if (options[18] > 0)
+	{
+		startPoint = options[20] - (comBox[25].getSelectedIndex() * 1048576L); //go back for overlapping output
+		doWrite = false;
+
+		/**
+		 * set to 0, because we do not jump directly to the position due to possible audio sync-lost of elementary streams
+		 */
+		options[40] = 0;
+		options[53] = 0;
+		options[54] = 0;
+
+		/**
 		if (pos < startPoint) 
 			startPoint = pos;
 		while (pos < startPoint)
 			pos += in.skip(startPoint-pos);
+		**/
 	}
 
-	// jump to first cut-in point
+	/**
+	 * if you do so, there's no common entry point with audio anymore,
+	 * therefor only one inputfile allowed
+	 * jump to first cut-in point
+	 *
 	if (comBox[17].getSelectedIndex()==0 && cutcount==0 && ctemp.size()>0) {
 		long startPoint = Long.parseLong(ctemp.get(cutcount).toString());
 		while (pos < startPoint)
@@ -14715,6 +14721,7 @@ public String rawvideo(XInputFile aXInputFile)
 
 	//DM31052004 081.7 int03 add
 	boolean lead_sequenceheader = false;
+
 
 	videoloop:
 	while (pos < filelength) {
@@ -14794,6 +14801,9 @@ public String rawvideo(XInputFile aXInputFile)
 				mark = a;
 				CUT_BYTEPOSITION = pos-load+mark;
 
+				if (CUT_BYTEPOSITION >= startPoint)
+					doWrite = true;
+
 				if (!first)
 				{
 					vdata = vbuffer.toByteArray();
@@ -14817,7 +14827,7 @@ public String rawvideo(XInputFile aXInputFile)
 							break firstframeloop;
 						}
 					}
-					goptest( vstream, vdata, vptsbytes, vlog, fparent);
+					goptest( vstream, vdata, vptsbytes, vlog, fparent, doWrite);
 				}
 				vbuffer.reset();
 
@@ -15032,10 +15042,18 @@ public static byte[] searchHeader(byte[] data, int type, int overhead)
 }
 
 
-/************************
-* gop changing/testing *
-************************/
+/**
+ * gop changing/testing
+ */
 public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, byte[] pts, DataOutputStream log, String dumpname)
+{
+	goptest( video_sequence, gop, pts, log, dumpname, true);
+}
+
+/**
+ * gop changing/testing
+ */
+public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, byte[] pts, DataOutputStream log, String dumpname, boolean doWrite)
 {
 
 	//DM14092003+ fix
@@ -15655,6 +15673,9 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 		else if (cBox[52].isSelected() && !comBox[34].getSelectedItem().toString().equals(""+VBASIC[0]))
 			options[7] = lastframes;
 
+		else if (!doWrite)
+		{}
+
 		else{
 
 			//  Msg(""+origframes+"\t"+CP[0]+"\t"+CP[1]+"/"+trefcheck+"/"+maxtref+"/"+newframes+"/"+options[7]);
@@ -15796,7 +15817,7 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 			}
 
 			/**
-			 * d2v project, update gop line
+			 * d2v project, update gop line, even if video export is disabled
 			 */
 			d2v.addGOP(options[50], newframes);
 
