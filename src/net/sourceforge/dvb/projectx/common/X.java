@@ -193,8 +193,8 @@ public class X extends JPanel
 {
 
 /* main version index */
-static String version_name = "ProjectX 0.82.0.05a";
-static String version_date = "13.03.2005";
+static String version_name = "ProjectX 0.82.0.05b";
+static String version_date = "14.03.2005";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -5919,6 +5919,15 @@ public static void setVisible0( boolean visible)
 		if (new File(value).exists())
 			return new XInputFile(new File(value));
 
+		try {
+			inputValue = new XInputFile(value);
+			return inputValue;
+
+		} catch (Exception e) {
+			System.out.println("'" + value + "'");
+			System.out.println("" + e);
+		}
+
 		return null;
 	}
 
@@ -6893,6 +6902,11 @@ public void working() {
 				continue argsloop;
 			}
 
+			if (xInputFile.length() <= 0)
+			{
+				Msg(Resource.getString("working.file.not.found") + " " + Resource.getString("scaninfo.size") + " " + xInputFile.length() + " " + Resource.getString("scaninfo.bytes"));
+				continue argsloop;
+			}
 
 			/***** scan ** 053c ***/ 
 			int filetype = scan.inputInt(xInputFile);
@@ -15740,7 +15754,7 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 			if (options[30] == 1)
 				System.out.println("A " + s + " /slice " + (0xFF & gop[s + 3]));
 
-			s += 8;
+			s += 4;
 
 			continue goploop;
 		}
@@ -16048,7 +16062,7 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 			if (iframe || !changegop || (changegop && writeframe)) 
 				frametypebuffer.write((byte)(frametype | progressive));
 
-			s += 8; // slices B min 5, I min 50, p min 25
+			s += 7; // slices B min 5, I min 50, p min 25
 			iframe = false;
 		}
 	} // end of gop search
