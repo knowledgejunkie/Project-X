@@ -54,6 +54,7 @@ src\net\sourceforge\dvb\projectx\xinput\ftp\test\PrintCommandListener.java
 src\net\sourceforge\dvb\projectx\xinput\topfield_raw\RawFileInputStream.java
 src\net\sourceforge\dvb\projectx\xinput\topfield_raw\RawInterface.java
 src\net\sourceforge\dvb\projectx\xinput\topfield_raw\RawReadIF.java
+src\net\sourceforge\dvb\projectx\xinput\topfield_raw\XInputDirectoryImpl.java
 src\net\sourceforge\dvb\projectx\xinput\topfield_raw\XInputFileImpl.java
 src\edu\stanford\ejalbert\BrowserLauncher.java
 src\RawRead.java
