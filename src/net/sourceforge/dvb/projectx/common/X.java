@@ -226,7 +226,7 @@ static String messagelog="";
 static JButton doitButton, breakButton, scanButton, pauseButton, extract, exeButton, picButton;
 
 public static JRadioButton[] RButton = new JRadioButton[25];
-public static JComboBox[] comBox = new JComboBox[38];
+public static JComboBox[] comBox = new JComboBox[39];
 public static JCheckBox[] cBox = new JCheckBox[72];
 
 // radio buttons for look and feels in general menu
@@ -648,7 +648,16 @@ protected JPanel buildFilePanel()
 	{
 		public void mouseClicked(MouseEvent e)
 		{
-			if (e.getClickCount() == 1)
+			if (e.getClickCount() > 1)
+			{
+				if (comBox[0].getItemCount() > 0)
+				{
+					activecoll = comBox[0].getSelectedIndex(); 
+					dialog.entry();
+				}
+			}
+
+			else if (e.getClickCount() == 1)
 			{
 				if (e.getModifiers() == MouseEvent.BUTTON3_MASK) 
 					popup.show( list3, e.getX(), e.getY());
@@ -656,12 +665,6 @@ protected JPanel buildFilePanel()
 				else if (list3.getSelectedValue() != null )
 					ScanInfo( (XInputFile)list3.getSelectedValue());
 			}
-			else if (e.getClickCount() > 1)
-				if (comBox[0].getItemCount() > 0)
-				{
-					activecoll = comBox[0].getSelectedIndex(); 
-					dialog.entry();
-				}
 		}
 	});
 
@@ -921,12 +924,6 @@ protected void buildAutoloadPanel()
 		{
 			int index = list1.locationToIndex( e.getPoint());
 
-			if (e.getClickCount() == 1)
-			{
-				if (list1.getSelectedValue() != null )
-					ScanInfo( (XInputFile)list1.getSelectedValue());
-			}
-
 			if (e.getClickCount() > 1)
 			{
 				if (e.getModifiers() == MouseEvent.BUTTON3_MASK && index > -1) // rename file
@@ -950,7 +947,6 @@ protected void buildAutoloadPanel()
 								new File(inparent + inputval).delete();
 
 								Common.renameTo(inparent + inchild, inparent + inputval); //DM13042004 081.7 int01 changed
-								//new File(inparent + inchild).renameTo(new File(inparent + inputval));
 
 								inputlist();
 							}
@@ -1001,6 +997,13 @@ protected void buildAutoloadPanel()
 					}
 				}
 			}
+
+			else if (e.getClickCount() == 1)
+			{
+				if (list1.getSelectedValue() != null )
+					ScanInfo( (XInputFile)list1.getSelectedValue());
+			}
+
 		}
 	});
 
@@ -2587,6 +2590,19 @@ protected JPanel buildoptionPanel() {
 	op2.add(comBox[37]);
 
 
+	Object[] previewbuffersize = { "256000","384000","512000","768000","1024000","1536000","2048000","2560000","3072000" };
+	comBox[38]=new JComboBox(previewbuffersize);
+	comBox[38].setSelectedIndex(2);
+	comBox[38].setEditable(true);
+	comBox[38].setPreferredSize(new Dimension(100,25));
+	comBox[38].setMaximumSize(new Dimension(100,25));
+
+	JLabel pbs = new JLabel(Resource.getString("tab.options.previewbuffer"));
+	pbs.setToolTipText(Resource.getString("tab.options.previewbuffer_tip"));
+	op2.add(pbs);
+	op2.add(comBox[38]);
+
+
 	//DM04052004 081.7 int02 add
 	JButton garbagecollector = new JButton(Resource.getString("tab.options.gc"));
 	garbagecollector.setToolTipText(Resource.getString("tab.options.gc_tip"));
@@ -3967,6 +3983,20 @@ class COLLECTION extends JFrame
 			MPVD.picture.showCut(true, cutPoints, previewList);
 	}
 
+	private int getLoadSize()
+	{
+		try {
+			int val = Integer.parseInt(comBox[38].getSelectedItem().toString());
+
+			return val;
+		}
+		catch (Exception e) {
+			Msg("!> wrong preview_buffer field entry");
+		}
+
+		return loadSizeForward;
+	}
+
 	public void preview(long pos)
 	{
 		boolean direction=false;
@@ -3984,8 +4014,7 @@ class COLLECTION extends JFrame
 		action=false;
 
 		//DM18062004 081.7 int05 changed
-		//int loadSize = 2560000; // bytes for searching the next I-frame ;changed for X0.81
-		int loadSize = loadSizeForward; // bytes for searching the next I-frame ;changed for X0.81
+		int loadSize = getLoadSize(); // bytes for searching the next I-frame ;changed for X0.81
 
 		setTitle(title + Resource.getString("collection.title.processing"));
 
