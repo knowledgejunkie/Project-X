@@ -177,8 +177,8 @@ public class X extends JPanel
 {
 
 /* main version index */
-static String version_name = "ProjectX 0.82.0.02";
-static String version_date = "18.01.2005";
+static String version_name = "ProjectX 0.82.0.03";
+static String version_date = "21.01.2005";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -236,7 +236,7 @@ static JButton doitButton, breakButton, scanButton, pauseButton, extract, exeBut
 
 public static JRadioButton[] RButton = new JRadioButton[25];
 public static JComboBox[] comBox = new JComboBox[39];
-public static JCheckBox[] cBox = new JCheckBox[80];
+public static JCheckBox[] cBox = new JCheckBox[81];
 
 // radio buttons for look and feels in general menu
 private JRadioButtonMenuItem lf_item[] = null; 
@@ -2007,7 +2007,7 @@ protected JPanel buildexternPanel()
 
 	exeButton = new JButton(Resource.getString("tab.extern.applications"));
 	exeButton.setActionCommand("exec");
-	exeButton.setPreferredSize(new Dimension(250,25));
+	exeButton.setPreferredSize(new Dimension(250,22));
 	video2Panel.add(exeButton);
 	exeButton.addActionListener(my0Listener);
 
@@ -2091,6 +2091,11 @@ protected JPanel buildexternPanel()
 
 	video2Panel.add(ftpPanel);
 
+	cBox[80] = new JCheckBox(Resource.getString("tab.options.ftp.bad_close"));
+	cBox[80].setPreferredSize(new Dimension(250,20));
+	cBox[80].setMaximumSize(new Dimension(250,20));
+	cBox[80].setToolTipText(Resource.getString("tab.options.ftp.bad_close.tip"));
+	video2Panel.add(cBox[80]);
 
 	video2.add(video2Panel);
 
@@ -5792,11 +5797,21 @@ public static void setVisible0( boolean visible)
 	frame.setVisible(visible);
 }
 
-//DM20032004 081.6 int18 add
-public static void setButton(int button, boolean selected)
-{
-	RButton[button].setSelected(selected);
-}
+	//DM20032004 081.6 int18 add
+	public static void setButton(int button, boolean selected)
+	{
+		RButton[button].setSelected(selected);
+	}
+
+	/**
+	 * Returns the JCheckBox Selection status
+	 * 
+	 * @return bool
+	 */
+	public static boolean isBoxSelected(int index)
+	{
+		return cBox[index].isSelected();
+	}
 
 /**
  * Returns the Version information
@@ -13449,6 +13464,9 @@ public void processTeletext(String[] args)
 				if (options[30]==1)
 					System.out.println("pos "+ (count-46) + "/vbi "+vbi+"/ "+magazine+"-"+row+"-"+page_number+"-"+subpage_number+"/pts "+source_pts+"/ "+timeformat_1.format(new java.util.Date(source_pts/90))+"/ "+Integer.toHexString(page_value)+"/wr "+write+"/lo "+loadpage+"/lastp "+lastpage_match+"/pagm "+page_match+"/v "+(v<video_pts_value.length ? video_pts_value[v] : v));
 
+
+
+
 				if (row != 0 && magazine != page_value>>>8) //row > 0, but not of current magazine
 						continue readloop;
 
@@ -15705,6 +15723,9 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 				}
 			}
 
+
+
+
 			/**** recalculate tref, timecode, frames + delete b-frames *****/
 			if (frame>-1 && changegop) {
 				if (writeframe)
@@ -16056,12 +16077,23 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 			}
 
 			/**
+			 * d2v project, update gop line, even if video export is disabled
+			 */
+			d2v.addGOP(options[50], newframes);
+
+			/**
 			 * if write is enabled, write gop
 			 */
 			if (cBox[6].isSelected())
 			{ 
 				if (format_changed && cBox[75].isSelected())
+				{
 					video_sequence.write(Video.getSequenceEndCode());
+
+					options[39] += 4;
+					options[50] += 4;
+					options[41] += 4;
+				}
 
 				if (cBox[77].isSelected() && !SDE_found && options[13] == 1)
 				{
@@ -16071,20 +16103,19 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 					video_sequence.write(Video.setSequenceDisplayExtension( exefield[9].getText(), VBASIC));
 					video_sequence.write(gop, offs, gop.length - offs);
 
-					options[39] += 9;
+					options[39] += 12;
+					options[50] += 12;
+					options[41] += 12;
 				}
 				else
+				{
 					video_sequence.write(gop);
+				}
 
 				options[39] += gop.length;
 
 				showOutSize();
 			}
-
-			/**
-			 * d2v project, update gop line, even if video export is disabled
-			 */
-			d2v.addGOP(options[50], newframes);
 
 			options[50] += gop.length;
 			options[41] += gop.length;

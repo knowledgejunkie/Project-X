@@ -70,12 +70,12 @@ public class IDDBufferedOutputStream extends BufferedOutputStream
 			if ((0xF0 & b[off+3])!=0xE0)
 				break;
 
-			for (int a = off + 9+ (0xFF & b[8]); a<off+len-3; a++)
+			for (int a = off + 9 + (0xFF & b[8]); a < off + len - 3; a++)
 			{
-				if (b[a]!=0 || b[a+1]!=0 || b[a+2]!=1 || b[a+3]!=0)
+				if (b[a] != 0 || b[a + 1] != 0 || b[a + 2] != 1 || b[a + 3] != 0)
 					continue;
 
-				if (a+5 >= off+len)
+				if (a + 5 >= off + len)
 					break;
 
 				int frametype = (7 & b[a+5]>>>3);
@@ -90,54 +90,54 @@ public class IDDBufferedOutputStream extends BufferedOutputStream
 
 			break;
 
-		case 1:
-			for (int a=0; a<b.length-3; a++)
+		case 1:  //idd Video
+			for (int a = off; a < off + len - 3; a++)
 			{
-				if (b[a]!=0 || b[a+1]!=0 || b[a+2]!=1)
+				if (b[a] != 0 || b[a + 1] != 0 || b[a + 2] != 1)
 					continue;
 
-				if ((0xFF&b[a+3])==0xB3)
+				if ((0xFF & b[a + 3]) == 0xB3)
 				{
 					IddOut.write(0xB3);
-					IddOut.write(littleEndian(a));
-					a+=12;
+					IddOut.write(littleEndian(a - off));
+					a += 12;
 				}
 
-				else if ((0xFF&b[a+3])==0xB7)
+				else if ((0xFF & b[a + 3]) == 0xB7)
 				{
 					IddOut.write(0xB7);
-					IddOut.write(littleEndian(a));
-					sequenceend=true;
-					a+=3;
+					IddOut.write(littleEndian(a - off));
+					sequenceend = true;
+					a += 3;
 				}
 
-				else if ((0xFF&b[a+3])==0xB8)
+				else if ((0xFF & b[a + 3]) == 0xB8)
 				{
 					IddOut.write(0xB8);
-					IddOut.write(littleEndian(a));
-					a+=7;
+					IddOut.write(littleEndian(a - off));
+					a += 7;
 				}
 
-				else if (b[a+3]==0)
+				else if (b[a + 3] == 0)
 				{
 					IddOut.write(0); //type
-					IddOut.write(littleEndian(a)); //pos
-					int tref=(3&b[a+5]>>>6) | (0xFF&b[a+4])<<2;
-					IddOut.write(0xFF&tref);
+					IddOut.write(littleEndian(a - off)); //pos
+					int tref = (3 & b[a + 5]>>>6) | (0xFF & b[a + 4])<<2;
+					IddOut.write(0xFF & tref);
 					IddOut.write(tref>>>8);
-					IddOut.write(7&b[a+5]>>>3); //pic
-					a+=8; //DM14122003 081.6 int06
+					IddOut.write(7 & b[a + 5]>>>3); //pic
+					a += 8; //DM14122003 081.6 int06
 				}
 			}
 			break;
 
-		case 2:
-			if (!(pos==0 && b.length<=0x50))
+		case 2: //idd audio
+			if ( !(pos == 0 && b.length <= 0x50))
 				IddOut.write(littleEndian(0));
 		}
 
-		super.write(b,off,len);
-		pos+=len;
+		super.write(b, off, len);
+		pos += len;
 	}
 
 	public synchronized void write(int b) throws IOException

@@ -43,13 +43,13 @@ import java.net.URL;
 import java.util.StringTokenizer;
 
 import net.sourceforge.dvb.projectx.common.X;
-import net.sourceforge.dvb.projectx.xinput.FileType;
-import net.sourceforge.dvb.projectx.xinput.XInputFileIF;
-import net.sourceforge.dvb.projectx.xinput.XInputStream;
-
 import net.sourceforge.dvb.projectx.gui.Dialogs;
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Common;
+
+import net.sourceforge.dvb.projectx.xinput.FileType;
+import net.sourceforge.dvb.projectx.xinput.XInputFileIF;
+import net.sourceforge.dvb.projectx.xinput.XInputStream;
 
 import org.apache.commons.net.ftp.FTPFile;
 
@@ -433,27 +433,42 @@ public class XInputFileImpl implements XInputFileIF {
 		ret = client.isConnected();
 		if (debug) System.out.println("rAC isCon " + ret + " / " + client.getReplyCode() + " / " + client.getReplyString());
 
-		if ( !EOF() )
+		/**
+		 * alternative kills the client instance, some server won't abort an incomplete data transfer
+		 * (current box-idx 80)
+		 */
+		if (X.isBoxSelected(80))
 		{
-			if (debug) System.out.println("rAC !eof ");
-
-			ret = client.abort();
-			if (debug) System.out.println("rAC abort " + ret + " / " + client.getReplyCode() + " / " + client.getReplyString());
+			if (debug) System.out.println("rAC kill ");
 		}
 
-		ret = client.logout();
-		if (debug) System.out.println("rAC logout " + ret + " / " + client.getReplyCode() + " / " + client.getReplyString());
-
-		ret = client.isConnected();
-		if (debug) System.out.println("rAC isCon " + ret + " / " + client.getReplyCode() + " / " + client.getReplyString());
-
-		if (ret)
+		/**
+		 * standard close of a client connection
+		 */
+		else
 		{
-			try {
-				client.disconnect();
-				if (debug) System.out.println("rAC disc " + client.getReplyCode() + " / " + client.getReplyString());
-			} catch (IOException e) {
-				if (debug) System.out.println("rAC disc-er " + e);
+			if ( !EOF() )
+			{
+				if (debug) System.out.println("rAC !eof ");
+
+				ret = client.abort();
+				if (debug) System.out.println("rAC abort " + ret + " / " + client.getReplyCode() + " / " + client.getReplyString());
+			}
+
+			ret = client.logout();
+			if (debug) System.out.println("rAC logout " + ret + " / " + client.getReplyCode() + " / " + client.getReplyString());
+
+			ret = client.isConnected();
+			if (debug) System.out.println("rAC isCon " + ret + " / " + client.getReplyCode() + " / " + client.getReplyString());
+
+			if (ret)
+			{
+				try {
+					client.disconnect();
+					if (debug) System.out.println("rAC disc " + client.getReplyCode() + " / " + client.getReplyString());
+				} catch (IOException e) {
+					if (debug) System.out.println("rAC disc-er " + e);
+				}
 			}
 		}
 
