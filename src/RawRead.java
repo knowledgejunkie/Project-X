@@ -73,8 +73,8 @@ public class RawRead implements RawReadIF
 
 				i++;
 
-				if (i>100)
-					break;
+				//if (i>100)
+				//	break;
 			}
 			while (s.length()!=0);
 

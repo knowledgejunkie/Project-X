@@ -193,8 +193,8 @@ public class X extends JPanel
 {
 
 /* main version index */
-static String version_name = "ProjectX 0.82.0.05b";
-static String version_date = "14.03.2005";
+static String version_name = "ProjectX 0.82.0.05c";
+static String version_date = "19.03.2005";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -5735,7 +5735,7 @@ public static void main(String[] args)
 				} 
 				catch (Exception e)
 				{
-					System.err.println("File input error");
+					System.err.println("File input error: " + e);
 				}
 			}
 
@@ -5916,16 +5916,26 @@ public static void setVisible0( boolean visible)
 		catch (Exception u1)
 		{}
 
-		if (new File(value).exists())
-			return new XInputFile(new File(value));
+		try {
+			File f = new File(value);
+
+			if (f.exists())
+			{
+				inputValue = new XInputFile(f);
+
+				return inputValue;
+			}
+
+		} catch (Exception e) {
+			System.out.println("local Filesystem access: '" + value + "' > " + e);
+		}
 
 		try {
 			inputValue = new XInputFile(value);
 			return inputValue;
 
 		} catch (Exception e) {
-			System.out.println("'" + value + "'");
-			System.out.println("" + e);
+			System.out.println("ext. Filesystem access: '" + value + "' > " + e);
 		}
 
 		return null;
@@ -13403,7 +13413,8 @@ public void processTeletext(String[] args)
 
 				in.read(packet);
 
-				if (packet[1] != 0x2C && packet[47] != 0x2C && packet[1] != 0x5A && (0xFF & packet[1]) != 0x88)
+		//		if (packet[1] != 0x2C && packet[47] != 0x2C && packet[1] != 0x5A && (0xFF & packet[1]) != 0x88)
+				if (packet[1] != 0x2C && packet[47] != 0x2C && packet[1] != 0x5A && (0xFF & packet[1]) != 0x88 && (0xFF & packet[1]) != 0xFF)
 				{
 					if (!cBox[3].isSelected() && !miss)
 						Msg(Resource.getString("teletext.msg.syncword.lost") + " " + count);
@@ -13413,23 +13424,44 @@ public void processTeletext(String[] args)
 					in.unread(packet, 1, 47);
 					continue readloop;
 				}
+
+				/**
+				 * stuffing packet with size 0x5A + 2
+				 */
 				else if (packet[1] == 0x5A && packet[0] == -1)
 				{
 					in.skip(0x5C - 48);
 					count += 0x5C;
 					continue readloop;
 				}
+
+				/**
+				 * stuffing packet with size 0x88 + 2
+				 */
 				else if ((0xFF & packet[1]) == 0x88 && packet[0] == -1)
 				{
 					in.skip(0x8A - 48);
 					count += 0x8A;
 					continue readloop;
 				}
+
+				/**
+				 * stuffing packet without size value, skips std packet size 46
+				 */
+				else if (packet[1] == -1 && packet[0] == -1)
+				{
+					in.unread(packet, 46, 2);
+					count += 0x2E;
+					continue readloop;
+				}
+
 				else
 					in.unread(packet,46,2);
 
+
 				if (!cBox[3].isSelected() && miss)
 					Msg(Resource.getString("teletext.msg.syncword.found") + " " + count);
+
 				miss = false;
 
 				count += 46;
@@ -17026,8 +17058,10 @@ class PIDdemux {
 			}
 
 			format = (ID == 0xBD) ? __ttx : 2;
-			isttx = (format == 1) ? true : false;
-			subid = (format < 2 && ((ismpg == 0 && __isAligned) || ismpg == 2)) ? (0xFF & _data[9 + (0xFF & _data[8])]) : 0;
+			isttx = format == 1;
+		//	subid = (format < 2 && ((ismpg == 0 && __isAligned) || ismpg == 2)) ? (0xFF & _data[9 + (0xFF & _data[8])]) : 0;
+			subid = (format < 2 && ((ismpg == 0 && (__isAligned || isttx)) || ismpg == 2)) ? (0xFF & _data[9 + (0xFF & _data[8])]) : 0;
+
 
 			switch (subid>>>4)
 			{
