@@ -37,6 +37,7 @@ import java.util.Hashtable;
 import net.sourceforge.dvb.projectx.audio.Audio;
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.X;
+import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.video.Video;
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
 
@@ -215,7 +216,6 @@ public class Scan
 					if ( (0xFF & check[a+Audio.Size]) > 0x3f || (0xFF & check[a+Audio.Size])==0 ) //smpte
 						continue audiocheck;
 
-					//audio = Audio.AC3_saveAnddisplayHeader();
 					audio_streams.add(Audio.AC3_saveAnddisplayHeader());
 
 					return 1;
@@ -243,7 +243,6 @@ public class Scan
 					if ( (0xFF & check[a+Audio.Size]) > 0x7f || (0xFF & check[a+Audio.Size])==0 ) //smpte 
 						continue audiocheck; 
 
-					//audio = Audio.DTS_saveAnddisplayHeader(); 
 					audio_streams.add(Audio.DTS_saveAnddisplayHeader()); 
 
 					return; 
@@ -263,7 +262,6 @@ public class Scan
 			if (Audio.MPA_parseNextHeader(check, a + Audio.Size) < 0)
 				continue audiocheck;
 
-			//audio = Audio.MPA_saveAnddisplayHeader();
 			audio_streams.add(Audio.MPA_saveAnddisplayHeader());
 
 			return;
@@ -914,13 +912,13 @@ public class Scan
 					} 
 
 					if (ERRORCODE > 0)
-						return 14;
+						return Common.ES_RIFF_TYPE;
 
 					else if (Audio.lMode_extension > 1)
 						break riffcheck;
 
 					else
-						return 15;
+						return Common.ES_cRIFF_TYPE;
 				}
 			}
 
@@ -977,7 +975,7 @@ public class Scan
 						X.subpicture.picture.decode_picture(packet,10,X.subpicture.isVisible());
 					}
 
-					return 16;
+					return Common.ES_SUP_TYPE;
 				}
 			}
 
@@ -989,7 +987,7 @@ public class Scan
 
 				PMTcheck(check, a);
 
-				return 11;
+				return Common.TS_TYPE;
 			}
 
 			pvacheck:
@@ -1008,7 +1006,7 @@ public class Scan
 					if (more) 
 						loadPVA(check,a);
 
-					return 1;
+					return Common.PVA_TYPE;
 				}
 			}
 
@@ -1023,7 +1021,7 @@ public class Scan
 					if (more) 
 						loadMPG2(check, a, false, true, bs1); 
 
-					return 2;
+					return Common.MPEG1PS_TYPE;
 				}
 
 				else if ( (0xC0 & check[a+4])==0x40 )
@@ -1032,7 +1030,7 @@ public class Scan
 					//	loadMPG2(check, a, false, false, bs1); 
 						loadMPG2(check, a, X.cBox[14].isSelected(), false, bs1); 
 
-					return 3;
+					return Common.MPEG2PS_TYPE;
 				}
 			}
 
@@ -1059,7 +1057,7 @@ public class Scan
 					if (more) 
 						loadMPG2(check, a, true, false, bs3); 
 
-					return 4;
+					return Common.PES_AV_TYPE;
 				}
 			}
 
@@ -1081,7 +1079,7 @@ public class Scan
 						if (more)
 							loadMPG2(check, a, true, false, bs3); 
 
-						return 5;
+						return Common.PES_MPA_TYPE;
 					}
 
 					else if ( (0xFF & check[a+3]) == 0xBD && check[a+3] == check[next+3] )
@@ -1098,7 +1096,7 @@ public class Scan
 								loadMPG2(check, a, true, false, bs3);
 						}
 
-						return 6;
+						return Common.PES_PS1_TYPE;
 					}
 				}
 			}
@@ -1126,10 +1124,10 @@ public class Scan
 							} 
 
 							if (b==0) 
-								return 12; 
+								return Common.ES_DTS_TYPE; 
 
 							else 
-								return 13;
+								return Common.ES_DTS_A_TYPE;
 						} 
 					} 
 
@@ -1141,7 +1139,7 @@ public class Scan
 
 						playtime = getAudioTime(size); 
 
-						return 12;
+						return Common.ES_DTS_TYPE;
 					}
 				}
 
@@ -1161,10 +1159,10 @@ public class Scan
 							}
 
 							if (b==0)
-								return 7;
+								return Common.ES_AC3_TYPE;
 
 							else 
-								return 10;
+								return Common.ES_AC3_A_TYPE;
 						}
 					}
 
@@ -1176,7 +1174,7 @@ public class Scan
 
 						playtime = getAudioTime(size); 
 
-						return 7;
+						return Common.ES_AC3_TYPE;
 					}
 				}
 
@@ -1191,7 +1189,7 @@ public class Scan
 						playtime = getAudioTime(size);
 					}
 
-					return 8;
+					return Common.ES_MPA_TYPE;
 				}
 			}
 
@@ -1216,7 +1214,7 @@ public class Scan
 								video_streams.add(Video.videoformatByte(bytecheck.toByteArray()));
 							}
 
-							return 9;
+							return Common.ES_MPV_TYPE;
 						}
 					}
 				}
@@ -1229,7 +1227,7 @@ public class Scan
 							if (more) 
 								video = msg_9;
 
-							return 9;
+							return Common.ES_MPV_TYPE;
 						}
 					}
 				} 
@@ -1244,7 +1242,7 @@ public class Scan
 		check=null; //DM22122003 081.6 int09 new
 		System.gc();
 
-		return 0;
+		return Common.Unsupported;
 	}
 
 

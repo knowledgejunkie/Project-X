@@ -175,7 +175,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "28.11.2004 21:08";
+static String version_date = "10.12.2004 23:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -6317,7 +6317,8 @@ public void pause()
 public void working() {
 
 	System.gc();
-	String vptslog = "-1", oldvptslog="-1";
+	String vptslog = "-1";
+	String oldvptslog="-1";
 
 	long splitsize=options[18];
 	options[19]=0;
@@ -6357,108 +6358,136 @@ public void working() {
 							Resource.getString("working.convertType.makeTS"), 
 							Resource.getString("working.convertType.packetFilter") };
 
-	for (int k=0; k<workinglist.size(); k++) {
+	for (int k = 0; k < workinglist.size(); k++)
+	{
 		// TODO Was geschieht hier?
-		int ft = scan.inputInt((XInputFile)workinglist.get(k));
+		int input_type = scan.inputInt((XInputFile)workinglist.get(k));
 
-		if (pva && ft==1) {
+		if (pva && input_type == Common.PVA_TYPE)
+		{
 			combvideo.add(workinglist.get(k));
-			vdr=false; 
-			mpg2=false; 
-			mpg1=false; 
-			mpgts=false; 
-			raw=false;
-			if (k>0) {
-				workinglist.remove(k);
-				k--;
-			} else if (mpgtovdr==0) 
-				options[27] = nextFilePTS(0,0,0,0);
-		} else if (vdr && ft==4) {
-			combvideo.add(workinglist.get(k));
-			pva=false; 
-			mpg2=false; 
-			mpg1=false; 
-			mpgts=false; 
-			raw=false;
-			if (k>0) {
-				workinglist.remove(k);
-				k--;
-			} else if (mpgtovdr==0) 
-				options[27] = nextFilePTS(1,0,0,0);
-		} else if (raw && (ft==5 || ft==6)) {
-			combvideo.add(workinglist.get(k));
-			pva=false; 
-			mpg2=false; 
-			mpg1=false; 
-			mpgts=false; 
-			vdr=false;
-			if (k>0) {
-				workinglist.remove(k);
-				k--;
-			} else if (mpgtovdr==0) 
-				options[27] = nextFilePTS(1,0,0,0);
-		} else if (mpg2 && ft==3) {
-			combvideo.add(workinglist.get(k));
-			pva=false; 
-			vdr=false; 
-			mpg1=false; 
-			mpgts=false; 
-			raw=false;
-			if (k>0) {
-				workinglist.remove(k);
-				k--;
-			} else if (mpgtovdr==0) 
-				options[27] = nextFilePTS(1,2,0,0);
-		} else if (mpgts && ft==11) {
-			combvideo.add(workinglist.get(k));
-			pva=false; 
-			vdr=false; 
-			mpg1=false; 
-			mpg2=false; 
-			raw=false;
-			if (k>0) {
+			vdr  = false; 
+			mpg2 = false; 
+			mpg1 = false; 
+			mpgts= false; 
+			raw  = false;
+
+			if (k > 0)
+			{
 				workinglist.remove(k);
 				k--;
 			}
-		} else if (mpg1 && ft==2) {
+			else if (mpgtovdr == 0) 
+				options[27] = nextFilePTS(0, 0, 0, 0);
+		}
+		else if (vdr && input_type == Common.PES_AV_TYPE)
+		{
 			combvideo.add(workinglist.get(k));
-			pva=false; 
-			vdr=false; 
-			mpg2=false; 
-			mpgts=false; 
-			raw=false;
-			if (k>0) {
+			pva  = false; 
+			mpg2 = false; 
+			mpg1 = false; 
+			mpgts= false; 
+			raw  = false;
+
+			if (k > 0)
+			{
 				workinglist.remove(k);
 				k--;
-			} else if (mpgtovdr==0) 
-				options[27] = nextFilePTS(1,1,0,0);
-		} else 
+			}
+			else if (mpgtovdr == 0) 
+				options[27] = nextFilePTS(1, 0, 0, 0);
+		} 
+		else if (raw && (input_type == Common.PES_MPA_TYPE || input_type == Common.PES_PS1_TYPE))
+		{
+			combvideo.add(workinglist.get(k));
+			pva  = false; 
+			mpg2 = false; 
+			mpg1 = false; 
+			mpgts= false; 
+			vdr  = false;
+
+			if (k > 0)
+			{
+				workinglist.remove(k);
+				k--;
+			}
+			else if (mpgtovdr == 0) 
+				options[27] = nextFilePTS(1, 0, 0, 0);
+		}
+		else if (mpg2 && input_type == Common.MPEG2PS_TYPE)
+		{
+			combvideo.add(workinglist.get(k));
+			pva  = false; 
+			vdr  = false; 
+			mpg1 = false; 
+			mpgts= false; 
+			raw  = false;
+
+			if (k > 0)
+			{
+				workinglist.remove(k);
+				k--;
+			}
+			else if (mpgtovdr == 0) 
+				options[27] = nextFilePTS(1, 2, 0, 0);
+		}
+		else if (mpgts && input_type == Common.TS_TYPE)
+		{
+			combvideo.add(workinglist.get(k));
+			pva  = false; 
+			vdr  = false; 
+			mpg1 = false; 
+			mpg2 = false; 
+			raw  = false;
+
+			if (k > 0)
+			{
+				workinglist.remove(k);
+				k--;
+			}
+		}
+		else if (mpg1 && input_type == Common.MPEG1PS_TYPE)
+		{
+			combvideo.add(workinglist.get(k));
+			pva  = false; 
+			vdr  = false; 
+			mpg2 = false; 
+			mpgts= false; 
+			raw  = false;
+
+			if (k > 0)
+			{
+				workinglist.remove(k);
+				k--;
+			}
+			else if (mpgtovdr == 0) 
+				options[27] = nextFilePTS(1, 1, 0, 0);
+		}
+		else 
 			break;
 	}
 
-
 	brm.surf.start();
 
-	while ( options[21]>=0 ) {
+	while ( options[21] >= 0 )
+	{
 
-		splitLabel.setText(" "+options[19]+" ");
+		splitLabel.setText(" " + options[19] + " ");
 		showOutSize();
 		InfoAtEnd.clear();
-		NoOfAudio=0;
-		NoOfPictures=0; //DM04032004 081.6 int18 add
-		NoOfTTX=0;   //DM04032004 081.6 int18 add
-		options[48]+=options[42];
-		options[42]=0;
+		NoOfAudio = 0;
+		NoOfPictures = 0;
+		NoOfTTX = 0;
+		options[48] += options[42];
+		options[42] = 0;
 
-		//DM20072004 081.7 int07 add
 		fakedPTS = -1;
-
 
 		if ( new File(vptslog).exists() ) 
 			new File(vptslog).delete();
 
 		argsloop:
-		for (int h=0; h<workinglist.size(); h++)
+		for (int h = 0; h < workinglist.size(); h++)
 		{
 			XInputFile xInputFile = (XInputFile)workinglist.get(h);
 
@@ -6470,24 +6499,28 @@ public void working() {
 				Msg(Resource.getString("working.file.not.found"));
 				continue argsloop;
 			}
-			//DM22062004 081.7 int05 changed--
 
 
 			/***** scan ** 053c ***/ 
 			int filetype = scan.inputInt(xInputFile);
 
 			switch (filetype) {
-			case 1: {
+			case Common.PVA_TYPE:
 				Msg(Resource.getString("working.file.pva"));
+
 				if (options[31]==0) 
 					Msg(convertType[mpgtovdr]);
+
 				vptslog = pvaparse(xInputFile,0,mpgtovdr,vptslog);
+
 				if (mpgtovdr==0) 
 					splitreset(vptslog);
+
 				break;
-			}
-			case 2: {
+
+			case Common.MPEG1PS_TYPE:
 				Msg(Resource.getString("working.file.mpeg1"));
+
 				if (h>0) 
 					pesparse(xInputFile,vptslog,1);
 				else
@@ -6499,9 +6532,10 @@ public void working() {
 						splitreset(vptslog);
 				}
 				break;
-			}
-			case 3: {
+
+			case Common.MPEG2PS_TYPE:
 				Msg(Resource.getString("working.file.mpeg2"));
+
 				if (h>0) 
 					pesparse(xInputFile,vptslog,2);
 				else {
@@ -6512,19 +6546,24 @@ public void working() {
 						splitreset(vptslog);
 				}
 				break;
-			}
-			case 4: {
+
+			case Common.PES_AV_TYPE:
 				Msg(Resource.getString("working.file.av.ttx"));
+
 				if (options[31]==0) 
 					Msg(convertType[mpgtovdr]);
+
 				vptslog = vdrparse(xInputFile,0,mpgtovdr);
+
 				if (mpgtovdr==0) 
 					splitreset(vptslog);
+
 				break;
-			}
-			case 5: 
-			case 6: {
+
+			case Common.PES_MPA_TYPE: 
+			case Common.PES_PS1_TYPE:
 				Msg(Resource.getString("working.file.a.ttx"));
+
 				if (h>0) {
 					splitreset(vptslog);
 					pesparse(xInputFile,vptslog,0);
@@ -6535,71 +6574,71 @@ public void working() {
 					if (mpgtovdr==0) 
 						splitreset(vptslog);
 				}
+
 				break;
-			}
-			case 10: {
+
+			case Common.ES_AC3_A_TYPE:
 				Msg(Resource.getString("working.file.ac3.smpte"));
 				splitreset(vptslog);
 				rawaudio(xInputFile,vptslog,"ac");
 				break;
-			}
-			case 7: {
+
+			case Common.ES_AC3_TYPE:
 				Msg(Resource.getString("working.file.ac3"));
 				splitreset(vptslog);
 				rawaudio(xInputFile,vptslog,"ac");
 				break;
-			}
-			case 8: {
+
+			case Common.ES_MPA_TYPE:
 				Msg(Resource.getString("working.file.mpeg.audio"));
 				splitreset(vptslog);
 				rawaudio(xInputFile,vptslog,"mp");
 				break;
-			}
-			case 9: {
+
+			case Common.ES_MPV_TYPE:
 				Msg(Resource.getString("working.file.mpeg.video"));
 				vptslog = rawvideo(xInputFile);
 				splitreset(vptslog);
 				break;
-			}
-			case 11: {
+
+			case Common.TS_TYPE:
 				Msg(Resource.getString("working.file.dvb"));
+
 				if (options[31]==0) 
 					Msg(convertType[mpgtovdr]);
+
 				vptslog = rawparse(xInputFile,scan.getPIDs(),mpgtovdr);
+
 				if (mpgtovdr==0) 
 					splitreset(vptslog);
+
 				break;
-			}
-			//DM19122003 081.6 int07 new
-			case 12: {
+
+			case Common.ES_DTS_TYPE:
 				Msg(Resource.getString("working.file.dts"));
 				splitreset(vptslog);
 				rawaudio(xInputFile,vptslog,"ac");
 				break;
-			}
-			case 13: {
+
+			case Common.ES_DTS_A_TYPE:
 				Msg(Resource.getString("working.file.dts.smpte"));
 				splitreset(vptslog);
 				rawaudio(xInputFile,vptslog,"ac");
 				break;
-			}
-			//DM24012004 081.6 int11 add
-			case 14:
-			{
+
+			case Common.ES_RIFF_TYPE:
 				Msg(Resource.getString("working.file.riff"));
 				splitreset(vptslog);
 				rawaudio(xInputFile,vptslog,"wa");
 				break;
-			}
-			//DM02032004 081.6 int18 add
-			case 16:
-			{
+
+			case Common.ES_SUP_TYPE:
 				Msg(Resource.getString("working.file.rle"));
 				splitreset(vptslog);
 				rawsub(xInputFile,vptslog);
 				break;
-			}
 
+			case Common.Unsupported:
 			default: 
 				Msg(Resource.getString("working.file.notsupported"));
 			}
@@ -9273,7 +9312,9 @@ public long nextFilePTS(int type, int ismpg, long lastpts, int file_number) {
 		case 0: {    // pva
 			pvaloop:
 			while (count < filesize) {
+
 				in.read(push25,0,25);
+
 				if ((255&push25[0])!=0x41 || (255&push25[1])!=0x56 || (255&push25[4])!=0x55) {
 					in.unread(push25,1,24); 
 					count++; 
@@ -9304,10 +9345,12 @@ public long nextFilePTS(int type, int ismpg, long lastpts, int file_number) {
 						break pvaloop;
 					}
 				}
+
 				in.unread(push25,8,17);
 				in.skip(packlength);
 				count+= 8+packlength;
 			}
+
 			break;
 		}
 		case 1: {    // mpg
@@ -9421,11 +9464,6 @@ public long nextFilePTS(int type, int ismpg, long lastpts, int file_number) {
 					pts = 0xFFFFFFFFL & ( (6&ptsdata[0])<<29 | (255&ptsdata[1])<<22 | (254&ptsdata[2])<<14 |
 							(255&ptsdata[3])<<7 | (254&ptsdata[4])>>>1 );
 				} else  
-
-
-
-
-
 					in.skip(ptslength);
 
 				count+=ptslength+packlength;
@@ -9440,7 +9478,10 @@ public long nextFilePTS(int type, int ismpg, long lastpts, int file_number) {
 		}
 		} // end switch
 
-		in.close();
+//		in.close();
+
+		// close does not always return!
+		in = null;
 
 		} 
 		catch (IOException e) { 

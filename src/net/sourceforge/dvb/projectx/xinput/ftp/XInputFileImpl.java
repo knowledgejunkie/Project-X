@@ -277,7 +277,13 @@ public class XInputFileImpl implements XInputFileIF {
 		if (!isopen) { throw new IllegalStateException("XInputFile is already closed!"); }
 
 		try {
-			pbis.close();
+
+		//	pbis.close();
+	// close does nothing in InputStream, so we set it to null
+	pbis = null;
+	// call the GC here, otherwise the last user connection stands until next GC and blocks
+	System.gc();
+
 			raf.close();
 			rafFile.delete();
 		} catch (IOException e) {
@@ -289,6 +295,7 @@ public class XInputFileImpl implements XInputFileIF {
 			buffer = new byte[8];
 			isopen = false;
 		}
+
 	}
 
 	/**

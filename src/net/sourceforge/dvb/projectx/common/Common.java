@@ -291,4 +291,24 @@ public final class Common
 		}
 	}
 
+
+	public final static int Unsupported   = 0;	//	Resource.getString("scan.unsupported"),
+	public final static int PVA_TYPE      = 1;	//	"PVA (Video/Audio PES)",
+	public final static int MPEG1PS_TYPE  = 2;	//	"MPEG-1 PS/SS (Video/Audio PES)",
+	public final static int MPEG2PS_TYPE  = 3;	//	"MPEG-2 PS/SS (Video/Audio PES)",
+	public final static int PES_AV_TYPE   = 4;	//	"PES (Video/Audio/TTX)",
+	public final static int PES_MPA_TYPE  = 5;	//	"PES (MPEG Audio)",
+	public final static int PES_PS1_TYPE  = 6;	//	"PES (private stream 1)",
+	public final static int ES_AC3_TYPE   = 7;	//	"ES (AC-3 Audio)",
+	public final static int ES_MPA_TYPE   = 8;	//	"ES (MPEG Audio)",
+	public final static int ES_MPV_TYPE   = 9;	//	"ES (MPEG Video)",
+	public final static int ES_AC3_A_TYPE = 10;	//	"ES (AC-3 Audio) (psb. SMPTE)",
+	public final static int TS_TYPE       = 11;	//	"DVB/MPEG2 TS",
+	public final static int ES_DTS_TYPE   = 12;	//	"ES (DTS Audio)", //DM19122003 081.6 int07
+	public final static int ES_DTS_A_TYPE = 13;	//	"ES (DTS Audio) (psb. SMPTE)",
+	public final static int ES_RIFF_TYPE  = 14;	//	"ES (RIFF Audio)", //DM30122003 081.6 int10
+	public final static int ES_cRIFF_TYPE = 15;	//	"ES (compressed RIFF Audio)",
+	public final static int ES_SUP_TYPE   = 16;	//	"ES (Subpicture 2-bit RLE)" //DM31012004 081.6 int13
+
+
 }
