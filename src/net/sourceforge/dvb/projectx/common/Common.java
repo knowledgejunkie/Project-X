@@ -35,8 +35,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.StringTokenizer;
+
+import javax.swing.JOptionPane;
 
 import net.sourceforge.dvb.projectx.audio.Audio;
 
@@ -249,6 +253,42 @@ public final class Common
 	 */
 	public static ArrayList getAC3list() {
 		return AC3list;
+	}
+
+	/**
+	 * Checks the latest version of Project-X
+	 */
+	public static void checkVersion() {
+		try
+		{
+			URL url = new URL("http://project-x.sourceforge.net/update/update.txt");
+			URLConnection urlConn = url.openConnection();
+			BufferedReader br = new BufferedReader(new InputStreamReader(urlConn.getInputStream()));
+			String line = br.readLine();
+			String version = line;
+			String date = null;
+			if (line != null)
+			{
+				StringTokenizer st = new StringTokenizer(line, ";");
+				if (st.hasMoreTokens())
+				{
+					version = st.nextToken();
+				}
+				if (st.hasMoreTokens())
+				{
+					date = st.nextToken();
+				}
+			}
+			if (date != null)
+			{
+				version += "\n"+date;
+			}
+			JOptionPane.showMessageDialog(X.frame, Resource.getString("help.version.info") + "\n"+version, Resource.getString("help.version.info.title"), JOptionPane.INFORMATION_MESSAGE);
+		}
+		catch(Exception e)
+		{
+			X.Msg(Resource.getString("help.version.error") + " " + e);
+		}
 	}
 
 }

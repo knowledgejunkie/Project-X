@@ -609,12 +609,19 @@ protected JMenu buildHelpMenu()
 	Resource.localize(openHtml, "help.help");
 	openHtml.setActionCommand("helphtml");
 
+	JMenuItem version = new JMenuItem();
+	Resource.localize(version, "help.version");
+	version.setActionCommand("helpversion");
+
 	help.add(about);
 	help.addSeparator();
 	help.add(openHtml);
+	help.addSeparator();
+	help.add(version);
 
 	about.addActionListener(menulistener);
 	openHtml.addActionListener(menulistener);
+	version.addActionListener(menulistener);
 
 	return help;
 }
@@ -2632,6 +2639,9 @@ class MenuListener implements ActionListener
 				} 
 			}
 		}
+
+		else if (actName.equals("helpversion"))
+			Common.checkVersion();
 
 		else if (actName.equals("helphtml"))
 			new Html().show();
