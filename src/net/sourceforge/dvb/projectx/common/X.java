@@ -178,7 +178,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "27.12.2004 14:00";
+static String version_date = "27.12.2004 16:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -5578,8 +5578,10 @@ public static void main(String[] args)
 					}
 
 					else
+					{
 						collfiles[0].add(addInputFile(args[a]));
 						//collfiles[0].add(args[a]);
+					}
 				} 
 				catch (Exception e)
 				{
@@ -5746,7 +5748,8 @@ public static String[] getVersion()
 
 				for (int i = 0; i < xif.length; i++)
 				{
-					if ( xif[i].toString().equals(url.toString()) )
+					if ( new URL(xif[i].toString()).getFile().equals(url.getFile()) )
+					//if ( xif[i].toString().equals(url.toString()) )
 					{
 						inputValue = xif[i];
 						break;
@@ -9380,7 +9383,7 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 			cell.add(""+(options[7]));
 			Msg(Resource.getString("rawparse.actual.vframes")+" "+options[7]);
 			Msg(Resource.getString("rawparse.switch.to")+" "+nextXInputFile);
-			progress.setString(((ToVDR==0)?Resource.getString("rawparse.actual.demuxing"):Resource.getString("rawparse.converting"))+Resource.getString("rawparse.dvb.mpeg")+" "+nextXInputFile.getName());
+			progress.setString(((ToVDR==0) ? Resource.getString("rawparse.demuxing") : Resource.getString("rawparse.converting")) + " " + Resource.getString("rawparse.dvb.mpeg") + " " + nextXInputFile.getName());
 			progress.setStringPainted(true);
 
 			//Ghost23012004 081.6 int11 add
