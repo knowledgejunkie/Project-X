@@ -49,3 +49,4 @@ dvbmatt neu 28.11. - vorschau schnittleiste , magenta querstriche zur schnittpun
 pstorch erl 01.12. - extract oro-2.0.8 out of commons-net-1.2.2>>>>>>> 1.18
 dvbmatt fix 4.12. - .SUB export , frame nummer war keine Ganzzahl
 dvbmatt neu 4.12. - zusätzl. option um eine leichte video pts - rückverschiebung auszugleichen
+dvbmatt fix 7.12. - fix , zu VDR erzeugung mit problem bei erzeugung eines sub-pfades durch namensgleichheit

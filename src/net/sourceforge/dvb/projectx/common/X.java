@@ -5984,7 +5984,6 @@ public void run() {
 				if (workouts.equals(outalias))
 					workouts = new File(firstfile).getParent();
 
-				//DM26062004 081.7 int05 add
 				if (workouts == null || !(new File(workouts).exists()))
 				{
 					workouts = inidir;
@@ -6008,10 +6007,12 @@ public void run() {
 					new File(workouts).mkdirs();
 				}
 
-				//DM12072004 081.7 int06 add
+				/**
+				 * create index.vdr + new path
+				 */
 				if (cBox[54].isSelected() && comBox[19].getSelectedIndex() == 1)
 				{
-					workouts += new File(firstfile).getName()
+					workouts += "_" + new File(firstfile).getName()
 						+ filesep
 						+ new java.text.SimpleDateFormat("yyyy-MM-dd.HH.mm.ss.SSS").format(new Date()) + ".rec"
 						+ filesep;
