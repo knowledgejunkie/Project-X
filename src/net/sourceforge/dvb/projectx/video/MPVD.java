@@ -2742,11 +2742,9 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 
 			if (cutfiles_points != null && cutfiles_points.length > 0)
 			{
-				g.setColor(new Color(150, 0, 0));
-
 				int p0 = 0, p1 = 0;
 
-				for (int a=0; a < cutfiles_points.length; a+=2)
+				for (int a=0; a < cutfiles_points.length; a++)
 				{
 					if (cutfiles_points[a] > cutfiles_length)
 						break; 
@@ -2754,12 +2752,21 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 					p0 = a == 0 ? 0 : (int)(cutfiles_points[a-1] * w1 / cutfiles_length);
 					p1 = (int)(cutfiles_points[a] * w1 / cutfiles_length);
 
-					g.fillRect(x1 + p0, y1, p1 - p0, h1);
+					if (a % 2 == 0)
+					{
+						g.setColor(new Color(150, 0, 0));
+						g.fillRect(x1 + p0, y1, p1 - p0, h1);
+					}
+
+					g.setColor(new Color(220, 0, 220));
+					g.fillRect(x1 + p1 - 1, y1 - 4, 2, h1 + 8);
 				}
 
 				if ((cutfiles_points.length & 1) == 0)
 				{
 					p0 = (int)(cutfiles_points[cutfiles_points.length -1] * w1 / cutfiles_length);
+
+					g.setColor(new Color(150, 0, 0));
 					g.fillRect(x1 + p0, y1, w1 - p0, h1);
 				}
 			}

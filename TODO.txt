@@ -22,7 +22,7 @@ pstorch erl 11.11. - skip() überschrieben in xinputstream, es sind ztw. zuwenig 
 pstorch erl 11.11. - update URL verbindung zur sf.net project homepage (update.txt)
 dvbmatt erl 11.11. - bei ungültigem ausgabepfad werden die daten auf dem projectx-pfad ausgegeben.
 dvbmatt erl 12.11. - nullpointer, wenn versucht wird, nicht initialisierten stream zu bearbeiten (piddemux klasse)
-dvbmatt erl 12.11. - pre-scan anpassung für MPG=>sPES Sondertypen
+dvbmatt neu 12.11. - pre-scan anpassung für MPG=>sPES Sondertypen
 dvbmatt erl 12.11. - spez. batchfile lesen bei CLI-ausführung (patch gepostet bei forum.doom9.org), mit anpassung für RE122
 12.11. - ";type=b" Anhängsel bei ftp-URLs ? wird bei RE1.2.2 nicht abgeschnitten. Zweck?
          Konflikt: Fehlende Auswertung ist Fehler in JDK 1.2.2, behoben in JDK 1.4
@@ -44,4 +44,5 @@ dvbmatt erl 20.11. - laden von Dateien via 'hinzufügen' und dann anklick für dat
 20.11. - wie oben, Erkennung des Dateityps bei Ausführung via CLI nicht implementiert?, geht nicht
 dvbmatt erl 20.11. - CLI: extern angebenes ini-File wirkt nicht mehr (wohl seit 081.9)
 dvbmatt neu 27.11. - meldungsoption zum mitloggen der verstrichenen prozesszeit
-27.11. - versuche zur beschleunigung der vorschau, durch externen prozessornahen code
+pstorch neu 28.11. - beschleunigung der vorschau, durch externen prozessornahen code
+dvbmatt neu 28.11. - vorschau schnittleiste , magenta querstriche zur schnittpunktmarkierung, bei engen stellen sieht man sonst nix
