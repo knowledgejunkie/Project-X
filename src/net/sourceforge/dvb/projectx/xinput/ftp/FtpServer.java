@@ -105,17 +105,16 @@ public class FtpServer {
 		return ftpClient.retrieveFileStream(aFileName);
 	}
 
-	public void close() 
-	{
-		if (!isOpen) // if not alread closed, close it now 
-		{ 
+	public void close() {
+		if (!isOpen) { 
+			throw new IllegalStateException("Is already closed, must be opened before!"); 
+		} else {
 			try {
 				ftpClient.logout();
 				ftpClient.disconnect();
 			} catch (Exception e) {
 				// do nothing
 			}
-
 			isOpen = false;
 		}
 	}
