@@ -1,4 +1,4 @@
 Manifest-Version: 1.0
 Main-Class: X
 Created-By: 1.2.2 (Sun Microsystems Inc.)
-
+Class-Path: commons-net-1.1.0.jar

@@ -29,12 +29,15 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.event.*;
+
+import xinput.XInputFile;
+
 import java.io.*;
 
 //DM26032004 081.6 int18 changed
 public class HexViewer extends JFrame {
 
-private String file = "";
+private XInputFile xinputFile = null;
 private JTextArea HexArea;
 private JTextField Field, Field1, from, fsize;
 private JScrollPane scroll;
@@ -194,13 +197,13 @@ protected void init()
 
 //DM06092003+  changed
 private void savefile(long startPos, long size) {
-	long len = new File(file).length();
+	long len = xinputFile.length();
 	size = (startPos+size>len) ? (len-startPos) : size;
 
 	if (startPos>=len || startPos<0 || size<1) 
 		return;
 
-	String newfile = file+"(0x"+Long.toHexString(startPos)+" to 0x"+Long.toHexString(startPos+size)+").bin";
+	String newfile = xinputFile+"(0x"+Long.toHexString(startPos)+" to 0x"+Long.toHexString(startPos+size)+").bin";
 	chooser.setSelectedFile(new File(newfile));
 	chooser.rescanCurrentDirectory();
 
@@ -218,7 +221,7 @@ private void savefile(long startPos, long size) {
 	try 
 	{
 	int buf=3072000;
-	BufferedInputStream hex = new BufferedInputStream(new FileInputStream(file),buf);
+	BufferedInputStream hex = new BufferedInputStream(xinputFile.getInputStream(),buf);
 	BufferedOutputStream hex1 = new BufferedOutputStream(new FileOutputStream(newfile),buf);
 	long filePos=0, endPos=startPos+size;
 
@@ -239,39 +242,39 @@ private void savefile(long startPos, long size) {
 	hex1.close();
 	}
 	catch (IOException e) { 
-		HexArea.setText(".. cannot access file : "+file); 
+		HexArea.setText(".. cannot access file : "+xinputFile); 
 	}
-	setTitle("Hex Viewer for File: "+file); //DM30122003 081.6 int10 add
+	setTitle("Hex Viewer for File: "+xinputFile); //DM30122003 081.6 int10 add
 }
 //DM06092003-
 
 private void readfile(long position) {
 	try 
 	{
-	RandomAccessFile hex = new RandomAccessFile(file,"r");
-	long len = hex.length();
+	xinputFile.randomAccessOpen("r");
+	long len = xinputFile.length();
 	if (position<len) {
 		if (textonly.isSelected()) {
-			hex.seek(position);
+			xinputFile.randomAccessSeek(position);
 			String text = "";
-			if (position!=0) 
-				hex.readLine();
-			for (int a=0; a<24 && hex.getFilePointer()<len; a++) 
-				text += hex.readLine() + "\n";
+			if (position!=0)
+				xinputFile.randomAccessReadLine();
+			for (int a=0; a<24 && xinputFile.randomAccessGetFilePointer()<len; a++) 
+				text += xinputFile.randomAccessReadLine() + "\n";
 			HexArea.setText(text);
 		} else {
 			int viewsize = (int)(((len-position)>=384L) ? 384 : (len-position) );
 			byte[] data = new byte[viewsize];
-			hex.seek(position);
-			hex.read(data);
+			xinputFile.randomAccessSeek(position);
+			xinputFile.randomAccessRead(data);
 			print(data,position);
 		}
 	}
-	hex.close();
+	xinputFile.randomAccessClose();
 
 	} 
 	catch (IOException e) { 
-		HexArea.setText(".. cannot access file : "+file); 
+		HexArea.setText(".. cannot access file : "+xinputFile); 
 	}
 }
 
@@ -295,19 +298,19 @@ private void print(byte[] data,long position) {
 	HexArea.setText(text);
 }
 
-public void view(String file1) {
-	long filelen = new File(file1).length();
-	if (!(file).equals(file1)) {
+public void view(XInputFile aXInputFile) {
+	long filelen = aXInputFile.length();
+	if ((xinputFile != null) && !(xinputFile.equals(aXInputFile))) {
 		HexArea.setText("");
 		slider.setMaximum((int)(filelen/16));
-		file = file1;
+		xinputFile = aXInputFile;
 		if (slider.getValue()==0) 
 			readfile(0);
 		else 
 			slider.setValue(0);
 	}
-	file = file1;
-	setTitle("Hex Viewer for File: "+file);
+	xinputFile = aXInputFile;
+	setTitle("Hex Viewer for File: "+xinputFile);
 	flen.setText(" fsize: "+filelen+"  ");
 	this.show();
 }

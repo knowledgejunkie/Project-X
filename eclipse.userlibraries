@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eclipse-userlibraries version="1">
+    <library name="Project-X-Lib" systemlibrary="false">
+        <archive path="Z:\Projekte\Project-X\lib\commons-net-1.1.0\commons-net-1.1.0.jar" source="\Project-X\lib\commons-net-1.1.0\src" javadoc="jar:file:/Z:/Projekte/Project-X/lib/commons-net-1.1.0/apidocs.zip!/apidocs"/>
+    </library>
+</eclipse-userlibraries>

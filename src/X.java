@@ -40,28 +40,105 @@
  *
  */
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.GraphicsEnvironment;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.LayoutManager;
+import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.PushbackInputStream;
+import java.io.RandomAccessFile;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.StringTokenizer;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
-import java.util.*;
-import java.util.Arrays.*;
-import java.beans.*;
-import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.tree.*;
-import javax.swing.filechooser.*;
-import javax.swing.plaf.basic.BasicComboBoxUI;
-import java.awt.dnd.*;
-import java.awt.datatransfer.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JProgressBar;
+import javax.swing.JRadioButton;
+import javax.swing.JRadioButtonMenuItem;
+import javax.swing.JScrollPane;
+import javax.swing.JSlider;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
+import xinput.XInputDirectory;
+import xinput.XInputFile;
+import xinput.ftp.FtpChooser;
+import xinput.topfield_raw.RawInterface;
 
 public class X extends JPanel
 {
 
 static String version[] = { 
-	"ProjectX 0.81.8",
-	"30.08.2004",
+	"ProjectX 0.81.8_XInput",
+	"03.10.2004",
 	"TEST PROJECT ONLY",
 	", User: " + System.getProperty("user.name")
 };
@@ -78,8 +155,6 @@ static String terms[] = {
 	" ",
 };
 
-//DM18062004 081.7 int05 add
-RawInterface raw_interface = new RawInterface();
 static int loadSizeForward = 2560000;
 
 static BRMonitor brm;
@@ -509,7 +584,7 @@ protected JPanel buildFilePanel()
 					popup.show( list3, e.getX(), e.getY());
 
 				else if (list3.getSelectedValue() != null )
-					ScanInfo( list3.getSelectedValue().toString());
+					ScanInfo( (XInputFile)list3.getSelectedValue());
 			}
 			else if (e.getClickCount() > 1)
 				if (comBox[0].getItemCount() > 0)
@@ -715,6 +790,14 @@ protected void buildAutoloadPanel()
 	add_input.setToolTipText("add directory to autoload list");
 	bb.add(add_input);
 
+	// Button to add a ftp server directory to the autoload list
+	JButton add_inputftp = new JButton("f");
+	add_inputftp.setActionCommand("+iftp");
+	add_inputftp.setPreferredSize(new Dimension(50,28));
+	add_inputftp.setMaximumSize(new Dimension(50,24));
+	add_inputftp.setToolTipText("add ftp server directory to autoload list");
+	bb.add(add_inputftp);
+
 	JButton refresh_list = new JButton("o");
 	refresh_list.setActionCommand("ri");
 	refresh_list.setPreferredSize(new Dimension(50,28));
@@ -768,15 +851,15 @@ protected void buildAutoloadPanel()
 			if (e.getClickCount() == 1)
 			{
 				if (list1.getSelectedValue() != null )
-					ScanInfo( list1.getSelectedValue().toString());
+					ScanInfo((XInputFile)list1.getSelectedValue());
 			}
 
 			if (e.getClickCount() > 1)
 			{
 				if (e.getModifiers() == MouseEvent.BUTTON3_MASK && index > -1) // rename file
 				{
-					String inparent = new File( list1.getSelectedValue().toString()).getParent();
-					String inchild = new File( list1.getSelectedValue().toString()).getName();
+					String inparent = ((XInputFile)list1.getSelectedValue()).getParent();
+					String inchild = ((XInputFile)list1.getSelectedValue()).getName();
 
 					if ( !inparent.endsWith(filesep) )  
 						inparent += filesep;
@@ -914,6 +997,7 @@ protected void buildAutoloadPanel()
 	add_files.addActionListener(my0Listener);
 	add_coll_and_files.addActionListener(my0Listener);
 	add_input.addActionListener(my0Listener);
+	add_inputftp.addActionListener(my0Listener);
 	remove_input.addActionListener(my0Listener);
 
 	autoload.getContentPane().add(control_2);
@@ -2495,8 +2579,8 @@ class MenuListener implements ActionListener
 			if (list3.isSelectionEmpty()) //DM12042004 081.7 int01 add
 				return;
 
-			String inparent = new File( list3.getSelectedValue().toString()).getParent();
-			String inchild = new File( list3.getSelectedValue().toString()).getName();
+			String inparent = ((XInputFile)list3.getSelectedValue()).getParent();
+			String inchild = ((XInputFile)list3.getSelectedValue()).getName();
 
 			if ( !inparent.endsWith(filesep) )  
 				inparent += filesep;
@@ -2531,7 +2615,7 @@ class MenuListener implements ActionListener
 
 		else if (actName.equals("viewAsHex"))
 		{
-			if (new File(scan.getFile()).exists())
+			if (scan.getFile().exists())
 				new HexViewer().view(scan.getFile());
 		}
 
@@ -2597,6 +2681,7 @@ class FileListener implements ActionListener
 			if (comBox[0].getItemCount()>0)
 				comBox[0].removeItemAt(comBox[0].getSelectedIndex());
 		}
+		// roehrist changes 22.09.2004 start
 		else if (actName.equals("+i"))
 		{
 			chooser.rescanCurrentDirectory();
@@ -2608,16 +2693,17 @@ class FileListener implements ActionListener
 				File theFile = chooser.getSelectedFile();
 				if(theFile!=null)
 				{
-					if (theFile.isFile()) 
-						bb = theFile.getParent(); 
-					else if (theFile.isDirectory()) 
-						bb = theFile.getAbsolutePath(); 
+					if (theFile.isFile())
+						theFile = theFile.getParentFile();
 
-					for (int i=0; i<comBox[12].getItemCount();i++)
-						if (bb.equalsIgnoreCase(comBox[12].getItemAt(i).toString())) 
+					XInputDirectory xInputDirectory = new XInputDirectory(theFile);
+
+					for (int i=0; i < comBox[12].getItemCount(); i++) {
+						if (xInputDirectory.toString().equalsIgnoreCase(comBox[12].getItemAt(i).toString()))
 							return;
+					}
 
-					comBox[12].addItem(bb);
+					comBox[12].addItem(xInputDirectory);
 					comBox[12].setSelectedIndex(comBox[12].getItemCount()-1);
 					inputlist();
 				}
@@ -2626,6 +2712,31 @@ class FileListener implements ActionListener
 			}
 			autoload.toFront(); //DM26032004 081.6 int18 add
 		}
+		else if (actName.equals("+iftp"))
+		{
+			// Add ftp server directory to autoload list
+			FtpChooser ftpChooser = new FtpChooser();
+			ftpChooser.pack();
+			ftpChooser.show();
+			XInputDirectory xInputDirectory = ftpChooser.getXInputDirectory();
+
+			if (ftpChooser.isTested() && xInputDirectory != null)
+			{
+					for (int i=0; i < comBox[12].getItemCount(); i++) {
+						if (xInputDirectory.toString().equalsIgnoreCase(comBox[12].getItemAt(i).toString()))
+							return;
+					}
+
+					comBox[12].addItem(xInputDirectory);
+					comBox[12].setSelectedIndex(comBox[12].getItemCount()-1);
+					inputlist();
+
+				autoload.toFront(); //DM26032004 081.6 int18 add
+				return;
+			}
+			autoload.toFront(); //DM26032004 081.6 int18 add
+		}
+		// roehrist changes 22.09.2004 end
 		else if (actName.equals("-i"))
 		{
 			if (comBox[12].getItemCount()>0) 
@@ -2948,7 +3059,7 @@ class EXECUTE extends JFrame {
  *************/
 class PATCH extends JDialog {
 
-	String file="";
+	XInputFile xInputFile=null;
 	String[] notes = { " H:"," V:"," BR:","bps " };
 	long ins=0;
 	byte[] os = new byte[1];
@@ -2988,24 +3099,6 @@ class PATCH extends JDialog {
 		changebutton.addActionListener(patchAction);
 		grid.add(changebutton);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 		JButton cancelbutton = new JButton("cancel");
 		cancelbutton.addActionListener(patchAction);
 		grid.add(cancelbutton);
@@ -3019,18 +3112,15 @@ class PATCH extends JDialog {
 		UIManager.addPropertyChangeListener(new UISwitchListener(container));
 	}
 
-	public boolean search(String file) {
-		try 
+	public boolean search(XInputFile aXInputFile) {
+		try
 		{
-		RandomAccessFile pfile = new RandomAccessFile(file,"r");
-		long size = pfile.length();
+		long size = aXInputFile.length();
 		byte[] ps = new byte[((size<650000)?(int)size:650000)];
 		os = scan.getVBasic();
-		pfile.seek(0);
-		pfile.read(ps);
-		pfile.close();
+		aXInputFile.randomAccessSingleRead(ps, 0);
 		for (int a=0;a<ps.length-15;a++) {
-			if (ps[a]!=0 || ps[a+1]!=0 || ps[a+2]!=1 || ps[a+3]!=(byte)0xB3 || 
+			if (ps[a]!=0 || ps[a+1]!=0 || ps[a+2]!=1 || ps[a+3]!=(byte)0xB3 ||
 			ps[a+4]!=os[4] || ps[a+5]!=os[5] || ps[a+6]!=os[6] || ps[a+7]!=os[7] ) continue;
 			ins=a;
 			patchfield[0].setText(""+((255&ps[a+4])<<4 | (240&ps[a+5])>>>4));
@@ -3038,14 +3128,14 @@ class PATCH extends JDialog {
 			patchfield[2].setText(""+(((255&ps[a+8])<<10 | (255&ps[a+9])<<2 | (192 & ps[a+10])>>>6)*400));
 			return true;
 		}
-		} 
+		}
 		catch (IOException e) { X.Msg("patch error "+e); }
 		return false;
 	}
 
-	public void entry(String file1) {
-		file = file1;
-		if (search(file))
+	public void entry(XInputFile aXInputFile) {
+		xInputFile = aXInputFile;
+		if (search(xInputFile))
 			this.show();
 	}
 
@@ -3086,10 +3176,10 @@ class PATCH extends JDialog {
 	public void dochange() {
 		try 
 		{
-		RandomAccessFile pfile = new RandomAccessFile(file,"rw");
-		pfile.seek(ins);
-		pfile.write(os);
-		pfile.close();
+			xInputFile.randomAccessOpen("rw");
+			xInputFile.randomAccessSeek(ins);
+			xInputFile.randomAccessWrite(os);
+			xInputFile.randomAccessClose();
 		} 
 		catch (IOException e) { X.Msg("patch error2 "+e); }
 		this.setVisible(false);
@@ -3123,7 +3213,7 @@ class COLLECTION extends JFrame {
 	long cutPoints[]=new long[0]; //DM17012004 081.6 int11 changed, DM29012004 int12 fix
 
 	//DM24062004 081.7 int05 changed
-	Preview Preview = new Preview(loadSizeForward, MPVDecoder, raw_interface);
+	Preview Preview = new Preview(loadSizeForward, MPVDecoder);
 	//PREVIEW Preview = new PREVIEW();
 
 	//DM18022004 081.6 int17 new
@@ -3785,12 +3875,12 @@ class COLLECTION extends JFrame {
 		filesearch:
 		for (int a=0,b=0,type=0; a<infiles.size(); a++)
 		{
-			file = infiles.get(a).toString();
-			type = scan.inputInt(file);
+			XInputFile xInputFile = (XInputFile)infiles.get(a);
+			type = scan.inputInt(xInputFile);
 
 			if (b != 0 && b != type)
 				break filesearch;
-
+			
 			switch (type)
 			{
 			case 1:
@@ -3803,8 +3893,8 @@ class COLLECTION extends JFrame {
 
 				//DM18062004 081.7 int05 changed
 				start = end;
-				end += raw_interface.isAccessibleDisk(file) ? raw_interface.getFileSize(file) : new File(file).length();
-				previewList.add(new PreviewObject(start, end, type, file));
+				end += xInputFile.length();
+				previewList.add(new PreviewObject(start, end, type, xInputFile));
 				break;
 
 			default:
@@ -4112,17 +4202,22 @@ class DNDListener implements DropTargetListener
 		{ 
 			e.rejectDrop(); 
 			return; 
-
-
-
-
 		}
 		e.acceptDrop(da);
 
 		Transferable tr = e.getTransferable();
 		DataFlavor[] df = tr.getTransferDataFlavors();
 
-		java.util.List li = (java.util.List)tr.getTransferData(df[0]);
+		// Get list with one or more File objects
+		List li = (java.util.List)tr.getTransferData(df[0]);
+		{
+			// Replace dropped File objects by XInputFile objects
+			ArrayList tempLi = new ArrayList();
+			for (int i = 0; i < li.size(); i++) {
+				tempLi.add(new XInputFile((File)li.get(i)));
+			}
+			li = tempLi;
+		}
 
 		if (da==1)        // copy = new coll each
 		{
@@ -4402,25 +4497,20 @@ public void updateState() {
  * show ScanInfos * 
  ******************/
 //DM26032004 081.6 int18 changed
-//DM18062004 081.7 int05 changed
-public void ScanInfo(String file)
+public void ScanInfo(XInputFile aXInputFile)
 {
-	File info = new File(file);
 	logtab.setSelectedIndex(1);
 	String values = "";
 	FileInfoTextArea.setBackground(Color.white);
 
-	values += "Location:\t" + info.getParent() + "\n";
-	values += "Name:\t" + info.getName() + "\n";
+	values += "Location:\t" + aXInputFile.getParent() + "\n";
+	values += "Name:\t" + aXInputFile.getName() + "\n";
 
-	int source = raw_interface.isAccessibleDisk(file) ? 2 : (info.exists() ? 1 : 0);
-	long size = source == 2 ? raw_interface.getFileSize(file) : info.length();
-
-	if (source > 0)
+	if (aXInputFile.exists())
 	{
-		values += "Size:\t" + (size / 1048576) + " MB (" + size + " bytes)" + "\n";
-		String type = "Type:\t" + scan.Type(file) + "\n"; // must be first when scanning
-		values += "Date:\t" + scan.Date(file) + "\n";
+		values += "Size:\t" + (aXInputFile.length() / 1048576) + " MB (" + aXInputFile.length() + " bytes)" + "\n";
+		String type = "Type:\t" + scan.Type(aXInputFile) + "\n"; // must be first when scanning
+		values += "Date:\t" + scan.Date(aXInputFile) + "\n";
 		values += "\n";
 		values += type;
 		values += "Video:\t" + scan.getVideo() + "\n";
@@ -4430,9 +4520,10 @@ public void ScanInfo(String file)
 		values += "est. Playtime:\t" + scan.getPlaytime()+ "\n";
 		FileInfoTextArea.setBackground(scan.isSupported() ? new Color(225,255,225) : new Color(255,225,225));
 	}
-
 	else
+	{
 		values += "\nFile doesn't exists!\n";
+	}
 
 	FileInfoTextArea.setText(values);
 }
@@ -4482,9 +4573,14 @@ public void iniload()
 				exefield[Integer.parseInt(path.substring(1,2))].setText(path.substring(2,path.length()));
 		}
 		else if (path.startsWith("i*"))
-		{ 
-			if (path.substring(2,path.length())!=null && new File(path.substring(2,path.length())).exists())
-				comBox[12].addItem(path.substring(2,path.length()));
+		{
+			try {
+				XInputDirectory xInputDirectory = new XInputDirectory(path.substring(2,path.length()));
+				if (path.substring(2,path.length())!=null && xInputDirectory.test())
+					comBox[12].addItem(xInputDirectory);
+			} catch (RuntimeException e) {
+				// If there are problems with the directory simply ignore it and do nothing
+			}
 		}
 		else if (path.startsWith("o*"))
 		{
@@ -4623,38 +4719,41 @@ public static void inisave() //DM26012004 081.6 int12 changed, //DM26032004 081.
 
 
 /**************************
- * refresh inputfileslist * 
+ * refresh inputfileslist *
  **************************/
-//DM18062004 081.7 int05 changed
-public void inputlist()
-{
+public void inputlist() {
 	ArrayList arraylist = new ArrayList();
+	for (int a = 0; a < comBox[12].getItemCount(); a++) {
+		// Get input files
+		Object item = comBox[12].getItemAt(a);
+		XInputDirectory xInputDirectory = (XInputDirectory)item;
+		XInputFile[] addlist = xInputDirectory.getFiles();
+		// Sort them
+		if (addlist.length > 0) {
+			class MyComparator implements Comparator {
 
-	for (int a=0; a < comBox[12].getItemCount(); a++)
-	{
-		File addlist[] = new File(comBox[12].getItemAt(a).toString()).listFiles();
-
-		if (addlist.length > 0) 
-			Arrays.sort(addlist);
-
-		for (int b=0; b < addlist.length; b++)
-		{
-			if (addlist[b].isFile() ) 
-				arraylist.add(addlist[b].toString());
+				public int compare(Object o1, Object o2) {
+					return o1.toString().compareTo(o2.toString());
+				}
+			}
+			Arrays.sort(addlist, new MyComparator());
+		}
+		// Add them to the list
+		for (int b = 0; b < addlist.length; b++) {
+			arraylist.add(addlist[b]);
 		}
 	}
 
-	// ext disk access
-	raw_interface.add_native_files(arraylist);
+	// Get all Topfield files (instead of a full XInputDirectory integration)
+	/* TODO Ist das genug? */
+	(new RawInterface()).add_native_files(arraylist);
 
-	if (arraylist.size() > 0) 
+	if (arraylist.size() > 0)
 		inputfiles = arraylist.toArray();
-
-	else 
+	else
 		inputfiles = new Object[0];
-
 	list1.setListData(inputfiles);
-}   
+}
 
 
 /*************
@@ -4741,8 +4840,10 @@ public void javaEV()
 	TextArea.append("\nuser.home\t" + System.getProperty("user.home"));
 	TextArea.append("\nini.file\t" + inifile);
 
-	//DM18062004 081.7 int05 add
-	TextArea.append("\ndisk access:\t" + raw_interface.GetLoadStatus());
+/* TODO	Entscheiden, wie der Ersatz hierfür aussehen soll
+ * //DM18062004 081.7 int05 add
+ * TextArea.append("\ndisk access:\t" + raw_interface.GetLoadStatus());
+ */
 }
 
 
@@ -5417,7 +5518,7 @@ public void run() {
 				if (ctemp.size()>0)
 					Msg("-> "+ctemp.size()+" cutpoint(s) defined ("+comBox[17].getSelectedItem()+")");
 
-				String fchilds = (new File(firstfile).getName()).toString();
+				String fchilds = new File(firstfile).getName();
 				if ( fchilds.lastIndexOf(".") != -1 ) 
 					fchilds = fchilds.substring(0,fchilds.lastIndexOf("."));
 
@@ -5479,7 +5580,7 @@ public void run() {
 				workouts += filesep;
 				Msg("write separated raw file to "+workouts);
  
-				String fchilds = (new File(firstfile).getName()).toString();
+				String fchilds = new File(firstfile).getName();
 				if ( fchilds.lastIndexOf(".") != -1 )
 					fchilds = fchilds.substring(0,fchilds.lastIndexOf("."));
 
@@ -5597,7 +5698,8 @@ public void working() {
 	String[] convertType = { "=> demux ","=> make a VDR (A/V PES)","=> make a MPG2","=> make a PVA","=> make a TS", "=> simple packet filter" };
 
 	for (int k=0; k<workinglist.size(); k++) {
-		int ft = scan.inputInt(workinglist.get(k).toString());
+		// TODO Was geschieht hier?
+		int ft = scan.inputInt((XInputFile)workinglist.get(k));
 
 		if (pva && ft==1) {
 			combvideo.add(workinglist.get(k));
@@ -5706,83 +5808,80 @@ public void working() {
 		if ( new File(vptslog).exists() ) 
 			new File(vptslog).delete();
 
-		argsloop:
+		argsloop:	
 		for (int h=0; h<workinglist.size(); h++)
 		{
-			String file = workinglist.get(h).toString();
+			XInputFile xInputFile = (XInputFile)workinglist.get(h);
 
-			//DM22062004 081.7 int05 changed++
-			long file_size = raw_interface.getFileSize(file);
-			Msg("\r\n=> File " + h + ":  " + file + " (" + file_size + ")");
+			Msg("\r\n=> File " + h + ":  " + xInputFile.toString() + " (" + xInputFile.length() + ")");
 
-			if (file_size < 0)
+			if (!xInputFile.exists())
 			{
 				Msg(" ? File not found !");
 				continue argsloop;
 			}
 			//DM22062004 081.7 int05 changed--
 
-
-			/***** scan ** 053c ***/ 
-			int filetype = scan.inputInt(file);
+			/***** scan ** 053c ***/
+			int filetype = scan.inputInt(xInputFile);
 
 			switch (filetype) {
 			case 1: {
 				Msg("=> File is PVA (Video/Audio PES)");
-				if (options[31]==0) 
+				if (options[31]==0)
 					Msg(convertType[mpgtovdr]);
-				vptslog = pvaparse(file,0,mpgtovdr,vptslog);
-				if (mpgtovdr==0) 
+				vptslog = pvaparse(xInputFile,0,mpgtovdr,vptslog);
+				if (mpgtovdr==0)
 					splitreset(vptslog);
 				break;
 			}
 			case 2: {
 				Msg("=> File is MPEG-1 PS/SS (Video/Audio PES)");
-				if (h>0) 
-					pesparse(file,vptslog,1);
+				if (h>0)
+					pesparse(xInputFile,vptslog,1);
 				else
 				{   //DM06022004 081.6 int15 changed, //DM10042004 081.7 int01 changed
-					if (options[31]==0) 
+					if (options[31]==0)
 						Msg(convertType[mpgtovdr]);
-					vptslog = vdrparse(file,1,mpgtovdr);
-					if (mpgtovdr==0) 
+					vptslog = vdrparse(xInputFile,1,mpgtovdr);
+					if (mpgtovdr==0)
 						splitreset(vptslog);
 				}
 				break;
 			}
 			case 3: {
 				Msg("=> File is MPEG-2 PS/SS (Video/Audio PES)");
-				if (h>0) 
-					pesparse(file,vptslog,2);
+				if (h>0)
+					pesparse(xInputFile,vptslog,2);
 				else {
-					if (options[31]==0) 
+					if (options[31]==0)
 						Msg(convertType[mpgtovdr]);
-					vptslog = (cBox[14].isSelected()) ? vdrparse(file,0,mpgtovdr) : vdrparse(file,2,mpgtovdr);
-					if (mpgtovdr==0) 
+					vptslog = (cBox[14].isSelected()) ? vdrparse(xInputFile,0,mpgtovdr) : vdrparse(xInputFile,2,mpgtovdr);
+					if (mpgtovdr==0)
 						splitreset(vptslog);
 				}
 				break;
 			}
 			case 4: {
 				Msg("=> File is Video/Audio/TTX PES");
-				if (options[31]==0) 
+				if (options[31]==0)
 					Msg(convertType[mpgtovdr]);
-				vptslog = vdrparse(file,0,mpgtovdr);
-				if (mpgtovdr==0) 
+				vptslog = vdrparse(xInputFile,0,mpgtovdr);
+				if (mpgtovdr==0)
 					splitreset(vptslog);
 				break;
 			}
-			case 5: 
+			case 5:
 			case 6: {
 				Msg("=> File is Audio/TTX PES");
 				if (h>0) {
 					splitreset(vptslog);
-					pesparse(file,vptslog,0);
+					pesparse(xInputFile,vptslog,0);
 				} else {
-					if (options[31]==0) 
+					if (options[31]==0)
 						Msg(convertType[mpgtovdr]);
-					vptslog = vdrparse(file,0,mpgtovdr);
-					if (mpgtovdr==0) 
+					vptslog = vdrparse(xInputFile,0,mpgtovdr);
+					if (mpgtovdr==0)
 						splitreset(vptslog);
 				}
 				break;
@@ -5790,33 +5889,33 @@ public void working() {
 			case 10: {
 				Msg("=> File is AC-3 Audio ES (psb. SMPTE)");
 				splitreset(vptslog);
-				rawaudio(file,vptslog,"ac");
+				rawaudio(xInputFile,vptslog,"ac");
 				break;
 			}
 			case 7: {
 				Msg("=> File is AC-3 Audio ES");
 				splitreset(vptslog);
-				rawaudio(file,vptslog,"ac");
+				rawaudio(xInputFile,vptslog,"ac");
 				break;
 			}
 			case 8: {
 				Msg("=> File is MPEG Audio ES");
 				splitreset(vptslog);
-				rawaudio(file,vptslog,"mp");
+				rawaudio(xInputFile,vptslog,"mp");
 				break;
 			}
 			case 9: {
 				Msg("=> File is MPEG Video ES");
-				vptslog = rawvideo(file);
+				vptslog = rawvideo(xInputFile);
 				splitreset(vptslog);
 				break;
 			}
 			case 11: {
 				Msg("=> File is DVB/MPEG-2 TS (Video/Audio/TTX PES)");
-				if (options[31]==0) 
+				if (options[31]==0)
 					Msg(convertType[mpgtovdr]);
-				vptslog = rawparse(file,scan.getPIDs(),mpgtovdr);
-				if (mpgtovdr==0) 
+				vptslog = rawparse(xInputFile,scan.getPIDs(),mpgtovdr);
+				if (mpgtovdr==0)
 					splitreset(vptslog);
 				break;
 			}
@@ -5824,13 +5923,13 @@ public void working() {
 			case 12: {
 				Msg("=> File is DTS Audio ES");
 				splitreset(vptslog);
-				rawaudio(file,vptslog,"ac");
+				rawaudio(xInputFile,vptslog,"ac");
 				break;
 			}
 			case 13: {
 				Msg("=> File is DTS Audio ES (psb. SMPTE)");
 				splitreset(vptslog);
-				rawaudio(file,vptslog,"ac");
+				rawaudio(xInputFile,vptslog,"ac");
 				break;
 			}
 			//DM24012004 081.6 int11 add
@@ -5838,7 +5937,7 @@ public void working() {
 			{
 				Msg("=> File is RIFF PCM Audio ES");
 				splitreset(vptslog);
-				rawaudio(file,vptslog,"wa");
+				rawaudio(xInputFile,vptslog,"wa");
 				break;
 			}
 			//DM02032004 081.6 int18 add
@@ -5846,11 +5945,11 @@ public void working() {
 			{
 				Msg("=> File is RLE Subpicture ES");
 				splitreset(vptslog);
-				rawsub(file,vptslog);
+				rawsub(xInputFile,vptslog);
 				break;
 			}
 
-			default: 
+			default:
 				Msg(" ? Filetype not supported !");
 			}
 		}
@@ -5858,7 +5957,7 @@ public void working() {
 		//**** print end of splitpart
 		if (options[18]>0)
 			Msg("===> END OF PART "+(options[19]++));
-		else 
+		else
 			options[21]=-100;
 
 		brm.surf.stop();
@@ -5883,7 +5982,7 @@ public void working() {
 				if (mn>-1) {
 					mn = Integer.parseInt(com.substring(mn+2));
 					argList.add(mn>-1 ? com.substring(0,com.lastIndexOf(" ?")) : com.trim());
-					if (mn==0 || mn>lastlist.length) 
+					if (mn==0 || mn>lastlist.length)
 						mn = lastlist.length;
 					for (int l=0;l<lastlist.length && l<mn;l++) {
 						String fn = lastlist[l].toString();
@@ -5904,12 +6003,12 @@ public void working() {
 
 				Msg("-> post command performed: "+commandline.trim());
 
-				try 
-				{ 
-				Runtime.getRuntime().exec(arguments); 
+				try
+				{
+				Runtime.getRuntime().exec(arguments);
 				}
-				catch (IOException re) { 
-					Msg(""+re); 
+				catch (IOException re) {
+					Msg(""+re);
 				}
 				argList=null;
 			}
@@ -5921,20 +6020,20 @@ public void working() {
 	yield();
 
 	File mpegvideolog = new File(vptslog);
-	if (mpegvideolog.exists()) 
+	if (mpegvideolog.exists())
 		mpegvideolog.delete();
 
-	if (cBox[11].isSelected()) 
+	if (cBox[11].isSelected())
 		logging.close();
 	if (cBox[21].isSelected()) {
-		try 
+		try
 		{
 		PrintWriter nlf = new PrintWriter(new FileOutputStream(loggin2));
 		nlf.print(messagelog);
 		nlf.close();
-		} 
-		catch (IOException e) { 
-			Msg("log error2 "+e); 
+		}
+		catch (IOException e) {
+			Msg("log error2 "+e);
 		}
 	}
 	messagelog="";
@@ -5942,16 +6041,13 @@ public void working() {
 	/*** delete tempfiles which have multi-used ***/
 	if (tempfiles.size()>0) {
 		for (int si=0;si<tempfiles.size();si+=2)
-			if ( new File(tempfiles.get(si).toString()).exists() ) 
+			if ( new File(tempfiles.get(si).toString()).exists() )
 				new File(tempfiles.get(si).toString()).delete();
 		tempfiles.clear();
 	}
 
 	options[18]=splitsize;
 }
-
-
-
 
 /***************
  * split reset *
@@ -6016,9 +6112,9 @@ private String infoPTSMatch(String args[], boolean video_pts, boolean data_pts)
 /**************
  * PES Parser *
  *************/
-public void pesparse(String file, String vptslog, int ismpg) {
+public void pesparse(XInputFile aXInputFile, String vptslog, int ismpg) {
 
-	String fchild = (newOutName.equals("")) ? (new File(file).getName()).toString() : newOutName;
+	String fchild = (newOutName.equals("")) ? aXInputFile.getName().toString() : newOutName;
 	String fparent = (!RButton[8].isSelected() && fchild.lastIndexOf(".") != -1 ) ? workouts+fchild.substring(0,fchild.lastIndexOf(".")) : workouts+fchild; //DM30122003 081.6 int10 changed
 
 	/*** split part ***/
@@ -6028,17 +6124,17 @@ public void pesparse(String file, String vptslog, int ismpg) {
 
 	if ( tempfiles.size()>0 ) {
 		for (int tfs=0; tfs<tempfiles.size(); tfs+=4 ) {
-			if ( tempfiles.get(tfs+1).toString().equals(file) ) {
+			if ( tempfiles.get(tfs+1).toString().equals(aXInputFile) ) {
 
 				Common.renameTo(tempfiles.get(tfs).toString(), paname); //DM13042004 081.7 int01 changed
 				//new File(tempfiles.get(tfs).toString()).renameTo(new File(paname));
 
 				tempfiles.set(tfs,paname);
 				String[] tfpes = { tempfiles.get(tfs).toString(), tempfiles.get(tfs+2).toString(), tempfiles.get(tfs+3).toString(), vptslog };
-				Msg("=> continue while using extracted raw data from "+file);
-				if (tfpes[2].equals("tt")) 
+				Msg("=> continue while using extracted raw data from "+aXInputFile);
+				if (tfpes[2].equals("tt"))
 					processTeletext(tfpes);
-				else 
+				else
 					mpt(tfpes);
 				return;
 			}
@@ -6053,21 +6149,16 @@ public void pesparse(String file, String vptslog, int ismpg) {
 	PESdemuxlist.clear();
 	PIDdemux demux = new PIDdemux();
 
-	try 
+	try
 	{
 
-	//long size = (new File(file)).length();
+	PushbackInputStream in = new PushbackInputStream(aXInputFile.getInputStream(),bs);
+	long size = aXInputFile.length();
 
-	//DM18062004 081.7 int05 changed
-	PushbackInputStream in = raw_interface.getStream(file, bs);
-	long size = raw_interface.getStreamSize();
-
-	progress.setString("demuxing PES file  "+(new File(file)).getName());
+	progress.setString("demuxing PES file  "+aXInputFile.getName());
 	progress.setStringPainted(true);
 	progress.setValue(0);
 	yield();
-
-	//PushbackInputStream in = new PushbackInputStream(new FileInputStream(file),bs);
 
 	byte[] push6 = new byte[6];
 	byte[] data = new byte[1];
@@ -6348,7 +6439,7 @@ public void pesparse(String file, String vptslog, int ismpg) {
 
 		lfn[demux.getType()]++;
 		tempfiles.add(values[0]);
-		tempfiles.add(file);
+		tempfiles.add(aXInputFile);
 		tempfiles.add(values[1]);
 		tempfiles.add(values[2]);
 
@@ -6380,9 +6471,9 @@ public void pesparse(String file, String vptslog, int ismpg) {
 /**************
  * VDR Parser *
  *************/
-public String vdrparse(String file, int ismpg, int ToVDR) {
+public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR) {
 
-	String fchild = (newOutName.equals("")) ? (new File(file).getName()).toString() : newOutName;
+	String fchild = (newOutName.equals("")) ? aXInputFile.getName() : newOutName;
 	String fparent = ( fchild.lastIndexOf(".") != -1 ) ? workouts+fchild.substring(0,fchild.lastIndexOf(".")) : workouts+fchild;
 
 	/*** split part ***/
@@ -6468,14 +6559,14 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 	long starts[] = new long[combvideo.size()];
 
 	for (int a=0; a<combvideo.size(); a++){   // maybe a < combideo.size()
-		file = combvideo.get(a).toString();
+		aXInputFile = (XInputFile)combvideo.get(a);
 		starts[a] = size;
-		size += new File(file).length();
+		size += aXInputFile.length();
 	}
 
-	file = combvideo.get(FileNumber).toString();
+	aXInputFile = (XInputFile)combvideo.get(FileNumber);
 	count = starts[FileNumber];
-	size = count + new File(file).length();
+	size = count + aXInputFile.length();
 
 	//** pid inclusion 
 	ArrayList abc = (ArrayList)speciallist.get(currentcoll);
@@ -6509,25 +6600,22 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 		}
 	}
 
-	file = combvideo.get(FileNumber).toString();
+	aXInputFile = (XInputFile)combvideo.get(FileNumber);
 	count = starts[FileNumber];
-	//size = count + new File(file).length();
+	size = count + aXInputFile.length();
 
 	if (FileNumber>0)
-		Msg("continue with file: "+file);
+		Msg("continue with file: "+aXInputFile);
 
-	//PushbackInputStream in = new PushbackInputStream(new FileInputStream(file),bs);
-
-	//DM18062004 081.7 int05 changed
-	PushbackInputStream in = raw_interface.getStream(file, bs);
-	size = count + raw_interface.getStreamSize();
 	long base = count;
+
+	PushbackInputStream in = new PushbackInputStream(aXInputFile.getInputStream(),bs);
 
 	while (count < startPoint) {
 		count += in.skip(startPoint-count);
 	}
 
-	progress.setString(((ToVDR==0)?"demuxing":"converting")+" A/V PES file  "+(new File(file)).getName());
+	progress.setString(((ToVDR==0)?"demuxing":"converting")+" A/V PES file  "+aXInputFile.getName());
 	progress.setStringPainted(true);
 	progress.setValue((int)((count-base)*100/(size-base))+1);
 	yield();
@@ -7097,24 +7185,20 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 				}
 			}
 
-			String nextfile = combvideo.get(++FileNumber).toString();
+			XInputFile nextXInputFile = (XInputFile)combvideo.get(++FileNumber);
 			count = size;
+			size += nextXInputFile.length();
 			base = count;
 
-			//size += new File(nextfile).length();
-			//in = new PushbackInputStream(new FileInputStream(nextfile),bs);
-
-			//DM18062004 081.7 int05 changed
-			in = raw_interface.getStream(nextfile, bs);
-			size += raw_interface.getStreamSize();
+			in = new PushbackInputStream(nextXInputFile.getInputStream(),bs);
 
 
 			Msg("-> actual written vframes: "+options[7]);
-			Msg("switch to file: "+nextfile);
-			progress.setString(((ToVDR==0)?"demuxing":"converting")+" A/V PES file  "+new File(nextfile).getName());
+			Msg("switch to file: "+nextXInputFile);
+			progress.setString(((ToVDR==0)?"demuxing":"converting")+" A/V PES file  "+nextXInputFile.getName());
 			progress.setStringPainted(true);
 
-		} else 
+		} else
 			break morepva;
 
 	} // end while more than 1 pva -> morepva
@@ -7229,9 +7313,9 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 /******************
  * ts Parser *
  ******************/
-public String rawparse(String file, int[] pids, int ToVDR) {
+public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR) {
 
-	String fchild = (newOutName.equals("")) ? (new File(file).getName()).toString() : newOutName;
+	String fchild = (newOutName.equals("")) ? (xInputFile.getName()) : newOutName;
 	String fparent = ( fchild.lastIndexOf(".") != -1 ) ? workouts+fchild.substring(0,fchild.lastIndexOf(".")) : workouts+fchild;
 
 	/*** split part ***/
@@ -7338,16 +7422,16 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 	long starts[] = new long[combvideo.size()];
 
 	for (int a=0; a<combvideo.size(); a++){
-		file = combvideo.get(a).toString();
+		xInputFile = (XInputFile)combvideo.get(a);
 		starts[a] = size;
-		size += new File(file).length();
+		size += xInputFile.length();
 	}
 
-	file = combvideo.get(FileNumber).toString();
+	xInputFile = (XInputFile)combvideo.get(FileNumber);
 	count = starts[FileNumber];
-	size = count + new File(file).length();
+	size = count + xInputFile.length();
 
-	//** pid inclusion 
+	//** pid inclusion
 	ArrayList abc = (ArrayList)speciallist.get(currentcoll);
 	int[] include = new int[abc.size()];
 	for (int a=0; a<abc.size(); a++) 
@@ -7379,24 +7463,22 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 		}
 	}
 
-	file = combvideo.get(FileNumber).toString();
+	xInputFile = (XInputFile)combvideo.get(FileNumber);
 	count = starts[FileNumber];
+	size = count + xInputFile.length();
 
 	if (FileNumber>0)
-		Msg("continue with file: "+file);
+		Msg("continue with file: "+xInputFile.toString());
 
 	long base = count;
 
-	//DM18062004 081.7 int05 changed
-	PushbackInputStream in = raw_interface.getStream(file, 200);
-	size = count + raw_interface.getStreamSize();
-
+	PushbackInputStream in = new PushbackInputStream(xInputFile.getInputStream(),200);
 
 	while (count < startPoint) {
 		count += in.skip(startPoint-count);
 	}
 
-	progress.setString(((ToVDR==0)?"demuxing":"converting")+" DVB MPEG-TS file  "+(new File(file)).getName());
+	progress.setString(((ToVDR==0)?"demuxing":"converting")+" DVB MPEG-TS file  "+xInputFile.getName());
 	progress.setStringPainted(true);
 	progress.setValue((int)((count-base)*100/(size-base))+1);
 	yield();
@@ -7936,25 +8018,22 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 			break morepva;
 
 		/*** more files ***/
-		if (FileNumber < combvideo.size()-1) { 
+		if (FileNumber < combvideo.size()-1) {
 			in.close();
 			System.gc();
 
-			String nextfile = combvideo.get(++FileNumber).toString();
+			XInputFile nextXInputFile = (XInputFile)combvideo.get(++FileNumber);
 			count = size;
-
-			//DM18062004 081.7 int05 changed++
-			in = raw_interface.getStream(nextfile, 200);
-			long fsize = raw_interface.getStreamSize();
-
 			//Ghost23012004 081.6 int11 changed
+			long fsize = nextXInputFile.length();
 			size += fsize;
 			base = count;
 
+			in = new PushbackInputStream(nextXInputFile.getInputStream(),200); //DM18092003
 			cell.add(""+(options[7]));
 			Msg("-> actual written vframes: "+options[7]);
-			Msg("switch to file: "+nextfile);
-			progress.setString(((ToVDR==0)?"demuxing":"converting")+" DVB MPEG-TS file  "+(new File(nextfile)).getName());
+			Msg("switch to file: "+nextXInputFile);
+			progress.setString(((ToVDR==0)?"demuxing":"converting")+" DVB MPEG-TS file  "+nextXInputFile.getName());
 			progress.setStringPainted(true);
 
 			//Ghost23012004 081.6 int11 add
@@ -7964,7 +8043,7 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 				rd=in.read(push189, rd, 189-rd);
 				Msg("!> try to complete incomplete ts packet...");
 			}
-		} else 
+		} else
 			break morepva;
 
 	} // end while more than 1 pva -> morepva
@@ -8107,13 +8186,13 @@ public long nextFilePTS(int type, int ismpg, long lastpts, int file_number) {
 		try 
 		{
 		//DM13082004 081.7 int09 changed
-		long filesize = new File(combvideo.get(file_number).toString()).length();
+		long filesize = ((XInputFile)combvideo.get(file_number)).length();
 		long buffersize = Long.parseLong(comBox[37].getSelectedItem().toString());
 
 		if (filesize > buffersize) //DM19122003 081.6_int07 changed
 			filesize = buffersize;
 
-		PushbackInputStream in = new PushbackInputStream(new FileInputStream(combvideo.get(file_number).toString()),6500);
+		PushbackInputStream in = new PushbackInputStream(((XInputFile)combvideo.get(file_number)).getInputStream(),6500);
 
 		switch (type) {
 		case 0: {    // pva
@@ -8321,19 +8400,15 @@ public long nextFilePTS(int type, int ismpg, long lastpts, int file_number) {
 
 
 
-/**********************
+/************************************
  * read bytes for overlap pva check *
- **********************/
+ ***********************************/
 public byte[] overlapPVA(byte[] overlapnext) {
 	//if (combvideo.size()>1) {
 	if (FileNumber < combvideo.size()-1) {
 		try 
 		{
-		//RandomAccessFile ovl = new RandomAccessFile(combvideo.get(1).toString(),"r");
-		RandomAccessFile ovl = new RandomAccessFile(combvideo.get(FileNumber+1).toString(),"r");
-		ovl.seek(0);
-		ovl.read(overlapnext);
-		ovl.close();
+		((XInputFile)combvideo.get(FileNumber+1)).randomAccessSingleRead(overlapnext, 0);
 		}
 		catch (IOException e) {
 			Msg("overlap read error "+e); 
@@ -8347,9 +8422,9 @@ public byte[] overlapPVA(byte[] overlapnext) {
  * PVA/PSV/PSA alternative Parser *
  **********************************/
 
-public String pvaparse(String pvafile,int ismpg,int ToVDR, String vptslog) {
+public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vptslog) {
 
-	String fchild = (newOutName.equals("")) ? (new File(pvafile).getName()).toString() : newOutName;
+	String fchild = (newOutName.equals("")) ? aPvaXInputFile.getName() : newOutName;
 	String fparent = ( fchild.lastIndexOf(".") != -1 ) ? workouts+fchild.substring(0,fchild.lastIndexOf(".")) : workouts+fchild;
 
 	/*** split part ***/
@@ -8445,14 +8520,14 @@ public String pvaparse(String pvafile,int ismpg,int ToVDR, String vptslog) {
 	long starts[] = new long[combvideo.size()];
 
 	for (int a=0; a<combvideo.size(); a++){
-		pvafile = combvideo.get(a).toString();
+		aPvaXInputFile = (XInputFile)combvideo.get(a);
 		starts[a] = size;
-		size += new File(pvafile).length();
+		size += aPvaXInputFile.length();
 	}
 
-	pvafile = combvideo.get(FileNumber).toString();
+	aPvaXInputFile = (XInputFile)combvideo.get(FileNumber);
 	count = starts[FileNumber];
-	size = count + new File(pvafile).length();
+	size = count + aPvaXInputFile.length();
 
 	/** pid inclusion **/
 	ArrayList abc = (ArrayList)speciallist.get(currentcoll);
@@ -8487,22 +8562,16 @@ public String pvaparse(String pvafile,int ismpg,int ToVDR, String vptslog) {
 		}
 	}
 
-	pvafile = combvideo.get(FileNumber).toString();
+	aPvaXInputFile = (XInputFile)combvideo.get(FileNumber);
 	count = starts[FileNumber];
-
-	//size = count + new File(pvafile).length();
+	size = count + aPvaXInputFile.length();
 
 	if (FileNumber>0)
-		Msg("continue with file: "+pvafile);
+		Msg("continue with file: "+aPvaXInputFile);
 
 	long base = count;
 
-	//PushbackInputStream in = new PushbackInputStream(new FileInputStream(pvafile),bs);
-
-	//DM18062004 081.7 int05 changed
-	PushbackInputStream in = raw_interface.getStream(pvafile, 65600);
-	size = count + raw_interface.getStreamSize();
-
+	PushbackInputStream in = new PushbackInputStream(aPvaXInputFile.getInputStream(),65600);
 
 	while (count < startPoint) {
 		count += in.skip(startPoint-count);
@@ -8513,7 +8582,7 @@ public String pvaparse(String pvafile,int ismpg,int ToVDR, String vptslog) {
 
 	overlapPVA(overlapnext);
 
-	progress.setString(((ToVDR==0)?"demuxing":"converting")+" PVA file  "+(new File(pvafile)).getName());
+	progress.setString(((ToVDR==0)?"demuxing":"converting")+" PVA file  "+aPvaXInputFile.getName());
 	progress.setStringPainted(true);
 	progress.setValue((int)((count-base)*100/(size-base))+1);
 	yield();
@@ -8895,21 +8964,15 @@ public String pvaparse(String pvafile,int ismpg,int ToVDR, String vptslog) {
 				}
 				cell.add(""+(options[7]));
 			}
-			String nextfile = combvideo.get(++FileNumber).toString();
+			XInputFile nextXInputFile = (XInputFile)combvideo.get(++FileNumber);
 			count = size;
-
-			//size += new File(nextfile).length();
-			//in = new PushbackInputStream(new FileInputStream(nextfile),bs-1000000);
-
-			//DM18062004 081.7 int05 changed
-			in = raw_interface.getStream(nextfile, 65600);
-			size += raw_interface.getStreamSize();
+			size += nextXInputFile.length();
 			base = count;
 
-
+			in = new PushbackInputStream(nextXInputFile.getInputStream(),65600);
 			Msg("-> actual written vframes: "+options[7]);
-			Msg("switch to file: "+nextfile);
-			progress.setString(((ToVDR==0)?"demuxing":"converting")+" PVA file  "+new File(nextfile).getName());
+			Msg("switch to file: "+nextXInputFile);
+			progress.setString(((ToVDR==0)?"demuxing":"converting")+" PVA file  "+nextXInputFile.getName());
 			progress.setStringPainted(true);
 			overlapPVA(overlapnext);
 		} else 
@@ -12735,13 +12798,13 @@ public void processSubpicture(String[] args)
 
 
 //DM02032004 081.6 int18 new
-public void rawsub(String args,String vptslog)
+public void rawsub(XInputFile aXInputStream,String vptslog)
 {
-	String fchild = (newOutName.equals("")) ? (new File(args).getName()).toString() : newOutName;
+	String fchild = (newOutName.equals("")) ? aXInputStream.getName() : newOutName;
 	String fparent = ( fchild.lastIndexOf(".") != -1 ) ? workouts+fchild.substring(0,fchild.lastIndexOf(".")) : workouts+fchild;
 
 	options[11]=1;
-	String[] synchit = { args,"-1","sp",vptslog };
+	String[] synchit = { aXInputStream.toString(),"-1","sp",vptslog };
 	processSubpicture(synchit);
 	options[11]=0;
 }
@@ -13132,17 +13195,18 @@ public void showExportStatus(String str, int value)
 	audiostatusLabel.setText(str + " " + value);
 }
 
-
 /********************
  * check pure audio *
  ********************/
-public void rawaudio(String args,String vptslog, String type) { //DM30122003 081.6 int10 changed
-	String fchild = (newOutName.equals("")) ? (new File(args).getName()).toString() : newOutName;
+public void rawaudio(XInputFile aXInputFile,String vptslog, String type) { //DM30122003 081.6 int10 changed
+	String fchild = (newOutName.equals("")) ? aXInputFile.getName() : newOutName;
 	String fparent = ( fchild.lastIndexOf(".") != -1 ) ? workouts+fchild.substring(0,fchild.lastIndexOf(".")) : workouts+fchild;
 
 	logAlias(vptslog,fparent+".pts");
 	options[11]=1;
-	String[] synchit = { args,fparent+".pts",type,vptslog };
+	String[] synchit = { aXInputFile.toString(),fparent+".pts",type,vptslog };
+	/* TODO mpt muss noch auf xinput umgestellt werden, oder nicht??
+	 */
 	mpt(synchit);      /* audiofile goes to synch methode */
 	new File(synchit[1]).delete();
 	options[11]=0;
@@ -13151,7 +13215,7 @@ public void rawaudio(String args,String vptslog, String type) { //DM30122003 081
 /********************
  * check pure video *
  ********************/
-public String rawvideo(String args) {
+public String rawvideo(XInputFile aXInputFile) {
 
 	String logfile = "-1";
 	boolean valid=false;
@@ -13159,12 +13223,10 @@ public String rawvideo(String args) {
 	byte[] vgl = new byte[4];
 	String[] videoext = { ".mpv",".mpv",".m1v",".m2v" };
 
-
-
-	try 
+	try
 	{
-	long filelength = (new File(args)).length();
-	String fchild = (newOutName.equals("")) ? (new File(args).getName()).toString() : newOutName;
+	long filelength = aXInputFile.length();
+	String fchild = (newOutName.equals("")) ? aXInputFile.getName() : newOutName;
 	String fparent = ( fchild.lastIndexOf(".") != -1 ) ? workouts+fchild.substring(0,fchild.lastIndexOf(".")) : workouts+fchild;
 
 	/*** split part ***/
@@ -13173,11 +13235,11 @@ public String rawvideo(String args) {
 	progress.setString("analyze video stream file  "+fchild);
 	progress.setStringPainted(true);
 	progress.setValue(0);
-	if (options[30]==1) 
+	if (options[30]==1)
 		System.out.println(" starting check of video stream file...");
 	yield();
 
-	PushbackInputStream in = new PushbackInputStream(new FileInputStream(args), 4);
+	PushbackInputStream in = new PushbackInputStream(aXInputFile.getInputStream(), 4);
 
 	IDDBufferedOutputStream vstream = new IDDBufferedOutputStream( new FileOutputStream(fparent+".s1"), bs);
 	if (cBox[34].isSelected()) //DM24112003 081.5++ mpeg2schnitt

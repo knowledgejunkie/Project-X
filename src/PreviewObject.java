@@ -1,3 +1,5 @@
+import xinput.XInputFile;
+
 /*
  * @(#)PreviewObject.java - file object for preview
  *
@@ -31,17 +33,17 @@ class PreviewObject
 {
 	private long start, end;
 	private int file_type;
-	private String file;
+	private XInputFile xInputFile;
 
 	public PreviewObject()
 	{}
 
-	public PreviewObject(long start, long end, int file_type, String file)
+	public PreviewObject(long start, long end, int file_type, XInputFile aXInputFile)
 	{
 		this.start = start;
 		this.end = end;
 		this.file_type = file_type;
-		this.file = file;
+		this.xInputFile = aXInputFile;
 	}
 
 	public long getStart()
@@ -59,8 +61,8 @@ class PreviewObject
 		return file_type;
 	}
 
-	public String getFile()
+	public XInputFile getFile()
 	{
-		return file;
+		return xInputFile;
 	}
 }

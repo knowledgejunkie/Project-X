@@ -31,6 +31,9 @@
 import java.io.*;
 import java.util.*;
 
+import xinput.XInputFile;
+
+
 class Preview
 {
 	private byte preview_data[];
@@ -39,16 +42,14 @@ class Preview
 
 	private ArrayList positionList, speciallist;
 	private int position[];
-	private RandomAccessFile in;
+//	private RandomAccessFile in;
 	private PreviewObject preview_object;
 	private MPVD mpv_decoder;
-	private RawInterface raw_interface;
 
-	public Preview(int loadSizeForward, MPVD mpv_decoder, RawInterface raw_interface)
+	public Preview(int loadSizeForward, MPVD mpv_decoder)
 	{
 		this.loadSizeForward = loadSizeForward;
 		this.mpv_decoder = mpv_decoder;
-		this.raw_interface = raw_interface;
 
 		position = new int[2];
 		positionList = new ArrayList();
@@ -82,13 +83,11 @@ class Preview
 
 			if (startposition < preview_object.getEnd())
 			{
-				if ( !raw_interface.getData(preview_object.getFile(), preview_data, startposition - preview_object.getStart(), read_offset, size))
-				{
-					in = new RandomAccessFile(preview_object.getFile(), "r");
-					in.seek(startposition - preview_object.getStart());
-					in.read(preview_data, read_offset, size);
-					in.close();
-				}
+				XInputFile lXInputFile = (XInputFile)preview_object.getFile();
+				lXInputFile.randomAccessOpen("r");
+				lXInputFile.randomAccessSeek(startposition - preview_object.getStart());
+				lXInputFile.randomAccessRead(preview_data, read_offset, size);
+				lXInputFile.randomAccessClose();
 
 				if (preview_object.getEnd() - startposition < size && a < previewList.size() - 1)
 				{
@@ -99,13 +98,8 @@ class Preview
 
 					preview_object = (PreviewObject)previewList.get(a);
 
-					if ( !raw_interface.getData(preview_object.getFile(), data2, startposition - preview_object.getStart(), 0, size))
-					{
-						in = new RandomAccessFile(preview_object.getFile(), "r");
-						in.seek(0);
-						in.read(data2);
-						in.close();
-					}
+					lXInputFile = (XInputFile)preview_object.getFile();
+					lXInputFile.randomAccessSingleRead(data2, 0);
 
 					System.arraycopy(data2, 0, preview_data, diff, size - diff);
 					data2 = null;
@@ -138,7 +132,7 @@ class Preview
 
 			if (startposition < preview_object.getEnd())
 			{
-				processed_file = "" + (a + 1) + "/" + previewList.size() + " " + new File(preview_object.getFile()).getName();
+				processed_file = "" + (a + 1) + "/" + previewList.size() + " " + preview_object.getFile().getName();
 				break;
 			}
 		}
