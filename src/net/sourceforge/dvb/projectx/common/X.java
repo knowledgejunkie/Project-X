@@ -193,8 +193,8 @@ public class X extends JPanel
 {
 
 /* main version index */
-static String version_name = "ProjectX 0.82.0.05";
-static String version_date = "12.03.2005";
+static String version_name = "ProjectX 0.82.0.05a";
+static String version_date = "13.03.2005";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -5746,8 +5746,13 @@ public static void main(String[] args)
 	
 			if (!IDsLoaded)
 				speciallist.add(new ArrayList());
+
 			if (!CutsLoaded)
 				cutlist.add(new ArrayList());
+
+			if (newOutNameList.size() == 0)
+				newOutNameList.add("");
+
 			comchange=false;
 			comBox[0].setSelectedIndex(comBox[0].getItemCount()-1); //DM26032004 081.6 int18 changed
 	
@@ -6627,6 +6632,7 @@ private void messageSettings()
 			Msg("-> " + Resource.getString("tab.extern.d2v") + " " + cBox[29].getText().toString());
 
 		//d2v_2
+
 		if (cBox[30].isSelected())
 			Msg("-> " + Resource.getString("tab.extern.d2v") + " " + cBox[30].getText().toString());
 
