@@ -46,3 +46,4 @@ dvbmatt erl 20.11. - CLI: extern angebenes ini-File wirkt nicht mehr (wohl seit 
 dvbmatt neu 27.11. - meldungsoption zum mitloggen der verstrichenen prozesszeit
 pstorch neu 28.11. - beschleunigung der vorschau, durch externen prozessornahen code
 dvbmatt neu 28.11. - vorschau schnittleiste , magenta querstriche zur schnittpunktmarkierung, bei engen stellen sieht man sonst nix
+pstorch erl 01.12. - extract oro-2.0.8 out of commons-net-1.2.2
