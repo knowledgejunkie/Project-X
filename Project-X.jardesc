@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jardesc>
+    <jar path="Z:/Projekte/Project-X/Project-X.jar"/>
+    <options overwrite="true" compress="true" exportErrors="false" exportWarnings="true" saveDescription="true" descriptionLocation="/Project-X/Project-X.jardesc" useSourceFolders="false" buildIfNeeded="true"/>
+    <manifest manifestVersion="1.0" usesManifest="true" reuseManifest="false" saveManifest="false" generateManifest="false" manifestLocation="/Project-X/MANIFEST.MF">
+        <sealing sealJar="false">
+            <packagesToSeal/>
+            <packagesToUnSeal/>
+        </sealing>
+    </manifest>
+    <selectedElements exportClassFiles="true" exportOutputFolder="false" exportJavaFiles="false">
+        <file path="/Project-X/ReadMe.txt"/>
+        <file path="/Project-X/Copying"/>
+        <folder path="/Project-X/htmls"/>
+        <file path="/Project-X/ReleaseNotes_081.7.txt"/>
+        <file path="/Project-X/ac3.bin"/>
+    </selectedElements>
+</jardesc>

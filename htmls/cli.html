@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <TITLE>faq</TITLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#D1D7DC" LINK="#0000EE" VLINK="#551A8B" ALINK="#FF0000">
+<BLOCKQUOTE>
+<CENTER><A HREF="index.html"><IMG SRC="images/up.gif" HEIGHT=16 WIDTH=16></A>&nbsp;&nbsp;<A HREF="faq.html"><IMG SRC="images/right.gif" HEIGHT=16 WIDTH=16></A></CENTER>
+<B>CL-Interface:</B>
+<BR><I>[Optionen] &lt;Quelldatei 1>...[&lt;Quelldatei x>]</I>
+
+<P><U>Anm:</U>
+<BR>CL l&auml;dt alle GUI Komponenten, ohne diese jedoch anzuzeigen (Ausnahme
+[-g]).
+<BR>Eingaben &uuml;ber das CL-I gelten als 1 Job.
+
+<P><I><U>keine Optionen</U></I>
+<BR>startet das GUI
+<BR>es wird die Standard-ini-Datei im aktuellen Pfad gelesen (falls vorhanden)
+und beim Beenden &uuml;berschrieben.
+
+<P><I><U>Optionen:</U></I>
+<BR><B>-c &lt;ini_file></B>
+<BR>die zum Laden mit vollst&auml;ndigem Pfad anzugebene &lt;ini-Datei>
+&uuml;berschreibt alle Standardeinstellungen mit den darin enthaltenen.
+<BR>es m&uuml;ssen nicht alle Settings enthalten sein, bei fehlenden wird
+der Standard gesetzt.
+<BR>alle Optionen des GUI einschlie&szlig;lich post-commands sind direkt
+&uuml;ber die ini-Datei steuerbar, ausgenommen Benutzervariablen wie [-n,p,i]/Quelldatei..
+
+<P><B>-dvx1</B>
+<BR>setzt die 2.Option zur Erzeugung einer .d2v Projektdatei
+
+<P><B>-dvx2</B>
+<BR>setzt die 2.Option zur Erzeugung einer .d2v Projektdatei
+<BR>setzt die Option zum Anf&uuml;gen eines RIFF Wave Headers bei AC3 Dateien
+
+<P><B>-dvx3</B>
+<BR>setzt die 2.Option zur Erzeugung einer .d2v Projektdatei
+<BR>setzt die Option zum Anf&uuml;gen eines RIFF Wave Headers bei MPEG
+Audio Dateien
+
+<P><B>-dvx4</B>
+<BR>setzt die 2.Option zur Erzeugung einer .d2v Projektdatei
+<BR>setzt die Option zum Anf&uuml;gen eines RIFF Wave Headers bei AC3 Dateien
+<BR>setzt die Option zum Anf&uuml;gen eines RIFF Wave Headers bei MPEG
+Audio Dateien
+
+<P>die o.g. Optionen k&ouml;nnen nicht gemeinsam verwendet werden!
+<BR>die u.g. sind wahlfrei, m&uuml;ssen aber den o.g. (falls diese optional
+verwendet werden) oder direkt dem Programmnamen folgen.
+
+<P><B>-o &lt;path></B>
+<BR>&uuml;berschreibt die aktuellen Einstellungen zum &lt;Ausgabepfad>,
+der vollst&auml;ndig angegeben werden muss.
+
+<P><B>-n &lt;filename></B>
+<BR>erzwingt f&uuml;r alle erstellten Dateien diesen &lt;Basisnamen> (ohne
+Pfad).
+<BR>(Option ist im GUI nicht verf&uuml;gbar)
+
+<P><B>-p &lt;file></B>
+<BR>die zum Laden mit vollst&auml;ndigem Pfad anzugebene &lt;cut-Datei>
+(text, zeilenorientiert) &uuml;bergibt die vorher festgelegten Schnittpunkte.
+<BR>Auswertung erfolgt entsprechend dem aktuellen Schnitt-Modus -> ini-Datei,
+std = bytepos. cut
+
+<P><B>-i &lt;token1,token2,..></B>
+<BR>&uuml;bergibt vorausgew&auml;hlte (P)IDs zur gefilterten Bearbeitung,
+mehrere getrennt mit Komma, die dann exklusiv verwendet werden.
+
+<P><B>-l</B>
+<BR>erstellt die Standard Logdatei
+
+<P><B>-g</B>
+<BR>startet das GUI mit allen &uuml;bergebenen Parametern anstatt den Job
+auf der Kommandozeile zu starten.
+<BR>beim Beenden werden &Auml;nderungen im GUI, wie auch &uuml;ber das
+CLI, nicht in der ini-Datei gespeichert.
+
+<P><B>&lt;Quelldatei 1..x></B>
+<BR>die Quelldateien einschlie&szlig;lich Pfad dieses einen Jobs m&uuml;ssen
+am Ende in der vorgesehen Bearbeitungsreihenfolge stehen.
+<BR>&nbsp;
+
+<P>Zum Erzeugen einer bestimmten ini-Datei alle Grundeinstellungen im GUI
+vornehmen und nach Programmende unter einem anderen (beliebigen) Namen
+speichern.
+<CENTER><A HREF="index.html"><IMG SRC="images/up.gif" HEIGHT=16 WIDTH=16></A>&nbsp;&nbsp;<A HREF="faq.html"><IMG SRC="images/right.gif" HEIGHT=16 WIDTH=16></A></CENTER>
+</BLOCKQUOTE>
+</BODY>
+</HTML>

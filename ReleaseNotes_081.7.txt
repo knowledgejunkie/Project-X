@@ -1,0 +1,149 @@
+
+ Project X 0.81.7
+
+ 07.04.2004
+
+ short description of changes:
+
+ !! if you experiences some troubles (flickering) of the log window, try to enable one of the remarks for the JViewport Scrollmode (depends on the JDK version!) "X.java line ~1086" and re-compile.
+
+ int18 = 0.81.7 / 07.04.2004
+
+ 07.04.2004 int18 IDDBufferedOutputStream.java - simple adaption of .idd export (exclude psb. wrong IDs)
+                  MPVD.java                    - preview infos of prog/interl. re-arranged
+                  X.java
+                  SUBPICTURE.java              - support of 'Subpicture demux' added (from VOB/MPG-PS/ES) with check, preview and resync (cut). 
+                                                 uses preview window of teletext. if it's visible, demux process is slower caused by decoding of the picture.
+                                                 the colors in preview does NOT represent the colors defined in the belonging .ifo file! take care of it by re-authoring the new .sup files..
+                                               - if creating/rewriting 'SUP' format, preview background color depends on the last active/found source video_resolution, subpicture must not exceed the 'good gray' display area into the 'bad red' area..! it has then to be re-adjusted..
+                  X.java
+                  TELETEXT.java                - teletext decoding (chars of LATIN 1 codepage) and syncing revised and optimized
+                  X.java
+                  AUDIO.java                   - support of LPCM (48+96kHz/up to 8-ch) demux added (from VOB/MPG-PS) by creating a .wav file (intel byte order)
+                                                 it's still under development; check and synchronize isn't yet optimized, but may produce usable results
+                  SCAN.java                    - fix: array exception
+                                               - shows the first frame of a subpicture ES
+                                               - parsing of TS-PMT displays now languages and other stuff of V/A/T 
+                  X.java                       - fix?: conversions toXYZ with split does not continue with the next free 'mapping ID', if a new PES-ID of the same type has been arrived after a previous split part.
+                                               - {global PTS shift} value now editable as a double (maybe better definitions than hours only)
+                                               - GOP/frame graphic now displays an interlaced sequence with a 'tiled yellow symbol'
+                                               - fix: issue 'pts mismatch', if cut of ES Video with ES Audio with 'later' cutpoints
+                                               - fix: preview: autosearch video pid of ts 
+                                               - fix: demux - array exception on too short payload sizes
+                                               - cutpoint files now include the cut_mode depending on the GUI setting (allowed in any line). 
+                                                 if exists, loading such a cutpoint file the cut_mode will be changed
+                                               - PES header in an ES (what's not allowed) will be messaged an replaced by zero bytes
+                                               - pidlist is now uppercase
+                                               - some other fixes..
+                                               - beginning GUI (and also internal) revision, starts with a new MenuBar and moves lots of options..
+                  TS.java                      - 'toTS': generated PMT of incl. teletext services contains static links to often used subtitle pages (deu150, ger777, eng888)
+                  X.java
+                  MPVD.java                    - <extern> {autosave each 1st I-Frame of GOP as bmp}
+                                                 export to the given base output directory (if subdirectory export is chosen).
+                                                 using GUI, saving the 1st pic requires a confirmation or changing of the out directory
+                                                 using CLI, 'last chance to change the directory before overwriting' is not implemented.
+                  X.java
+                  StartUp.java                 - lic. agreement moved to startup-'wait'-time until GUI is completely loaded
+                                                 it will disappear only if the user has confirmed the terms of use once.
+                  Html.java                    - new 'Help' option opens a html frame to surf in lokal files, starting at "htmls/index.html"
+                                                 anyone can add own pages/links for it
+
+ 20.02.2004 int17 StartUp.java - little startup window for future use
+                  X.java       - some Log messages extended
+                               - some fixes
+                               - gopcheck: fix? sometimes wrong delivery of a PTS in 1st gop
+                               - <extern> {create index.vdr when making VDR} , if enabled, the written files are also renamed to the usual .vdr segment names indexed by the index.vdr
+                               - <extern> {autosave PTS values of cutpoints} , if enabled, any cutpoint will be exported as its belongin' GOP# PTS start value to <"file".Xpl>
+                                 (does not apply to additional set export limits!)
+                               - <coll. specials> {use PTS for cuts} is intended to use these PTS cut lists (preview is not available in this mode),
+                                 load an existing cutpoint file via drag'ndrop onto {load cutpoints..} or the points 'key-in' field.
+
+ 13.02.2004 int16 X.java       - some Log messages extended
+                  MPAD.java    - decode to PCM: .aif (Apple) format for output added
+                  MPVD.java    - preview: shows field_encoding_type of I-picture (F-rame,T-op,B-ottom) in addition to top_field_first flag
+                                 (non-frame encoded pictures are not handled correctly when demux by Pj.X, ATM)
+                               - preview: <coll. specials> {fast/worse decoding} uses only the 1st pixel of each block in a macroblock.
+
+ 07.02.2004 int15 X.java       - MPEG1-PS: split on simple conversion 'to VDR/M2P/PVA/TS' has stopped after 1st part
+                               - fix1: 'action: to..' options: enabled split wrote the last PES packet of a split part into the next part, too. (even when overlap disabled)
+                               - multiple input files: consecutive PTSs of file segments less than 10sec. assume one recording. (fmly. 2sec.), otherwise next files must contain a sequenceheader. if not, demux will not export further video data (because of unknown 'real' picture resol. of next parts)
+                               - change MPEG-ES: sequence_end_code does not stop the demux process anymore.
+                  MPVD.java    - shows coded framerate in preview
+
+ 05.02.2004 int14 X.java       - MPEG1-PS: simple conversion 'to VDR/M2P/PVA/TS' added
+                               - some messages changed
+                               - fix1: arrayexception on PES sources
+                               - fix2: arrayexception on ES sources
+
+ 31.01.2004 int13 X.java       - teletext: adaption for 'non-System B' DVB-ttx stuffing lines (2* 46bytes length), prevents lots of 'missing..' messages and resulting errors (seen on Pro7.ger)
+                  SCAN.java    - preparing file support of ES-Subpicture (.sup) as input
+
+ 29.01.2004 int12 SUBPICTURE.java - preview area extended (prevent exceptions on big char sizes and/or 2nd Y-Offsets)
+                  SCAN.java       - search for TS-syncbytes extended (at least 1MB, refers to scan_buffer_size) (better detection of clear PVR files from emTech320)
+                  X.java
+                  AUDIO.java      - add: {use Timecode for cuts}, timecode must be formatted like "hour.min.sec.frame" (allowed separators: "." or ":"), starting at "0" (missing values are set to 0)
+                                    ATM, a cutpoint refers to the start-timecode (recalculated to first PTS occurance) of a GOP.
+                                  - changes for message: "missing startcode.."
+                                  - change when concatenate different files (PTS gap extended from min. 5sec to 20sec between foreign files), sometimes 5sec didn't reach.
+                                  - change for audio_insertion_message (sometimes wrong calculation of inserted time_length for log_display only, not insertion itself)
+                                  - RIFF/X-PCM (step 2, ATM not LPCM) incl. multichannel support added (to enable cut with video), ATM no insertion/add message, if so.
+                                  - {specials1} -> {join file segments} , attempt to join splitted TS packets on boundaries of file segments (dreambox) (thx2Ghost for the implementation)
+                                  - fix: exception on multichannel TS data (with an empty PIDlist and more than one video PID data), wrong delivery of 2nd video PID data
+
+ 30.12.2003 int10 X.java
+                  HEXVIEWER.java
+                  AUDIO.java
+                  MPAD.java
+                  SCAN.java
+                  TELETEXT.java
+                  SUBPICTURE.java - GUI re-arranged (video,options,extern)
+                                  - {extern} execution procedure of post commands incl. arguments changed
+                                    (and: packing the main application line into " chars, it's used also for the arguments)
+                                  - mods to allow multiple (independent) teletext sub-ids/-streams in one stream (0x10..1F)
+                                  - fix: Exception, if GOP/Sequ. did not contain any frame
+                                  - {options} -> {append new file extensions (PES)} : for secondary PES streams like multiple audio/Ttx, it only appends the new extension instead of replace the existing for the new file.
+                                  - {hexviewer} info line while saving binary part of file
+                                  - {decode to PCM} a not yet decodable frame (with MPAD), but of known format (as mp3) in the stream, will be replaced with the corresponding number of silent samples (resampled if necessary), to fit the given time_length to keep PCM audio in sync.
+                                  - {scan} pmt-info: PMTcheck fixed
+                                  - {audio} -> {allow spaces between frames} (handle with care! and only with _good_ data)
+                                    (it does not verify the frame length of given valid frame header data, so the results are undefined and maybe corrupted frames.. )
+                                  - {files} file-info: detect & display RIFF WAVE data (Audio ES) , for planned (L)PCM support
+                                  - {teletext} SUP-format only: ascii chars with non-black background are now written in italic_style (e.g. commentarys)
+                                    (note: many fonts seem not to support an optional italic_style in the same font name.., sans serif does, comic sans not)
+
+ 
+ 22.12.2003 int08/int09 X.java - fix: {parse MPG as VDR} -> MPG_startcodes_check was disabled when activated.
+
+            workaround for memory overload when reloading TTX PTS data (what can exceed the max. memory, caused by using PTS data (same value) for _every_ small TTX packet)
+
+ 20.12.2003 int07 X.java     - nextfile PTS check_buffer now depends on {pre-Scan buffersize} (options)
+                  AUDIO.java
+                  SCAN.java
+                  X.java     - now support of DTS Audio (thx to R_One for the first implementation)
+                               should work for all input formats..
+                               only limited tests are done ATM, may not work in some circumstances..
+                               notes: * RiffHeader option as for AC3 does not work ATM, so don't activate..
+                                      * don't confuse DTS-wav with 'pure' DTS data (what X 'hopefully understands')
+                                      * DTS-wav is what you burn as 'faked' PCM data tracks to Audio-only CD-R/DVD-Rs.
+                                      * usually it has to be converted externally (see -> http://hypercubemx.free.fr/html/download1.html for tools)
+
+ 14.12.2003 int06 X.java, IDDBuffered....java - better handling of low bitrate video data (as in MPEG1)
+
+ 12.12.2003 int05 X.java - change in time formatting of .ssa subtitles (caused by several JREs)
+                         - {options} -> {start path for file selection} in a filechooser
+                           # empty = std = user.home
+                           # <path> = start here at 1st call of chooser in a session
+                           # ?<path> = start here at every call of chooser in a session
+
+ 06/10.12.2003 int03/04 SCAN.java - fix for "added pre-Scan buffer field for user choice "
+                                    (exception while detection of ES)
+
+ 04.12.2003 int02 X.java
+                  SCAN.java - changed handling of filetype 'vdr packsize0' due to a cutpoint mismatch
+                              increase the I-buffer size if necessary, so that you don't get 'missing next startcode (packsize=0)' ,
+                              but lower values accelerate the process at least twice than before..
+                            - added pre-Scan buffer field for user choice (increase for better detection of filetype mentioned as above.)
+
+ 01.12.2003 int01 MPVD.java preview
+                            -change issue 'cannot find sequenceheader' -> temporary removed
+
