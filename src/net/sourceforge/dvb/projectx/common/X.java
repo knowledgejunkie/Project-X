@@ -30,7 +30,7 @@
  * any other code. Considerable effort has been expended to ensure 
  * an useful implementation, even in cases where the standards 
  * are ambiguous or misleading.
- * Do not expect any useful output from it, even if that may possible.
+ * Do not expect any useful output, even if that may be possible.
  *
  * For a program compliant to the international standards ISO 11172
  * and ISO 13818 it is inevitable to use methods covered by patents
@@ -177,8 +177,8 @@ public class X extends JPanel
 {
 
 /* main version index */
-static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "08.01.2005 20:00";
+static String version_name = "ProjectX 0.82.0";
+static String version_date = "15.01.2005";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -5282,6 +5282,7 @@ class GoListener implements ActionListener
 			options[33] = -1;
 			qinfo = true; 
 			options[56] = (0x100000L * Integer.parseInt(comBox[21].getSelectedItem().toString())); 
+
 
 			new WORK().start();
 		}
