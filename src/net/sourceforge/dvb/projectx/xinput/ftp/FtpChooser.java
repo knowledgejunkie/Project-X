@@ -12,6 +12,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import net.sourceforge.dvb.projectx.common.Resource;
+import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.xinput.XInputDirectory;
 import java.awt.*;
 
@@ -117,21 +118,21 @@ public class FtpChooser extends JDialog {
     tfServer.setNextFocusableComponent(tfUser);
 		tfServer.setPreferredSize(new Dimension(80, 21));
 		tfServer.setToolTipText(Resource.getString("ftpchooser.server.tip"));
-		tfServer.setText(Resource.getString("ftpchooser.server.entry"));
+		tfServer.setText(Common.getFTP_Server());
 		tfServer.addFocusListener(new FtpChooser_tfServer_focusAdapter(this));
 		tfUser.setNextFocusableComponent(tfPassword);
     tfUser.setToolTipText(Resource.getString("ftpchooser.user.tip"));
-		tfUser.setText(Resource.getString("ftpchooser.user.entry"));
+		tfUser.setText(Common.getFTP_User());
 		tfUser.addFocusListener(new FtpChooser_tfUser_focusAdapter(this));
 		tfPassword.setNextFocusableComponent(tfDirectory);
     tfPassword.setToolTipText(Resource.getString("ftpchooser.password.tip"));
-		tfPassword.setText(Resource.getString("ftpchooser.password.entry"));
+		tfPassword.setText(Common.getFTP_Password());
 		tfPassword.addFocusListener(new FtpChooser_tfPassword_focusAdapter(this));
 		tfDirectory.setMinimumSize(new Dimension(153, 21));
     tfDirectory.setNextFocusableComponent(testButton);
 		tfDirectory.setPreferredSize(new Dimension(153, 21));
 		tfDirectory.setToolTipText(Resource.getString("ftpchooser.directory.tip"));
-		tfDirectory.setText(Resource.getString("ftpchooser.directory.entry"));
+		tfDirectory.setText(Common.getFTP_Directory());
 		tfDirectory.addFocusListener(new FtpChooser_tfDirectory_focusAdapter(this));
 		testButton.setNextFocusableComponent(okButton);
     testButton.setText(Resource.getString("ftpchooser.test"));
@@ -210,6 +211,7 @@ public class FtpChooser extends JDialog {
 	}
 	
 	void okButton_actionPerformed(ActionEvent e) {
+		Common.setFTPServer(tfServer.getText(), tfUser.getText(), tfPassword.getText(), tfDirectory.getText());
 		setVisible(false);
 	}
 

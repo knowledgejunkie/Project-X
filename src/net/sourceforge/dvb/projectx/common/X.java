@@ -2572,16 +2572,14 @@ protected JPanel buildoptionPanel() {
 	op0.add(new JLabel(Resource.getString("tab.options.startpath")));
 	op0.add(d2vfield[8]);
 
-//
+//+
 	cBox[74] = new JCheckBox(Resource.getString("tab.options.ftp.binary"));
 	cBox[74].setToolTipText(Resource.getString("tab.options.ftp.binary.tip"));
 	cBox[74].setPreferredSize(new Dimension(250,20));
 	cBox[74].setMaximumSize(new Dimension(250,20));
-	cBox[74].setActionCommand("ftp_type");
 	cBox[74].setSelected(true);
-	cBox[74].addActionListener(mytabListener);
 	op0.add(cBox[74]);
-//
+//-
 
 	option.add(op0);
 
@@ -4724,9 +4722,6 @@ class TabListener implements ActionListener
 		else if (actName.equals("aiff")) 
 			RButton[5].setSelected(false);
 
-		else if (actName.equals("ftp_type")) 
-			cBox[74].setSelected(false);
-
 
 		updateState();
 	}
@@ -5041,6 +5036,16 @@ public void iniload()
 			String lf = path.substring(3);
 			setLookAndFeel(lf);
 		}
+
+		else if (path.startsWith("ftp.server=")) 
+			Common.setFTP_Server(path.substring(11, path.length()));
+		else if (path.startsWith("ftp.user=")) 
+			Common.setFTP_User(path.substring(9, path.length()));
+		else if (path.startsWith("ftp.password=")) 
+			Common.setFTP_Password(path.substring(13, path.length()));
+		else if (path.startsWith("ftp.directory=")) 
+			Common.setFTP_Directory(path.substring(14, path.length()));
+
 	}
 	
 
@@ -5131,6 +5136,11 @@ public static void inisave() //DM26012004 081.6 int12 changed, //DM26032004 081.
 		inis.println("// look and feel");
 		inis.println("lf="+comBox[16].getSelectedItem());
 	}
+
+	inis.println("ftp.server=" + Common.getFTP_Server()); 
+	inis.println("ftp.user=" + Common.getFTP_User()); 
+	inis.println("ftp.password=" + Common.getFTP_Password()); 
+	inis.println("ftp.directory=" + Common.getFTP_Directory()); 
 
 	inis.close();
 	} 
@@ -11314,6 +11324,7 @@ public boolean processAudio(String[] args)
 					}
 				}
 				w+=2;
+
 			}
 			w-=2;
 			timeline -= audio.Time_length;

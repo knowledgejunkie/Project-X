@@ -292,23 +292,75 @@ public final class Common
 	}
 
 
-	public final static int Unsupported   = 0;	//	Resource.getString("scan.unsupported"),
-	public final static int PVA_TYPE      = 1;	//	"PVA (Video/Audio PES)",
-	public final static int MPEG1PS_TYPE  = 2;	//	"MPEG-1 PS/SS (Video/Audio PES)",
-	public final static int MPEG2PS_TYPE  = 3;	//	"MPEG-2 PS/SS (Video/Audio PES)",
-	public final static int PES_AV_TYPE   = 4;	//	"PES (Video/Audio/TTX)",
-	public final static int PES_MPA_TYPE  = 5;	//	"PES (MPEG Audio)",
-	public final static int PES_PS1_TYPE  = 6;	//	"PES (private stream 1)",
-	public final static int ES_AC3_TYPE   = 7;	//	"ES (AC-3 Audio)",
-	public final static int ES_MPA_TYPE   = 8;	//	"ES (MPEG Audio)",
-	public final static int ES_MPV_TYPE   = 9;	//	"ES (MPEG Video)",
-	public final static int ES_AC3_A_TYPE = 10;	//	"ES (AC-3 Audio) (psb. SMPTE)",
-	public final static int TS_TYPE       = 11;	//	"DVB/MPEG2 TS",
-	public final static int ES_DTS_TYPE   = 12;	//	"ES (DTS Audio)", //DM19122003 081.6 int07
-	public final static int ES_DTS_A_TYPE = 13;	//	"ES (DTS Audio) (psb. SMPTE)",
-	public final static int ES_RIFF_TYPE  = 14;	//	"ES (RIFF Audio)", //DM30122003 081.6 int10
-	public final static int ES_cRIFF_TYPE = 15;	//	"ES (compressed RIFF Audio)",
-	public final static int ES_SUP_TYPE   = 16;	//	"ES (Subpicture 2-bit RLE)" //DM31012004 081.6 int13
+	public final static int Unsupported   = 0;	//	"unsupported"
+	public final static int PVA_TYPE      = 1;	//	"PVA (Video/Audio PES)"
+	public final static int MPEG1PS_TYPE  = 2;	//	"MPEG-1 PS/SS (Video/Audio PES)"
+	public final static int MPEG2PS_TYPE  = 3;	//	"MPEG-2 PS/SS (Video/Audio PES)"
+	public final static int PES_AV_TYPE   = 4;	//	"PES (Video/Audio/TTX)"
+	public final static int PES_MPA_TYPE  = 5;	//	"PES (MPEG Audio)"
+	public final static int PES_PS1_TYPE  = 6;	//	"PES (private stream 1)"
+	public final static int ES_AC3_TYPE   = 7;	//	"ES (AC-3 Audio)"
+	public final static int ES_MPA_TYPE   = 8;	//	"ES (MPEG Audio)"
+	public final static int ES_MPV_TYPE   = 9;	//	"ES (MPEG Video)"
+	public final static int ES_AC3_A_TYPE = 10;	//	"ES (AC-3 Audio) (psb. SMPTE)"
+	public final static int TS_TYPE       = 11;	//	"DVB/MPEG2 TS"
+	public final static int ES_DTS_TYPE   = 12;	//	"ES (DTS Audio)"
+	public final static int ES_DTS_A_TYPE = 13;	//	"ES (DTS Audio) (psb. SMPTE)"
+	public final static int ES_RIFF_TYPE  = 14;	//	"ES (RIFF Audio)"
+	public final static int ES_cRIFF_TYPE = 15;	//	"ES (compressed RIFF Audio)"
+	public final static int ES_SUP_TYPE   = 16;	//	"ES (Subpicture 2-bit RLE)"
 
 
+	private static String ftp_server = "192.168.0.5";
+	private static String ftp_user = "root";
+	private static String ftp_password = "dreambox";
+	private static String ftp_directory = "/hdd/movie";
+
+	public static void setFTPServer(String server, String user, String password, String directory)
+	{
+		ftp_server = server != null ? server : ftp_server;
+		ftp_user = user != null ? user : ftp_user;
+		ftp_password = password != null ? password : ftp_password;
+		ftp_directory = directory != null ? directory : ftp_directory;
+	}
+
+	public static String getFTP_Server()
+	{
+		return ftp_server;
+	}
+
+	public static String getFTP_User()
+	{
+		return ftp_user;
+	}
+
+	public static String getFTP_Password()
+	{
+		return ftp_password;
+	}
+
+	public static String getFTP_Directory()
+	{
+		return ftp_directory;
+	}
+
+	public static void setFTP_Server(String server)
+	{
+		ftp_server = server != null ? server : ftp_server;
+	}
+
+	public static void setFTP_User(String user)
+	{
+		ftp_user = user != null ? user : ftp_user;
+	}
+
+	public static void setFTP_Password(String password)
+	{
+		ftp_password = password != null ? password : ftp_password;
+	}
+
+	public static void setFTP_Directory(String directory)
+	{
+		ftp_directory = directory != null ? directory : ftp_directory;
+	}
 }
