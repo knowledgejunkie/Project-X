@@ -184,6 +184,9 @@ public class FtpChooser extends JDialog {
 		xInputDirectory = null;
 		isTested = false;
 		okButton.setEnabled(false);
+
+		setLocation(200, 200);
+
 	}
 
 	void testButton_actionPerformed(ActionEvent e) {
@@ -191,10 +194,6 @@ public class FtpChooser extends JDialog {
 		xInputDirectory = new XInputDirectory(ftpVO);
 
 		isTested = xInputDirectory.test();
-
-	//	if (!isTested) {
-	//		xInputDirectory = null;
-	//	}
 
 		okButton.setEnabled(isTested);
 		tfState.setText(xInputDirectory.getTestMsg());

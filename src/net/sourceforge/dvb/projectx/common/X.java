@@ -170,7 +170,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "11.11.2004";
+static String version_date = "12.11.2004";
 
 public static boolean CLI_mode = false;
 
@@ -5796,12 +5796,14 @@ public void run() {
 
 		Msg("\r\n" + Resource.getString("run.session.infos"));
 
-		for ( ; a<b ; a++,d++) {
+		for ( ; a < b ; a++,d++)
+		{
 			workinglist.clear();
 			workinglist = (ArrayList)collfiles[a].clone();
 			comBox[0].setSelectedIndex(a);
-			Msg("\r\n" + Resource.getString("run.working.coll") + " " + a);
 			currentcoll = a;
+
+			Msg("\r\n" + Resource.getString("run.working.coll") + " " + a);
 
 			if (workinglist.size() > 0)
 			{ 
@@ -5824,7 +5826,10 @@ public void run() {
 
 				//DM26062004 081.7 int05 add
 				if (workouts == null || !(new File(workouts).exists()))
+				{
 					workouts = inidir;
+					Msg(Resource.getString("run.write.output.notexists"));
+				}
 
 				if ( !workouts.endsWith(filesep) ) 
 					workouts += filesep;
