@@ -178,7 +178,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "07.01.2005 21:00";
+static String version_date = "08.01.2005 20:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -1786,6 +1786,7 @@ protected JPanel buildvideo1Panel() {
 	cBox[77] = new JCheckBox(Resource.getString("tab.video.patch.sde"));
 	cBox[77].setPreferredSize(new Dimension(180,20));
 	cBox[77].setMaximumSize(new Dimension(180,20));
+	cBox[77].setSelected(true);
 	cBox[77].setToolTipText(Resource.getString("tab.video.patch.sde.tip"));
 	SdePanel.add(cBox[77]);
 

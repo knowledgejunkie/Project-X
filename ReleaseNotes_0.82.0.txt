@@ -8,7 +8,7 @@
 
    fix - GUI: nullpointerexception: {patch video basics} w/o a selected file
    fix - all: nullpointerexception: stream processing w/o or disabled content
-   fix - demux: video gop-summary: always shown 'interlaced & progressive pictures', independent from content
+   fix - demux: video gop-summary: always shown 'interlaced & progressive pictures', independent of content
    fix - demux: mp2 conversions: now better handling of exceptions and type mismatchs
    fix - demux: split output: didn't work for ES-video; to prevent lost of sync, it always start analysis from pos.0
    fix - demux: stream pts offsets didn't affect new stream content (IDs) found after a change of this offset
@@ -18,7 +18,7 @@
    change - scan fileinfo: adaption for MPG=>sPES special stream types content
    change - concatenate diff. files: pts offset value changed
    change - processing: check, whether write access is possible to specified output directory, stops processing if that check fails
-   change - post commands: now back to V0.81.8 handling, Java's own parsing of commandline sometimes failed; now set "?x" quoted to quote all arguments, too
+   change - post commands: now back to V0.81.8 handling, Java's own parsing of commandline sometimes failed; now set "?x" in quotes to quote all arguments, too
    change - a lot internals
 
    new - <messages>: option to append the current process time index to any log info 
@@ -30,7 +30,7 @@
    new - <special>: option to handle different cell_times in VOBs (pts's in cells are not continuous) (demux only)
    new - <subtitle>: teletext: option to draw outlined text char's (if less than 4 colors/pic in source) instead of a complete half transparent background for the whole subtitle picture
    new - <GUI menu>: online connection to verify the latest version info and availability (may not work with a proxy)
-   new - <CLI>: accepts a batch (txt-)file/URL as input, if it ends w/ 'bfl' or 'tpl' (then this includes one file segment per line of input). ATM, this batch file doesn't support full unicode for FTP input URLs, so keep them simple.
+   new - <CLI>: accepts a batch (txt-)file/URL as input, with the extensions 'bfl' or 'tpl' (then this includes one file segment per line of input). ATM, this batch file doesn't support full unicode for FTP input URLs, so keep them simple.
    new - TS export: additional PMT entry to fit AC3 to ATSC 
    new - scan fileinfo: TS: shows VPS(VBI)-PIDs and PIDs stream identifier of this service, with better sorting of multiple PIDs
    new - TS: VPS(VBI)-PIDs will now be ignored (less misinterpretation with other private data streams)
@@ -49,7 +49,7 @@
        * dependent on the ftp-server, some features are not available or do not work as designed
          (we encounter problems with 'spaces in directory names', 'inaccessible big files', 'no support of resume', 'slow response time')
        - File- (also as file:URL) and Topfield-HD access should work as before
-       - now, slow data input doesn't result in data-lost (wrong file pointers) anymore
+       - now, slow data input shouldn't result in data-lost (wrong file pointers) anymore
         
 
  
@@ -67,6 +67,6 @@
 
  ----------------
  Project X 0.81.9  
- 29.10.2004
+ 30.10.2004
 
  basic release

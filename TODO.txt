@@ -156,3 +156,5 @@ dvbmatt neu 31.12. - VTX SUP-UT-Export mit neuer Option für Textumrandung, viel 
 dvbmatt fix 31.12. - ptsoffset wurde nicht angewandt, wenn neuer stream erst nach einer Änderung im pts_offset auftauchte (nur bei mpg1/2,vdr,pva hauptstreams von belang)
 
 dvbmatt fix 05.01.  - dekodierproblem bei dvb-subpics, wirft neue Probs auf, evtl. später zu lösen
+
+dvbmatt 08.01. - beide apache jars nochmal modifiziert (manifest, lic, jdk), auch für leichteres spät. vers.update
