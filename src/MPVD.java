@@ -2553,15 +2553,16 @@ private void scale_Picture()
 	float Ydecimate = vertical_size / (float)ny;
 	float Xdecimate = horizontal_size / (float)(nx - x_offset);
 
+	//DM30072004 081.7 int07 add
+	//DM28082004 081.7 int10 changed
+	WSS.init(pixels, horizontal_size);
+
 	for (int y = 0; Y < vertical_size && y < ny; Y += Ydecimate, y++, X=0)
 		for (int x = x_offset; X < horizontal_size && x < nx; X += Xdecimate, x++)
 			pixels2[x + (y * scanline)] = YUVtoRGB(pixels[(int)X + ((int)Y * horizontal_size)]);
 
 
 	source.newPixels();
-
-	//DM30072004 081.7 int07 add
-	WSS.init(pixels, horizontal_size);
 }
 
 

@@ -60,11 +60,9 @@ public final class WSS
 		float fx = 0;
 		float Xdecimate = width / (float)(nx);
 
+		//DM28082004 081.7 int10 changed
 		for (int x = 0; fx < width && x < nx; fx += Xdecimate, x++)
-		{
-			pixels[x] = source_pixels[(int)fx];
-			pixels[x] = Ifo.RGBtoYUV(pixels[x])>>>16;
-		}
+			pixels[x] = 0xFF & source_pixels[(int)fx]>>>16;
 
 		a = 0;
 
