@@ -309,7 +309,6 @@ void buildGUI()
 	RButton[11] = new JRadioButton();
 	RButton[12] = new JRadioButton();
 	RButton[13] = new JRadioButton();
-	RButton[16] = new JRadioButton();
 
 	chooser = new X_JFileChooser(); //DM12122003 081.6 int05
 	MPVDecoder = new MPVD();
@@ -3694,7 +3693,8 @@ class COLLECTION extends JFrame
 		{
 			public void stateChanged(ChangeEvent e)
 			{
-				if (!search.getValueIsAdjusting() && action)
+				//if (!search.getValueIsAdjusting() && action)
+				if (action && (!search.getValueIsAdjusting() || RButton[16].isSelected()))
 				{
 					long val = ((comBox[17].getSelectedIndex()==0)?16L:1L) * search.getValue();
 
@@ -3777,13 +3777,19 @@ class COLLECTION extends JFrame
 		RButton[10].setMaximumSize(new Dimension(230,20));
 		cutPanel.add(RButton[10]);
 
+		RButton[16] = new JRadioButton(Resource.getString("collection.preview.liveupdate"));
+		RButton[16].setToolTipText(Resource.getString("collection.preview.liveupdate_tip"));
+		RButton[16].setPreferredSize(new Dimension(230,20));
+		RButton[16].setMaximumSize(new Dimension(230,20));
+		cutPanel.add(RButton[16]);
+
 		RButton[6] = new JRadioButton(Resource.getString("collection.goppreview"));
 		RButton[6].setToolTipText(Resource.getString("collection.goppreview_tip"));
 		RButton[6].setPreferredSize(new Dimension(230,20));
 		RButton[6].setMaximumSize(new Dimension(230,20));
 		cutPanel.add(RButton[6]);
 
-		cutPanel.add(Box.createRigidArea(new Dimension(1, 12)));
+		cutPanel.add(Box.createRigidArea(new Dimension(1, 8)));
 
 		cutPanel.add(new JLabel(Resource.getString("collection.pidlist")));
 
@@ -3835,7 +3841,7 @@ class COLLECTION extends JFrame
 		cpoints.addActionListener(cutAction);
 		cutPanel.add(cpoints);
 
-		cutPanel.add(Box.createRigidArea(new Dimension(1, 12)));
+		cutPanel.add(Box.createRigidArea(new Dimension(1, 8)));
 
 		cBox[2] = new JCheckBox(Resource.getString("collection.createsubdir"));
 		cBox[2].setToolTipText(Resource.getString("collection.createsubdir_tip"));
@@ -3849,7 +3855,7 @@ class COLLECTION extends JFrame
 		cBox[71].setMaximumSize(new Dimension(250,20));
 		cutPanel.add(cBox[71]);
 
-		cutPanel.add(Box.createRigidArea(new Dimension(1, 12)));
+		cutPanel.add(Box.createRigidArea(new Dimension(1, 8)));
 
 		cutPanel.add(new JLabel(Resource.getString("collection.exportlimits")));
 
@@ -3888,7 +3894,7 @@ class COLLECTION extends JFrame
 		CL3.add(comBox[24]);  
 		cutPanel.add(CL3);
 
-		cutPanel.add(Box.createRigidArea(new Dimension(1, 12)));
+		cutPanel.add(Box.createRigidArea(new Dimension(1, 8)));
 
 		//DM17012004 081.6 int11 changed, DM18022004 081.6 int17 changed
 		Object[] cut_types = 
