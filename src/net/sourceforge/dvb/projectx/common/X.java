@@ -175,6 +175,7 @@ public class X extends JPanel
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
 static String version_date = "20.11.2004 19:00";
+static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
 
@@ -292,14 +293,10 @@ long fakedPTS = -1;
 static double videoframerate = 3600.0;
 static double videotimecount = 0.0;
 
-public X()	//DM20032004 081.6 int18 changed
-{
 
-	if ( !inidir.endsWith(filesep) ) 
-		inidir += filesep;
+public X()
+{}
 
-	inifile = inidir + "X.ini";
-}
 
 void buildGUI()
 {
@@ -2969,7 +2966,10 @@ class FileListener implements ActionListener
 		{
 			// Add ftp server directory to autoload list
 			FtpChooser ftpChooser = new FtpChooser();
-			ftpChooser.pack();
+
+			if (!CLI_mode)
+				ftpChooser.pack();
+
 			ftpChooser.show();
 			XInputDirectory xInputDirectory = ftpChooser.getXInputDirectory();
 
@@ -5310,7 +5310,13 @@ public static void loadIDs(String nIDs)
 public static void main(String[] args)
 {
 	StartUp startup = null; 
+
 	boolean iniSet = false;
+
+	if ( !inidir.endsWith(filesep) ) 
+		inidir += filesep;
+
+	inifile = inidir + standard_ini;
 
 	try
 	{
@@ -5361,6 +5367,7 @@ public static void main(String[] args)
 		//load main stuff
 		X panel = new X();
 	
+
 		// initialize language
 		Resource.loadLang(inifile);
 	
@@ -8996,6 +9003,8 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 				demux = (PIDdemux)TSdemuxlist.get(TSPid.getDemux());
 
 				//DM14072004 081.7 int06 add
+
+
 				if (!demux.StreamEnabled())
 				{}
 
@@ -16793,6 +16802,8 @@ class makeVDR
 			if (first)
 			{
 				out.write(packBA); 
+
+
 
 
 				options[39]+= 14; 
