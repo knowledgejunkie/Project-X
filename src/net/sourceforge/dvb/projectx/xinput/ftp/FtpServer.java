@@ -136,7 +136,6 @@ public class FtpServer {
 			if (!FTPReply.isPositiveCompletion(reply)) {
 				ftpClient.disconnect();
 				testMsg = "Can't connect.";
-				error = true;
 				return false;
 			}
 
@@ -144,14 +143,12 @@ public class FtpServer {
 			if (!ftpClient.login(ftpVO.getUser(), ftpVO.getPassword())) {
 				ftpClient.logout();
 				testMsg = "Can't login.";
-				error = true;
 				return false;
 			}
 
 			// Change directory
 			if (!ftpClient.changeWorkingDirectory(ftpVO.getDirectory())) {
 				testMsg = "Can't change to directory";
-				error = true;
 				return false;
 			}
 
@@ -160,6 +157,7 @@ public class FtpServer {
 
 		} catch (IOException ex) {
 			testMsg = ex.getLocalizedMessage();
+			error = true;
 		} finally {
 			if (ftpClient.isConnected()) {
 				try {
@@ -168,7 +166,7 @@ public class FtpServer {
 				}
 			}
 		}
-		return true;
+		return !error;
 	}
 
 	public String getTestMsg() {
