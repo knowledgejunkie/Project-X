@@ -233,7 +233,7 @@ static JButton doitButton, breakButton, scanButton, pauseButton, extract, exeBut
 
 public static JRadioButton[] RButton = new JRadioButton[25];
 public static JComboBox[] comBox = new JComboBox[39];
-public static JCheckBox[] cBox = new JCheckBox[74];
+public static JCheckBox[] cBox = new JCheckBox[75];
 
 // radio buttons for look and feels in general menu
 private JRadioButtonMenuItem lf_item[] = null; 
@@ -2555,12 +2555,14 @@ protected JPanel buildoptionPanel() {
 	cBox[11] = new JCheckBox(Resource.getString("tab.options.biglog"));
 	cBox[11].setToolTipText(Resource.getString("tab.options.biglog_tip"));
 	cBox[11].setActionCommand("biglog");
+	cBox[11].addActionListener(mytabListener);
 	op0.add(cBox[11]);
 
 	cBox[21] = new JCheckBox(Resource.getString("tab.options.normallog"));
 	cBox[21].setToolTipText(Resource.getString("tab.options.normallog_tip"));
 	cBox[21].setActionCommand("normallog");
 	cBox[21].setSelected(true);
+	cBox[21].addActionListener(mytabListener);
 	op0.add(cBox[21]);
 
 	//DM24012004 081.6 int11 moved
@@ -2571,8 +2573,7 @@ protected JPanel buildoptionPanel() {
 	cBox[43].setSelected(false);
 	op0.add(cBox[43]);
 
-
-	op0.add(Box.createRigidArea(new Dimension(1,5)));
+	op0.add(Box.createRigidArea(new Dimension(1,2)));
 
 	//DM12122003 081.6 int05
 	d2vfield[8] = new JTextField("");
@@ -2580,6 +2581,17 @@ protected JPanel buildoptionPanel() {
 	d2vfield[8].setToolTipText(Resource.getString("tab.options.startpath_tip"));
 	op0.add(new JLabel(Resource.getString("tab.options.startpath")));
 	op0.add(d2vfield[8]);
+
+//
+	cBox[74] = new JCheckBox(Resource.getString("tab.options.ftp.binary"));
+	cBox[74].setToolTipText(Resource.getString("tab.options.ftp.binary.tip"));
+	cBox[74].setPreferredSize(new Dimension(250,20));
+	cBox[74].setMaximumSize(new Dimension(250,20));
+	cBox[74].setActionCommand("ftp_type");
+	cBox[74].setSelected(true);
+	cBox[74].addActionListener(mytabListener);
+	op0.add(cBox[74]);
+//
 
 	option.add(op0);
 
@@ -2619,6 +2631,8 @@ protected JPanel buildoptionPanel() {
 	comBox[37].setEditable(true);
 	comBox[37].setPreferredSize(new Dimension(100,25));
 	comBox[37].setMaximumSize(new Dimension(100,25));
+	comBox[37].addActionListener(mytabListener);
+
 	JLabel scanL = new JLabel(Resource.getString("tab.options.prebuffer"));
 	scanL.setToolTipText(Resource.getString("tab.options.prebuffer_tip"));
 	op2.add(scanL);
@@ -2637,7 +2651,6 @@ protected JPanel buildoptionPanel() {
 	op2.add(pbs);
 	op2.add(comBox[38]);
 
-
 	//DM04052004 081.7 int02 add
 	JButton garbagecollector = new JButton(Resource.getString("tab.options.gc"));
 	garbagecollector.setToolTipText(Resource.getString("tab.options.gc_tip"));
@@ -2651,12 +2664,7 @@ protected JPanel buildoptionPanel() {
 		}
  	});
 
-
 	option.add(op2);
-
-	cBox[11].addActionListener(mytabListener);
-	cBox[21].addActionListener(mytabListener);
-	comBox[37].addActionListener(mytabListener);
 
 	return option;
 }
@@ -4673,28 +4681,39 @@ class DNDListener implements DropTargetListener
 /****************************
  ****  tabbed pane listener *
  ****************************/
-class TabListener implements ActionListener {
-	public void actionPerformed(ActionEvent e) {
+class TabListener implements ActionListener
+{
+	public void actionPerformed(ActionEvent e)
+	{
 		String actName = e.getActionCommand();
 
 		if (actName.equals("biglog")) 
 			cBox[21].setSelected(false);
+
 		else if (actName.equals("normallog")) 
 			cBox[11].setSelected(false);
+
 		else if (actName.equals("d2v1")) 
 			cBox[30].setSelected(false);
+
 		else if (actName.equals("d2v2")) 
 			cBox[29].setSelected(false);
+
 		else if (actName.equals("prog1")) 
 			cBox[44].setSelected(false);
+
 		else if (actName.equals("prog2")) 
 			cBox[31].setSelected(false);
 
-		//DM07022004 081.6 int16 new
 		else if (actName.equals("riff")) 
 			RButton[9].setSelected(false);
+
 		else if (actName.equals("aiff")) 
 			RButton[5].setSelected(false);
+
+		else if (actName.equals("ftp_type")) 
+			X.getSettings().setBooleanProperty("tab.options.ftp.binary", cBox[74].isSelected());
+
 
 		updateState();
 	}

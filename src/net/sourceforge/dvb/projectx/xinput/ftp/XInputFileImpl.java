@@ -132,12 +132,17 @@ public class XInputFileImpl implements XInputFileIF {
 
 		String s;
 
-		s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getDirectory() + "/"
-				+ ftpFile.getName() + ";type=b";
+		/**
+		 * append the "type=b" string depending on the users wish, better for JRE 1.2.2 seems not parse it correctly
+		 * usually TYPE I is set as std, so we don't ever need this appending
+		 */
+		String b = net.sourceforge.dvb.projectx.common.X.getSettings().getBooleanProperty("tab.options.ftp.binary", true) ? ";type=b" : "";
 
-		//	s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" +
-		// ftpVO.getServer() + ftpVO.getDirectory() + "/"
-		//			+ ftpFile.getName();
+	//	s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getDirectory() + "/"
+	//			+ ftpFile.getName() + ";type=b";
+
+		s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getDirectory() + "/"
+				+ ftpFile.getName() + b;
 
 		return s;
 	}
