@@ -72,30 +72,47 @@ public class XInputFileImpl implements XInputFileIF {
 		String s;
 
 		String name = ftpFile.getName();
-		name = name.replaceAll("Ã¤", "ä");
-		name = name.replaceAll("Ã¶", "ö");
-		name = name.replaceAll("Ã¼", "ü");
-		name = name.replaceAll("Ã„", "Ä");
-		name = name.replaceAll("Ã–", "Ö");
-		name = name.replaceAll("Ãœ", "Ü");
-		name = name.replaceAll("ÃŸ", "ß");
-		name = name.replaceAll("Ã¡", "á");
-		name = name.replaceAll("Ã ", "à");
-		name = name.replaceAll("Ã©", "é");
-		name = name.replaceAll("Ã¨", "è");
-		name = name.replaceAll("Ã­", "í");
-		name = name.replaceAll("Ã¬", "ì");
-		name = name.replaceAll("Ã³", "ó");
-		name = name.replaceAll("Ã²", "ò");
-		name = name.replaceAll("Ãº", "ú");
-		name = name.replaceAll("Ã¹", "ù");
+		name = replaceStringByString(name, "Ã¤", "ä");
+		name = replaceStringByString(name, "Ã¶", "ö");
+		name = replaceStringByString(name, "Ã¼", "ü");
+		name = replaceStringByString(name, "Ã„", "Ä");
+		name = replaceStringByString(name, "Ã–", "Ö");
+		name = replaceStringByString(name, "Ãœ", "Ü");
+		name = replaceStringByString(name, "ÃŸ", "ß");
+		name = replaceStringByString(name, "Ã¡", "á");
+		name = replaceStringByString(name, "Ã ", "à");
+		name = replaceStringByString(name, "Ã©", "é");
+		name = replaceStringByString(name, "Ã¨", "è");
+		name = replaceStringByString(name, "Ã­", "í");
+		name = replaceStringByString(name, "Ã¬", "ì");
+		name = replaceStringByString(name, "Ã³", "ó");
+		name = replaceStringByString(name, "Ã²", "ò");
+		name = replaceStringByString(name, "Ãº", "ú");
+		name = replaceStringByString(name, "Ã¹", "ù");
 
 		s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getDirectory() + "/"
 				+ name;
 
 		return s;
 	}
-	
+
+	/**
+	 * @return String, checked of arg1 and replaced with arg2
+	 * JDK 1.2.2 compatibility, replacement of newer String.replaceAll()
+	 */
+	private String replaceStringByString(String name, String arg1, String arg2) {
+
+		if (name == null)
+			return name;
+
+		StringBuffer sb = new StringBuffer(name);
+
+		for (int i = 0; (i = sb.toString().indexOf(arg1, i)) != -1; )
+			sb.replace(i, i+2, arg2);
+
+		return sb.toString();
+	}	
+
 	/* (non-Javadoc)
 	 * @see net.sourceforge.dvb.projectx.xinput.XInputFileIF#getFileType()
 	 */
@@ -130,12 +147,17 @@ public class XInputFileImpl implements XInputFileIF {
 
 	/**
 	 * Time in milliseconds from the epoch.
+	 * JDK1.2.2 adaption: Date.getTime()
 	 * 
 	 * @return Time in milliseconds from the epoch
 	 */
 	public long lastModified() {
 
-		return ftpFile.getTimestamp().getTimeInMillis();
+		// JDK 1.2.2 going trough Date.getTime(), Time is rounded or 0, but date seems correct
+		return ftpFile.getTimestamp().getTime().getTime();
+
+		// JDK 1.4.2 return value long is not protected
+		//return ftpFile.getTimestamp().getTimeInMillis();
 	}
 
 	/**
@@ -175,23 +197,23 @@ public class XInputFileImpl implements XInputFileIF {
 		String s = null;
 
 		s = ftpFile.getName();
-		s = s.replaceAll("Ã¤", "ä");
-		s = s.replaceAll("Ã¶", "ö");
-		s = s.replaceAll("Ã¼", "ü");
-		s = s.replaceAll("Ã„", "Ä");
-		s = s.replaceAll("Ã–", "Ö");
-		s = s.replaceAll("Ãœ", "Ü");
-		s = s.replaceAll("ÃŸ", "ß");
-		s = s.replaceAll("Ã¡", "á");
-		s = s.replaceAll("Ã ", "à");
-		s = s.replaceAll("Ã©", "é");
-		s = s.replaceAll("Ã¨", "è");
-		s = s.replaceAll("Ã­", "í");
-		s = s.replaceAll("Ã¬", "ì");
-		s = s.replaceAll("Ã³", "ó");
-		s = s.replaceAll("Ã²", "ò");
-		s = s.replaceAll("Ãº", "ú");
-		s = s.replaceAll("Ã¹", "ù");
+		s = replaceStringByString(s, "Ã¤", "ä");
+		s = replaceStringByString(s, "Ã¶", "ö");
+		s = replaceStringByString(s, "Ã¼", "ü");
+		s = replaceStringByString(s, "Ã„", "Ä");
+		s = replaceStringByString(s, "Ã–", "Ö");
+		s = replaceStringByString(s, "Ãœ", "Ü");
+		s = replaceStringByString(s, "ÃŸ", "ß");
+		s = replaceStringByString(s, "Ã¡", "á");
+		s = replaceStringByString(s, "Ã ", "à");
+		s = replaceStringByString(s, "Ã©", "é");
+		s = replaceStringByString(s, "Ã¨", "è");
+		s = replaceStringByString(s, "Ã­", "í");
+		s = replaceStringByString(s, "Ã¬", "ì");
+		s = replaceStringByString(s, "Ã³", "ó");
+		s = replaceStringByString(s, "Ã²", "ò");
+		s = replaceStringByString(s, "Ãº", "ú");
+		s = replaceStringByString(s, "Ã¹", "ù");
 
 		return s;
 	}

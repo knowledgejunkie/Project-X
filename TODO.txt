@@ -1,7 +1,9 @@
 
 dvbmatt erl 30.10. - gif Bild für ftp-Connection Dialog
 dvbmatt erl 30.10. - JDK1.2.2 adaption, String.split() geändert in StringTokenizer (FtpVO.java)
-30.10. - JDK1.2.2 adaption, String.replaceAll() umgehen
+dvbmatt erl 02.11. - JDK1.2.2 adaption, String.replaceAll() umgehen
+dvbmatt klärung 02.11. - JDK1.2.2 adaption, Calendar.getTimeInMillis() ist protected in 1.2.2 und nicht abrufbar, umweg über Date.getTime()
+	problem?: Uhrzeit ist tlw. gerundet auf volle minuten oder ganz 0, datum stimmt
 pstorch erl 31.10. - dropdown liste Vorauswahlbox, Einträge > 1 lassen sich nicht auswählen
 pstorch erl 31.10. - dropdown liste Vorauswahlbox, Einträge nicht entfernbar
 31.10. - Hänger bei XInput mit FTP -> muss noch untersucht werden
