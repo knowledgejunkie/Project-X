@@ -470,6 +470,11 @@ public class Picture extends JPanel implements Runnable {
 			return -1;
 
 		int packetlength = Get_Bits(data, BPos, 16); // required pack length
+
+		//DM13042004 081.7 int01 add
+		if (packetlength == 0xF) // DVB subpicture: subtitle_stream_id 0x00 & start of subtitle segment 0x0F
+			return -7;
+
 		if (BPos[0] + packetlength != picture_length + 2)
 			return -2;
 

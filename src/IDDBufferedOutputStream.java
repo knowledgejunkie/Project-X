@@ -125,9 +125,13 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 		String num = "000"+filenumber+".vdr";
 		String newName = parent + num.substring(num.length()-7);
 		File nname = new File(newName);
+
 		if (nname.exists())
 			nname.delete();
-		new File(oldName).renameTo(nname);
+
+		Common.renameTo(new File(oldName), nname); //DM13042004 081.7 int01 changed
+		//new File(oldName).renameTo(nname);
+
 		return newName;
 	}
 
@@ -145,18 +149,26 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 	}
 	public void renameIddTo(File newName){
 		File nname = new File(newName.toString()+".idd");
-		if (newName.exists()){
+		if (newName.exists())
+		{
 			if (nname.exists())
 				nname.delete();
-			new File(name).renameTo(nname);
-		}else
+
+			if (new File(name).exists())  //DM13042004 081.7 int01 changed
+				Common.renameTo(new File(name), nname);
+				//new File(name).renameTo(nname);
+		}
+		else
 			new File(name).delete();
 	}
 	public void renameVideoIddTo(String newName){
 		File nname = new File(newName+".idd");
+
 		if (nname.exists())
 			nname.delete();
-		new File(name).renameTo(nname);
+
+		Common.renameTo(new File(name), nname);
+		//new File(name).renameTo(nname);
 	}
 	public void deleteIdd() {
 		new File(name).delete();

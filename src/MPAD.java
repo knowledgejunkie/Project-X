@@ -1010,7 +1010,9 @@ private static short savePCM[] = new short[2];
 private static int LEFT_RIGHT=0;
 public static boolean MOTOROLA=false, DOWNSAMPLE=false, DOWNMIX=false, 
 		WAVE=true, MONO=false, RESET=false, NORMALIZE=false;
-public static double MULTIPLY=0;
+
+public static double MULTIPLY = 1; //DM10042004 081.7 int01 changed
+public static int MAX_VALUE = 32767; //DM10042004 081.7 int01 add
 
 
 public static int check_sync() {
@@ -1392,7 +1394,6 @@ public static int decode_layer2() throws IOException {
 
 	int channel=head.channel;
 	int last_resample=resample;
-	double last_multiply=MULTIPLY;
 
 	writeLoop:
 	while (true) {
@@ -1441,31 +1442,51 @@ public static int decode_layer2() throws IOException {
 						s[1] += W[(32*k+i)*2+1];
 					}
 
+					//DM10042004 081.7 int01 changed+
 					s[0] *= 32768;
 					s[1] *= 32768;
 
-					if (MULTIPLY != 0) {
-						s[0] *= MULTIPLY;
-						s[1] *= MULTIPLY;
-					}
+					ss[0] = (int)(s[0] * MULTIPLY);
+					ss[1] = (int)(s[1] * MULTIPLY);
 
-					ss[0] = (int)(s[0]);
-					ss[1] = (int)(s[1]);
-	
-					if(ss[0] > 32767){
-						pcm[0] = 32767;
-					}else if(ss[0] < -32768){
-						pcm[0] = -32768;
-					}else{
+					if(ss[0] > MAX_VALUE)
+					{
+						if (NORMALIZE)
+							MULTIPLY = 1.0 * MAX_VALUE / s[0];
+
+						pcm[0] = (short)MAX_VALUE;
+					}
+					else if(ss[0] < -(MAX_VALUE+1))
+					{
+						if (NORMALIZE)
+							MULTIPLY = Math.abs(1.0 * -(MAX_VALUE+1) / s[0]);
+
+						pcm[0] = (short)(-(MAX_VALUE+1));
+					}
+					else
+					{
 						pcm[0] = (short)ss[0];
 					}
-					if(ss[1] > 32767){
-						pcm[1] = 32767;
-					}else if(ss[1] < -32768){
-						pcm[1] = -32768;
-					}else{
+
+					if(ss[1] > MAX_VALUE)
+					{
+						if (NORMALIZE)
+							MULTIPLY = 1.0 * MAX_VALUE / s[1];
+
+						pcm[1] = (short)MAX_VALUE;
+					}
+					else if(ss[1] < -(MAX_VALUE+1))
+					{
+						if (NORMALIZE)
+							MULTIPLY = Math.abs(1.0 * -(MAX_VALUE+1) / s[1]);
+
+						pcm[1] = (short)(-(MAX_VALUE+1));
+					}
+					else
+					{
 						pcm[1] = (short)ss[1];
 					}
+					//DM10042004 081.7 int01 changed-
 
 					if (resample == Resample[LEFT_RIGHT>>>3 & 1].length)
 						resample=0;
@@ -1656,29 +1677,51 @@ public static int decode_layer1() throws IOException {
 				s[1] += W[(32*k+i)*2+1];
 			}
 
-			if (MULTIPLY != 0) {
-				double mp = MULTIPLY / 100.0;
-				s[0] *= mp;
-				s[1] *= mp;
+			//DM10042004 081.7 int01 changed+
+			s[0] *= 32768;
+			s[1] *= 32768;
+
+			ss[0] = (int)(s[0] * MULTIPLY);
+			ss[1] = (int)(s[1] * MULTIPLY);
+
+			if(ss[0] > MAX_VALUE)
+			{
+				if (NORMALIZE)
+					MULTIPLY = 1.0 * MAX_VALUE / s[0];
+
+				pcm[0] = (short)MAX_VALUE;
 			}
+			else if(ss[0] < -(MAX_VALUE+1))
+			{
+				if (NORMALIZE)
+					MULTIPLY = Math.abs(1.0 * -(MAX_VALUE+1) / s[0]);
 
-			ss[0] = (int)(s[0]*32768);
-			ss[1] = (int)(s[1]*32768);
-
-			if(ss[0] > 32767){  //left
-				pcm[0] = 32767;
-			}else if(ss[0] < -32768){
-				pcm[0] = -32768;
-			}else{
+				pcm[0] = (short)(-(MAX_VALUE+1));
+			}
+			else
+			{
 				pcm[0] = (short)ss[0];
 			}
-			if(ss[1] > 32767){  //right
-				pcm[1] = 32767;
-			}else if(ss[1] < -32768){
-				pcm[1] = -32768;
-			}else{
+
+			if(ss[1] > MAX_VALUE)
+			{
+				if (NORMALIZE)
+					MULTIPLY = 1.0 * MAX_VALUE / s[1];
+
+				pcm[1] = (short)MAX_VALUE;
+			}
+			else if(ss[1] < -(MAX_VALUE+1))
+			{
+				if (NORMALIZE)
+					MULTIPLY = Math.abs(1.0 * -(MAX_VALUE+1) / s[1]);
+
+				pcm[1] = (short)(-(MAX_VALUE+1));
+			}
+			else
+			{
 				pcm[1] = (short)ss[1];
 			}
+			//DM10042004 081.7 int01 changed-
 
 			if (resample == Resample[LEFT_RIGHT>>>3 & 1].length)
 				resample=0;
@@ -1925,6 +1968,7 @@ public static byte[] decodeArray(byte[] data) throws IOException { //DM30122003 
 	buf=data;
 	BufferPos=0;
 	ERROR_CODE=ERROR_CODE1=0;
+	double last_Multiply = MULTIPLY;
 
 	if ( (ERROR_CODE1 = check_sync()) == 0) 
 		return new byte[0];
@@ -1946,6 +1990,9 @@ public static byte[] decodeArray(byte[] data) throws IOException { //DM30122003 
 	}
 	if (ERROR_CODE==1)
 		head.new_sampling_frequency=head.sampling_frequency;
+
+	if (last_Multiply != MULTIPLY) //DM10042004 081.7 int01 add
+		X.options[17] |= 0x1000CL;
 
 	return out1.toByteArray();
 }

@@ -63,6 +63,8 @@
 	AUDIO.java
 	AudioFrameConstants.java
 	BR_MONITOR.java
+	Common.java
+	CRC.java
 	D2V.java
 	HEXVIEWER.java
 	LOGAREA.java
@@ -100,3 +102,4 @@
        to the discontinued "father" of X and this new project
 
 /===============================================================================/
+

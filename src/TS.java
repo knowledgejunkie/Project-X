@@ -24,16 +24,8 @@
  *
  */
 
-/*
- * the needed part of CRC32 calculation was mostly derived from:
- * Description: General Encoder/Decoder for CRC-32
- *              used in MPEG-2 systems
- * Author:   Patrick Persson, Teracom Nu
- * Version:  1.0, 940203
- */
-
-
-public class TS {
+public class TS
+{
 
 static byte[] TFhead = {
 	(byte)0xCD,0x39,0xc,0,
@@ -167,7 +159,7 @@ public void setPmtPids(java.util.ArrayList PIDs) throws java.io.IOException {
 	newpmt[3] = (byte)(0xFF&sectionlen);
 	pmtout.reset();
 	pmtout.write(newpmt);
-	pmtout.write(CalcCRC32(newpmt));
+	pmtout.write(CRC.generateCRC32(newpmt, 1)); //DM10042004 081.7 int01 changed
 	newpmt = pmtout.toByteArray();
 
 	int pmtpacks = ((newpmt.length-1)/184)+1; // = number of needed pmt packs
@@ -304,55 +296,6 @@ public byte[] getPCR(long pts, int count, int PCRPid) {
 	pcr[10] = (byte)((1 & pts) << 7 );
 	/* PCR ext is 0, byte10+byte11 */
 	return pcr;
-}
-
-
-public static byte[] CalcCRC32(byte[] data1) {
-	byte[] data = new byte[data1.length-1];  // byte 0 not for crc calc
-	System.arraycopy(data1,1,data,0,data.length);
-
-	int bit_count = 0, bit_in_byte = 0, data_bit;
-	int[] shift_reg = new int[32];
-	int[] g = { 1,1,1,0,1,1,0,1,1,0,1,1,1,0,0,0,1,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,1 };
-	long crc=0;
-
-	/* Initialize shift register's to '1' */
-	java.util.Arrays.fill(shift_reg,1);
-
-	/* Calculate nr of data bits, summa of bits*/
-	int nr_bits = data.length * 8;
-	int c=0;
-
-	while (bit_count < nr_bits) {
-		/* Fetch bit from bitstream */
-		data_bit = (data[c]  & (0x80 >> bit_in_byte));
-		data_bit = data_bit >> (7 - bit_in_byte);
-		bit_in_byte++; 
-		bit_count++;
-		if (bit_in_byte == 8) {
-			bit_in_byte = 0;
-			c++;
-		}
-		/* Perform the shift and modula 2 addition */
-		data_bit ^= shift_reg[31];
-		int i = 31;
-		while (i != 0) {
-			if (g[i]==1)
-				shift_reg[i] = shift_reg[i-1] ^ data_bit;
-			else
-				shift_reg[i] = shift_reg[i-1];
-			i--;
-		}
-		shift_reg[0] = data_bit;
-	}
-	for (int i=0; i<32; i++)
-		crc = ((crc << 1) | (shift_reg[31-i]));
-
-	byte[] crcb = new byte[4];
-	for (int i=0; i<4; i++) 
-		crcb[i] = (byte)(0xFF&(crc>>>((3-i)*8)));
-
-	return crcb;
 }
 
 }

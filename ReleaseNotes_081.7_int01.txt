@@ -1,0 +1,27 @@
+16.04.2004
+replace the provided updated source files from the basic version 0.81.7
+it's recommended to backup the old.
+
+Note: all changes are subject to test ATM
+
+short description of changes:
+-------------------------
+0.81.7 int01 / 14.04.2004
+
+X.java
+AUDIO.java
+MPAD.java
+TS.java
+CRC.java
+SUBPICTURE.java
+Common.java
+
+-change: <audio> <decode to pcm> _ now "normalize to % " instead of a fix amplifying factor
+-new: <audio> <demux> _ CRC check possible; if enabled, AC-3 and MPA Layer 1+2 will be checked
+-fix: _ array error on m2p-pespackets without payload
+-fix: _ nullpointer exception when selecting <rename> without a file
+-change: _ Log summary infos
+-fix: <demux> _ DVB subpictures not yet supported -> type now ignored 
+-adaption: <demux> _ nebula software inserts the same PTS value for every video PES packet in a gop, what cannot be conform; (no adaption for direct conversions)
+-adaption: if OS blocks renaming a file, X tries repeatedly to continue with success for a while..
+-some other changes

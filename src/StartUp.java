@@ -85,6 +85,7 @@ public class StartUp extends JFrame
 		disagree.setOpaque(false);
 		agree = new JRadioButton("I agree");
 		agree.setOpaque(false);
+		agree.setEnabled(false); //DM16042004 081.7 int01 add
 
 		ButtonGroup BrGroup = new ButtonGroup();
 		BrGroup.add(disagree);
@@ -114,6 +115,9 @@ public class StartUp extends JFrame
 
 	public void set( boolean agreement)
 	{
+		//DM16042004 081.7 int01 add
+		agree.setEnabled(true);
+
 		this.agreement = agreement;
 		agree.setSelected(agreement);
 		if (agreement)

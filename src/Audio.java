@@ -46,6 +46,8 @@ int Channel=0;
 int Emphasis=0;
 int Size=0;
 int Size_base=0;
+int Bound=0; //DM10042004 081.7 int01 add
+int Sblimit; //DM10042004 081.7 int01 add
 double Time_length=0.0;
 
 int nID=0;
@@ -128,7 +130,10 @@ String[] dMode = {
 
 
 /*** parse mpa Header ***/
-public int MPA_parseHeader(byte[] frame, int pos) {
+//DM10042004 081.7 int01 changed
+public int MPA_parseHeader(byte[] frame, int pos)
+{
+	int sblimit = 32;
 
 	if ( (0xFF&frame[pos])!=0xFF || (0xF0&frame[pos+1])!=0xF0 ) 
 		return -1;
@@ -158,7 +163,8 @@ public int MPA_parseHeader(byte[] frame, int pos) {
 	if (Mode==0) 
 		Mode_extension=0;
 
-	Channel = (Mode==3) ? 1: 2;
+	Bound = Mode==1 ? ((Mode_extension + 1) << 2) : sblimit;
+	Channel = Mode==3 ? 1: 2;
 	Copyright = 1&frame[pos+3]>>>3;
 	Original = 1&frame[pos+3]>>>2;
 	Time_length = time_index[Layer]/Sampling_frequency;
@@ -168,12 +174,38 @@ public int MPA_parseHeader(byte[] frame, int pos) {
 			return -5; /* unsupported bitrate */
 		if(Bitrate/Channel > 192000) 
 			return -6; /* unsupported bitrate */
+
+		if (Bitrate < 56000)
+		{
+			if(Sampling_frequency == 32000) 
+				Sblimit = 12;
+			else 
+				Sblimit = 8;
+		}
+		else if (Bitrate < 96000) 
+			Sblimit = 27;
+		else
+		{
+			if (Sampling_frequency == 48000) 
+				Sblimit = 27;
+			else 
+				Sblimit = 30;
+		}
+		if (Bound > Sblimit) 
+			Bound = Sblimit;
+	}
+	else if (Layer==2)  // MPEG-2
+	{
+		Sblimit = 30;
 	}
 
 	if (Layer<3) {
+		if (Bound > Sblimit) 
+			Bound = Sblimit;
 		Size = (Size_base = 144*Bitrate/Sampling_frequency) + Padding_bit;
 		return 1;
 	} else {
+		Sblimit = 32;
 		Size = (Size_base = (12*Bitrate/Sampling_frequency)*4) + (4*Padding_bit);
 		return 2;
 	}
