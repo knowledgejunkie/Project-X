@@ -193,8 +193,8 @@ public class X extends JPanel
 {
 
 /* main version index */
-static String version_name = "ProjectX 0.82.0.05c";
-static String version_date = "19.03.2005";
+static String version_name = "ProjectX 0.82.0.05d";
+static String version_date = "22.03.2005";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -6857,6 +6857,8 @@ public void working() {
 				workinglist.remove(k);
 				k--;
 			}
+			else if (mpgtovdr == 0) 
+				options[27] = nextFilePTS(2, 0, 0, 0);
 		}
 		else if (mpg1 && input_type == Common.MPEG1PS_TYPE)
 		{
@@ -13621,7 +13623,8 @@ public void processTeletext(String[] args)
 				{
 					write = vptsdata ? false : true;
 
-					while (pts_position[x+1] != -1 && pts_position[x+1] < count-46)
+				//	while (pts_position[x+1] != -1 && pts_position[x+1] < count-46)
+					while (pts_position[x+1] != -1 && pts_position[x+1] <= count - 46 )
 					{
 						x++;
 						source_pts = pts_value[x];
@@ -13712,6 +13715,25 @@ public void processTeletext(String[] args)
 					if (lastpage_match)
 					{
 						long out_time = source_pts - time_difference;
+
+						/**
+						 * adapt out_time of page, if termination of it was detected later than 80ms after last row
+						 */
+						Object buffer_time = load_buffer.get("buffer_time");
+
+						if (buffer_time != null)
+						{
+							long l = Long.parseLong(buffer_time.toString());
+
+							if (source_pts - l > 7200)
+							{
+								out_time = l - time_difference + 7200;
+
+								if (options[30] == 1)
+									System.out.println("termination for in_time too late, new out_time: " + out_time);
+							}
+						}
+
 
 						if (write)  //buffered page can be written
 						{
@@ -13844,7 +13866,29 @@ public void processTeletext(String[] args)
 						long in_time = source_pts - time_difference;
 						boolean rows = false;
 
-						// copy keys+values to clear for next page, only row 1..23 used instead of 0..31
+
+						/**
+						 * adapt in_time of page, if termination of it was detected later than 80ms after last row
+						 */
+						Object buffer_time = load_buffer.get("buffer_time");
+
+						if (buffer_time != null)
+						{
+							long l = Long.parseLong(buffer_time.toString());
+
+							if (source_pts - l > 7200)
+							{
+								in_time = l - time_difference + 7200;
+
+								if (options[30] == 1)
+									System.out.println("termination too late, new in_time: " + in_time);
+							}
+						}
+
+
+						/**
+						 * copy keys+values to clear for next page, only row 1..23 used instead of 0..31
+						 */
 						for (int a=1; a<24; a++) 
 						{
 							if ( !load_buffer.containsKey("" + a) )
@@ -13946,6 +13990,11 @@ public void processTeletext(String[] args)
 
 				if (options[30]==1) 
 					System.out.println("row " + row + ": " + str + "/lb " + load_buffer.size()); 
+
+				/**
+				 * updates current timestamp of last packet
+				 */
+				load_buffer.put("buffer_time", String.valueOf(source_pts));
 
 			} // return to read next packet
 
