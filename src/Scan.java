@@ -61,6 +61,15 @@ int filetype = 0; //DM26032004 081.6_int18 add
 
 java.text.DateFormat timeformat = new java.text.SimpleDateFormat("HH:mm:ss.SSS");
 
+//DM18062004 081.7 int05 add
+RawInterface raw_interface;
+
+//DM18062004 081.7 int05 add
+public Scan()
+{
+	raw_interface = new RawInterface();
+}
+
 //DM26032004 081.6_int18 changed
 public int inputInt(String file) { 
 	filetype = testFile(file,false);
@@ -79,8 +88,10 @@ public boolean isSupported() {
 	return (filetype == 0 ? false : true);
 }
 
-public String Date(String file) {
-	return java.text.DateFormat.getDateInstance(java.text.DateFormat.LONG).format(new java.util.Date(new File(file).lastModified()))+"  "+java.text.DateFormat.getTimeInstance(java.text.DateFormat.LONG).format(new java.util.Date(new File(file).lastModified()));
+//DM18062004 081.7 int05 changed
+public String Date(String file)
+{
+	return raw_interface.getFileDate(file);
 }
  
 //DM10032004 081.6 int18 changed
@@ -110,8 +121,13 @@ public String getPlaytime() {
 	return playtime; 
 }
 
-public boolean isEditable() { 
-	return (new File(origFile).exists() && hasVideo); 
+//DM18062004 081.7 int05 changed
+public boolean isEditable()
+{
+	if (raw_interface.isAccessibleDisk(origFile))
+		return hasVideo;
+	else
+		return (new File(origFile).exists() && hasVideo);
 }
 
 public String getFile() { 
@@ -605,11 +621,16 @@ public int testFile(String infile, boolean more) { //DM04122003 081.6_int02 chan
    
 	try 
 	{
-	RandomAccessFile incheck = new RandomAccessFile( infile,"r" );
-	size = incheck.length();
-	incheck.seek(0);
-	incheck.read(check);
-	incheck.close();
+
+	//DM18062004 081.7 int05 changed
+	if (!raw_interface.getScanData(infile, check))
+	{
+		RandomAccessFile incheck = new RandomAccessFile( infile, "r" );
+		size = incheck.length();
+		incheck.seek(0);
+		incheck.read(check);
+		incheck.close();
+	}
 
 	riffcheck:
 	for (int a=0; a<bs0; a++)  //DM30122003 081.6 int10 add, compressed as AC3,MPEG is currently better detected as ES-not RIFF

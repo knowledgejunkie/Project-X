@@ -78,6 +78,11 @@
 	MPAC.java
 	MPAD.java
 	MPVD.java
+	PREVIEW.java
+	PreviewObject.java
+	RawInterface.java
+	RAWREAD.java	- symbolical class
+	RawFileInputStream.java	- symbolical class
 	RIFFHEADER.java
 	SCAN.java
 	StartUp.java

@@ -60,8 +60,8 @@ public class X extends JPanel
 {
 
 static String version[] = { 
-	"ProjectX 0.81.7_int04",
-	"14.06.2004",
+	"ProjectX 0.81.7_int05",
+	"27.06.2004",
 	"TEST PROJECT ONLY",
 	", User: " + System.getProperty("user.name")
 };
@@ -77,6 +77,10 @@ static String terms[] = {
 	"(6) use it at your own risk and for your own education as it was meant",
 	" ",
 };
+
+//DM18062004 081.7 int05 add
+RawInterface raw_interface = new RawInterface();
+static int loadSizeForward = 2560000;
 
 static BRMonitor brm;
 static SubPicture subpicture = new SubPicture(); //DM06032004 081.6 int18 changed
@@ -3024,227 +3028,11 @@ class PATCH extends JDialog {
 	}
 }
 
-
-/*************
- * preview loading *
- *************/
-class PREVIEW {
-
-	ArrayList positionList;
-	int position[];
-	RandomAccessFile in;
-
-	public PREVIEW() {
-		position = new int[2];
-		positionList = new ArrayList();
-	}
-
-	public long load(long startposition, int size, ArrayList previewList, boolean direction) throws IOException {
-		String file="";
-		long start=0, end;
-		int filetype=0;
-		byte data[];
-
-		data = new byte[size];
-		for (int a=0;a<previewList.size();a++){
-			Object filedata[] = (Object[])previewList.get(a);
-			file = filedata[0].toString();
-			long properties[] = (long[])filedata[1];
-			start = properties[0];
-			end = properties[1];
-			filetype = (int)properties[2];
-			if (startposition < end){
-				in = new RandomAccessFile(file,"r");
-				in.seek(startposition-start);
-				in.read(data);
-				in.close();
-				if (end-startposition < size && a<previewList.size()-1){
-					a++;
-					int diff = (int)(end-startposition);
-					byte data2[] = new byte[size];
-					filedata = (Object[])previewList.get(a);
-					file = filedata[0].toString();
-					properties = (long[])filedata[1];
-					in = new RandomAccessFile(file,"r");
-					in.seek(0);
-					in.read(data2);
-					in.close();
-					System.arraycopy(data2,0,data,diff,size-diff);
-					data2=null;
-				} // else removed (fix1)
-				break;
-			}
-		}
-
-		data = search(data, startposition, filetype);
-
-		//DM08022004 081.6 int16 changed
-		long newposition = MPVDecoder.picture.decodeArray(data,direction,RButton[6].isSelected(),RButton[10].isSelected());
-
-		for (int a=positionList.size()-1; a>-1; a--){
-			position = (int[])positionList.get(a);
-			if (position[1] <= newposition){
-				startposition += position[0];
-				a=0;
-			}
-		}
-		if (positionList.size()==0) 
-			startposition += newposition;
-
-		for (int a=0;a<previewList.size();a++){
-			Object filedata[] = (Object[])previewList.get(a);
-			file = filedata[0].toString();
-			long properties[] = (long[])filedata[1];
-			if (startposition < properties[1]){
-				dialog.firstfile.setText(""+(a+1)+"/"+previewList.size()+" "+new File(file).getName());
-				break;
-			}
-		}
-
-		data=null;
-		System.gc();
-
-		return startposition;
-	}
-
-	public byte[] search(byte data[], long startposition, int filetype) {
-		ByteArrayOutputStream array = new ByteArrayOutputStream();
-		positionList.clear();
-		int mark=0, offset=0, ID=-1;
-		boolean save=false;
-
-		//DM17102003 updated 081.5++ for pid limitation from list in preview (TS,MPG-PS,VDR)
-		ArrayList abc = (ArrayList)speciallist.get(activecoll);
-		int[] include = new int[abc.size()];
-		for (int a=0; a<include.length; a++) 
-			include[a] = Integer.parseInt(abc.get(a).toString().substring(2),16);
-		java.util.Arrays.sort(include);
-
-		for (int a=0; a<data.length-9; a++){
-			//mpg es:
-			if (filetype==9){
-				return data;
-			}
-			//pva:
-			if (filetype==1 && (0xFF&data[a])==0x41 && (0xFF&data[a+1])==0x56 && (0xFF&data[a+4])==0x55) {
-				if (save)
-					array.write(data,mark,a-mark);
-				mark = a;
-				if (data[a+2]==1){
-					ID=1;
-					mark = ((0x10&data[a+5])!=0) ? a+12 : a+8;
-					int currentposition[] = { a,array.size() };
-					positionList.add(currentposition);
-					save=true;
-				} else
-					save=false;
-				a += 7+((0xFF&data[a+6])<<8 | (0xFF&data[a+7]));
-			}
-			//ts:
-			if (filetype==11 && a<data.length-188 && (0xFF&data[a])==0x47 && (0xFF&data[a+188])==0x47) {
-				if (save && mark<=a)
-					array.write(data,mark,a-mark);
-				mark = a;
-				int PID = (0x1F&data[a+1])<<8 | (0xFF&data[a+2]);
-				if (include.length>0 && java.util.Arrays.binarySearch(include,PID)<0)
-					save=false;
-				else if ((ID==PID || ID==-1) && (0xD&data[a+3]>>>4)==1){  
-					if ((0x20&data[a+3])!=0)       //payload start position, adaption field
-						mark = a + 5 + (0xFF&data[a+4]);
-					else
-						mark = a + 4;
-					if ((0x40&data[a+1])!=0){    //start indicator
-						if (data[mark]==0 && data[mark+1]==0 && data[mark+2]==1 && (0xF0&data[mark+3])==0xE0) //DM06032004 081.6 int18 fix
-						{
-							ID=PID;
-							mark = mark + 9 + (0xFF&data[mark+8]);
-							int currentposition[] = { a,array.size() };
-							positionList.add(currentposition);
-						} else
-							save=false;
-					}
-					if (ID==PID)
-						save=true;
-				} else
-					save=false;
-				a += 187;
-			}
-			//mpg2-ps
-			if ((filetype==3 || filetype==4) && data[a]==0 && data[a+1]==0 && data[a+2]==1) {
-				int PID = 0xFF&data[a+3];
-				if (PID < 0xB9)
-					continue;
-				if (save)
-					array.write(data,mark,a-mark);
-				mark = a;
-				if (include.length>0 && java.util.Arrays.binarySearch(include,PID)<0)
-					save=false;
-				else if ((ID==PID || ID==-1) && (0xF0&PID)==0xE0){
-					ID=PID;
-					mark = a + 9 + (0xFF&data[a+8]);
-					int currentposition[] = { a,array.size() };
-					positionList.add(currentposition);
-					save=true;
-				}else
-					save=false;
-
-				offset=(0xFF&data[a+3])<0xBB?11:0;
-				a += (offset==0) ? (5+((0xFF&data[a+4])<<8 | (0xFF&data[a+5]))) : offset;
-			}
-			//mpg1-ps //DM28112003 081.5++
-			if (filetype==2 && data[a]==0 && data[a+1]==0 && data[a+2]==1) {
-				int PID = 0xFF&data[a+3];
-				if (PID < 0xB9)
-					continue;
-				if (save)
-					array.write(data,mark,a-mark);
-				mark = a;
-				if (include.length>0 && java.util.Arrays.binarySearch(include,PID)<0)
-					save=false;
-				else if ((ID==PID || ID==-1) && (0xF0&PID)==0xE0){
-					ID=PID;
-					int shift=a+6;
-					skiploop:
-					while(true) {
-						switch (0xC0&data[shift]) {
-						case 0x40:	shift+=2; 
-									continue skiploop; 
-						case 0x80: 	shift+=3; 
-									continue skiploop; 
-						case 0xC0: 	shift++;  
-									continue skiploop; 
-						case 0: 	break;
-						}
-						switch (0x30&data[shift]) {
-						case 0x20:	shift+=5;  
-									break skiploop; 
-						case 0x30: 	shift+=10; 
-									break skiploop; 
-						case 0x10:	shift+=5; 
-									break skiploop; 
-						case 0:    	shift++; 
-									break skiploop; 
-						}
-					}
-					mark = shift;
-					int currentposition[] = { a,array.size() };
-					positionList.add(currentposition);
-					save=true;
-				}else
-					save=false;
-
-				offset=(0xFF&data[a+3])<0xBB?11:0;
-				a += (offset==0) ? (5+((0xFF&data[a+4])<<8 | (0xFF&data[a+5]))) : offset;
-			}
-		}
-		//DM08022004 081.6 int16 changed
-		dialog.scannedPID.setText("processing Video (P)ID 0x"+Integer.toHexString(ID).toUpperCase());
-
-		return array.toByteArray();
-	}
-
-}
-
+//DM24062004 081.7 int05
+/** outsourced
+class PREVIEW
+{}
+**/
 
 /*************
  * cut panel *
@@ -3265,7 +3053,10 @@ class COLLECTION extends JFrame {
 	int filetype=0;
 	long lastpos=0;
 	long cutPoints[]=new long[0]; //DM17012004 081.6 int11 changed, DM29012004 int12 fix
-	PREVIEW Preview = new PREVIEW();
+
+	//DM24062004 081.7 int05 changed
+	Preview Preview = new Preview(loadSizeForward, MPVDecoder, raw_interface);
+	//PREVIEW Preview = new PREVIEW();
 
 	//DM18022004 081.6 int17 new
 	class DNDListener2 implements DropTargetListener {
@@ -3867,21 +3658,33 @@ class COLLECTION extends JFrame {
 		}
 
 		action=false;
-		int loadSize = 2560000; // bytes for searching the next I-frame ;changed for X0.81
-		setTitle(title+"processing preview...");
 
-		if (pos>>>4 >= (long)search.getMaximum()){  // last
-			pos = (pos > loadSize) ? pos-loadSize : 0;
+		//DM18062004 081.7 int05 changed
+		//int loadSize = 2560000; // bytes for searching the next I-frame ;changed for X0.81
+		int loadSize = loadSizeForward; // bytes for searching the next I-frame ;changed for X0.81
+
+		setTitle(title + "processing preview...");
+
+		if (pos>>>4 >= (long)search.getMaximum())   // last
+		{
+			pos = (pos > loadSize) ? pos - loadSize : 0;
 			direction=true;
 		}
-		else if (pos>0 && pos<lastpos && ((lastpos>>>4)-(pos>>>4)) < 3L ){
-			pos = (pos > loadSize) ? pos-loadSize : 0;
-			direction=true;
+		else if (pos > 0 && pos < lastpos && ((lastpos>>>4) - (pos>>>4)) < 3L )
+		{
+			pos = (pos > loadSize) ? pos - loadSize : 0;
+			direction = true;
 		}
-		pos = Preview.load(pos,((direction&&pos==0)?(int)lastpos:loadSize),previewList,direction);
+
+		//DM24062004 081.7 int05 changed
+		pos = Preview.load(pos, ((direction && pos==0) ? (int)lastpos : loadSize), previewList, direction, RButton[6].isSelected(), RButton[10].isSelected(), speciallist, activecoll);
+		dialog.firstfile.setText(Preview.getProcessedFile());
+		dialog.scannedPID.setText(Preview.getProcessedPID());
+
+
 		lastpos = pos;
-		search.setValue((int)(lastpos/16));
-		framecutfield.setText(""+lastpos);
+		search.setValue((int)(lastpos / 16));
+		framecutfield.setText("" + lastpos);
 		search.requestFocus();
 		} 
 		catch (IOException e6) {}
@@ -3894,33 +3697,43 @@ class COLLECTION extends JFrame {
 
 		ArrayList xyz = (ArrayList)speciallist.get(activecoll);
 		dataList.clear();
-		for (int a=0; a<xyz.size(); a++) 
+
+		for (int a=0; a<xyz.size(); a++)
 			dataList.add(xyz.get(a));
+
 		includeList.setListData(dataList.toArray());
 
 		ArrayList infiles = (ArrayList)collfiles[activecoll];
 		previewList.clear();
+
 		long start=0,end=0;
+
+		//DM24062004 081.7 int05 changed
 		filesearch:
-		for (int a=0,b=0,type=0; a<infiles.size(); a++){
-			type = scan.inputInt( file=infiles.get(a).toString());
-			if (b!=0 && b!=type)
+		for (int a=0,b=0,type=0; a<infiles.size(); a++)
+		{
+			file = infiles.get(a).toString();
+			type = scan.inputInt(file);
+
+			if (b != 0 && b != type)
 				break filesearch;
-			switch (type){
+
+			switch (type)
+			{
 			case 1:
 			case 2: //DM28112003 081.5++
 			case 3:
 			case 4:
 			case 9:
 			case 11:
-				b=type;
-				File sourcefile = new File(file);
+				b = type;
+
+				//DM18062004 081.7 int05 changed
 				start = end;
-				end += sourcefile.length();
-				long properties[] = { start,end,type };
-				Object FileData[] = { file,properties };
-				previewList.add(FileData);
+				end += raw_interface.isAccessibleDisk(file) ? raw_interface.getFileSize(file) : new File(file).length();
+				previewList.add(new PreviewObject(start, end, type, file));
 				break;
+
 			default:
 				break filesearch;
 			}
@@ -4121,28 +3934,36 @@ class COLLECTION extends JFrame {
 	}
 
 	//DM24082003+ , DM17012004 081.6 int11 changed
-	public void getExpectedSize() {
-		if (previewList.size()==0){
-			pointscount.setText(""+comBox[14].getItemCount());
+	//DM24062004 081.7 int05 changed
+	public void getExpectedSize()
+	{
+		if (previewList.size() == 0)
+		{
+			pointscount.setText("" + comBox[14].getItemCount());
 			return;
 		}
+
 		long newSize[] = new long[comBox[14].getItemCount()];
 		long start=0, diff=0, end=0;
 
-		if (comBox[17].getSelectedIndex()==0){
-			for (int a=0; a<newSize.length; a++)
+		if (comBox[17].getSelectedIndex() == 0)
+		{
+			for (int a = 0; a < newSize.length; a++)
 				newSize[a] = Long.parseLong(comBox[14].getItemAt(a).toString());
 
-			if (newSize.length==0 || (newSize.length&1)==1)
-				end = ((long[]) (( (Object[])previewList.get(previewList.size()-1) )[1]) )[1];
-			else
-				end = newSize[newSize.length-1];
+			if (newSize.length == 0 || (newSize.length & 1) == 1)
+				end = ((PreviewObject)previewList.get(previewList.size() - 1)).getEnd();
 
-			for (int a=0; a<newSize.length; a+=2){
-				diff += newSize[a]-start;
-				start = a+1<newSize.length ? newSize[a+1] : start;
+			else
+				end = newSize[newSize.length - 1];
+
+			for (int a = 0; a < newSize.length; a += 2)
+			{
+				diff += newSize[a] - start;
+				start = a + 1 < newSize.length ? newSize[a + 1] : start;
 			}
 		}
+
 		String length = comBox[17].getSelectedIndex()==0 ? (" / exp.Size: "+((end-diff)/1048576L)+"MB") : "";
 		pointscount.setText(""+comBox[14].getItemCount() + length);
 	}
@@ -4504,6 +4325,7 @@ public void updateState() {
  * show ScanInfos * 
  ******************/
 //DM26032004 081.6 int18 changed
+//DM18062004 081.7 int05 changed
 public void ScanInfo(String file)
 {
 	File info = new File(file);
@@ -4514,9 +4336,12 @@ public void ScanInfo(String file)
 	values += "Location:\t" + info.getParent() + "\n";
 	values += "Name:\t" + info.getName() + "\n";
 
-	if (info.exists())
+	int source = raw_interface.isAccessibleDisk(file) ? 2 : (info.exists() ? 1 : 0);
+	long size = source == 2 ? raw_interface.getFileSize(file) : info.length();
+
+	if (source > 0)
 	{
-		values += "Size:\t" + (info.length() / 1048576) + " MB (" + info.length() + " bytes)" + "\n";
+		values += "Size:\t" + (size / 1048576) + " MB (" + size + " bytes)" + "\n";
 		String type = "Type:\t" + scan.Type(file) + "\n"; // must be first when scanning
 		values += "Date:\t" + scan.Date(file) + "\n";
 		values += "\n";
@@ -4528,10 +4353,9 @@ public void ScanInfo(String file)
 		values += "est. Playtime:\t" + scan.getPlaytime()+ "\n";
 		FileInfoTextArea.setBackground(scan.isSupported() ? new Color(225,255,225) : new Color(255,225,225));
 	}
+
 	else
-	{
 		values += "\nFile doesn't exists!\n";
-	}
 
 	FileInfoTextArea.setText(values);
 }
@@ -4717,21 +4541,34 @@ public static void inisave() //DM26012004 081.6 int12 changed, //DM26032004 081.
 /**************************
  * refresh inputfileslist * 
  **************************/
-public void inputlist() {
+//DM18062004 081.7 int05 changed
+public void inputlist()
+{
 	ArrayList arraylist = new ArrayList();
-	for (int a=0;a<comBox[12].getItemCount();a++) {
-		File[] addlist = new File(comBox[12].getItemAt(a).toString()).listFiles();
-		if (addlist.length>0) 
+
+	for (int a=0; a < comBox[12].getItemCount(); a++)
+	{
+		File addlist[] = new File(comBox[12].getItemAt(a).toString()).listFiles();
+
+		if (addlist.length > 0) 
 			Arrays.sort(addlist);
-		for (int b=0;b<addlist.length;b++) {
+
+		for (int b=0; b < addlist.length; b++)
+		{
 			if (addlist[b].isFile() ) 
 				arraylist.add(addlist[b].toString());
 		}
 	}
-	if (arraylist.size()>0) 
+
+	// ext disk access
+	raw_interface.add_native_files(arraylist);
+
+	if (arraylist.size() > 0) 
 		inputfiles = arraylist.toArray();
+
 	else 
-		inputfiles=new Object[0];
+		inputfiles = new Object[0];
+
 	list1.setListData(inputfiles);
 }   
 
@@ -4798,27 +4635,30 @@ class GoListener implements ActionListener
 }
 
 
-
 /****************
  * show java EV *
  ****************/
-public void javaEV() {
+public void javaEV()
+{
 	TextArea.setText(java.text.DateFormat.getDateInstance(java.text.DateFormat.FULL).format(new Date()));
-	TextArea.append("  "+java.text.DateFormat.getTimeInstance(java.text.DateFormat.FULL).format(new Date()));
-	TextArea.append("\njava.version\t"+System.getProperty("java.version"));
-	TextArea.append("\njava.vendor\t"+System.getProperty("java.vendor"));
-	TextArea.append("\njava.home\t"+System.getProperty("java.home"));
-	TextArea.append("\njava.vm.version\t"+System.getProperty("java.vm.version"));
-	TextArea.append("\njava.vm.vendor\t"+System.getProperty("java.vm.vendor"));
-	TextArea.append("\njava.vm.name\t"+System.getProperty("java.vm.name"));
-	TextArea.append("\njava.class.vers\t"+System.getProperty("java.class.version"));
-	TextArea.append("\njava.class.path\t"+System.getProperty("java.class.path"));
-	TextArea.append("\nos.name\t"+System.getProperty("os.name"));
-	TextArea.append("\nos.arch\t"+System.getProperty("os.arch"));
-	TextArea.append("\nos.version\t"+System.getProperty("os.version"));
-	TextArea.append("\nuser.name\t"+System.getProperty("user.name"));
-	TextArea.append("\nuser.home\t"+System.getProperty("user.home"));
-	TextArea.append("\nini.file\t"+inifile);
+	TextArea.append("  " + java.text.DateFormat.getTimeInstance(java.text.DateFormat.FULL).format(new Date()));
+	TextArea.append("\njava.version\t" + System.getProperty("java.version"));
+	TextArea.append("\njava.vendor\t" + System.getProperty("java.vendor"));
+	TextArea.append("\njava.home\t" + System.getProperty("java.home"));
+	TextArea.append("\njava.vm.version\t" + System.getProperty("java.vm.version"));
+	TextArea.append("\njava.vm.vendor\t" + System.getProperty("java.vm.vendor"));
+	TextArea.append("\njava.vm.name\t" + System.getProperty("java.vm.name"));
+	TextArea.append("\njava.class.vers\t" + System.getProperty("java.class.version"));
+	TextArea.append("\njava.class.path\t" + System.getProperty("java.class.path"));
+	TextArea.append("\nos.name\t" + System.getProperty("os.name"));
+	TextArea.append("\nos.arch\t" + System.getProperty("os.arch"));
+	TextArea.append("\nos.version\t" + System.getProperty("os.version"));
+	TextArea.append("\nuser.name\t" + System.getProperty("user.name"));
+	TextArea.append("\nuser.home\t" + System.getProperty("user.home"));
+	TextArea.append("\nini.file\t" + inifile);
+
+	//DM18062004 081.7 int05 add
+	TextArea.append("\ndisk access:\t" + raw_interface.GetLoadStatus());
 }
 
 
@@ -4836,6 +4676,8 @@ public static int loadAC3() {
 	in.seek(0); 
 	in.read(check); 
 	in.close();
+
+	Msg(""); //DM22062004 081.7 int05 add
 
 	int a=0, frame_counter=0;
 	while (a < check.length) {
@@ -4907,6 +4749,7 @@ public static void loadIDs(String nIDs) {  //DM28112003 081.5++
 	Msg("-> loading "+nIDList.size()+" (P)IDs...");
 	return;
 }
+
 
 public static void main(String[] args) {
 
@@ -5048,9 +4891,9 @@ public static void main(String[] args) {
 
 		panel.updateState();
 
-		if ((ac3f=loadAC3())>0) 
-			Msg(""+ac3f+" additional AC3 frames loaded..");
-			System.out.println(""+ac3f+" additional AC3 frames loaded..");
+		//DM22062004 081.7 int05 changed
+		if ((ac3f = loadAC3()) > 0) 
+			Msg("ac3.bin contains " + ac3f + " AC3 frames");
 
 		cBox[11].setSelected(false);
 		options[30]=0;
@@ -5123,8 +4966,9 @@ public static void main(String[] args) {
 		panel.updateState();
 		panel.javaEV();
 
-		if ((ac3f=loadAC3())>0) 
-			Msg(""+ac3f+" additional AC3 frames loaded..");
+		//DM22062004 081.7 int05 changed
+		if ((ac3f = loadAC3()) > 0) 
+			Msg("ac3.bin contains " + ac3f + " AC3 frames");
 
 		startup.set(RButton[1].isSelected());
 
@@ -5181,6 +5025,7 @@ public static void Msg(String msg)
 public static void showOutSize()
 {
 	outSize.setText(""+(options[39]/1048576L)+"MB");
+
 } 
 
 /*****************************************
@@ -5378,6 +5223,8 @@ public void run() {
 	sms.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
 	long timeneeded = System.currentTimeMillis();
 
+
+
 	TextArea.setBackground(Color.white); //DM26032004 081.6 int18 changed
 
 	int a=0,b=0,d=0;
@@ -5438,10 +5285,16 @@ public void run() {
 				workouts = collout.get(a).toString();
 				String firstfile = workinglist.get(0).toString();
 
-				if (workouts.equals(outalias)) 
+				if (workouts.equals(outalias))
 					workouts = new File(firstfile).getParent();
+
+				//DM26062004 081.7 int05 add
+				if (workouts == null)
+					workouts = inidir;
+
 				if ( !workouts.endsWith(filesep) ) 
 					workouts += filesep;
+
 				if (cBox[2].isSelected()){
 					workouts += "("+a+")"+filesep;
 					new File(workouts).mkdirs();
@@ -5729,16 +5582,21 @@ public void working() {
 			new File(vptslog).delete();
 
 		argsloop:
-		for (int h=0; h<workinglist.size(); h++) {
+		for (int h=0; h<workinglist.size(); h++)
+		{
 			String file = workinglist.get(h).toString();
-			File inputfile = new File(file);
-			Msg("");
-			Msg("=> File "+h+":  "+file +((!inputfile.exists())?"":""+("  ("+inputfile.length()+" bytes)")));
 
-			if (!inputfile.exists()) { 
+			//DM22062004 081.7 int05 changed++
+			long file_size = raw_interface.getFileSize(file);
+			Msg("\r\n=> File " + h + ":  " + file + " (" + file_size + ")");
+
+			if (file_size < 0)
+			{
 				Msg(" ? File not found !");
 				continue argsloop;
 			}
+			//DM22062004 081.7 int05 changed--
+
 
 			/***** scan ** 053c ***/ 
 			int filetype = scan.inputInt(file);
@@ -6025,14 +5883,18 @@ public void pesparse(String file, String vptslog, int ismpg) {
 	try 
 	{
 
-	long size = (new File(file)).length();
+	//long size = (new File(file)).length();
+
+	//DM18062004 081.7 int05 changed
+	PushbackInputStream in = raw_interface.getStream(file, bs);
+	long size = raw_interface.getStreamSize();
 
 	progress.setString("demuxing PES file  "+(new File(file)).getName());
 	progress.setStringPainted(true);
 	progress.setValue(0);
 	yield();
 
-	PushbackInputStream in = new PushbackInputStream(new FileInputStream(file),bs);
+	//PushbackInputStream in = new PushbackInputStream(new FileInputStream(file),bs);
 
 	byte[] push6 = new byte[6];
 	byte[] data = new byte[1];
@@ -6250,6 +6112,7 @@ public void pesparse(String file, String vptslog, int ismpg) {
 
 	Msg("packs: "+clv[5]+" "+((count*100/size))+"% "+count);
 
+
 	in.close(); 
 	yield();
 
@@ -6466,14 +6329,17 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 
 	file = combvideo.get(FileNumber).toString();
 	count = starts[FileNumber];
-	size = count + new File(file).length();
+	//size = count + new File(file).length();
 
 	if (FileNumber>0)
 		Msg("continue with file: "+file);
 
-	long base = count;
+	//PushbackInputStream in = new PushbackInputStream(new FileInputStream(file),bs);
 
-	PushbackInputStream in = new PushbackInputStream(new FileInputStream(file),bs);
+	//DM18062004 081.7 int05 changed
+	PushbackInputStream in = raw_interface.getStream(file, bs);
+	size = count + raw_interface.getStreamSize();
+	long base = count;
 
 	while (count < startPoint) {
 		count += in.skip(startPoint-count);
@@ -7037,10 +6903,14 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 
 			String nextfile = combvideo.get(++FileNumber).toString();
 			count = size;
-			size += new File(nextfile).length();
 			base = count;
 
-			in = new PushbackInputStream(new FileInputStream(nextfile),bs);
+			//size += new File(nextfile).length();
+			//in = new PushbackInputStream(new FileInputStream(nextfile),bs);
+
+			//DM18062004 081.7 int05 changed
+			in = raw_interface.getStream(nextfile, bs);
+			size += raw_interface.getStreamSize();
 
 
 			Msg("-> actual written vframes: "+options[7]);
@@ -7313,14 +7183,16 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 
 	file = combvideo.get(FileNumber).toString();
 	count = starts[FileNumber];
-	size = count + new File(file).length();
 
 	if (FileNumber>0)
 		Msg("continue with file: "+file);
 
 	long base = count;
 
-	PushbackInputStream in = new PushbackInputStream(new FileInputStream(file),200);
+	//DM18062004 081.7 int05 changed
+	PushbackInputStream in = raw_interface.getStream(file, 200);
+	size = count + raw_interface.getStreamSize();
+
 
 	while (count < startPoint) {
 		count += in.skip(startPoint-count);
@@ -7795,13 +7667,15 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 
 			String nextfile = combvideo.get(++FileNumber).toString();
 			count = size;
-			//size += new File(nextfile).length();
+
+			//DM18062004 081.7 int05 changed++
+			in = raw_interface.getStream(nextfile, 200);
+			long fsize = raw_interface.getStreamSize();
+
 			//Ghost23012004 081.6 int11 changed
-			long fsize = new File(nextfile).length();
 			size += fsize;
 			base = count;
 
-			in = new PushbackInputStream(new FileInputStream(nextfile),200); //DM18092003
 			cell.add(""+(options[7]));
 			Msg("-> actual written vframes: "+options[7]);
 			Msg("switch to file: "+nextfile);
@@ -8334,14 +8208,20 @@ public String pvaparse(String pvafile,int ismpg,int ToVDR, String vptslog) {
 
 	pvafile = combvideo.get(FileNumber).toString();
 	count = starts[FileNumber];
-	size = count + new File(pvafile).length();
+
+	//size = count + new File(pvafile).length();
 
 	if (FileNumber>0)
 		Msg("continue with file: "+pvafile);
 
 	long base = count;
 
-	PushbackInputStream in = new PushbackInputStream(new FileInputStream(pvafile),bs);
+	//PushbackInputStream in = new PushbackInputStream(new FileInputStream(pvafile),bs);
+
+	//DM18062004 081.7 int05 changed
+	PushbackInputStream in = raw_interface.getStream(pvafile, 65600);
+	size = count + raw_interface.getStreamSize();
+
 
 	while (count < startPoint) {
 		count += in.skip(startPoint-count);
@@ -8528,6 +8408,7 @@ public String pvaparse(String pvafile,int ismpg,int ToVDR, String vptslog) {
 					}
 					TSPid.countPVA();
 				} else { 
+
 					TSPid.setCounter(counter);
 					TSPid.countPVA();
 				}
@@ -8722,10 +8603,16 @@ public String pvaparse(String pvafile,int ismpg,int ToVDR, String vptslog) {
 			}
 			String nextfile = combvideo.get(++FileNumber).toString();
 			count = size;
-			size += new File(nextfile).length();
+
+			//size += new File(nextfile).length();
+			//in = new PushbackInputStream(new FileInputStream(nextfile),bs-1000000);
+
+			//DM18062004 081.7 int05 changed
+			in = raw_interface.getStream(nextfile, 65600);
+			size += raw_interface.getStreamSize();
 			base = count;
 
-			in = new PushbackInputStream(new FileInputStream(nextfile),bs-1000000);
+
 			Msg("-> actual written vframes: "+options[7]);
 			Msg("switch to file: "+nextfile);
 			progress.setString(((ToVDR==0)?"demuxing":"converting")+" PVA file  "+new File(nextfile).getName());
@@ -10837,6 +10724,7 @@ public boolean processAudio(String[] args) {
 		break;
 	}
 	case 3: { 
+
 		if ( mp1name.exists() ) 
 			mp1name.delete();
 		if (audioout1.length()<100) 
@@ -11909,6 +11797,7 @@ public void processTeletext(String[] args)
 				new File(synchit[0]).delete();
 				new File(synchit[1]).delete();
 				System.gc();
+
 				return;
 			}
 			else
@@ -12818,6 +12707,8 @@ public String rawvideo(String args) {
 	byte[] SEQUENCE_END_CODE = { 0,0,1,(byte)0xb7 };
 	byte[] vgl = new byte[4];
 	String[] videoext = { ".mpv",".mpv",".m1v",".m2v" };
+
+
 
 	try 
 	{

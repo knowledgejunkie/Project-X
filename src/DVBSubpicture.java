@@ -79,7 +79,7 @@ public class DVBSubpicture
 
 		//DM13062004 081.7 int04 add++
 		user_table = table;
-		user_table_enabled = user_table.isEmpty() ? false : true;
+		user_table_enabled = !user_table.isEmpty(); //DM23062004 081.7 int05 changed
 
 		if (user_table_enabled)
 			IRD = Integer.parseInt(user_table.get("model").toString().trim());
@@ -247,13 +247,13 @@ public class DVBSubpicture
 	private void end_display()
 	{
 		int segment_length = getBits(16);
-		flushBits(segment_length);
+		flushBits(segment_length * 8); //DM18062004 081.7 int05 changed
 	}
 
 	private void stuffing()
 	{
 		int segment_length = getBits(16); //+ BytePosition;
-		flushBits(segment_length);
+		flushBits(segment_length * 8); //DM18062004 081.7 int05 changed
 	}
 
 	private void prepare_output()
@@ -310,6 +310,15 @@ public class DVBSubpicture
 		for (Enumeration e = epoch.getRegions(); e.hasMoreElements() ; )
 		{
 			region = epoch.setRegion(Integer.parseInt(e.nextElement().toString()));
+
+			//DM23062004 081.7 int05 add
+			if (region.getErrors() > 0)
+			{
+				X.Msg("!> decoding error: " + region.getErrors() + ", Region_Id " + region.getId() + " (pts " + page.getTimeIn() + ")");
+				//region.setActive(false);
+			}
+
+			region.setError(0); //DM23062004 081.7 int05 add
 
 			if ( !region.isActive() || !region.isChanged() )
 				continue;
@@ -484,7 +493,7 @@ public class DVBSubpicture
 
 		if (region_id < 0)
 		{
-			flushBits(segment_end - BytePosition);
+			flushBits( (segment_end - BytePosition) * 8);  //DM18062004 081.7 int05 changed
 			addBigMessage("object_id " + object.getId() + " with no region_id");
 			return;
 		}
@@ -896,8 +905,22 @@ public class DVBSubpicture
 		if ((0xFF000000 & color) == 0) //keep underlying pixel if new pixel is full transparent
 			return;
 
+		//DM23062004 081.7 int05 add
+		if (x > region.getWidth() - 1 || y > region.getHeight() - 1)
+		{
+			region.setError(2);
+			return;
+		}
+
 		from_index = x + y * region.getWidth();
 		to_index = from_index + w;
+
+		//DM23062004 081.7 int05 add
+		if (x + w > region.getWidth())
+		{
+			to_index = from_index + region.getWidth() - x;
+			region.setError(1);
+		}
 
 		java.util.Arrays.fill(pixel_data, from_index, to_index, color);
 	}
@@ -1245,6 +1268,9 @@ public class DVBSubpicture
 		private int pixel_code_2bit;
 		private int pixel[];
 
+		//DM23062004 081.7 int05 add
+		private int error = 0;
+
 		private Region()
 		{}
 
@@ -1439,6 +1465,21 @@ public class DVBSubpicture
 		private boolean isChanged()
 		{
 			return changed;
+		}
+
+		//DM23062004 081.7 int05 add
+		private int getErrors()
+		{
+			return error;
+		}
+
+		//DM23062004 081.7 int05 add
+		private void setError(int val)
+		{
+			error |= val;
+
+			if (val == 0)
+				error = 0;
 		}
 	}
 

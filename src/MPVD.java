@@ -1248,6 +1248,9 @@ public void picture_display_extension(){
 
 		frame_center_vertical_offset[i] = Get_Bits(16);
 		Flush_Bits(1);	// marker bit
+
+		//DM24062004 081.7 int05 add
+		info_3 += ",(" + frame_center_horizontal_offset[i] + "," + frame_center_vertical_offset[i] + ")";
 	}
 }
 
@@ -2588,14 +2591,14 @@ public void run()
 }
 
 //DM27042004 081.7 int02 changed
+//DM24062004 081.7 int05 changed
 public void showCut(boolean play, long cutPoints[], java.util.ArrayList previewList)
 {
 	PLAY = play;
 
 	if ( !previewList.isEmpty() )
 	{
-		Object filedata[] = (Object[])previewList.get(previewList.size()-1);
-		cutfiles_length = ((long[])filedata[1])[1];
+		cutfiles_length = ((PreviewObject)previewList.get(previewList.size() - 1)).getEnd();
 		cutfiles_points = cutPoints;
 	}
 	else

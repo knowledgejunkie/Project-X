@@ -204,7 +204,7 @@ public class Picture extends JPanel implements Runnable
 		4, (byte)0xFF, (byte)0xFA,         // color alpha channel linkage F=opaque
 		5, 0, 0, 0, 0, 0, 0, // coordinates Xa,Ya,Xe,Ye
 		6, 0, 0, 0, 0,     // bytepos start top_field, start bottom_field
-		1,  // start displ.
+		1,  // start displ.  //0 means force display
 		(byte)0xFF,    // end of sequ.
 		1, 0x50,  // time for next sequ,
 		0, 0,  //next contr sequ.
