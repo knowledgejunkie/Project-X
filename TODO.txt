@@ -16,4 +16,4 @@ dvbmatt klärung 02.11. - JDK1.2.2 adaption, Calendar.getTimeInMillis() ist prote
 	problem?: Uhrzeit ist tlw. gerundet auf volle minuten oder ganz 0, datum stimmt
 dvbmatt erl. - 5.11. - TS.java , TS-Erzeugung: zusätzl. ATSC konformer AC3 Eintrag in PMT
 dvbmatt - 6.11. - Klärung, nicht eingecheckt - commons-net-1.2.2 + jakarta-oro als Source verwenden zum lokalen kompilieren für jeweils auf System vorh. JDK, oder fertige .jar basierend auf JDK122 (funktion mit div. JDK's prüfen)
-6.11. - Hexviewer, keine Daten bei Erstaufruf, scrollen (slider) arbeitet nicht wie vorgesehen (Sprungweite)
+dvbmatt erl 6.11. - Hexviewer, keine Daten bei Erstaufruf, scrollen (slider) arbeitet nicht wie vorgesehen (Sprungweite)

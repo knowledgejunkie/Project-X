@@ -225,12 +225,12 @@ public class HexViewer extends JFrame
 	private void savefile(long startPos, long size)
 	{
 		long len = xinputFile.length();
-		size = (startPos+size>len) ? (len-startPos) : size;
+		size = (startPos + size > len) ? (len - startPos) : size;
 
-		if (startPos>=len || startPos<0 || size<1) 
+		if (startPos >= len || startPos<0 || size < 1) 
 			return;
 
-		String newfile = xinputFile+"(0x"+Long.toHexString(startPos)+" to 0x"+Long.toHexString(startPos+size)+").bin";
+		String newfile = xinputFile + "(0x" + Long.toHexString(startPos) + " to 0x" + Long.toHexString(startPos + size) + ").bin";
 		chooser.setSelectedFile(new File(newfile));
 		chooser.rescanCurrentDirectory();
 
@@ -290,17 +290,24 @@ public class HexViewer extends JFrame
 	{
 		try 
 		{
-	xinputFile.randomAccessOpen("r");
-	long len = xinputFile.length();
-	if (position<len) {
-		if (textonly.isSelected()) {
-			xinputFile.randomAccessSeek(position);
+			xinputFile.randomAccessOpen("r");
+
+			long len = xinputFile.length();
+
+			if (position<len)
+			{
+				if (textonly.isSelected())
+				{
+					xinputFile.randomAccessSeek(position);
+
 					String text = "";
 
-					if (position!=0) 
-				xinputFile.randomAccessReadLine();
-			for (int a=0; a<24 && xinputFile.randomAccessGetFilePointer()<len; a++) 
-				text += xinputFile.randomAccessReadLine() + "\n";
+					if (position != 0) 
+						xinputFile.randomAccessReadLine();
+
+					for (int a=0; a < 24 && xinputFile.randomAccessGetFilePointer() < len; a++) 
+						text += xinputFile.randomAccessReadLine() + "\n";
+
 					HexArea.setText(text);
 				}
 				else
@@ -309,7 +316,8 @@ public class HexViewer extends JFrame
 					byte[] data = new byte[viewsize];
 					xinputFile.randomAccessSeek(position);
 					xinputFile.randomAccessRead(data);
-					print(data,position);
+
+					print(data, position);
 				}
 			}
 			xinputFile.randomAccessClose();
@@ -334,7 +342,7 @@ public class HexViewer extends JFrame
 			text += fill.substring(0, 10 - pos.length()) + pos + " : ";
 			int b=0;
 
-			for (; b<16 && a+b<data.length; b++)
+			for (; b < 16 && a + b < data.length; b++)
 			{ 
 				String val = Integer.toHexString((0xFF & data[a + b])).toUpperCase();
 				text += fill.substring(0, 2 - val.length()) + val + ((b == 7) ? "-" : " ");
@@ -354,13 +362,14 @@ public class HexViewer extends JFrame
 	{
 		long filelen = aXInputFile.length();
 
-		if ((xinputFile != null) && !(xinputFile.equals(aXInputFile)))
+		if ((xinputFile == null) || !(xinputFile.equals(aXInputFile)))
 		{
-			HexArea.setText("");
-			slider.setMaximum((int)(filelen/16));
 			xinputFile = aXInputFile;
 
-			if (slider.getValue()==0) 
+			HexArea.setText("");
+			slider.setMaximum((int)(filelen / 16));
+
+			if (slider.getValue() == 0) 
 				readfile(0);
 
 			else 
