@@ -189,13 +189,20 @@ public class FtpChooser extends JDialog {
 	void testButton_actionPerformed(ActionEvent e) {
 		FtpVO ftpVO = new FtpVO(tfServer.getText(), tfUser.getText(), tfPassword.getText(), tfDirectory.getText(), null);
 		xInputDirectory = new XInputDirectory(ftpVO);
+
 		isTested = xInputDirectory.test();
-		if (!isTested) {
-			xInputDirectory = null;
-		}
+
+	//	if (!isTested) {
+	//		xInputDirectory = null;
+	//	}
+
 		okButton.setEnabled(isTested);
 		tfState.setText(xInputDirectory.getTestMsg());
 		taState.setText(xInputDirectory.getLog());
+
+		if (!isTested) {
+			xInputDirectory = null;
+		}
 	}
 
 	void okButton_actionPerformed(ActionEvent e) {
