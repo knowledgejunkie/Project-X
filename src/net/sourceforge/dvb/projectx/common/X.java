@@ -1,7 +1,7 @@
 /*
  * @(#)X.java - main incl. GUI
  *
- * Copyright (c) 2001-2004 by dvb.matt, All rights reserved.
+ * Copyright (c) 2001-2005 by dvb.matt, All rights reserved.
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.
@@ -178,7 +178,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "30.12.2004 22:00";
+static String version_date = "01.01.2005 18:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -236,7 +236,7 @@ static JButton doitButton, breakButton, scanButton, pauseButton, extract, exeBut
 
 public static JRadioButton[] RButton = new JRadioButton[25];
 public static JComboBox[] comBox = new JComboBox[39];
-public static JCheckBox[] cBox = new JCheckBox[79];
+public static JCheckBox[] cBox = new JCheckBox[80];
 
 // radio buttons for look and feels in general menu
 private JRadioButtonMenuItem lf_item[] = null; 
@@ -2386,29 +2386,37 @@ protected JPanel buildsubtitlePanel()
 
 	cBox[17] = new JCheckBox(Resource.getString("tab.subtitle.megaradio"));
 	cBox[17].setToolTipText(Resource.getString("tab.subtitle.megaradio.tip"));
-	cBox[17].setPreferredSize(new Dimension(500,22));
-	cBox[17].setMaximumSize(new Dimension(500,22));
+	cBox[17].setPreferredSize(new Dimension(500,20));
+	cBox[17].setMaximumSize(new Dimension(500,20));
 	tt0.add(cBox[17]);
 
 	cBox[22] = new JCheckBox(Resource.getString("tab.subtitle.hidden"));
 	cBox[22].setToolTipText(Resource.getString("tab.subtitle.hidden.tip"));
-	cBox[22].setPreferredSize(new Dimension(500,22));
-	cBox[22].setMaximumSize(new Dimension(500,22));
+	cBox[22].setPreferredSize(new Dimension(500,20));
+	cBox[22].setMaximumSize(new Dimension(500,20));
 	tt0.add(cBox[22]);
 
 	//DM22072004 081.7 int07 add
 	cBox[62] = new JCheckBox(Resource.getString("tab.subtitle.pts"));
 	cBox[62].setToolTipText(Resource.getString("tab.subtitle.pts.tip"));
-	cBox[62].setPreferredSize(new Dimension(500,22));
-	cBox[62].setMaximumSize(new Dimension(500,22));
+	cBox[62].setPreferredSize(new Dimension(500,20));
+	cBox[62].setMaximumSize(new Dimension(500,20));
 	tt0.add(cBox[62]);
 
 	//DM09032004 081.6 int18 add
 	cBox[67] = new JCheckBox(Resource.getString("tab.subtitle.timecode"));
 	cBox[67].setToolTipText(Resource.getString("tab.subtitle.timecode.tip"));
-	cBox[67].setPreferredSize(new Dimension(500,25));
-	cBox[67].setMaximumSize(new Dimension(500,25));
+	cBox[67].setPreferredSize(new Dimension(500,20));
+	cBox[67].setMaximumSize(new Dimension(500,20));
 	tt0.add(cBox[67]);
+
+	cBox[79] = new JCheckBox(Resource.getString("tab.subtitle.decode"));
+	cBox[79].setToolTipText(Resource.getString("tab.subtitle.decode.tip"));
+	cBox[79].setPreferredSize(new Dimension(500,20));
+	cBox[79].setMaximumSize(new Dimension(500,20));
+	cBox[79].setSelected(true);
+	tt0.add(cBox[79]);
+
 
 	JLabel page_decode = new JLabel(Resource.getString("tab.subtitle.pages"));
 	page_decode.setToolTipText(Resource.getString("tab.subtitle.pages.tip"));
@@ -2421,7 +2429,7 @@ protected JPanel buildsubtitlePanel()
 
 	for (int p=0;p<6;p++) {
 		comBox[28+p] = new JComboBox(pagenumber);
-		comBox[28+p].setPreferredSize(new Dimension(60,25));
+		comBox[28+p].setPreferredSize(new Dimension(60,22));
 		comBox[28+p].setEditable(true);
 		tt1.add(comBox[28+p]);
 	}
@@ -2513,13 +2521,13 @@ protected JPanel buildsubtitlePanel()
 	};
 	comBox[11] = new JComboBox(model);
 	comBox[11].setSelectedIndex(1);
-	comBox[11].setPreferredSize(new Dimension(130,22));
-	comBox[11].setMaximumSize(new Dimension(130,22));
+	comBox[11].setPreferredSize(new Dimension(130,20));
+	comBox[11].setMaximumSize(new Dimension(130,20));
 
 	d2vfield[9] = new JTextField("");
 	d2vfield[9].setEditable(true);
-	d2vfield[9].setPreferredSize(new Dimension(40,22));
-	d2vfield[9].setMaximumSize(new Dimension(100,22));
+	d2vfield[9].setPreferredSize(new Dimension(40,20));
+	d2vfield[9].setMaximumSize(new Dimension(100,20));
 	d2vfield[9].setToolTipText(Resource.getString("tab.subtitle.pageid.tip"));
 
 	JPanel IRDPanel = new JPanel();
@@ -2536,21 +2544,28 @@ protected JPanel buildsubtitlePanel()
 	tt0.add(IRDPanel);
 	//DM24042004 081.7 int02 add--
 
-	tt0.add(new JLabel(Resource.getString("tab.subtitle.sup.special")));
+	//tt0.add(new JLabel(Resource.getString("tab.subtitle.sup.special")));
 
 	picButton = new JButton(Resource.getString("tab.subtitle.preview"));
-	picButton.setPreferredSize(new Dimension(180,25));
+	picButton.setPreferredSize(new Dimension(180,24));
 	picButton.setActionCommand("picview");
 	picButton.addActionListener(my0Listener);
 
-	Object[] fonts = (Object[])GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+	Object[] fonts = new Object[0];
+	try {
+		fonts = (Object[])GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+	} catch (Exception exc) {
+		System.out.println(Resource.getString("tab.subtitle.font.error") + ": " + exc);
+	} catch (Error err) {
+		System.out.println(Resource.getString("tab.subtitle.font.error") + ": " + err);
+	}
 	comBox[26] = new JComboBox(fonts);
-	comBox[26].setSelectedItem("SansSerif");
-	comBox[26].setPreferredSize(new Dimension(150,25));
+	comBox[26].setSelectedItem("Tahoma");
+	comBox[26].setPreferredSize(new Dimension(150,24));
 
 	d2vfield[6] = new JTextField("26;10;32;80;560;720;576;-1;4"); //DM26052004 081.7 int03 changed
 	d2vfield[6].setEditable(true);
-	d2vfield[6].setPreferredSize(new Dimension(170,20));
+	d2vfield[6].setPreferredSize(new Dimension(170,24));
 	d2vfield[6].setToolTipText(Resource.getString("tab.subtitle.sup.values.tip"));
 
 	JPanel picPanel = new JPanel();
@@ -5065,8 +5080,11 @@ public void iniload()
 			Common.setFTP_Password(path.substring(13, path.length()));
 		else if (path.startsWith("ftp.directory=")) 
 			Common.setFTP_Directory(path.substring(14, path.length()));
-		else if (path.startsWith("ftp.command=")) 
+		else if (path.startsWith("ftp.command="))
+		{
 			Common.setFTP_Command(path.substring(12, path.length()));
+			ftpcommand.setText(Common.getFTP_Command());
+		}
 
 	}
 	
@@ -7141,7 +7159,8 @@ public void pesparse(XInputFile aXInputFile, String vptslog, int ismpg)
 	long count=0;
 
 	PESdemuxlist.clear();
-	PIDdemux demux = new PIDdemux();
+	PIDdemux demux = null;
+	//PIDdemux demux = new PIDdemux();
 
 	try 
 	{
@@ -7513,17 +7532,18 @@ public void pesparse(XInputFile aXInputFile, String vptslog, int ismpg)
 
 	for (int a=0;a<PESdemuxlist.size();a++) {
 		demux = (PIDdemux)PESdemuxlist.get(a);
+
 		if (demux.getType()==3) 
 			continue;
 
 		String[] values = demux.close(vptslog);
+
 		if (values[0].equals("")) 
 			continue;
 
 		String newfile = values[3]+ ((lfn[demux.getType()]>0) ? ("_"+lfn[demux.getType()]) : "") + "." + values[2];
 
 		Common.renameTo(values[0], newfile); //DM13042004 081.7 int01 changed
-		//new File(values[0]).renameTo(new File(newfile));
 
 		values[0] = newfile;
 		values[3] = vptslog;
@@ -7536,21 +7556,25 @@ public void pesparse(XInputFile aXInputFile, String vptslog, int ismpg)
 			Msg(Resource.getString("pesparse.ac3.audio")+((demux.subID()!=0) ? ("(SubID 0x"+Integer.toHexString(demux.subID()).toUpperCase()+")") : "")); //DM19122003 081.6 int07 changed
 			mpt(values);
 			break;
+
 		case 1: //DM30122003 081.6 int10 changed
 			Msg("");
 			Msg(Resource.getString("pesparse.teletext")+" (SubID 0x"+Integer.toHexString(demux.subID()).toUpperCase()+")");
 			processTeletext(values);
 			break;
+
 		case 2:
 			Msg("");
 			Msg(Resource.getString("pesparse.mpeg.audio")+" (0x"+Integer.toHexString(demux.getID()).toUpperCase()+")");
 			mpt(values);
 			break;
+
 		case 4: //DM23022004 081.6 int18 add
 			Msg("");
 			Msg(Resource.getString("pesparse.lpcm.audio")+" (SubID 0x"+Integer.toHexString(demux.subID()).toUpperCase()+")");
 			processLPCM(values);
 			break;
+
 		case 5: //DM23022004 081.6 int18 add, //DM12042004 081.7 int01 changed
 			Msg("");
 			Msg(Resource.getString("pesparse.subpic")+" (SubID 0x"+Integer.toHexString(demux.subID()).toUpperCase()+")");
@@ -7625,7 +7649,8 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 	String[][] mt = { { "(vdr)","","" },{ "","(mpg)","(mpg)" } };
 	int[] newID = { 0xE0, 0xC0, 0x80, 0x90, 0xA0, 0x20 }; //DM22022004 081.6 int18 changed
 
-	PIDdemux demux = new PIDdemux();
+	PIDdemux demux = null;
+	//PIDdemux demux = new PIDdemux();
 
 	if (options[19]==0) 
 		VDRdemuxlist.clear();
@@ -7863,6 +7888,7 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 						if ((0xFF & options[52]) != cellid || (0xFFFF & options[52]>>>16) != vobid)
 						{
 							Msg(Resource.getString("vdrparse.split.cellids", "" + vobid, "" + cellid, "" + count, "" + clv[6], "" + options[7])); //DM30122003 081.6 int10 changed
+
 
 							if (cBox[76].isSelected())
 							{
@@ -8204,7 +8230,8 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 				{
 				case 0xE0:
 					IDtype=Resource.getString("idtype.mpeg.video");
-					demux = new PIDdemux();
+					demux = new PIDdemux(ptsoffset);
+					//demux = new PIDdemux();
 					demux.setID(pesID);
 					demux.setnewID(newID[0]++);
 					demux.setsubID(0);
@@ -8231,7 +8258,8 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 				case 0xC0:
 				case 0xD0:
 					IDtype=Resource.getString("idtype.mpeg.audio"); 
-					demux = new PIDdemux();
+					demux = new PIDdemux(ptsoffset);
+					//demux = new PIDdemux();
 					demux.setID(pesID);
 					demux.setnewID(newID[1]++);
 					demux.setsubID(0);
@@ -8254,7 +8282,8 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 				case 0xBD:   //DM30122003 081.6 int10 changed
 					IDtype = Resource.getString("idtype.private.stream");
 					IDtype += (ttx ? " TTX " : "") + (subID != 0 ? " (SubID 0x" + Integer.toHexString(subID).toUpperCase() + ")" : ""); 
-					demux = new PIDdemux();
+					demux = new PIDdemux(ptsoffset);
+					//demux = new PIDdemux();
 					demux.setID(pesID);
 					demux.setsubID(subID);
 					demux.setTTX(ttx);    // sets the type, too  (false=ac3,dts,lpcm,subpic, true=ttx)
@@ -8701,8 +8730,9 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 	else if (ToVDR==5) 
 		makevdr.init(fparent + "[filtered].ts", options, bs, ToVDR, (int)options[19]);
 
-	TSPID TSPid = new TSPID();
-	PIDdemux demux;
+	//TSPID TSPid = new TSPID();
+	TSPID TSPid = null;
+	PIDdemux demux = null;
 	ArrayList usedPIDs = new ArrayList();
 
 	if (options[19]==0) { 
@@ -9904,8 +9934,10 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 	int[] newID = { 0xE0, 0xC0, 0x80, 0x90 };
 
 	RAWFILE rawfile = new RAWFILE();
-	TSPID TSPid = new TSPID();
-	PIDdemux demux = new PIDdemux();
+	TSPID TSPid = null;
+	PIDdemux demux = null;
+	//TSPID TSPid = new TSPID();
+	//PIDdemux demux = new PIDdemux();
 
 	if (options[19]==0) {
 		PVAPidlist.clear();
@@ -10253,7 +10285,8 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 				switch (pid) {
 				case 1: { 
 					IDtype=Resource.getString("idtype.video");
-					demux = new PIDdemux();
+					demux = new PIDdemux(ptsoffset);
+					//demux = new PIDdemux();
 					TSPid.setStarted(true);
 					demux.setID(0xE0);
 					demux.setnewID(newID[0]++);
@@ -10271,27 +10304,7 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 				}
 				case 2: { 
 					IDtype=Resource.getString("idtype.main.audio");
-				/**
-					if (!cpts) 
-						continue pvaloop;
-					int streamID = 0xFF&data[3];
-					demux = new PIDdemux();
-					TSPid.setStarted(true);
-					demux.setID(streamID);
-					demux.setnewID(newID[1]++);
-					demux.setPID(pid);
-					demux.setsubID(0);
-					demux.setType(2);
-					demux.setStreamType(ismpg);
-					TSPid.setID(PVAdemuxlist.size());
-					PVAdemuxlist.add(demux);
-					IDtype+=Resource.getString("idtype.has.pesid")+Integer.toHexString(streamID).toUpperCase()+streamtypes[2];
-					if (ToVDR==0) 
-						demux.init(fparent,options,bs/PVAdemuxlist.size(),PVAdemuxlist.size(),3);
-					else 
-						IDtype+=" " + Resource.getString("idtype.mapped.to") + Integer.toHexString(demux.getnewID()).toUpperCase();
-					break; 
-				**/
+					//do not break
 				}
 				default: { 
 					IDtype=Resource.getString("idtype.additional"); 
@@ -10302,7 +10315,8 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 						TSPid.setneeded(false); 
 						break; 
 					}
-					demux = new PIDdemux();
+					demux = new PIDdemux(ptsoffset);
+					//demux = new PIDdemux();
 					TSPid.setStarted(true);
 					demux.setPID(pid);
 					demux.setType((streamID!=0xBD)?2:0);    // MPA?
@@ -11367,6 +11381,7 @@ public boolean processAudio(String[] args)
 				}
 
 				long[] ins = { (long)time_counter,0 };
+
 
 				while ( ptsval[x+1] > (timeline-(audio.Time_length/2.0)) )  {
 					if (vptsdata && w<vptsval.length) { 
@@ -13415,6 +13430,7 @@ public void processTeletext(String[] args)
 									print_buffer.println( "|out_" + timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) )); 
 									break;
 
+
 								case 2:  // SC
 									print_buffer.print( Teletext.SMPTE( timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), (long)videoframerate) + "&");
 									print_buffer.print( Teletext.SMPTE( timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), (long)videoframerate) + "#");
@@ -13817,6 +13833,7 @@ public void processTeletext(String[] args)
 		else
 		{ 
 			subpicture.picture.set2();
+			Msg("");
 			Msg(Resource.getString("teletext.msg.newrun"));
 		}
 
@@ -16308,10 +16325,18 @@ class PIDdemux {
 	byte[] subpic_header = { 0x53, 0x50, 0, 0, 0, 0, 0, 0, 0, 0 }; //DM24022004 081.6 int18 new
 	byte[] pcm_header = { 0x50, 0x43, 0x4D, 0, 0, 0, 0, 0, 0, 0 }; //'PCM'+5b(pts)+2b(size) //DM24022004 081.6 int18 new
 
+
+	public PIDdemux()
+	{}
+
+	public PIDdemux(long val)
+	{
+		ptsoffset = val;
+	}
+
 	//DM14072004 081.7 int06 add, stream type preselector
 	public boolean StreamEnabled()
 	{
-
 		switch(newID>>>4)
 		{
 		case 0xE:  //video
@@ -16335,7 +16360,7 @@ class PIDdemux {
 			return cBox[60].isSelected();
 
 		default:
-			return false;
+			return true;
 		}
 	}
 
@@ -16963,6 +16988,7 @@ class PIDdemux {
 				ptsover=true;      // bit 33 was set
 
 			if (ptsover && pts<0xF0000000L) 
+
 				pts |= 0x100000000L;
 
 			pts += ptsoffset;

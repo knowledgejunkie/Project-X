@@ -146,3 +146,11 @@ dvbmatt änderg 29.12. - CLI: batchfile-liste (für eine Coll) auch via FTP ladbar
 dvbmatt fix 30.12. - stream type deselector funktionierte nicht mehr im merge
 
 dvbmatt ergänz 30.12. - <extern> benutzerspezifische FTP Kommandos erlauben, die vor dem Initialisieren des Inputstream ausgeführt werden (nicht bei Test)
+
+dvbmatt fix 31.12. - sekundärer Streamdemux (bspw. PES-ttx) funktionierte in Übergangszeit nicht mehr
+
+dvbmatt änder 31.12. - abfrage der install. fonts mit fehlerabfangen, IIRC unix-problem
+
+dvbmatt neu 31.12. - VTX SUP-UT-Export mit neuer Option für Textumrandung, viel bessere Optik bei weniger als 3 Sprecherfarben pro Bild (eh selten), bei mehr als 2 wie bisher kompletter Hintergrund
+
+dvbmatt fix 31.12.  ptsoffset wurde nicht angewandt, wenn neuer stream erst nach einer Änderung im pts_offset auftauchte (nur bei mpg1/2,vdr,pva hauptstreams von belang)

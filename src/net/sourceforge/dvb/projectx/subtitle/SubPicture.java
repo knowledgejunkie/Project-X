@@ -1,7 +1,7 @@
 /*
  * @(#)SUBPICTURE.java - creates SUP file to use as DVD subtitles
  *
- * Copyright (c) 2003-2004 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2003-2005 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.
@@ -40,6 +40,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
+import java.awt.geom.Rectangle2D;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -98,6 +99,8 @@ public class Picture extends JPanel implements Runnable
 	public java.text.DateFormat sms = new java.text.SimpleDateFormat("HH:mm:ss.SSS");
 	public Thread thread;
 	private int w=720, h=576, x=20, nibble=0, val=0, default_alpha=10; //DM24012004 081.6 int11 changed, //DM20042004 081.7 int02 changed
+	private int modified_alpha = 0;
+
 	private BufferedImage bimg;
 	private Graphics2D big;
 	private Font font, font_alt, font_std; //DM30122003 081.6 int10 add, //DM01032004 081.6 int18 add
@@ -185,7 +188,8 @@ public class Picture extends JPanel implements Runnable
 		0xFF90E0E0, //cyan
 		0xFF808080, //white-gray
 
-		0 // bg transparent
+		0, // backgr black, user_transparency
+		0x80 // backgr blue, sign for full transparency
 	};
 
 	private final int default_sup_colors[] = {
@@ -239,6 +243,8 @@ public class Picture extends JPanel implements Runnable
 	private int isforced_status = 0;
 	private boolean global_error = false;
 
+	private int line_offset = 28;
+
 	public DVBSubpicture dvb = new DVBSubpicture(); //DM24042004 081.7 int02 new
 
 	public Picture()
@@ -246,13 +252,12 @@ public class Picture extends JPanel implements Runnable
 		bimg = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 		big = bimg.createGraphics();
 
-		set("SansSerif", ("" + "26;10;32;80;560;720;576;-1;4"));
+		set("Tahoma", ("" + "26;10;32;80;560;720;576;-1;4"));
 		frc = big.getFontRenderContext();
 
 		//   big.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
 		setBackground(Color.gray);
-		//setVisible(true);
 		sms.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
 	}
 
@@ -301,7 +306,8 @@ public class Picture extends JPanel implements Runnable
 	{
 		int space = 6;
 		Rect[0] = option[3];
-		Rect[3] = (2 * space) + (option[0] * str.length);
+		//Rect[3] = (2 * space) + (option[0] * str.length);
+		Rect[3] = (2 * space) + (line_offset * str.length);
 		Rect[1] = option[6] - option[2] - Rect[3];
 		Rect[2] = option[4];
 
@@ -320,11 +326,83 @@ public class Picture extends JPanel implements Runnable
 
 		int color_table[] = getColorTable(1);
 
-		//DM26052004 081.7 int03 moved
 		big.setFont(font);
 
-		big.setColor(new Color(color_table[64])); // 8
-		big.fillRect(Rect[0], Rect[1], Rect[2], Rect[3]); // black background
+		ArrayList list = new ArrayList();
+		boolean antialiasing;
+
+		/**
+		 * pre-check, whether we have not more than 2 'speaker-colors'
+		 */
+		for (int a = 0; a < str.length; a++)
+		{
+			int[] chars = (int[])str[a];
+
+			for (int b = 0; b < chars.length; b++)
+			{
+				//source background color
+				int offset = (7 & chars[b]>>>4)<<3;
+
+				//source modified foreground color
+				int paint_color = color_table[offset + (7 & chars[b])];
+				String str = Integer.toString(paint_color);
+				String sign = new Character((char)(chars[b]>>>8)).toString();
+
+				//remember new color
+				if (list.indexOf(str) < 0 && !sign.equals(" "))
+					list.add(str);
+			}
+		}
+
+		/**
+		 * define background; if less than 3 front-colors, use 'simple' antialiasing with full transparency
+		 */
+		if (list.size() < 3 && X.cBox[79].isSelected())
+		{
+			big.setColor(new Color(color_table[65])); // deep blue, full transp
+			modified_alpha = 0;
+			antialiasing = true;
+		}
+		else
+		{
+			big.setColor(new Color(color_table[64])); // black, half transp
+			modified_alpha = default_alpha;
+			antialiasing = false;
+		}
+
+		big.fillRect(Rect[0], Rect[1], Rect[2], Rect[3]); // background
+
+		Rectangle2D r;
+
+		// paint background of char
+		for (int a = 0; antialiasing && a < str.length; a++)
+		{
+			int[] chars = (int[])str[a];
+			String str = "";
+
+			big.setColor(new Color(color_table[64])); // black
+
+			/**
+			 * concatenate string, no special colors required
+			 */
+			for (int i = 0; i < chars.length; i++)
+				str += new Character((char)(chars[i]>>>8)).toString();
+
+			x = option[3];
+			//int y = Rect[1] + (option[0] * (1 + a));
+			int y = Rect[1] + (line_offset * (1 + a));
+			int[] offs = { 2, 3, 3, 3, 3, 3, 2 };
+
+			for (int i = 0; i < offs.length; i++) // horiz. lines
+			{
+				int _x = x;
+				int _y = y - (offs.length / 2) + i;
+
+				for (int j = -offs[i]; j < offs[i] + 1; j++)
+					big.drawString(str, _x + j, _y);
+			}
+		}
+
 
 		// paint ascii char
 		for (int a=0; a < str.length; a++)
@@ -335,10 +413,13 @@ public class Picture extends JPanel implements Runnable
 			//DM26052004 081.7 int03 changed
 			for (int b=0; b < chars.length; b++)
 			{
+				//source background color
 				int offset = (7 & chars[b]>>>4)<<3;
 
+				//source foreground color
 				big.setColor(new Color(color_table[offset + (7 & chars[b])]));
-				big.drawString("" + (char)(chars[b]>>>8), x, Rect[1] + (option[0] * (1 + a)));
+				//big.drawString("" + (char)(chars[b]>>>8), x, Rect[1] + (option[0] * (1 + a)));
+				big.drawString("" + (char)(chars[b]>>>8), x, Rect[1] + (line_offset * (1 + a)));
 
 				x += font.getStringBounds("" + (char)(chars[b]>>>8), frc).getWidth();
 			}
@@ -656,7 +737,8 @@ public class Picture extends JPanel implements Runnable
 		}
 
 		if (read_from_Image)
-			pgc_alphas &= (0xFFF0 | default_alpha);
+		//	pgc_alphas &= (0xFFF0 | default_alpha);
+			pgc_alphas &= (0xFFF0 | modified_alpha);
 
 		return (pgc_alphas<<16 | pgc_colors);
 	}
@@ -687,10 +769,11 @@ public class Picture extends JPanel implements Runnable
 			a++;
 		}
 
+		line_offset = option[0] + 2;
 		default_alpha = 0xF & option[1];
 		font = new Font(nm, Font.BOLD, option[0]);
 		font_alt = new Font(nm, Font.BOLD | Font.ITALIC, option[0]); //DM30122003 081.6 int10 add
-		font_std = new Font("Sans Serif", Font.PLAIN, 14); //DM01032004 081.6 int18 add
+		font_std = new Font("Tahoma", Font.PLAIN, 14); //DM01032004 081.6 int18 add
 		return option[7];
 	}
 
