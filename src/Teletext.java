@@ -25,545 +25,712 @@
  */
 
 
-//import java.awt.*;
+import java.util.*;
 
 public final class Teletext
 {
+	private Teletext()
+	{}
 
-private Teletext()
-{}
+	private final static String[] ssaHeader = {
+		"[Script Info]",
+		"; This is a Sub Station Alpha v4 script.",
+		"; For Sub Station Alpha info and downloads,",
+		"; go to http://www.eswat.demon.co.uk/",
+		"; or email kotus@eswat.demon.co.uk",
+		"; to burn-in these subtitles into an AVI, just install subtitler2.3 PlugIn for VirtualDub, see doom9.org",
+		"Title: Subtitles taken from TV teletext",
+		"Original Script: by their respective owner",
+		"ScriptType: v4.00",
+		"Collisions: Normal",
+		"PlayResY: 240",      // maybe replaced [10]
+		"PlayDepth: 0", 
+		"Timer: 100.0000",    // maybe replaced [12]
+		"[V4 Styles]",
+		"Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, TertiaryColour, BackColour, Bold, Italic, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, AlphaLevel, Encoding",
+		"Style: MainB,Arial,14,&H00FFFF,&H00FFFF,&H00FFFF,0,0,-1,1,2,4,1,16,16,16,0,0",
+		"Style: MainT,Arial,14,&HFFFFFF,&HFFFFFF,&HFFFFFF,0,1,0,1,2,4,1,16,16,16,0,0",
+		"Style: MainI,Arial,14,&HFFFFFF,&HFFFFFF,&HFFFFFF,0,1,1,1,2,4,1,16,16,16,0,0",   //DM30122003 081.6 int10 add
+		"Style: MainC,Courier New,14,&HFFFFFF,&HFFFFFF,&HFFFFFF,0,1,0,1,2,4,1,16,16,16,0,0",
+		"[Events]",
+		"Format: Marked, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
+		"Comment: Marked=0,0:00:00.00,0:00:00.01,MainB,,0000,0000,0000,!Effect,This script was created by decoding a tv teletext stream to build coloured subtitles"
+	};
 
-//DM14032004 081.6 int18 changed
-//DM05052004 081.7 int02 changed
-private final static char[][] ncs = {
-	/**** # is original ****/
-	//{ '£','$','@','«','½','»','^','#','-','¼','¦','¾','÷' },  // westeuropean, polish 000
-	{ '£','$','@','Z','\u015A','\u0141','\u0107','\u00F3','\u0119','\u017C','\u015B','\u0142','\u017A' },  // westeuropean, polish unicode
-	{ 'é','ï','à','ë','ê','ù','î','#','è','â','ô','û','ç' },  // french 001, checked
-	{ '#','¤','É','Ä','Ö','Å','Ü','_','é','ä','ø','å','ü' },  // 010 nor,swe  010, checked
-	//{ '#','û','@','t','z','ý','í','r','é','á','ê','ú','s' },  // turkish, czech, greek 011, some wrong w/o unicode
-	{ '#','\u016F','\u010D','\u0165','\u017E','ý','í','\u0159','é','á','\u011B','ú','\u0161' },  // czech, using unicode
-	{ '#','$','§','Ä','Ö','Ü','^','_','°','ä','ö','ü','ß' },  // german 100, checked
-	{ 'ç','$','@','á','é','í','ó','ú','¿','ã','ñ','õ','à' },  // portugal 101
-	{ '£','$','é','°','ç','»','^','ë','ù','à','ò','è','ì' },  // italian, jugoslav 110, checked
-	//{ '#','¤','T','Â','S','Ä','Î','i','t','â','s','â','î' },  // rumanian,english thai 111, some wrong w/o unicode
-	{ ' ','¤','\u0163','Â','\u015E','Ä','Î','i','\u0164','â','\u015F','\u0103','î' },  // rumanian,using unicode
+	private final static String[] ssaLine = { 
+		"Dialogue: Marked=0,",
+		",MainT,,0000,0000,0000,!Effect,{\\q2\\a2}"
+	};
 
-	/**** # is replaced ****/
-	//{ '£','$','@','«','½','»','^','#','-','¼','¦','¾','÷' },  // westeuropean, polish 000
-	{ '£','$','@','Z','\u015A','\u0141','\u0107','\u00F3','\u0119','\u017C','\u015B','\u0142','\u017A' },  // westeuropean, polish unicode
-	{ 'é','ï','à','ë','ê','ù','î',' ','è','â','ô','û','ç' },  // french  001, checked
-	{ ' ','¤','É','Ä','Ö','Å','Ü','_','é','ä','ø','å','ü' },  // 010 nor,swe 010, checked
-	//{ ' ','û','@','t','z','ý','í','r','é','á','ê','ú','s' },  // turkish, czech, greek 011, some wrong w/o unicode
-	{ ' ','\u016F','\u010D','\u0165','\u017E','ý','í','\u0159','é','á','\u011B','ú','\u0161' },  // czech, using unicode
-	{ ' ','$','§','Ä','Ö','Ü','^','_','°','ä','ö','ü','ß' },  // german 100, checked
-	{ 'ç','$','@','á','é','í','ó','ú','¿','ã','ñ','õ','à' },  // portugal 101
-	{ '£','$','é','°','ç','»','^','ë','ù','à','ò','è','ì' },  // italian, jugoslav 110,  checked
-	//{ ' ','¤','T','Â','S','Ä','Î','i','t','â','s','â','î' }  // rumanian,english thai 111, some wrong w/o unicode
-	{ ' ','¤','\u0163','Â','\u015E','Ä','Î','i','\u0164','â','\u015F','\u0103','î' }  // rumanian,using unicode
-}; 
+	//DM26052004 081.7 int03 changed
+	private final static String[] stlHeader = {
+		"",
+		"//Font select and font size",
+		"$FontName   = Arial",
+		"$FontSize   = 30",
+		"//Character attributes (global)",
+		"$Bold    = FALSE",
+		"$UnderLined = FALSE",
+		"$Italic  = FALSE",
+		"//Position Control",
+		"$HorzAlign = Center",
+		"$VertAlign = Bottom",
+		"$XOffset   = 10",
+		"$YOffset   = 10",
+		"//Contrast Control",
+		"$TextContrast        = 15",
+		"$Outline1Contrast    = 8",
+		"$Outline2Contrast    = 15",
+		"$BackgroundContrast  = 0",
+		"//Effects Control",
+		"$ForceDisplay = FALSE",
+		"$FadeIn   = 0",
+		"$FadeOut  = 0",
+		"//Other Controls",
+		"$TapeOffset = FALSE",
+		"//Colors",
+		"$ColorIndex1 = 0",
+		"$ColorIndex2 = 1",
+		"$ColorIndex3 = 2",
+		"$ColorIndex4 = 3",
+		"//Subtitles"
+	};
 
-private final static String[] ssaHeader = {
-	"[Script Info]",
-	"; This is a Sub Station Alpha v4 script.",
-	"; For Sub Station Alpha info and downloads,",
-	"; go to http://www.eswat.demon.co.uk/",
-	"; or email kotus@eswat.demon.co.uk",
-	"; to burn-in these subtitles into an AVI, just install subtitler2.3 PlugIn for VirtualDub, see doom9.org",
-	"Title: Subtitles taken from TV teletext",
-	"Original Script: by their respective owner",
-	"ScriptType: v4.00",
-	"Collisions: Normal",
-	"PlayResY: 240",      // maybe replaced [10]
-	"PlayDepth: 0", 
-	"Timer: 100.0000",    // maybe replaced [12]
-	"[V4 Styles]",
-	"Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, TertiaryColour, BackColour, Bold, Italic, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, AlphaLevel, Encoding",
-	"Style: MainB,Arial,14,&H00FFFF,&H00FFFF,&H00FFFF,0,0,-1,1,2,4,1,16,16,16,0,0",
-	"Style: MainT,Arial,14,&HFFFFFF,&HFFFFFF,&HFFFFFF,0,1,0,1,2,4,1,16,16,16,0,0",
-	"Style: MainI,Arial,14,&HFFFFFF,&HFFFFFF,&HFFFFFF,0,1,1,1,2,4,1,16,16,16,0,0",   //DM30122003 081.6 int10 add
-	"Style: MainC,Courier New,14,&HFFFFFF,&HFFFFFF,&HFFFFFF,0,1,0,1,2,4,1,16,16,16,0,0",
-	"[Events]",
-	"Format: Marked, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
-	"Comment: Marked=0,0:00:00.00,0:00:00.01,MainB,,0000,0000,0000,!Effect,This script was created by decoding a tv teletext stream to build coloured subtitles"
-};
+	//DM14052004 081.7 int02 add
+	private final static String[] sonHeader = {
+		"st_format\t2",
+		"Display_Start\tnon_forced",
+		"TV_Type\t\tPAL",
+		"Tape_Type\tNON_DROP",
+		"Pixel_Area\t(0 575)",
+		"Directory\t",
+		"",
+		"SP_NUMBER\tSTART\t\tEND\t\tFILE_NAME"
+	};
 
-private final static String[] ssaLine = { 
-	"Dialogue: Marked=0,",
-	",MainT,,0000,0000,0000,!Effect,{\\q2\\a2}"
-};
-
-//DM26052004 081.7 int03 changed
-private final static String[] stlHeader = {
-	"",
-	"//Font select and font size",
-	"$FontName   = Arial",
-	"$FontSize   = 30",
-	"//Character attributes (global)",
-	"$Bold    = FALSE",
-	"$UnderLined = FALSE",
-	"$Italic  = FALSE",
-	"//Position Control",
-	"$HorzAlign = Center",
-	"$VertAlign = Bottom",
-	"$XOffset   = 10",
-	"$YOffset   = 10",
-	"//Contrast Control",
-	"$TextContrast        = 15",
-	"$Outline1Contrast    = 8",
-	"$Outline2Contrast    = 15",
-	"$BackgroundContrast  = 0",
-	"//Effects Control",
-	"$ForceDisplay = FALSE",
-	"$FadeIn   = 0",
-	"$FadeOut  = 0",
-	"//Other Controls",
-	"$TapeOffset = FALSE",
-	"//Colors",
-	"$ColorIndex1 = 0",
-	"$ColorIndex2 = 1",
-	"$ColorIndex3 = 2",
-	"$ColorIndex4 = 3",
-	"//Subtitles"
-};
-
-//DM14052004 081.7 int02 add
-private final static String[] sonHeader = {
-	"st_format\t2",
-	"Display_Start\tnon_forced",
-	"TV_Type\t\tPAL",
-	"Tape_Type\tNON_DROP",
-	"Pixel_Area\t(0 575)",
-	"Directory\t",
-	"",
-	"SP_NUMBER\tSTART\t\tEND\t\tFILE_NAME"
-};
-
-private final static String[] colors = {
-	"{\\c&HC0C0C0&}",   // black /gray
-	"{\\c&H4040FF&}",   // red
-	"{\\c&H00FF00&}",   // green
-	"{\\c&H00FFFF&}",   // yellow
-	"{\\c&HFF409B&}",   // blue //DM15032004 081.6 int18 changed
-	"{\\c&HFF00FF&}",   // magenta
-	"{\\c&HFFFF00&}",   // cyan
-	"{\\c&HFFFFFF&}",   // white
-};
+	private final static String[] colors = {
+		"{\\c&HC0C0C0&}",   // black /gray
+		"{\\c&H4040FF&}",   // red
+		"{\\c&H00FF00&}",   // green
+		"{\\c&H00FFFF&}",   // yellow
+		"{\\c&HFF409B&}",   // blue //DM15032004 081.6 int18 changed
+		"{\\c&HFF00FF&}",   // magenta
+		"{\\c&HFFFF00&}",   // cyan
+		"{\\c&HFFFFFF&}",   // white
+	};
 
 
-//DM14052004 081.7 int02 add
-public static String[] getSONHead(String path, long frame_rate)
-{
-	if (frame_rate != 3600)
+	//DM14052004 081.7 int02 add
+	public static String[] getSONHead(String path, long frame_rate)
 	{
-		sonHeader[2] = "TV_Type\t\tNTSC";
-		sonHeader[3] = "Tape_Type\tDROP";
-	}
-	else
-	{
-		sonHeader[2] = "TV_Type\t\tPAL";
-		sonHeader[3] = "Tape_Type\tNON_DROP";
+		if (frame_rate != 3600)
+		{
+			sonHeader[2] = "TV_Type\t\tNTSC";
+			sonHeader[3] = "Tape_Type\tDROP";
+		}
+		else
+		{
+			sonHeader[2] = "TV_Type\t\tPAL";
+			sonHeader[3] = "Tape_Type\tNON_DROP";
+		}
+
+		sonHeader[5] = "Directory\t" + path;
+
+		return sonHeader;
 	}
 
-	sonHeader[5] = "Directory\t" + path;
+	/*****************
+	 * return STL header *
+	 *****************/
+	public static String[] getSTLHead(String version)
+	{
+		stlHeader[0] = 	"//Generated by " + version;
 
-	return sonHeader;
-}
+		return stlHeader;
+	}
 
-/*****************
- * return STL header *
- *****************/
-public static String[] getSTLHead(String version)
-{
-	stlHeader[0] = 	"//Generated by " + version;
+	/*****************
+	 * return SSA header *
+	 *****************/
+	public static String[] getSSAHead()
+	{ 
+		return ssaHeader; 
+	}
 
-	return stlHeader;
-}
+	/*****************
+	 * return SSA line *
+	 *****************/
+	public static String[] getSSALine()
+	{ 
+		return ssaLine; 
+	}
 
-/*****************
- * return SSA header *
- *****************/
-public static String[] getSSAHead()
-{ 
-	return ssaHeader; 
-}
+	/*****************
+	 * return SMPTE *
+ 	*****************/
+	public static String SMPTE(String time, long videoframetime)
+	{
+		StringBuffer a = new StringBuffer();
+		a.append(time.substring(0, 8) + ":00");
+		String b = "" + (Integer.parseInt(time.substring(9, 12)) / ((int)videoframetime / 90));
+		a.replace((b.length() == 1) ? 10 : 9 , 11, b);
 
-/*****************
- * return SSA line *
- *****************/
-public static String[] getSSALine()
-{ 
-	return ssaLine; 
-}
+		return a.toString();
+	}
 
-/*****************
- * return SMPTE *
- *****************/
-public static String SMPTE(String time, long videoframetime)
-{
-	StringBuffer a = new StringBuffer();
-	a.append(time.substring(0, 8) + ":00");
-	String b = "" + (Integer.parseInt(time.substring(9, 12)) / ((int)videoframetime / 90));
-	a.replace((b.length() == 1) ? 10 : 9 , 11, b);
-
-	return a.toString();
-}
-
-/*****************
- * change endian *
- *****************/
-public static byte bytereverse(byte n)
-{
-	n = (byte) (((n >> 1) & 0x55) | ((n << 1) & 0xaa));
-	n = (byte) (((n >> 2) & 0x33) | ((n << 2) & 0xcc));
-	n = (byte) (((n >> 4) & 0x0f) | ((n << 4) & 0xf0));
-	return n;
-}
-
-/**************
- * set parity *
- **************/
-public static byte parity(byte n)
-{
-	boolean par=true;
-
-	if (n == 0) 
+	/*****************
+	 * change endian *
+ 	*****************/
+	public static byte bytereverse(byte n)
+	{
+		n = (byte) (((n >> 1) & 0x55) | ((n << 1) & 0xaa));
+		n = (byte) (((n >> 2) & 0x33) | ((n << 2) & 0xcc));
+		n = (byte) (((n >> 4) & 0x0f) | ((n << 4) & 0xf0));
 		return n;
+	}
 
-	for (int a=0; a < 8; a++) 
-		if ((n>>>a & 1) == 1) 
-			par = !par;
-	if (par) 
-		return (byte)(0x80 | n);
-
-	return n;
-}
-
-/****************
- * check parity *
- ****************/
-public static boolean cparity(byte n)
-{
-	boolean par=true;
-
-	if (n == 0) 
-		return true;
-
-	for (int a=0; a < 7; a++) 
-		if ((n>>>a & 1) == 1) 
-			par = !par;
-
-	if (par && (1 & n>>>7) == 1) 
-		return true;
-
-	else if (!par && (1 & n>>>7) == 0) 
-		return true;
-
-	return false;
-}
-
-
-
-//DM24052004 081.7 int03 introduced
-//no error correction ATM
-public static int hamming24_18(byte b[], int off)
-{
-	int val = 0;
-	val |= (0xFE & b[off + 2])>>>1;
-	val |= (0xFE & b[off + 1])<<6;
-	val |= (0xE & b[off])<<13;
-	val |= (0x20 & b[off])<<12;
-
-	return val;
-}
-
-/******************
- * hamming decode *
- ******************/
-//DM12032004 081.6 int18 changed
-//DM24052004 081.7 int03 changed
-public static byte hamming_decode(byte a)
-{
-	switch (0xFF & a)
+	/**************
+	 * set parity *
+	 **************/
+	public static byte parity(byte n)
 	{
-	case 0xa8: 
-		return 0;
-	case 0x0b: 
-		return 1;
-	case 0x26: 
-		return 2;
-	case 0x85: 
-		return 3;
-	case 0x92: 
-		return 4;
-	case 0x31: 
-		return 5;
-	case 0x1c: 
-		return 6;
-	case 0xbf: 
-		return 7;
-	case 0x40: 
-		return 8;
-	case 0xe3: 
-		return 9;
-	case 0xce: 
-		return 10;
-	case 0x6d: 
-		return 11;
-	case 0x7a: 
-		return 12;
-	case 0xd9: 
-		return 13;
-	case 0xf4: 
-		return 14;
-	case 0x57: 
-		return 15;
-	default: 
-		return -1;     // decode error , not yet corrected
+		boolean par=true;
+
+		if (n == 0) 
+			return n;
+
+		for (int a=0; a < 8; a++) 
+			if ((n>>>a & 1) == 1) 
+				par = !par;
+
+		if (par) 
+			return (byte)(0x80 | n);
+
+		return n;
 	}
-}
+
+	/****************
+	 * check parity *
+ 	****************/
+	public static boolean cparity(byte n)
+	{
+		boolean par=true;
+
+		if (n == 0) 
+			return true;
+
+		for (int a=0; a < 7; a++) 
+			if ((n>>>a & 1) == 1) 
+				par = !par;
+
+		if (par && (1 & n>>>7) == 1) 
+			return true;
+
+		else if (!par && (1 & n>>>7) == 0) 
+			return true;
+
+		return false;
+	}
 
 
-/******************************
- * make suppic from teletext *
- ******************************/
-//DM30122003 081.6 int10 changed
-public static int[] makepic(byte[] a, int cflag)
-{
-	boolean ascii=true;
-	int[] chars = new int[a.length];
-	int ac = 7;  // init with white ascii color per line + black background
-	//  cflag = language 
-	//  return int char<<8 | 0xF0&ac backgrnd | 0xF&ac foregrnd
+	//DM24052004 081.7 int03 introduced
+	//no error correction ATM
+	public static int hamming24_18(byte b[], int off)
+	{
+		int val = 0;
 
-	for (int c=0; c < a.length; c++) {
-		if (!cparity(a[c])) 
-			a[c]=8;
-		int tx = 0x7F & bytereverse(a[c]);
+		val |= (0xFE & b[off + 2])>>>1;
+		val |= (0xFE & b[off + 1])<<6;
+		val |= (0xE & b[off])<<13;
+		val |= (0x20 & b[off])<<12;
 
-		if (tx>>>3 ==0) { 
-			ascii=true; 
-			chars[c]= (0x20<<8 | ac); 
-			ac= (0xF0&ac) | tx; 
-			continue; 
-		} //0x0..7
-		else if (tx>>>4 ==0) { 
-			chars[c]=0x20<<8 | ac; 
-			continue; 
-		}  //0x8..F
-		else if (tx>>>7 ==1) { 
-			chars[c]=0x20<<8 | ac; 
-			continue; 
-		}  //0x80..FF
-		else if (tx < 27) { 
-			ascii=false; 
-			chars[c]=0x20<<8 | ac; 
-			continue; 
-		}  //0x10..1A
-		else if (tx < 32) {    //1d=new bg with last color, 1c=black bg
-			switch (tx){
-			case 0x1C:
-				ac&=0xF;
-				break;
-			case 0x1D:
-				ac|=(0xF&ac)<<4;
+		return val;
+	}
+
+	/******************
+	 * hamming decode *
+	 ******************/
+	//DM12032004 081.6 int18 changed
+	//DM24052004 081.7 int03 changed
+	public static byte hamming_decode(byte a)
+	{
+		switch (0xFF & a)
+		{
+		case 0xa8: 
+			return 0;
+		case 0x0b: 
+			return 1;
+		case 0x26: 
+			return 2;
+		case 0x85: 
+			return 3;
+		case 0x92: 
+			return 4;
+		case 0x31: 
+			return 5;
+		case 0x1c: 
+			return 6;
+		case 0xbf: 
+			return 7;
+		case 0x40: 
+			return 8;
+		case 0xe3: 
+			return 9;
+		case 0xce: 
+			return 10;
+		case 0x6d: 
+			return 11;
+		case 0x7a: 
+			return 12;
+		case 0xd9: 
+			return 13;
+		case 0xf4: 
+			return 14;
+		case 0x57: 
+			return 15;
+		default: 
+			return -1;     // decode error , not yet corrected
+		}
+	}
+
+
+	/******************************
+	 * make suppic from teletext *
+	 ******************************/
+	//DM30122003 081.6 int10 changed
+	//DM24072004 081.7 int07 changed
+	public static int[] makepic(byte[] packet, int offset, int len, int row, int character_set, boolean checkParity)
+	{
+		//  return int char<<8 | 0xF0 & active_color backgrnd | 0xF & active_color foregrnd
+
+		boolean ascii = true, toggle = false;
+		int chars[] = new int[len];
+		int active_color = 7;  // init with white ascii color per line + black background
+		int primary_set_mapping = 0, primary_national_set_mapping = character_set;
+		int secondary_set_mapping = 0, secondary_national_set_mapping = character_set;
+
+		if (page_modifications.containsKey("primary_set"))
+			secondary_set_mapping = primary_set_mapping = Integer.parseInt(page_modifications.get("primary_set").toString());
+
+		if (page_modifications.containsKey("primary_national_set"))
+			secondary_national_set_mapping = primary_national_set_mapping = Integer.parseInt(page_modifications.get("primary_national_set").toString());
+
+		if (page_modifications.containsKey("secondary_set"))
+		{
+			secondary_set_mapping = Integer.parseInt(page_modifications.get("secondary_set").toString());
+			secondary_national_set_mapping = Integer.parseInt(page_modifications.get("secondary_national_set").toString());
+		}
+
+		active_set = CharSet.getActive_G0_Set(primary_set_mapping, primary_national_set_mapping, row);
+		active_national_set = CharSet.getActiveNationalSubset(primary_set_mapping, primary_national_set_mapping, row);
+
+
+		for (int c = offset, val, i = 0; i < len; c++, i++)
+		{
+			val = row<<16 | i;
+
+			if (page_modifications.containsKey("" + val))
+			{
+				chars[i] = active_color | (int)(page_modifications.get("" + val).toString().charAt(0))<<8;
+				continue;
 			}
-			chars[c]=0x20<<8 | ac; 
-			continue; 
-		} //0x1B..1F
-		else if (tx == 0x7F) { 
-			chars[c]=0x20<<8 | ac; 
-			continue; 
-		} //0x7F
 
-		if (!ascii) { 
-			chars[c]=0x20<<8 | ac; 
-			continue; 
+			if (checkParity && !cparity(packet[c])) 
+				packet[i] = 8; //if error, switch to graphics mode (= space)
+
+			int char_value = 0x7F & bytereverse(packet[c]);
+
+			if (char_value>>>3 == 0) //0x0..7
+			{ 
+				ascii=true; 
+				chars[i] = (active_set[32]<<8 | active_color); 
+				active_color = (0xF0 & active_color) | char_value; 
+				continue; 
+			}
+			else if (char_value>>>4 == 0)  //0x8..F
+			{ 
+				chars[i] = active_set[32]<<8 | active_color; 
+				continue; 
+			}
+			else if (char_value>>>7 == 1)  //0x80..FF
+			{ 
+				chars[i] = active_set[32]<<8 | active_color; 
+				continue; 
+			}
+			else if (char_value < 27)  //0x10..1A
+			{ 
+				ascii = false; 
+				chars[i] = active_set[32]<<8 | active_color; 
+				continue; 
+			}
+			else if (char_value < 32) //0x1B..1F
+			{
+				switch (char_value)    //1d=new bg with last color, 1c=black bg, 1b ESC
+				{
+				case 0x1B:
+					if (toggle)
+					{
+						active_set = CharSet.getActive_G0_Set(primary_set_mapping, primary_national_set_mapping, row);
+						active_national_set = CharSet.getActiveNationalSubset(primary_set_mapping, primary_national_set_mapping, row);
+					}
+					else
+					{
+						active_set = CharSet.getActive_G0_Set(secondary_set_mapping, secondary_national_set_mapping, row);
+						active_national_set = CharSet.getActiveNationalSubset(secondary_set_mapping, secondary_national_set_mapping, row);
+					}
+					toggle = !toggle;
+					break;
+
+				case 0x1C:
+					active_color &= 0xF;
+					break;
+
+				case 0x1D:
+					active_color |= (0xF & active_color)<<4;
+				}
+
+				chars[i] = active_set[32]<<8 | active_color; 
+				continue; 
+			}
+			else if (char_value == 0x7F) //0x7F
+			{ 
+				chars[i] = active_set[32]<<8 | active_color; 
+				continue; 
+			}
+
+			if (!ascii)
+			{ 
+				chars[i] = active_set[32]<<8 | active_color; 
+				continue; 
+			}
+
+			// all chars 0x20..7F    special characters
+			switch (char_value)
+			{ 
+			case 0x23: 
+				chars[i] = active_color | active_national_set[0]<<8;  
+				continue; 
+			case 0x24: 
+				chars[i] = active_color | active_national_set[1]<<8;  
+				continue; 
+			case 0x40:
+				chars[i] = active_color | active_national_set[2]<<8;  
+				continue; 
+			case 0x5b:
+				chars[i] = active_color | active_national_set[3]<<8;  
+				continue; 
+			case 0x5c: 
+				chars[i] = active_color | active_national_set[4]<<8;  
+				continue; 
+			case 0x5d: 
+				chars[i] = active_color | active_national_set[5]<<8;  
+				continue; 
+			case 0x5e: 
+				chars[i] = active_color | active_national_set[6]<<8;  
+				continue; 
+			case 0x5f: 
+				chars[i] = active_color | active_national_set[7]<<8;  
+				continue; 
+			case 0x60: 
+				chars[i] = active_color | active_national_set[8]<<8;  
+				continue; 
+			case 0x7b: 
+				chars[i] = active_color | active_national_set[9]<<8;  
+				continue; 
+			case 0x7c:
+				chars[i] = active_color | active_national_set[10]<<8; 
+				continue; 
+			case 0x7d:
+				chars[i] = active_color | active_national_set[11]<<8; 
+				continue; 
+			case 0x7e:
+				chars[i] = active_color | active_national_set[12]<<8; 
+				continue; 
+			default: 
+				chars[i] = active_color | active_set[char_value]<<8; 
+				continue; 
+			}
 		}
 
-		// all chars 0x20..7F    special characters
-		switch (tx) { 
-		case 0x23: { 
-			chars[c] = ac | ncs[cflag][0]<<8;  
-			continue; 
-		}
-		case 0x24: { 
-			chars[c] = ac | ncs[cflag][1]<<8;  
-			continue; 
-		}
-		case 0x40: { 
-			chars[c] = ac | ncs[cflag][2]<<8;  
-			continue; 
-		}
-		case 0x5b: { 
-			chars[c] = ac | ncs[cflag][3]<<8;  
-			continue; 
-		}
-		case 0x5c: { 
-			chars[c] = ac | ncs[cflag][4]<<8;  
-			continue; 
-		}
-		case 0x5d: { 
-			chars[c] = ac | ncs[cflag][5]<<8;  
-			continue; 
-		}
-		case 0x5e: { 
-			chars[c] = ac | ncs[cflag][6]<<8;  
-			continue; 
-		}
-		case 0x5f: { 
-			chars[c] = ac | ncs[cflag][7]<<8;  
-			continue; 
-		}
-		case 0x60: { 
-			chars[c] = ac | ncs[cflag][8]<<8;  
-			continue; 
-		}
-		case 0x7b: { 
-			chars[c] = ac | ncs[cflag][9]<<8;  
-			continue; 
-		}
-		case 0x7c: { 
-			chars[c] = ac | ncs[cflag][10]<<8; 
-			continue; 
-		}
-		case 0x7d: { 
-			chars[c] = ac | ncs[cflag][11]<<8; 
-			continue; 
-		}
-		case 0x7e: { 
-			chars[c] = ac | ncs[cflag][12]<<8; 
-			continue; 
-		}
-		default:   { 
-			chars[c] = ac | tx<<8; 
-			continue; 
-		}
-		}
+		String test = "";
+
+		for (int s = 0; s < chars.length; s++) 
+			test += (char)(chars[s]>>>8);
+
+		if (test.trim().length() == 0) 
+			return null;
+
+		return chars;
 	}
 
-	String test = "";
-	for (int s=0;s<chars.length;s++) 
-		test += (char)(chars[s]>>>8);
-	if (test.trim().length()==0) 
-		return null;
 
-	return chars;
-}
+	/******************************
+	 * make strings from teletext *
+	 ******************************/
+	//DM24072004 081.7 int07 changed
+	public static String makestring(byte[] packet, int offset, int len, int row, int character_set, int color, boolean checkParity)
+	{
+		boolean ascii = true, toggle = false;
+		String text = "";
+		int primary_set_mapping = 0, primary_national_set_mapping = character_set;
+		int secondary_set_mapping = 0, secondary_national_set_mapping = character_set;
 
+		if (page_modifications.containsKey("primary_set"))
+			secondary_set_mapping = primary_set_mapping = Integer.parseInt(page_modifications.get("primary_set").toString());
 
-/******************************
- * make strings from teletext *
- ******************************/
-public static String makestring(byte[] a, int cflag, int color)
-{
-	boolean ascii=true;
-	String text = "";
+		if (page_modifications.containsKey("primary_national_set"))
+			secondary_national_set_mapping = primary_national_set_mapping = Integer.parseInt(page_modifications.get("primary_national_set").toString());
 
-	loopi:
-	for (int c=0; c < a.length; c++) {
-		if (!cparity(a[c])) 
-			a[c]=8;
-		int tx = 0x7F & bytereverse(a[c]);
-
-		if (tx>>>3 ==0) { 
-			ascii=true; 
-			text += ((color==1)?colors[tx]:"")+" "; 
-			continue; 
-		} //0x0..7
-		else if (tx>>>4 ==0) { 
-			text += " "; 
-			continue; 
-		}  //0x8..F
-		else if (tx>>>7 ==1) { 
-			text += " "; 
-			continue; 
-		}  //0x80..FF
-		else if (tx < 27) { 
-			ascii=false; 
-			text += " "; 
-			continue; 
-		}  //0x10..1A
-		else if (tx < 32) {  
-			text += " "; 
-			continue; 
-		} //0x1B..1F
-		else if (tx == 0x7F) {  
-			text += " "; 
-			continue; 
-		} //0x7F
-
-		if (!ascii) { 
-			text += " "; 
-			continue; 
+		if (page_modifications.containsKey("secondary_set"))
+		{
+			secondary_set_mapping = Integer.parseInt(page_modifications.get("secondary_set").toString());
+			secondary_national_set_mapping = Integer.parseInt(page_modifications.get("secondary_national_set").toString());
 		}
 
-		// all chars 0x20..7F    special characters
+		active_set = CharSet.getActive_G0_Set(primary_set_mapping, primary_national_set_mapping, row);
+		active_national_set = CharSet.getActiveNationalSubset(primary_set_mapping, primary_national_set_mapping, row);
 
-		switch (tx) {      // special  characters
-		case 0x23: { 
-			text += ncs[cflag][0]; 
-			continue loopi; 
+		loopi:
+		for (int c = offset, val, i = 0; i < len; c++, i++)
+		{
+			val = row<<16 | i;
+
+			if (page_modifications.containsKey("" + val))
+			{
+				text += page_modifications.get("" + val).toString();
+				continue;
+			}
+
+			if (checkParity && !cparity(packet[c])) 
+				packet[c] = 8; //if error, switch to graphics mode (= space), by loosing all following chars
+
+			int char_value = 0x7F & bytereverse(packet[c]);
+
+			if (char_value>>>3 == 0)  //0x0..7
+			{ 
+				ascii = true; 
+				text += ((color==1) ? colors[char_value] : "") + (char)active_set[32]; 
+				continue; 
+			}
+			else if (char_value>>>4 == 0)   //0x8..F
+			{ 
+				text += (char)active_set[32]; 
+				continue; 
+			}
+			else if (char_value>>>7 == 1)  //0x80..FF
+			{ 
+				text += (char)active_set[32]; 
+				continue; 
+			}
+			else if (char_value < 27)  //0x10..1A
+			{ 
+				ascii = false; 
+				text += (char)active_set[32]; 
+				continue; 
+			}
+			else if (char_value < 32) //0x1B..1F
+			{  
+				if (char_value == 0x1B) //ESC
+				{
+					if (toggle)
+					{
+						active_set = CharSet.getActive_G0_Set(primary_set_mapping, primary_national_set_mapping, row);
+						active_national_set = CharSet.getActiveNationalSubset(primary_set_mapping, primary_national_set_mapping, row);
+					}
+					else
+					{
+						active_set = CharSet.getActive_G0_Set(secondary_set_mapping, secondary_national_set_mapping, row);
+						active_national_set = CharSet.getActiveNationalSubset(secondary_set_mapping, secondary_national_set_mapping, row);
+					}
+					toggle = !toggle;
+				}
+
+				text += (char)active_set[32]; 
+				continue; 
+			}
+			else if (char_value == 0x7F) //0x7F
+			{  
+				text += (char)active_set[32]; 
+				continue; 
+			}
+
+			if (!ascii)
+			{ 
+				text += (char)active_set[32]; 
+				continue; 
+			}
+
+			// all chars 0x20..7F
+
+			switch (char_value)  // special national characters
+			{
+			case 0x23:
+				text += (char)active_national_set[0]; 
+				continue loopi; 
+			case 0x24:
+				text += (char)active_national_set[1]; 
+				continue loopi; 
+			case 0x40:
+				text += (char)active_national_set[2]; 
+				continue loopi; 
+			case 0x5b:
+				text += (char)active_national_set[3]; 
+				continue loopi; 
+			case 0x5c:
+				text += (char)active_national_set[4]; 
+				continue loopi; 
+			case 0x5d:
+				text += (char)active_national_set[5]; 
+				continue loopi; 
+			case 0x5e:
+				text += (char)active_national_set[6]; 
+				continue loopi; 
+			case 0x5f:
+				text += (char)active_national_set[7]; 
+				continue loopi; 
+			case 0x60:
+				text += (char)active_national_set[8]; 
+				continue loopi; 
+			case 0x7b:
+				text += (char)active_national_set[9]; 
+				continue loopi; 
+			case 0x7c:
+				text += (char)active_national_set[10]; 
+				continue loopi; 
+			case 0x7d:
+				text += (char)active_national_set[11]; 
+				continue loopi; 
+			case 0x7e:
+				text += (char)active_national_set[12]; 
+				continue loopi; 
+			default:
+				text += (char)active_set[char_value]; 
+				continue loopi; 
+			}
 		}
-		case 0x24: { 
-			text += ncs[cflag][1]; 
-			continue loopi; 
-		}
-		case 0x40: { 
-			text += ncs[cflag][2]; 
-			continue loopi; 
-		}
-		case 0x5b: { 
-			text += ncs[cflag][3]; 
-			continue loopi; 
-		}
-		case 0x5c: { 
-			text += ncs[cflag][4]; 
-			continue loopi; 
-		}
-		case 0x5d: { 
-			text += ncs[cflag][5]; 
-			continue loopi; 
-		}
-		case 0x5e: { 
-			text += ncs[cflag][6]; 
-			continue loopi; 
-		}
-		case 0x5f: { 
-			text += ncs[cflag][7]; 
-			continue loopi; 
-		}
-		case 0x60: { 
-			text += ncs[cflag][8]; 
-			continue loopi; 
-		}
-		case 0x7b: { 
-			text += ncs[cflag][9]; 
-			continue loopi; 
-		}
-		case 0x7c: { 
-			text += ncs[cflag][10]; 
-			continue loopi; 
-		}
-		case 0x7d: { 
-			text += ncs[cflag][11]; 
-			continue loopi; 
-		}
-		case 0x7e: { 
-			text += ncs[cflag][12]; 
-			continue loopi; 
-		}
-		default:  { 
-			text += (char)tx; 
-			continue loopi; 
-		}
-		}
+
+		if (color==1) 
+			return colors[7] + text.trim();
+
+		else 
+			return text;
 	}
 
-	if (color==1) 
-		return colors[7]+text.trim();
-	else 
-		return text;
-}
+	//DM30072004 081.7 int07 add
+	private static Hashtable page_modifications = new Hashtable();
+	private static boolean use = false;
+	private static int display_row = 0, display_column = 0;
+	private static short active_set[];
+	private static short active_national_set[];
 
+
+	//DM30072004 081.7 int07 add
+	public static void clearEnhancements()
+	{
+		page_modifications.clear();
+		use = false;
+		display_row = 0;
+		display_column = 0;
+		active_set = CharSet.getActive_G0_Set(0, 0, 0);
+		active_national_set = CharSet.getActiveNationalSubset(0, 0, 0);
+	}
+
+	//analyze triplets etc.
+	//DM30072004 081.7 int07 add
+	public static void setEnhancements(byte packet[], int row, int character_set)
+	{
+		int val, mapping, position = 0, code;
+		byte address, mode, data, designation;
+
+		designation = bytereverse((byte)((0xF & hamming_decode(packet[6]))<<4));
+
+		//X.Msg("row " + row + " /designation " + designation);
+
+		if ((row == 29 && designation == 0) || (row == 29 && designation == 4) || (row == 28 && designation == 4))
+		{
+			// read triplet 1
+			val = hamming24_18(packet, 7);
+			code = val<<3;
+
+			if (row == 28 && designation == 0 && (0x3F800 & val) != 0)
+				return;  // not X/28/0 format 1
+
+			// read triplet 2
+			val = hamming24_18(packet, 10);
+			code |= (7 & val>>15);
+
+			//primary set
+			mapping = 0xFE & bytereverse((byte)(0x7F & code>>7));
+
+			page_modifications.put("primary_set", "" + (0xF & mapping>>4));
+
+			if (row != 29)
+				page_modifications.put("primary_national_set", "" + character_set);
+
+			//secondary set
+			mapping = 0xFE & bytereverse((byte)(0x7F & code));
+
+			page_modifications.put("secondary_set", "" + (0xF & mapping>>4));
+			page_modifications.put("secondary_national_set", "" + (7 & mapping>>1));
+		}
+
+		if (row != 26)
+			return;
+
+		for (int a = 7; a < 46; a += 3)
+		{
+			val = hamming24_18(packet, a);
+			address = bytereverse( (byte)(0xFC & val>>10));
+			mode = bytereverse( (byte)(0xF8 & val>>4));
+			data = bytereverse( (byte)(0xFE & val<<1));
+
+		/**
+			X.Msg("triplet " + a + " / " + Integer.toBinaryString(val));
+			X.Msg("  address " + address );
+			X.Msg("  mode " + mode );
+			X.Msg("  data " + data );
+		**/
+
+			if (address >= 40)  //40..63 means row 24,1..23
+			{
+				if (address == 63 && mode == 31) //termination
+					break;
+
+				if (mode != 4 && mode != 1)
+				{
+					use = false;
+					continue;
+				}
+
+				display_row = address == 40 ? 0 : address - 40;
+				display_column = mode == 1 ? 0 : data;
+				use = true;
+			}
+			else //0..39 means column 0..39
+			{
+				if (!use)
+					continue;
+
+				display_column = address;
+				String str = "";
+
+				if (mode == 15) //char from G2 set
+					str += (char)CharSet.getActive_G2_Set(0, character_set, display_row)[data];
+
+				else if (mode == 16) //char from G0 set w/o diacr.
+					str += (char)CharSet.getActive_G0_Set(0, character_set, display_row)[data];
+
+				//combination fixed table (because it won't work here when combine unicode chars)
+				else if (mode > 16) //char from G0 set w/ diacr.
+					str += (char)CharSet.getCombinedCharacter(data, mode & 0xF);
+
+				else
+					continue;
+
+				position = display_row<<16 | display_column;
+
+				page_modifications.put("" + position, str);
+			}
+		}
+	}
 }

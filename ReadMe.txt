@@ -66,6 +66,7 @@
 	Bitmap.java
 	BMP.java
 	BR_MONITOR.java
+	CharSet.java
 	Common.java
 	CRC.java
 	D2V.java
@@ -92,6 +93,7 @@
 	TS.java
 	UISwitchListener.java
 	VIDEO.java
+	WSS.java
 	X.java
 	MANIFEST.MF	- manifest (refers to the main class and JDK version)
 

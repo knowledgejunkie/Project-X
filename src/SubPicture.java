@@ -225,6 +225,9 @@ public class Picture extends JPanel implements Runnable
 	private Bitmap bitmap;
 	private boolean read_from_Image = false;
 
+	//DM25072004 081.7 int07 add
+	private int isforced_status = 0;
+
 	DVBSubpicture dvb = new DVBSubpicture(); //DM24042004 081.7 int02 new
 
 	public Picture()
@@ -788,6 +791,32 @@ public class Picture extends JPanel implements Runnable
 			Flush_Bits( BPos, 4);
 	}
 
+	//DM25072004 081.7 int07 add
+	public String isForced_Msg()
+	{
+		String str = null;
+
+		//change of status occured
+		if ((isforced_status & 1) == 0)
+		{
+			if ((isforced_status & 2) > 0)
+				str = "-> display status: not forced";
+
+			else
+				str = "-> display status: forced";
+		}
+
+		isforced_status |= 1;
+
+		return str;
+	}
+
+	//DM25072004 081.7 int07 add
+	public void reset()
+	{
+		isforced_status = 0;
+	}
+
 	//DM14052004 081.7 int02 add
 	public int decode_picture(byte packet[], int off, boolean decode)
 	{
@@ -856,7 +885,13 @@ public class Picture extends JPanel implements Runnable
 			switch(cmd_switch)
 			{
 			case 0: // force display
+				//DM25072004 081.7 int07 changed
+				isforced_status = (isforced_status & 5) != 5 ? 4 : 5;
+				break;
 			case 1: // start display
+				//DM25072004 081.7 int07 changed
+				isforced_status = (isforced_status & 3) != 3 ? 2 : 3;
+				break;
 			case 2: // stop display
 			case 0xFF: // end of ctrl sequ.
 				break;

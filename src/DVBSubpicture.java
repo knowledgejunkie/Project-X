@@ -27,7 +27,7 @@
 /*
  * example of a basic implementation of a DVB subtitle decoder
  * 
- * it does not implement yet support of encoded string characters, only bitmapped pictures
+ * it does not implement yet export of encoded string characters, only bitmapped pictures
  * 
  */
 
@@ -66,6 +66,9 @@ public class DVBSubpicture
 	//DM13062004 081.7 int04 add
 	private Hashtable user_table = new Hashtable();
 	private boolean user_table_enabled;
+
+	//DM30072004 081.7 int07 add
+	private boolean global_error = false;
 
 	public DVBSubpicture()
 	{
@@ -117,14 +120,27 @@ public class DVBSubpicture
 	{
 		int Pos, Val;
 		Pos = BitPosition>>>3;
+
+		//DM03082004 081.7 int07 add
+		if (Pos >= data.length - 4)
+		{
+			global_error = true;
+			BitPosition += N;
+			BytePosition = BitPosition>>>3;
+			return 0;
+		}
+
 		Val =   (0xFF & data[Pos])<<24 |
 			(0xFF & data[Pos+1])<<16 |
 			(0xFF & data[Pos+2])<<8 |
 			(0xFF & data[Pos+3]);
+
 		Val <<= BitPosition & 7;
 		Val >>>= 32-N;
+
 		BitPosition += N;
 		BytePosition = BitPosition>>>3;
+
 		return Val;
 	}
 
@@ -132,12 +148,22 @@ public class DVBSubpicture
 	{
 		int Pos, Val;
 		Pos = BitPosition>>>3;
+
+		//DM03082004 081.7 int07 add
+		if (Pos >= data.length - 4)
+		{
+			global_error = true;
+			return 0;
+		}
+
 		Val =   (0xFF & data[Pos])<<24 |
 			(0xFF & data[Pos+1])<<16 |
 			(0xFF & data[Pos+2])<<8 |
 			(0xFF & data[Pos+3]);
+
 		Val <<= BitPosition & 7;
 		Val >>>= 32-N;
+
 		return Val;
 	}
 
@@ -177,12 +203,21 @@ public class DVBSubpicture
 
 		picture_saved = false;
 
+		//DM30072004 081.7 int07 add
+		global_error = false;
+
 		flushBits(8); //padding
 		int stream_ident = getBits(8); // 0 = std
 		int segment_type = 0;
 
+		//DM30072004 081.7 int07 changed
 		while ( nextBits(8) == 0x0F )
+		{
 			segment_type = Subtitle_Segment();
+
+			if (global_error && region != null)
+				region.setError(4);
+		}
 
 		if ( nextBits(8) == 0xFF )
 		{}

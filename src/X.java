@@ -60,8 +60,8 @@ public class X extends JPanel
 {
 
 static String version[] = { 
-	"ProjectX 0.81.7_int06",
-	"16.07.2004",
+	"ProjectX 0.81.7_int07",
+	"06.08.2004",
 	"TEST PROJECT ONLY",
 	", User: " + System.getProperty("user.name")
 };
@@ -137,7 +137,8 @@ static JRadioButton[] RButton = new JRadioButton[25];
 static JComboBox[] comBox = new JComboBox[38];
 
 //DM14072004 081.7 int06 changed
-static JCheckBox[] cBox = new JCheckBox[62];
+//DM20072004 081.7 int07 changed
+static JCheckBox[] cBox = new JCheckBox[63];
 
 static JList list1, list3, list4;
 static X_JFileChooser chooser; //DM12122003 081.6 int05
@@ -186,6 +187,9 @@ JFrame autoload; //DM26032004 081.6 int18 add
 Hashtable Options = new Hashtable();  //DM26032004 081.6 int18 add, intended for new ini or langauge
 
 TeletextPageMatrix tpm = new TeletextPageMatrix();  //DM17042004 081.7 int02 add
+
+//DM20072004 081.7 int07 add
+long fakedPTS = -1;
 
 
 public X()	//DM20032004 081.6 int18 changed
@@ -1023,7 +1027,7 @@ protected JPanel buildMainPanel()
 	cBox[18] = new JCheckBox("all coll's");
 	cBox[18].setPreferredSize(new Dimension(100,20));
 	cBox[18].setMaximumSize(new Dimension(100,20));
-	cBox[18].setToolTipText("working with all collections");
+	cBox[18].setToolTipText("enable to work with all collections in one run");
 	control08.add(cBox[18]);
 
 	cBox[25] = new JCheckBox("post process.");
@@ -1039,7 +1043,7 @@ protected JPanel buildMainPanel()
 	control08.add(cBox[14]);
 
 	msoff = new JLabel("A/V offset");
-	msoff.setToolTipText("<html>shows the A/V timeoffset at the beginning of each GOP in ms:  a/b/c <p>(cuts causes different offsets)<p>a) A/V PTS offset in source <p>b) A/V frame begin offset for actual GOP in demuxed file <p>c) new real A/V offset for actual GOP in demuxed file<html>");
+	msoff.setToolTipText("<html>shows the A/V timeoffset at the beginning of each GOP in ms:  a/b/c <p>(cuts causes different offsets)<p>a) A/V PTS offset in source <p>b) A/V frame begin offset for actual GOP in demuxed file <p>c) new real A/V offset for actual GOP in demuxed file</html>");
 	msoff.setPreferredSize(new Dimension(100,20));
 	msoff.setMaximumSize(new Dimension(100,20));
 	control08.add(msoff);
@@ -2060,20 +2064,27 @@ protected JPanel buildsubtitlePanel()
 	tt0.setLayout( new ColumnLayout() );
 	tt0.setBorder( BorderFactory.createTitledBorder("DVB teletext, DVB subtitles") ); //DM18052004 0817. int02 changed
 
-	cBox[17] = new JCheckBox("export MegaRadio MP3-stream (from NBC/Giga Teletext) test");
+	cBox[17] = new JCheckBox("test only: export MegaRadio MP3-stream (from NBC/Giga Teletext)");
 	cBox[17].setToolTipText("formerly transmitted via Hotbird 13°E, 11.054GHz Hor., SR 27500, FEC 5/6, TTX-PID 553");
-	cBox[17].setPreferredSize(new Dimension(400,22));
-	cBox[17].setMaximumSize(new Dimension(400,22));
+	cBox[17].setPreferredSize(new Dimension(500,22));
+	cBox[17].setMaximumSize(new Dimension(500,22));
 	tt0.add(cBox[17]);
 
-	cBox[22] = new JCheckBox("decode hidden rows of teletext (id 0xFF); usually not recommended!");
+	cBox[22] = new JCheckBox("advanced: decode hidden rows of teletext (id 0xFF, means offline pages)");
 	cBox[22].setToolTipText("some pages or complete teletexts/subtitles are hidden, so that may help");
-	cBox[22].setPreferredSize(new Dimension(400,22));
-	cBox[22].setMaximumSize(new Dimension(400,22));
+	cBox[22].setPreferredSize(new Dimension(500,22));
+	cBox[22].setMaximumSize(new Dimension(500,22));
 	tt0.add(cBox[22]);
 
+	//DM22072004 081.7 int07 add
+	cBox[62] = new JCheckBox("advanced: re-build TTX-PTS from 1st MpgAudio stream in a stream file");
+	cBox[62].setToolTipText("use it ONLY for TTX streams included in a stream file (TS,PES..) but w/o proper time base to video");
+	cBox[62].setPreferredSize(new Dimension(500,22));
+	cBox[62].setMaximumSize(new Dimension(500,22));
+	tt0.add(cBox[62]);
+
 	//DM09032004 081.6 int18 add
-	RButton[13] = new JRadioButton("keep original Timecode (PTS) on independent decoding (for tests only)");
+	RButton[13] = new JRadioButton("advanced: keep original Timecode (PTS) on independent decoding");
 	RButton[13].setToolTipText("without a leading video to demux, new Timecode doesn't start at 0");
 	RButton[13].setPreferredSize(new Dimension(500,25));
 	RButton[13].setMaximumSize(new Dimension(500,25));
@@ -3703,8 +3714,13 @@ class COLLECTION extends JFrame {
 		search.setValue((int)(lastpos / 16));
 		framecutfield.setText("" + lastpos);
 		search.requestFocus();
+
 		} 
-		catch (IOException e6) {}
+		catch (IOException e6)
+		{
+			//DM25072004 081.7 int07 add
+			Msg("preview error: " + e6);
+		}
 		setTitle(title);
 		getExpectedSize();
 		action=true;
@@ -4483,7 +4499,11 @@ public void iniload()
 
 	}
 	} 
-	catch (IOException e1) {}
+	catch (IOException e1)
+	{
+		//DM25072004 081.7 int07 add
+		Msg("ini load error: " + e1);
+	}
 }   
 
 
@@ -4554,7 +4574,10 @@ public static void inisave() //DM26012004 081.6 int12 changed, //DM26032004 081.
 	inis.close();
 	} 
 	catch (IOException e1)
-	{}
+	{
+		//DM25072004 081.7 int07 add
+		Msg("ini save error: " + e1);
+	}
 }
 
 
@@ -5024,6 +5047,10 @@ public static String[] getTerms()
  ************/
 public static void Msg(String msg)
 {
+	//DM25072004 081.7 int07 add
+	if (msg == null) 
+		return;
+
 	if (options[30]==1) 
 		System.out.println(msg); 
 
@@ -5203,7 +5230,10 @@ private static void saveCuts(long cutposition, long startPTS, long lastframes, S
 		Msg("-> saving cut PTS value ("+startPTS+") to file..");
 		}
 		catch (IOException e)
-		{}
+		{
+			//DM25072004 081.7 int07 add
+			Msg("cutpoint save error: " + e);
+		}
 	}
 }
 
@@ -5628,6 +5658,10 @@ public void working() {
 		NoOfTTX=0;   //DM04032004 081.6 int18 add
 		options[48]+=options[42];
 		options[42]=0;
+
+		//DM20072004 081.7 int07 add
+		fakedPTS = -1;
+
 
 		if ( new File(vptslog).exists() ) 
 			new File(vptslog).delete();
@@ -6288,10 +6322,12 @@ public void pesparse(String file, String vptslog, int ismpg) {
 
 	}
 	catch (EOFException e1) { 
-		Msg("pesparse EOF reached in error"); 
+		//DM25072004 081.7 int07 add
+		Msg("pesparse EOF reached in error: " + e1); 
 	}
 	catch (IOException e2) { 
-		Msg("pesparse File I/O"); 
+		//DM25072004 081.7 int07 add
+		Msg("pesparse File I/O error: " + e2); 
 	}
 
 	System.gc();
@@ -7133,10 +7169,12 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 
 	}  // end try
 	catch (EOFException e1) { 
-		Msg("vdrparse EOF reached in error"); 
+		//DM25072004 081.7 int07 add
+		Msg("vdrparse EOF reached in error: " + e1); 
 	}
 	catch (IOException e2) { 
-		Msg("vdrparse File I/O"); 
+		//DM25072004 081.7 int07 add
+		Msg("vdrparse File I/O error: " + e2); 
 	}
 
 	System.gc();
@@ -7642,60 +7680,110 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 						break;
 					}
 
-					if (type.equals(""))  //DM10032004 081.6 int8 changed
+					//DM10032004 081.6 int08 changed
+					//DM23072004 081.7 int07 changed
+					if (type.equals(""))
 					{
 						switch (psiID)
 						{
 
 						case 0:
-							type="(PAT)"; 
+							type = "(PAT)"; 
 							break;
 						case 1: 
-							type="(CAT)"; 
+							type = "(CAT)"; 
 							break;
 						case 2: 
-							type="(PMT)"; 
+							type = "(PMT)"; 
+							break;
+						case 3: 
+							type = "(TSD)"; 
 							break;
 						case 4: 
-							type="(PSI)"; 
+							type = "(PSI)"; 
 							break;
 						case 6: 
+						case 0x40: 
+						case 0x41: 
+							type = "(NIT)"; 
+							break;
 						case 0x42: 
 						case 0x46: 
-							type="(SDT)"; 
+							type = "(SDT)"; 
 							break;
 						case 0x4A: 
-							type="(BAT)"; 
+							type = "(BAT)"; 
 							break;
 						case 0x4E: 
 						case 0x4F: 
 						case 0x50: 
 						case 0x60: 
-							type="(EIT)"; 
+							type = "(EIT)"; 
+							break;
+						case 0x70: 
+							type = "(TDS)"; 
+							break;
+						case 0x71: 
+							type = "(RS)"; 
+							break;
+						case 0x72: 
+							type = "(ST)"; 
+							break;
+						case 0x73: 
+							type = "(TO)"; 
+							break;
+						case 0x7E: 
+							type = "(DI)"; 
 							break;
 						case 0x7F: 
-							type="(SIT)"; 
+							type = "(SIT)"; 
 							break;
 						case 0x82: 
-							type="(EMM)"; 
+							type = "(EMM)"; 
 							break;
 						case 0x80:
 						case 0x81:
 						case 0x83:
 						case 0x84: 
-							type="(ECM)"; 
+							type = "(ECM)"; 
 							break;
-						//DM15072004 081.7 int06 add
-						case 0xC1: 
-							type = "(unknown 0x" + Integer.toHexString(psiID).toUpperCase() + ")"; 
+						case 0x43: 
+						case 0x44: 
+						case 0x45: 
+						case 0x47: 
+						case 0x48: 
+						case 0x49: 
+						case 0x4B: 
+						case 0x4C: 
+						case 0x4D: 
+						case 0xFF: 
+							type = "(res.)"; 
 							break;
 						default:
-							type+="(payload: ";
-							for (int f=0;f<8;f++) {
-								String val = Integer.toHexString((0xFF&push189[4+addlength+f])).toUpperCase();
-								type += " "+ ((val.length()<2) ? ("0"+val) : val);
+							if (psiID >= 0x50 && psiID <= 0x6F)
+							{
+								type = "(EIT)"; 
+								break;
 							}
-							type+=" ..)";
+
+							if ((psiID >= 4 && psiID <= 3F) || (psiID >= 0x74 && psiID <= 0x7D))
+							{
+								type = "(res.)"; 
+								break;
+							}
+
+							if (psiID >= 0x80 && psiID < 0xFF)
+							{
+								type = "(user def. 0x" + Integer.toHexString(psiID).toUpperCase() + ")"; 
+								break;
+							}
+
+							type += "(payload: ";
+							for (int f=0; f < 8; f++) {
+								String val = Integer.toHexString((0xFF&push189[4+addlength+f])).toUpperCase();
+								type += " " + ((val.length()<2) ? ("0"+val) : val);
+							}
+							type += " ..)";
 						}
 
 						if (scram>0 && !cBox[38].isSelected()) {
@@ -7945,11 +8033,15 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 	}
 
 	}
-	catch (EOFException e1) {
-		Msg("raw EOF reached in error"); 
+	catch (EOFException e1)
+	{
+		//DM27072004 081.7 int07 changed
+		Msg("raw EOF reached in error " + e1); 
 	}
-	catch (IOException e2) { 
-		Msg("raw File I/O"); 
+	catch (IOException e2)
+	{ 
+		//DM27072004 081.7 int07 changed
+		Msg("raw File I/O error " + e2); 
 	}
 
 	yield();
@@ -8866,10 +8958,12 @@ public String pvaparse(String pvafile,int ismpg,int ToVDR, String vptslog) {
 
 	}  // end try
 	catch (EOFException e1) { 
-		Msg("pva EOF reached in error"); 
+		//DM25072004 081.7 int07 add
+		Msg("pva EOF reached in error: " + e1); 
 	}
 	catch (IOException e2) { 
-		Msg("pva File I/O"); 
+		//DM25072004 081.7 int07 add
+		Msg("pva File I/O error: " + e2); 
 	}
 
 	yield();
@@ -10977,7 +11071,8 @@ public boolean processAudio(String[] args) {
 
 	}    // end try
 	catch (IOException e) {  
-		Msg("stopped... file(s) not found");  
+		//DM25072004 081.7 int07 add
+		Msg("file I/O error: " + e);  
 	}
 
 	progress.setValue(100); //DM13042004 081.7 int01 add
@@ -11032,6 +11127,9 @@ public void processTeletext(String[] args)
 
 			//DM17042004 081.7 int02 add
 			tpm.picture.init(fchild);
+
+			//DM30072004 081.7 int07 add
+			Teletext.clearEnhancements();
 
 			String LBs = LB==1 ? "[1]" : "";
 
@@ -11335,6 +11433,9 @@ public void processTeletext(String[] args)
 			Hashtable flags = new Hashtable();
 			ArrayList picture_String = new ArrayList();
 
+			//DM24072004 081.7 int07 add
+			String provider = "", program_title = "", vps_str = "";
+
 			readloop:
 			while ( count < size )
 			{
@@ -11433,7 +11534,7 @@ public void processTeletext(String[] args)
 				}
 				else
 				{
-					if (!cBox[19].isSelected() || (0x3F & packet[2]) != 0x30)
+					if ((0x3F & packet[2]) != 0x30)
 						continue readloop;
 
 					// show vps status of VBI 16 in GUI
@@ -11456,13 +11557,48 @@ public void processTeletext(String[] args)
 						vps_status = "Timer  "; 
 						break; 
 					default: 
-						vps_status = ""+(0x1F & (vps_data>>>25)) + "." + (0xF & (vps_data>>>21)) + ".  " +
+						vps_status = "" + (0x1F & (vps_data>>>25)) + "." + (0xF & (vps_data>>>21)) + ".  " +
 							(0x1F & (vps_data>>>16)) + ":" + (0x3F & (vps_data>>>10)) + "  ";
 					}
 
-					ttxvpsLabel.setText(vps_status + vps_sound_mode[(3 & packet[5]>>>6)]);
+					//DM23072004 081.7 int07 changed
+					vps_status += vps_sound_mode[(3 & packet[5]>>>6)] + " " + Integer.toHexString(0xF & vps_data>>>6).toUpperCase() + " " + Integer.toHexString(vps_data & 0x3F).toUpperCase();
+
+					if (cBox[19].isSelected())
+						ttxvpsLabel.setText(vps_status);
+
+					//DM23072004 081.7 int07 add
+					if (!vps_status.equals(vps_str))
+					{
+						vps_str = vps_status;
+						Msg("-> VPS status: " + vps_str + " @ PTS " + timeformat_1.format( new java.util.Date( source_pts / 90)) );
+					}
+
 					continue readloop;
 				}
+
+
+				//DM24072004 081.7 int07 add
+				// X3/31.1 ttx provider
+				if (magazine == 3 && row == 31 && packet[7] == 0x40 && packet[8] == 0x57 && provider.equals(""))
+				{
+					provider = Teletext.makestring(packet, 10, 34, 31, 0, 0, false).trim();
+					Msg("-> provider: " + provider);
+				}
+
+				//DM24072004 081.7 int07 add
+				// X8/30.0 program title
+				else if (magazine == 8 && row == 30 && packet[7] == (byte)0xA8)
+				{
+					String str = Teletext.makestring(packet, 26, 20, 30, 0, 0, true).trim() + " ";
+
+					if (!str.equals(program_title))
+					{
+						program_title = str;
+						Msg("-> program: " + program_title);
+					}
+				}
+
 
 				if (row == 0)
 				{
@@ -11508,9 +11644,8 @@ public void processTeletext(String[] args)
 					// show header_line in GUI
 					if (cBox[19].isSelected() || options[30] == 1) 
 					{
-						byte chars[] = new byte[32];
-						System.arraycopy(packet, 14, chars, 0, 32);
-						String str = magazine + page_number + "  " + subpage_number + "  " + Teletext.makestring(chars, character_set, 0);
+						//DM24072004 081.7 int07 changed
+						String str = magazine + page_number + "  " + subpage_number + "  " + Teletext.makestring(packet, 14, 32, 0, (7 & flag>>>21), 0, true) + "  " + program_title;
 
 						if (cBox[19].isSelected())
 							ttxheaderLabel.setText(str);
@@ -11762,6 +11897,9 @@ public void processTeletext(String[] args)
 						else
 							write_buffer.put("active", "1");
 
+						//DM30072004 081.7 int07 add
+						Teletext.clearEnhancements();
+
 						load_buffer.clear();
 					}
 
@@ -11780,16 +11918,28 @@ public void processTeletext(String[] args)
 				if (options[30] == 1)
 					System.out.println("load " + loadpage + "/lbuf " + load_buffer.toString());
 
+				// ignore if row is not of expected magazine
+				//DM30072004 081.7 int07 changed
+				if (magazine != page_value>>>8)
+					continue readloop;
+
+				// load and filter re-defined chars from X26/0..15 triplets
+				//DM30072004 081.7 int07 add
+				if (row > 23 && subtitle_type != 0)
+				{
+					if (row == 29 || loadpage)
+						Teletext.setEnhancements(packet, row, character_set);
+
+					continue readloop;
+				}
+
 				if (!loadpage)
 					continue readloop;
 
-				// ignore if row is > 23 and not of expected magazine
-				if (magazine != page_value>>>8 || row > 23)
-					continue readloop;
-
-				if (subtitle_type == 0)  // megaradio, simple decode the bytes
+				//DM30072004 081.7 int07 changed
+				if (subtitle_type == 0)  // megaradio, simple decode the bytes of row 1..23
 				{
-					for (int b = (row == 1) ? 17: 0; b<39; b++) // framebytes to MSB
+					for (int b = (row == 1) ? 17: 0; row < 24 && b < 39; b++) // framebytes to MSB
 						out.write(Teletext.bytereverse(packet[7+b]));
 
 					continue readloop;
@@ -11797,33 +11947,32 @@ public void processTeletext(String[] args)
 
 				// decode row 1..23 , 0=header, 24 fasttext labels, 25 supressedheader, >26 non text packets 
 
-				byte chars[] = new byte[40];
-				System.arraycopy(packet, 6, chars, 0, 40);
 				String str = null;
 				int picture_data[] = null;
 
+				//DM24072004 081.7 int07 changed
 				switch (subtitle_type)
 				{
 				case 1:
-					str = Teletext.makestring(chars, character_set, 0);
+					str = Teletext.makestring(packet, 6, 40, row, character_set, 0, true);
 					break;
 
 				case 3:
 				case 4:
-					str = Teletext.makestring(chars, character_set, 0).trim();
+					str = Teletext.makestring(packet, 6, 40, row, character_set, 0, true).trim();
 					break;
 
 				case 2:
 				case 7:
-					str = Teletext.makestring(chars, character_set + 8, 0).trim();
+					str = Teletext.makestring(packet, 6, 40, row, character_set + 8, 0, true).trim();
 					break;
 
 				case 5:
-					str = Teletext.makestring(chars, character_set, 1).trim();
+					str = Teletext.makestring(packet, 6, 40, row, character_set, 1, true).trim();
 					break;
 
 				case 6:
-					picture_data = Teletext.makepic(chars, character_set);
+					picture_data = Teletext.makepic(packet, 6, 40, row, character_set, true);
 				}
 
 				if (str != null && !str.equals(""))
@@ -12005,11 +12154,13 @@ public void processTeletext(String[] args)
 			}  // end try
 			catch (EOFException e1)
 			{ 
-				Msg(" EOF reached in error"); 
+				//DM25072004 081.7 int07 add
+				Msg(" EOF reached in error: " + e1); 
 			}
 			catch (IOException e2)
 			{ 
-				Msg("File not found "+filename); 
+				//DM25072004 081.7 int07 add
+				Msg("File I/O error: "+filename + " / " + e2); 
 			}
 
 		System.gc();
@@ -12087,6 +12238,9 @@ public void processSubpicture(String[] args)
 	if (comBox[11].getSelectedIndex() > 2)
 		user_table = Common.getUserColourTable(ColourTablesFile, comBox[11].getSelectedItem().toString());
 	//DM13062004 081.7 int04 add--
+
+	//DM25072004 081.7 int07 add
+	subpicture.picture.reset();
 
 	//DM13062004 081.7 int04 changed
 	subpicture.picture.dvb.setIRD(2<<comBox[11].getSelectedIndex(), user_table, (options[30]==1 ? true : false), d2vfield[9].getText().toString());
@@ -12459,6 +12613,11 @@ public void processSubpicture(String[] args)
 
 			showExportStatus("pic's:", ++pics);
 			subpicture.newTitle(" / picture "+pics+" -> in: " + Common.formatTime_1(new_pts / 90) + " duration: " + Common.formatTime_1(display_time / 90));
+
+			//DM25072004 081.7 int07 add
+			String str = subpicture.picture.isForced_Msg();
+			if (str != null)
+				Msg(str + ", from picture " + pics);
 		}
 
 		else
@@ -12514,11 +12673,13 @@ public void processSubpicture(String[] args)
 	}  // end try
 	catch (EOFException e1)
 	{ 
-		Msg(" EOF reached in error"); 
+		//DM25072004 081.7 int07 add
+		Msg(" EOF reached in error: " + e1); 
 	}
 	catch (IOException e2)
 	{ 
-		Msg(" IO error "+filename); 
+		//DM25072004 081.7 int07 add
+		Msg(" IO error "+filename + " / " + e2); 
 	}
 
 	System.gc();
@@ -12900,11 +13061,13 @@ public void processLPCM(String[] args)
 	}  // end try
 	catch (EOFException e1)
 	{ 
-		Msg(" EOF reached in error"); 
+		//DM25072004 081.7 int07 add
+		Msg(" EOF reached in error: " + e1); 
 	}
 	catch (IOException e2)
 	{ 
-		Msg(" IO error "+filename); 
+		//DM25072004 081.7 int07 add
+		Msg(" IO error: "+filename + " / " + e2); 
 	}
 
 	System.gc();
@@ -14156,27 +14319,43 @@ public static void setvideoheader(String videofile, String logfile) {
 
 
 /*************** create PTS alias **************/
-public void logAlias(String vptslog, String datalog) {
+public void logAlias(String vptslog, String datalog)
+{
 	try
 	{
-	RandomAccessFile log = new RandomAccessFile(datalog,"rw");
-	log.seek(0);
-	File vpts = new File(vptslog); 
-	if (vpts.exists() && vpts.length()>0) {
-		RandomAccessFile vlog = new RandomAccessFile(vptslog,"r");
-		long p = vlog.readLong();
-		if (!PureVideo && options[19]==0) 
-			options[25]=p;
-		log.writeLong(options[25]+options[28]);
-		vlog.close();
-	} else 
-		log.writeLong((0L+options[28]));
 
-	log.writeLong(0L); 
-	log.close();
-	Msg("--> using faked PTS for following data"); // *** add (fix5)
+		RandomAccessFile log = new RandomAccessFile(datalog, "rw");
+		log.seek(0);
+
+		File vpts = new File(vptslog); 
+
+		if (vpts.exists() && vpts.length() > 0)
+		{
+			RandomAccessFile vlog = new RandomAccessFile(vptslog, "r");
+			long p = vlog.readLong();
+
+			if (!PureVideo && options[19] == 0)
+				options[25] = p;
+
+			log.writeLong(options[25] + options[28]);
+
+			vlog.close();
+		}
+		else 
+			log.writeLong((0L + options[28]));
+
+		log.writeLong(0L); 
+		log.close();
+
+		Msg(""); //DM20072004 081.7 int07 add
+		Msg("--> using faked PTS for following data:"); // *** add (fix5)
+
 	}
-	catch (IOException e) { Msg("setaliaslog error"); }
+	catch (IOException e)
+	{
+		//DM25072004 081.7 int07 add
+		Msg("setaliaslog error: " + e);
+	}
 }
 
 //DM08032004 081.6 int18 new
@@ -14353,6 +14532,7 @@ class PIDdemux {
 				return true;
 			break;
 		case 0x2:
+		case 0x3: //DM23072004 081.7 int07 add
 			if (cBox[60].isSelected())
 				return true;
 			break;
@@ -14577,9 +14757,33 @@ class PIDdemux {
 		if (!writedata) 
 			return;
 
+
 		try 
 		{
-		if ( ptslength>0 && data.length>=ptslength) {    // read pts, if available
+
+		//DM20072004 081.7 int07 add
+		//if (isttx && ptslength == 0 && pts == -1 && fakedPTS != lastPTS)
+		if (isttx && cBox[62].isSelected())
+		{
+			//do nothing even if PTS is available for TTX, because user wont it
+
+			//lastPTS nutzt die geborgte AudioPTS, pts schaltet die funktion aus, falls ttx doch eigene PTS hat und nur zufällig mal keine zum anfang
+			if (fakedPTS != lastPTS)
+			{
+				lastPTS = fakedPTS;
+
+				if (options[30]==1) //DM131003 081.5++
+					System.out.print(" stolen ttx PTS: "+ lastPTS + "/ " + addoffset + "/ " + target);
+
+				log.writeLong(lastPTS);
+				log.writeLong(target);
+			}
+		}
+
+		//DM20072004 081.7 int07 changed
+		//if ( ptslength>0 && data.length>=ptslength)
+		else if ( ptslength > 0 && data.length >= ptslength)
+		{    // read pts, if available
 			pts = 0xFFFFFFFFL & ( (6&data[shift])<<29 | (255&data[shift+1])<<22 | (254&data[shift+2])<<14 |
 				(255&data[shift+3])<<7 | (254&data[shift+4])>>>1 );
 
@@ -14609,6 +14813,12 @@ class PIDdemux {
 
 			lastPTS=pts; //DM22122003 081.6 int09 new
 		} 
+
+		//DM20072004 081.7 int07 add
+		//test, speichert die pts des erstgefundenen mpg-audio stroms, also multiaudio bringt nix durcheinander
+		if (newID == 0xC0 && fakedPTS != lastPTS)
+			fakedPTS = lastPTS;
+
 
 		switch(subid>>>4){
 		//DM22022004 081.6 int18 add
@@ -15212,6 +15422,10 @@ class makeVDR {
 			int i=0;
 			for (;i<IDs.size();i++) {          // new ID arrived, align data
 				if (newID==(0xFF&Integer.parseInt(IDs.get(i).toString()))) 
+
+
+
+
 					break;
 			}
 			if (i==IDs.size()) {

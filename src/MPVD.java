@@ -1541,6 +1541,9 @@ public int slice(int MBAmax){
 			}
 		}
 
+//test
+//System.out.println("mba " + MBA[0]);
+
 		if (MBAinc[0]==1) { /* not skipped */
 			if (decode_macroblock(macroblock_type, motion_type, dct_type, PMV,
 				dc_dct_pred, motion_vertical_field_select, dmvector)<1) {
@@ -1649,6 +1652,22 @@ public int decode_macroblock(int macroblock_type[], int motion_type[], int dct_t
 
 	if (Fault_Flag>0) return 0;	// trigger: go to next slice
 
+//test
+/**
+System.out.println(
+	"ma " + macroblock_type[0] + 
+	" /mt " + motion_type[0] + 
+	" /mv " + motion_vector_count[0] + 
+	" /mf " + mv_format[0] +
+	" /ms " + mvscale[0] + 
+	" /dm " + dmv[0] + 
+	" /dc " + dct_type[0] +
+	" /qs " + quantizer_scale + 
+	" /qt " + q_scale_type +
+	" /cm " + concealment_motion_vectors
+);
+**/
+
 	/* decode blocks */
 	for (comp=0; comp<block_count; comp++)	{
 		Clear_Block(comp);
@@ -1725,6 +1744,12 @@ public void Decode_MPEG2_Intra_Block(int comp, int dc_dct_pred[]) {
 			break;
 	}
 
+//test
+/**
+System.out.println("comp " + comp + " /dc " + val);
+if (quantizer_scale > 4)
+	val -= 128;
+**/
 	bp[0] = (short)(val << (3-intra_dc_precision));  //the top-left pixel value of block
 
 	/* decode AC coefficients */
@@ -2272,8 +2297,6 @@ public void Add_Block(int comp, int bx, int by, int dct_type[], boolean addflag)
 	}
 	iincr += 8;
 
-//System.out.println("" + cc + " / " + rfp + " / " + iincr + " / " + dct_type[0] + " / " + picture_structure + " / " + Integer.toHexString(0xFF & Block_Ptr[0]));
-
 	//DM02092003+
 	int val,luma,pPos, r,g,b;
 	if (cc==0){   //lumi
@@ -2285,7 +2308,10 @@ public void Add_Block(int comp, int bx, int by, int dct_type[], boolean addflag)
 				pixels[pPos] += val<<16 | val<<8 | val;
 			}
 		}
-	}else{    //chroma cc1 = Cb, cc2=Cr
+	}
+
+	else
+	{    //chroma cc1 = Cb, cc2=Cr
 		if (chroma_format!=CHROMA444){
 			rfp<<=1;
 			iincr<<=1;
@@ -2505,6 +2531,9 @@ private void scale_Picture()
 			pixels2[x + (y * scanline)] = 0xFF000000 | pixels[(int)X + ((int)Y * horizontal_size)];
 
 	source.newPixels();
+
+	//DM30072004 081.7 int07 add
+	WSS.init(pixels, horizontal_size);
 }
 
 
@@ -2537,6 +2566,22 @@ public void paint(Graphics g)
 	g.setColor(Color.white);
 	g.drawString(info_1, 36, 301);
 	g.drawString(info_2, 36, 316);
+
+	//DM30072004 081.7 int07 add++
+	String str;
+
+	if ((str = WSS.getWSS()) != null)
+	{
+		g.setColor(Color.white);
+		g.fill3DRect(10, 10, 80, 16, true);
+		g.setColor(Color.red);
+		g.drawString("WSS present", 14, 22);
+
+		setToolTipText("<html>doubleclick to save as bmp<p><p>" + str + "</html>");
+	}
+	else
+		setToolTipText("doubleclick to save as bmp");
+	//DM30072004 081.7 int07 add--
 
 	if (PLAY)
 	{
