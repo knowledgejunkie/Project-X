@@ -174,7 +174,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "20.11.2004 19:00";
+static String version_date = "26.11.2004 19:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -2916,6 +2916,7 @@ class FileListener implements ActionListener
 				File theFile = chooser.getSelectedFile();
 				if(theFile != null && theFile.isFile())
 				{
+
 					bb = theFile.getAbsolutePath(); 
 
 					if (comBox[0].getItemAt(0)=="") 
@@ -8636,22 +8637,24 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 				continue pvaloop;
 			}
 
-			if ((addfield&1)==0)
+			if ((addfield & 1) == 0)
 				continue pvaloop;
 
-			if (addlength>183 || (addlength>180 && start))
-				error=true;
+			if (addlength > 183 || (addlength > 180 && start))
+				error = true;
 
 			if (error)
 			{
-				Msg(Resource.getString("rawparse.bit.error", Integer.toHexString(pid).toUpperCase(), "" + packet, "" + (count-188)));
+				if (!cBox[40].isSelected())
+					Msg(Resource.getString("rawparse.bit.error", Integer.toHexString(pid).toUpperCase(), "" + packet, "" + (count-188)));
+
 				continue pvaloop;
 			}
 
 			// PES id, if packet start
-			pesID = (start) ? ((255&push189[4+addlength])<<24 | (255&push189[5+addlength])<<16 |
+			pesID = (start) ? ((0xFF & push189[4 + addlength])<<24 | (0xFF & push189[5 + addlength])<<16 |
+					(0xFF & push189[6 + addlength])<<8 | (0xFF & push189[7 + addlength])) : 0;
 
-					(255&push189[6+addlength])<<8 | (255&push189[7+addlength])) : 0;
 			// PSI id, if packet start
 			psiID = (start) ? pesID>>>16 : 0;
 
@@ -16802,6 +16805,7 @@ class makeVDR
 			if (first)
 			{
 				out.write(packBA); 
+
 
 
 

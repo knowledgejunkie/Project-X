@@ -23,10 +23,6 @@ public class IDCTRefNative {
 			System.out.println(e);
 			//e.printStackTrace();
 		}
-		catch(UnsatisfiedLinkError ule)
-		{
-			System.out.println(ule);
-		}
 	}
 	
 	/**
