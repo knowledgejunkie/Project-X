@@ -169,8 +169,8 @@ public class X extends JPanel
 {
 
 /* main version index */
-static String version_name = "ProjectX 0.81.9 Halloween Edition";
-static String version_date = "29.10.2004";
+static String version_name = "ProjectX 0.81.10 dev";
+static String version_date = "11.11.2004";
 
 public static boolean CLI_mode = false;
 
@@ -5823,7 +5823,7 @@ public void run() {
 					workouts = new File(firstfile).getParent();
 
 				//DM26062004 081.7 int05 add
-				if (workouts == null)
+				if (workouts == null || !(new File(workouts).exists()))
 					workouts = inidir;
 
 				if ( !workouts.endsWith(filesep) ) 
