@@ -58,7 +58,6 @@
 
 package net.sourceforge.dvb.projectx.video;
 
-import net.sourceforge.dvb.projectx.common.*;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -75,12 +74,13 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PushbackInputStream;
+import java.util.ArrayList;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-
+import net.sourceforge.dvb.projectx.common.*;
 import net.sourceforge.dvb.projectx.video.IDCTRefNative;
 import net.sourceforge.dvb.projectx.video.IDCTSseNative;
 
@@ -88,26 +88,60 @@ import net.sourceforge.dvb.projectx.video.IDCTSseNative;
 
 public class MPVD extends JFrame {
 
-public static Picture picture;
+	public static Picture picture;
+
+	public MPVD()
+	{
+		addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				System.exit(0);
+			}
+		});
+
+		picture = new Picture();
+		getContentPane().add("Center", picture);
+
+		setSize(new Dimension(256 + 10, 232 + 30));
+		setLocation(100, 100);
+		setVisible(false);
+	}
 
 
-public MPVD(){
-	addWindowListener(new WindowAdapter() {
-		public void windowClosing(WindowEvent e) { System.exit(0); }
-	});
-	picture = new Picture();
-	picture.run();
-	getContentPane().add("Center",picture);
 
-	setSize(new Dimension(256+10,232+30));
-	setLocation(100,100);
-	setVisible(false);
-}
+public class Picture extends JPanel {
 
+	public Picture()
+	{
+		//DM08022004 081.6 int16 changed and new
+		java.util.Arrays.fill(pixels2, 0xFF505050); //DM24042004 081.7 int02 changed
+		source = new MemoryImageSource(512, 288, pixels2, 0, 512); //DM02092004 081.7 int02 changed
+		source.setAnimated(true);
+		image = createImage(source);
 
+		setBackground(Color.black);
+		setVisible(true);
 
-public class Picture extends JPanel implements Runnable {
+		chooser = new JFileChooser();
+		setToolTipText(tooltip1); // <- VORSCHLAG 1 Tooltip! 
 
+		//DM02092003+
+		addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() > 1)
+					saveBMP(false,false);
+			}
+		});
+		//DM02092003-
+
+	//
+		idct = new IDCTRefNative();
+		idctsse = new IDCTSseNative();
+
+		if (idct.isLibraryLoaded())
+			idct.init();
+	//
+
+	}
 
 //
 private IDCTRefNative idct;
@@ -121,38 +155,6 @@ private Image image;
 private MemoryImageSource source;
 private boolean FAST=false;
 private final String tooltip1 = Resource.getString("mpvdecoder.tip1");
-
-public Picture(){
-	//DM08022004 081.6 int16 changed and new
-	java.util.Arrays.fill(pixels2, 0xFF505050); //DM24042004 081.7 int02 changed
-	//source = new MemoryImageSource(256, 192, pixels2, 0, 256);
-	source = new MemoryImageSource(512, 288, pixels2, 0, 512); //DM02092004 081.7 int02 changed
-	source.setAnimated(true);
-	image = createImage(source);
-
-	setBackground(Color.black);
-	setVisible(true);
-	chooser = new JFileChooser();
-	setToolTipText(tooltip1); // <- VORSCHLAG 1 Tooltip! 
-
-	//DM02092003+
-	addMouseListener(new MouseAdapter() {
-		public void mouseClicked(MouseEvent e) {
-			if (e.getClickCount() > 1)
-				saveBMP(false,false);
-		}
-	});
-	//DM02092003-
-
-//
-	idct = new IDCTRefNative();
-	idctsse = new IDCTSseNative();
-
-	if (idct.isLibraryLoaded())
-		idct.init();
-//
-
-}
 
 //DM27042004 081.7 int02 add
 private long cutfiles_length = 0;
@@ -2253,6 +2255,7 @@ public void motion_compensation(int MBA[], int macroblock_type[], int motion_typ
 		/* ISO/IEC 13818-2 section 7.6.8: Adding prediction and coefficient data */
 		Add_Block(comp, bx, by, dct_type, (macroblock_type[0] & MACROBLOCK_INTRA)==0);
 	}
+
 }
 
 /*  Perform IEEE 1180 reference (64-bit floating point, separable 8x1
@@ -2455,10 +2458,12 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 }
 
 
-public int Get_macroblock_type(){
-	int macroblock_type=0;
+	private int Get_macroblock_type()
+	{
+		int macroblock_type=0;
 
-	switch (picture_coding_type){
+		switch (picture_coding_type)
+		{
 		case I_TYPE:
 			macroblock_type = Get_I_macroblock_type();
 			break;
@@ -2470,104 +2475,126 @@ public int Get_macroblock_type(){
 		case B_TYPE:
 			macroblock_type = Get_B_macroblock_type();
 			break;
+		}
+
+		return macroblock_type;
 	}
 
-	return macroblock_type;
-}
 
-public int Get_I_macroblock_type(){
-	if (Get_Bits(1)>0)
-		return 1;
+	private int Get_I_macroblock_type()
+	{
+		if (Get_Bits(1) > 0)
+			return 1;
 
-	if (Get_Bits(1)<1)
-		Fault_Flag = 2;
+		if (Get_Bits(1) < 1)
+			Fault_Flag = 2;
 
-	return 17;
-}
-
-public int Get_P_macroblock_type(){
-	int code;
-
-	if ((code = Show_Bits(6))>=8){
-		code >>= 3;
-		Flush_Bits(PMBtab0[code][1]);
-
-		return PMBtab0[code][0];
+		return 17;
 	}
 
-	if (code==0){
-		Fault_Flag = 2;
-		return 0;
+
+	private int Get_P_macroblock_type()
+	{
+		int code;
+
+		if ((code = Show_Bits(6)) >= 8)
+		{
+			code >>= 3;
+			Flush_Bits(PMBtab0[code][1]);
+
+			return PMBtab0[code][0];
+		}
+
+		if (code == 0)
+		{
+			Fault_Flag = 2;
+
+			return 0;
+		}
+
+		Flush_Bits(PMBtab1[code][1]);
+
+		return PMBtab1[code][0];
 	}
 
-	Flush_Bits(PMBtab1[code][1]);
 
-	return PMBtab1[code][0];
-}
+	private int Get_B_macroblock_type()
+	{
+		int code;
 
-public int Get_B_macroblock_type(){
-	int code;
+		if ((code = Show_Bits(6)) >= 8)
+		{
+			code >>= 2;
+			Flush_Bits(BMBtab0[code][1]);
 
-	if ((code = Show_Bits(6))>=8){
-		code >>= 2;
-		Flush_Bits(BMBtab0[code][1]);
+			return BMBtab0[code][0];
+		}
 
-		return BMBtab0[code][0];
+		if (code == 0)
+		{
+			Fault_Flag = 2;
+
+			return 0;
+		}
+
+		Flush_Bits(BMBtab1[code][1]);
+
+		return BMBtab1[code][0];
 	}
 
-	if (code==0){
-		Fault_Flag = 2;
-		return 0;
+
+	private int Get_motion_code()
+	{
+		int code;
+
+		if (Get_Bits(1) > 0)
+			return 0;
+
+		if ((code = Show_Bits(9)) >= 64)
+		{
+			code >>= 6;
+			Flush_Bits(MVtab0[code][1]);
+
+			return ((Get_Bits(1) > 0) ? -MVtab0[code][0] : MVtab0[code][0]);
+		}
+
+		if (code >= 24)
+		{
+			code >>= 3;
+			Flush_Bits(MVtab1[code][1]);
+
+			return ((Get_Bits(1) > 0) ? -MVtab1[code][0] : MVtab1[code][0]);
+		}
+
+		if ((code -= 12) < 0)
+		{
+			Fault_Flag = 10;
+
+			return 0;
+		}
+
+		Flush_Bits(MVtab2[code][1]);
+
+		return ((Get_Bits(1)>0) ? -MVtab2[code][0] : MVtab2[code][0]);
 	}
 
-	Flush_Bits(BMBtab1[code][1]);
 
-	return BMBtab1[code][0];
-}
+	/**
+	 * get differential motion vector (for dual prime prediction) 
+	 */
+	private int Get_dmvector()
+	{
+		if (Get_Bits(1) > 0)
+			return ((Get_Bits(1) > 0) ? -1 : 1);
 
-
-
-public int Get_motion_code(){
-	int code;
-
-	if (Get_Bits(1)>0)
-		return 0;
-
-	if ((code = Show_Bits(9))>=64)	{
-		code >>= 6;
-		Flush_Bits(MVtab0[code][1]);
-
-		return ((Get_Bits(1)>0)?-MVtab0[code][0]:MVtab0[code][0]);
+		else
+			return 0;
 	}
 
-	if (code>=24){
-		code >>= 3;
-		Flush_Bits(MVtab1[code][1]);
 
-		return ((Get_Bits(1)>0)?-MVtab1[code][0]:MVtab1[code][0]);
-	}
-
-	if ((code-=12)<0){
-		Fault_Flag = 10;
-		return 0;
-	}
-
-	Flush_Bits(MVtab2[code][1]);
-
-	return ((Get_Bits(1)>0) ? -MVtab2[code][0] : MVtab2[code][0]);
-}
-
-/* get differential motion vector (for dual prime prediction) */
-public int Get_dmvector(){
-	if (Get_Bits(1)>0)
-		return ((Get_Bits(1)>0) ? -1 : 1);
-	else
-		return 0;
-}
-
-
-
-	//DM20082004 081.7 int10 add
+	/**
+	 * performs YUV to RGB conversion
+	 */
 	private int YUVtoRGB(int YUV)
 	{
 		int T  = 0xFF;
@@ -2581,6 +2608,7 @@ public int Get_dmvector(){
 		int R = (int)((float)Y +1.402f * (Cr-128));
 		int G = (int)((float)Y -0.34414 * (Cb-128) -0.71414 * (Cr-128));
 		int B = (int)((float)Y +1.722 * (Cb-128));
+
 		R = R < 0 ? 0 : (R > 0xFF ? 0xFF : R);
 		G = G < 0 ? 0 : (G > 0xFF ? 0xFF : G);
 		B = B < 0 ? 0 : (B > 0xFF ? 0xFF : B);
@@ -2589,377 +2617,369 @@ public int Get_dmvector(){
 	}
 
 
-//DM08022004 081.6 int16 changed, 
-//DM24042004 081.7 int02 changed
-//DM20082004 081.7 int10 changed
-private void scale_Picture()
-{
-	java.util.Arrays.fill(pixels2,0xFF505050);
+	/**
+	 * scales source picture to 2nd picture of memoryimagesource
+	 * includes YUV to RGB conversion
+	 */
+	private void scale_Picture()
+	{
+		java.util.Arrays.fill(pixels2, 0xFF505050);
 
-	int x_offset = ((aspect_ratio_information == 3 || aspect_ratio_information == 4) && profile_and_level_indication != 0) ? 0 : 64;
-	int scanline = 512;
-	int ny = 288;
-	int nx = x_offset == 0 ? scanline : scanline - x_offset;
-	float Y = 0, X = 0;
-	float Ydecimate = vertical_size / (float)ny;
-	float Xdecimate = horizontal_size / (float)(nx - x_offset);
+		int x_offset = ((aspect_ratio_information == 3 || aspect_ratio_information == 4) && profile_and_level_indication != 0) ? 0 : 64;
+		int scanline = 512;
+		int ny = 288;
+		int nx = x_offset == 0 ? scanline : scanline - x_offset;
+		float Y = 0, X = 0;
+		float Ydecimate = vertical_size / (float)ny;
+		float Xdecimate = horizontal_size / (float)(nx - x_offset);
 
-	//DM30072004 081.7 int07 add
-	//DM28082004 081.7 int10 changed
-	WSS.init(pixels, horizontal_size);
-
-	for (int y = 0; Y < vertical_size && y < ny; Y += Ydecimate, y++, X=0)
-		for (int x = x_offset; X < horizontal_size && x < nx; X += Xdecimate, x++)
-			pixels2[x + (y * scanline)] = YUVtoRGB(pixels[(int)X + ((int)Y * horizontal_size)]);
+		for (int y = 0; Y < vertical_size && y < ny; Y += Ydecimate, y++, X=0)
+			for (int x = x_offset; X < horizontal_size && x < nx; X += Xdecimate, x++)
+				pixels2[x + (y * scanline)] = YUVtoRGB(pixels[(int)X + ((int)Y * horizontal_size)]);
 
 
-	source.newPixels();
-}
+		//java.util.Arrays.fill(pixels2, 0xFF507090);
+
+		source.newPixels();
+
+		/**
+		 * expects pixels in YUV format for WSS recognition
+		 */
+		WSS.init(pixels, horizontal_size);
+	}
 
 
-//DM08022004 081.6 int16 changed
-//DM24042004 081.7 int02 changed
-public void paint(Graphics g)
-{
-	int x[] = { 10, 10, 30 };
-	int y[] = { 294, 314, 304 };
+	/**
+	 * updates info field 1
+	 */
+	private void messageStreamInfo()
+	{
+		String prog[] = { "i", "p" };
 
-	g.setColor(Color.black);
-	g.fillRect(0, 0, 600, 600);
-
-	g.drawImage(image, 0, 0, this);
-
-	String prog[] = { "i", "p" };
-
-	//DM21022004 081.6 int18 changed
-	info_1 = horizontal_size + "*" + vertical_size;
-	info_1 +=	prog[progressive_sequence] + " ";
-	info_1 +=	aspect_ratio_string[aspect_ratio_information] + " ";
-	info_1 += picture_coding_type_string[picture_coding_type];
-	info_1 +=	"(" + temporal_reference + ")";
-	info_1 +=	progressive_string[progressive_frame] + " ";
-	info_1 += ", " + video_format_S[video_format] + " ";
-	info_1 += ", " + (profile_and_level_indication==0 ? "MPEG1" : (1 & profile_and_level_indication>>>7) + "|" +
+		info_1 = horizontal_size + "*" + vertical_size;
+		info_1 +=	prog[progressive_sequence] + " ";
+		info_1 +=	aspect_ratio_string[aspect_ratio_information] + " ";
+		info_1 += picture_coding_type_string[picture_coding_type];
+		info_1 +=	"(" + temporal_reference + ")";
+		info_1 +=	progressive_string[progressive_frame] + " ";
+		info_1 += ", " + video_format_S[video_format] + " ";
+		info_1 += ", " + (profile_and_level_indication==0 ? "MPEG1" : (1 & profile_and_level_indication>>>7) + "|" +
 			prof[7 & profile_and_level_indication>>>4] + "@" + lev[15 & profile_and_level_indication]);
-	info_1 += info_4;
+		info_1 += info_4;
+	}
 
-	g.setColor(Color.white);
-	g.drawString(info_1, 36, 301);
-	g.drawString(info_2, 36, 316);
 
-	//DM30072004 081.7 int07 add++
-	String str;
-
-	if ((str = WSS.getWSS()) != null)
+	/**
+	 * updates the preview graphic
+	 */
+	public void paint(Graphics g)
 	{
+		int x[] = { 10, 10, 30 };
+		int y[] = { 294, 314, 304 };
+
+		messageStreamInfo();
+
+		g.setColor(Color.black);
+		g.fillRect(0, 0, 600, 600);
+
+		g.drawImage(image, 0, 0, this);
+
 		g.setColor(Color.white);
-		g.fill3DRect(10, 10, 80, 16, true);
-		g.setColor(Color.red);
-		g.drawString("WSS present", 14, 22);
+		g.drawString(info_1, 36, 301);
+		g.drawString(info_2, 36, 316);
 
-		setToolTipText("<html>" + tooltip1 + "<p><p>" + str + "</html>");
-	}
-	else
-		setToolTipText(tooltip1);
-	//DM30072004 081.7 int07 add--
+		String str;
 
-	if (PLAY)
-	{
-		g.setColor(Color.green);
-		g.fillPolygon(x, y, 3);
-	}
-	else
-	{
-		g.setColor(Color.red);
-		g.fillRect(10, 294, 20, 20);
-	}
-
-
-	if (ERROR1)
-	{
-		g.setColor(Color.white);
-		g.fill3DRect(150, 120, 200, 20, true);
-		g.setColor(Color.red);
-		g.drawString("error while decoding frame", 160, 133);
-	}
-
-	if (ERROR2)
-	{
-		g.setColor(Color.white);
-		g.fill3DRect(150, 135, 200, 20, true);
-		g.setColor(Color.red);
-		g.drawString("cannot find sequence header", 160, 148);
-	}
-
-	if (cutfiles_length > 0)
-	{
-		int x1 = 10, y1 = 326, w1 = 492, h1 = 6;
-		g.setColor(new Color(0, 200, 0));
-		g.fillRect(x1, y1, w1, h1);
-		g.setColor(Color.white);
-		g.drawRect(x1 -2, y1 -2, w1 +3, h1 +3);
-
-		if (cutfiles_points != null && cutfiles_points.length > 0)
+		if ((str = WSS.getWSS()) != null)
 		{
-			g.setColor(new Color(150, 0, 0));
+			g.setColor(Color.white);
+			g.fill3DRect(10, 10, 80, 16, true);
+			g.setColor(Color.red);
+			g.drawString("WSS present", 14, 22);
 
-			int p0 = 0, p1 = 0;
-			for (int a=0; a < cutfiles_points.length; a+=2)
+			setToolTipText("<html>" + tooltip1 + "<p><p>" + str + "</html>");
+		}
+
+		else
+			setToolTipText(tooltip1);
+
+		if (PLAY)
+		{
+			g.setColor(Color.green);
+			g.fillPolygon(x, y, 3);
+		}
+
+		else
+		{
+			g.setColor(Color.red);
+			g.fillRect(10, 294, 20, 20);
+		}
+
+
+		if (ERROR1)
+		{
+			g.setColor(Color.white);
+			g.fill3DRect(150, 120, 200, 20, true);
+			g.setColor(Color.red);
+			g.drawString("error while decoding frame", 160, 133);
+		}
+
+		if (ERROR2)
+		{
+			g.setColor(Color.white);
+			g.fill3DRect(150, 135, 200, 20, true);
+			g.setColor(Color.red);
+			g.drawString("cannot find sequence header", 160, 148);
+		}
+
+		if (cutfiles_length > 0)
+		{
+			int x1 = 10, y1 = 326, w1 = 492, h1 = 6;
+			g.setColor(new Color(0, 200, 0));
+			g.fillRect(x1, y1, w1, h1);
+			g.setColor(Color.white);
+			g.drawRect(x1 -2, y1 -2, w1 +3, h1 +3);
+
+			if (cutfiles_points != null && cutfiles_points.length > 0)
 			{
-				if (cutfiles_points[a] > cutfiles_length)
-					break; 
+				g.setColor(new Color(150, 0, 0));
 
-				p0 = a == 0 ? 0 : (int)(cutfiles_points[a-1] * w1 / cutfiles_length);
-				p1 = (int)(cutfiles_points[a] * w1 / cutfiles_length);
+				int p0 = 0, p1 = 0;
 
-				g.fillRect(x1 + p0, y1, p1 - p0, h1);
+				for (int a=0; a < cutfiles_points.length; a+=2)
+				{
+					if (cutfiles_points[a] > cutfiles_length)
+						break; 
+
+					p0 = a == 0 ? 0 : (int)(cutfiles_points[a-1] * w1 / cutfiles_length);
+					p1 = (int)(cutfiles_points[a] * w1 / cutfiles_length);
+
+					g.fillRect(x1 + p0, y1, p1 - p0, h1);
+				}
+
+				if ((cutfiles_points.length & 1) == 0)
+				{
+					p0 = (int)(cutfiles_points[cutfiles_points.length -1] * w1 / cutfiles_length);
+					g.fillRect(x1 + p0, y1, w1 - p0, h1);
+				}
 			}
+		}
+	}
 
-			if ((cutfiles_points.length & 1) == 0)
+
+	/**
+	 * updates cut symbols in preview info field
+	 *
+	 * @param1 - do_export bool
+	 * @param2 - cutpoints list array
+	 * @param3 - previewlist of files
+	 */
+	public void showCut(boolean play, long cutPoints[], ArrayList previewList)
+	{
+		PLAY = play;
+
+		if ( !previewList.isEmpty() )
+		{
+			cutfiles_length = ((PreviewObject)previewList.get(previewList.size() - 1)).getEnd();
+			cutfiles_points = cutPoints;
+		}
+		else
+		{
+			cutfiles_length = 0;
+			cutfiles_points = null;
+		}
+
+		repaint();
+	}
+
+
+	/**
+	 * returns arrays byteposition offset of 1st successful decoded GOP
+	 * interface, entry point to decode picture for preview
+	 *
+	 * @param1 - ES byte array
+	 * @param2 - search direction
+	 * @param3 - enable GOPheader alignment
+	 * @param4 - simple_fast decode
+	 * @return
+	 */
+	public long decodeArray(byte array[], boolean direction, boolean viewGOP, boolean fast)
+	{
+		FAST = fast; //DM08022004 081.6 int16 new
+		DIRECTION = direction;
+		ERROR1 = false;
+		ERROR2 = false;
+		buf = array;
+		BufferPos = 0;
+		BitPos = 0;
+		StartPos = 0;
+		this.viewGOP = viewGOP;
+
+		if (DIRECTION)
+		{
+			StartPos = BufferPos = buf.length - 4;
+			BitPos = BufferPos<<3;
+		}
+
+		try
+		{
+			while (BufferPos < buf.length && BufferPos >= 0)
 			{
-				p0 = (int)(cutfiles_points[cutfiles_points.length -1] * w1 / cutfiles_length);
-				g.fillRect(x1 + p0, y1, w1 - p0, h1);
+				ERROR_CODE1 = extern_Get_Hdr();
+
+				if ( ERROR_CODE1 == 1 )
+				{
+					if (picture_coding_type != I_TYPE)
+					{
+						BufferPos += 2048;
+						continue;
+					}
+
+					InitialDecoder();
+					Decode_Picture();
+
+					return StartPos;
+				}
+
+				else if (ERROR_CODE1 == 2 )
+					return 0;
+
+				else
+					BufferPos++;
 			}
+
+			ERROR2=true;
 		}
+
+		catch (ArrayIndexOutOfBoundsException ae)
+		{ 
+			ERROR1 = true;
+		}
+
+		catch (Error ee)
+		{ 
+			ERROR1 = true;
+		}
+
+		repaint();
+
+		return 0;
 	}
-}
 
-//DM08022004 081.6 int16 changed
-public void run()
-{
-	//source.newPixels();
-}
 
-//DM27042004 081.7 int02 changed
-//DM24062004 081.7 int05 changed
-public void showCut(boolean play, long cutPoints[], java.util.ArrayList previewList)
-{
-	PLAY = play;
+	/**
+	 * BMP 24-bit header
+	 */
+	private byte bmpHead[] = {
+		0x42, 0x4D, //'B','M'
+		0, 0, 0, 0, // real filesize 32bit, little endian (real size*3 + header(0x36))
+		0, 0, 0, 0, 
+		0x36, 0, 0, 0, //bitmap info size
+		0x28, 0, 0, 0, 
+		0, 0, 0, 0, //hsize
+		0, 0, 0, 0, //vsize
+		1, 0,  //nplane
+		0x18, 0, //bitcount 24b
+		0, 0, 0, 0, //ncompr
+		0, 0, 0, 0, //image bytesize
+		(byte)0x88, 0xB, 0, 0, //nxpm
+		(byte)0x88, 0xB, 0, 0, //nypm  //DM24042007 081.7 int02 changed
+		0, 0, 0, 0,  //nclrused,
+		0, 0, 0, 0   //nclrimp
+	};
 
-	if ( !previewList.isEmpty() )
+
+	/**
+	 * performs change of byte order
+	 *
+	 * @param1 - source byte array
+	 * @param2 - array position
+	 * @param3 - source int value
+	 */
+	private void littleEndian(byte[] array, int aPos, int value)
 	{
-		cutfiles_length = ((PreviewObject)previewList.get(previewList.size() - 1)).getEnd();
-		cutfiles_points = cutPoints;
+		for (int a = 0; a < 4; a++)
+			array[aPos + a] = (byte)(value>>(a * 8) & 0xFF);
 	}
-	else
+
+
+	/**
+	 * saves cached preview source picture as BMP
+	 *
+	 * @param1 - automatic saving (demux mode - <extern> panel option)
+	 * @param2 - if GUI is not visible, don't update
+	 */
+	public void saveBMP(boolean auto_save, boolean noGUI)
 	{
-		cutfiles_length = 0;
-		cutfiles_points = null;
-	}
+		int size = horizontal_size * vertical_size;
 
-	repaint();
-}
-
-/** call **/
-public long decodeArray(byte array[], boolean direction, boolean viewGOP, boolean fast) {
-	FAST=fast; //DM08022004 081.6 int16 new
-	DIRECTION=direction;
-	ERROR1=false;
-	ERROR2=false;
-	buf=array;
-	BufferPos=0;
-	BitPos=0;
-	StartPos=0;
-	this.viewGOP=viewGOP;
-
-	if (DIRECTION){
-		StartPos=BufferPos=buf.length-4;
-		BitPos = BufferPos<<3;
-	}
-
-	try
-	{
-	while (BufferPos < buf.length && BufferPos >= 0) {
-		ERROR_CODE1 = extern_Get_Hdr();
-		if ( ERROR_CODE1 == 1 ) {
-			if (picture_coding_type!=I_TYPE) {
-				BufferPos += 2048;
-				continue;
-			}
-			InitialDecoder();
-			Decode_Picture();
-			return StartPos;
-		} else if (ERROR_CODE1 == 2 ){
-			return 0;
-		} else {
-			BufferPos++;
-		}
-	}
-	ERROR2=true;
-	}
-	catch (ArrayIndexOutOfBoundsException ae) { 
-		ERROR1=true;
-	}
-	catch (Error ee) { 
-		ERROR1=true;
-	}
-	repaint();
-	return 0;
-}
-
-
-/** call **/
-public void decodeFile(String arg[]) {
-	try {
-		String infile="";
-
-		for (int a=0;a<arg.length;a++) {
-			if (new File(arg[a]).exists()) infile=arg[a];
-		}
-
-		if (infile.equals("")) {
-			System.out.println("no input file");
-			System.exit(0);
-		}
-		File file = new File(infile);
-
-		buf=new byte[1024000];
-		PushbackInputStream in = new PushbackInputStream(new FileInputStream(infile),512000);
-
-		long BytePos=0, ReadPos=0;
-		int Frame=0;
-		BufferPos=0;
-		BitPos=0;
-		in.read(buf);
-
-		while (BytePos < file.length()) {
-			ERROR_CODE1 = Get_Hdr();
-			if ( ERROR_CODE1 == 1 ) {
-				InitialDecoder();
-				Decode_Picture();
-				System.out.println(" a"+(BytePos*101/file.length())+"%  F#"+(Frame++));
-				System.out.println("ph "+temporal_reference+"/"+picture_coding_type);
-			} else if (ERROR_CODE1 == 2 ){
-				System.out.println(" "+(BytePos*101/file.length())+"%  end");
-				break;
-			} else {
-				System.out.println(" b"+(BytePos*101/file.length())+"%  a/ "+ERROR_CODE+"/"+ERROR_CODE1+" /"+Fault_Flag);
-				BufferPos++;
-			}
-			if (buf.length-BufferPos < 512000) {
-				in.unread(buf,BufferPos,buf.length-BufferPos);
-				ReadPos += BufferPos;
-				in.read(buf);
-				BufferPos=0;
-			}
-			BytePos = ReadPos+BufferPos;
-		}
-
-		in.close();
-
-	} catch (IOException e) { System.out.println("IO "+e); }
-	//catch (Exception e1) { System.out.println(" "+e1+" /"+ERROR_CODE+" /"+ERROR_CODE1+" /"+Fault_Flag); }
-}
-
-//DM02092003+
-private byte bmpHead[] = {
-	0x42, 0x4D, //'B','M'
-	0, 0, 0, 0, // real filesize 32bit, little endian (real size*3 + header(0x36))
-	0, 0, 0, 0, 
-	0x36, 0, 0, 0, //bitmap info size
-	0x28, 0, 0, 0, 
-	0, 0, 0, 0, //hsize
-	0, 0, 0, 0, //vsize
-	1, 0,  //nplane
-	0x18, 0, //bitcount 24b
-	0, 0, 0, 0, //ncompr
-	0, 0, 0, 0, //image bytesize
-	(byte)0x88, 0xB, 0, 0, //nxpm
-	(byte)0x88, 0xB, 0, 0, //nypm  //DM24042007 081.7 int02 changed
-	0, 0, 0, 0,  //nclrused,
-	0, 0, 0, 0   //nclrimp
-};
-
-public void littleEndian(byte[] array, int aPos, int value) {
-	for (int a=0;a<4;a++)
-		array[aPos+a] = (byte)(value>>(a*8) &0xFF);
-}
-
-public void saveBMP(boolean auto_save, boolean noGUI) {  //DM30112003 081.5++ changed, //DM26022004 081.6 int18 changed
-	int size=horizontal_size*vertical_size;
-	if (size==0)
-		return;
-
-	//VORSCHLAG 2(a)+ 
-	if (bmpCount==0){   //DM26032004 081.6 int18 changed
-		File dir= new File(X.outfield.getText()); 
-		if(dir.isDirectory() && X.comBox[13].getItemCount()>0) 
-			chooser.setCurrentDirectory(dir); 
-		else if (!X.list3.isSelectionEmpty())
-			chooser.setCurrentDirectory(new File(X.list3.getSelectedValues()[0].toString())); 
-	}
-	//VORSCHLAG 2(a)- 
-
-	String newfile = chooser.getCurrentDirectory()+System.getProperty("file.separator")+"X_pic_"+bmpCount+".bmp";
-
-	if (!noGUI && (!auto_save || bmpCount==0)) //DM26022004 081.6 int18 changed
-	{
-		chooser.setSelectedFile(new File(newfile));
-		chooser.rescanCurrentDirectory();
-		chooser.setDialogTitle("save picture");
-
-		int retval = chooser.showSaveDialog(this);
-		if(retval == JFileChooser.APPROVE_OPTION) {
-			File theFile = chooser.getSelectedFile();
-			if(theFile != null && !theFile.isDirectory()) {
-				newfile = theFile.getAbsolutePath();
-			}
-		} else 
+		if (size == 0)
 			return;
-	}
 
-	byte bmp24[] = new byte[3];
-	littleEndian(bmpHead,2,(54+size*3));
-	littleEndian(bmpHead,18,horizontal_size);
-	littleEndian(bmpHead,22,vertical_size);
-	littleEndian(bmpHead,34,(size*3));
-
-	try
-	{
-	BufferedOutputStream BMPfile = new BufferedOutputStream(new FileOutputStream(newfile),2048000);
-	BMPfile.write(bmpHead);
-
-	//DM20082004 081.7 int10 changed
-	for (int a = vertical_size - 1; a >= 0; a--)
-		for (int b = 0, pixel = 0; b < horizontal_size; b++)
+		if (bmpCount == 0)
 		{
-			pixel = YUVtoRGB(pixels[b + a * horizontal_size]);
+			File dir = new File(X.outfield.getText()); 
 
-			for (int c = 0; c < 3; c++)
-				bmp24[c] = (byte)(pixel >>(c * 8) & 0xFF);
+			if(dir.isDirectory() && X.comBox[13].getItemCount() > 0) 
+				chooser.setCurrentDirectory(dir); 
 
-			BMPfile.write(bmp24);
+			else if (!X.list3.isSelectionEmpty())
+				chooser.setCurrentDirectory(new File(X.list3.getSelectedValues()[0].toString())); 
 		}
 
-	BMPfile.flush();
-	BMPfile.close();
-	bmpCount++;
-	}catch (IOException e){ }
-}
-//DM02092003-
+		String newfile = chooser.getCurrentDirectory() + System.getProperty("file.separator") + "X_pic_" + bmpCount + ".bmp";
+
+		if (!noGUI && (!auto_save || bmpCount==0)) //DM26022004 081.6 int18 changed
+		{
+			chooser.setSelectedFile(new File(newfile));
+			chooser.rescanCurrentDirectory();
+			chooser.setDialogTitle("save picture");
+
+			int retval = chooser.showSaveDialog(this);
+
+			if(retval == JFileChooser.APPROVE_OPTION)
+			{
+				File theFile = chooser.getSelectedFile();
+
+				if (theFile != null && !theFile.isDirectory())
+					newfile = theFile.getAbsolutePath();
+			}
+			else 
+				return;
+		}
+
+		byte bmp24[] = new byte[3];
+		littleEndian(bmpHead, 2, (54 + size * 3));
+		littleEndian(bmpHead, 18, horizontal_size);
+		littleEndian(bmpHead, 22, vertical_size);
+		littleEndian(bmpHead, 34, (size * 3));
+
+		try
+		{
+			BufferedOutputStream BMPfile = new BufferedOutputStream(new FileOutputStream(newfile),2048000);
+			BMPfile.write(bmpHead);
+
+			for (int a = vertical_size - 1; a >= 0; a--)
+				for (int b = 0, pixel = 0; b < horizontal_size; b++)
+				{
+					pixel = YUVtoRGB(pixels[b + a * horizontal_size]);
+
+					for (int c = 0; c < 3; c++)
+						bmp24[c] = (byte)(pixel >>(c * 8) & 0xFF);
+
+					BMPfile.write(bmp24);
+				}
+
+			BMPfile.flush();
+			BMPfile.close();
+
+			bmpCount++;
+		}
+
+		catch (IOException e)
+		{}
+	}
 
 }  // end inner class
 
-
-public void resize2(int h, int v) {
-	setSize(new Dimension(h+10,v+40));
-}
-
-public static void main (String arg[]) throws IOException {
-
-	System.out.println("MPEG test Video Decoder; v0.02  01.06.03");
-	System.out.println("");
-	System.out.println(">java MPVD <infile>");
-	System.out.println("");
-
-	if (arg.length==0) System.exit(0);
-
-	MPVD m = new MPVD();
-	m.show();
-	for (;;)
-		picture.decodeFile(arg);
-}
-
-
-
-}
+} // end outer class
