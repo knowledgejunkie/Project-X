@@ -82,6 +82,8 @@ public class XInputFileImpl implements XInputFileIF {
 
 	public XInputStream xIs = null;
 
+	private Object constructorParameter = null;
+
 	/**
 	 * Private Constructor, don't use!
 	 */
@@ -159,6 +161,14 @@ public class XInputFileImpl implements XInputFileIF {
 			sb.replace(i, i + 2, arg2);
 
 		return sb.toString();
+	}
+
+	public void setConstructorParameter(Object obj) {
+		constructorParameter = obj;
+	}
+			
+	public Object getConstructorParameter() {
+		return constructorParameter;
 	}
 
 	/*

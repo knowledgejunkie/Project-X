@@ -57,6 +57,8 @@ public class XInputFileImpl implements XInputFileIF {
 
 	private String fileName = null;
 
+	private Object constructorParameter = null;
+
 	/**
 	 * Private Constructor, don't use!
 	 */
@@ -96,6 +98,14 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public String toString() {
 		return fileName;
+	}
+
+	public void setConstructorParameter(Object obj) {
+		constructorParameter = obj;
+	}
+			
+	public Object getConstructorParameter() {
+		return constructorParameter;
 	}
 
 	/*

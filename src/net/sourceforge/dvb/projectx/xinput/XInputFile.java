@@ -58,11 +58,18 @@ public class XInputFile implements XInputFileIF {
 		retrieveImplementation(parameterTypes, parameterValues);
 		constructorParameter = aVO;
 
+		if (impl != null)
+			impl.setConstructorParameter(aVO);
+
 		if (debug) System.out.println("Leave XInputFile(Object '" + aVO + "')");
 	}
 
 	public XInputFile getNewInstance() {
 		if (debug) System.out.println("Enter XInputFile.getNewInstance()");
+
+		if (impl != null)
+			constructorParameter = impl.getConstructorParameter();
+
 		XInputFile xif = new XInputFile(constructorParameter);
 		if (debug) System.out.println("Leave XInputFile.getNewInstance() returning " + xif);
 		return xif;
@@ -115,6 +122,19 @@ public class XInputFile implements XInputFileIF {
 							.println("Leave XInputFile.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
 			throw new IllegalArgumentException("No matching FileType found or file doesn't exist");
 		}
+	}
+
+	public void setConstructorParameter(Object obj) {
+		if (debug) System.out.println("Enter XInputFile.setConstructorParameter(Object obj)" + "'" + obj + "'");
+		impl.setConstructorParameter(obj);
+		if (debug) System.out.println("Leave XInputFile.setConstructorParameter(Object obj)");
+	}
+			
+	public Object getConstructorParameter() {
+		if (debug) System.out.println("Enter XInputFile.getConstructorParameter()");
+		Object obj = impl.getConstructorParameter();
+		if (debug) System.out.println("Leave XInputFile.getConstructorParameter()" + "'" + obj + "'");
+		return obj;
 	}
 
 	/**

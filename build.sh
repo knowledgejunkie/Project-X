@@ -1,9 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 #build.sh
 rm -f ProjectX.jar
-mkdir -p build
-javac -O -classpath lib/commons-net-1.3.0.jar -d build @sources.lst
-cp resources/*.* build
-jar cfvm projectx.jar MANIFEST.MF -C build .
-#start von projectx
-java -jar projectx.jar
+mkdir -p bin
+javac -encoding "ISO-8859-1" -O -g:none -classpath lib/commons-net-1.3.0.jar:lib/jakarta-oro-2.0.8.jar -d build @sources.lst
+cp resources/* build
+jar cfvm ProjectX.jar MANIFEST.MF -C build .

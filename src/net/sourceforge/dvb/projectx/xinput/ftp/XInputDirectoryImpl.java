@@ -120,7 +120,16 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 
 		if (url.getProtocol().compareTo("ftp") != -1) {
 
+			/**
+			 * JDK122 cannot parse user + pw, but returns it in getHost()
+			 */
+			String _link = url.toString();
 			String _host = url.getHost();
+
+			int j = _link.indexOf(_host);
+
+			if (j > 6)
+				_host = _link.substring(6, j) + _host;
 
 			String server = _host;
 			String user = null;
@@ -129,6 +138,7 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 			String port = null;
 
 			int i = _host.indexOf("@");
+
 			if (i != -1)
 			{
 				server = _host.substring(i + 1);

@@ -59,6 +59,8 @@ public class XInputFileImpl implements XInputFileIF {
 
 	private RandomAccessFile randomAccessFile = null;
 
+	private Object constructorParameter = null;
+
 	/**
 	 * Private Constructor, don't use!
 	 */
@@ -96,6 +98,15 @@ public class XInputFileImpl implements XInputFileIF {
 	public String toString() {
 
 		return file.getAbsolutePath();
+	}
+
+
+	public void setConstructorParameter(Object obj) {
+		constructorParameter = obj;
+	}
+			
+	public Object getConstructorParameter() {
+		return constructorParameter;
 	}
 
 	/**
@@ -205,7 +216,10 @@ public class XInputFileImpl implements XInputFileIF {
 		}
 
 		if (ret)
+		{
 			file = new File(parent + newName);
+			constructorParameter = file;
+		}
 
 		return ret;
 	}

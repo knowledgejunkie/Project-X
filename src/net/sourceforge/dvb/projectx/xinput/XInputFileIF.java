@@ -48,6 +48,10 @@ public interface XInputFileIF {
 	 */
 	public String toString();
 
+	public void setConstructorParameter(Object obj);
+			
+	public Object getConstructorParameter();
+
 	/**
 	 * Gets the type of this XInputFile implementation.
 	 * 
