@@ -185,7 +185,11 @@ public class XInputFileImpl implements XInputFileIF {
 		if (!isopen) { throw new IllegalStateException("XInputFile is already closed!"); }
 
 		if (inputStream != null) {
-			inputStream.close();
+			try {
+				inputStream.close();
+			} catch (IOException e) {
+				// Do nothing
+			}
 			inputStream = null;
 		}
 
