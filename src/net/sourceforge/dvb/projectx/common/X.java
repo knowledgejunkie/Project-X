@@ -132,6 +132,8 @@ import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import java.net.URL;
+
 import net.sourceforge.dvb.projectx.audio.Audio;
 import net.sourceforge.dvb.projectx.audio.AudioFrameConstants;
 import net.sourceforge.dvb.projectx.audio.CRC;
@@ -172,7 +174,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "20.11.2004 15:00";
+static String version_date = "20.11.2004 19:00";
 
 public static boolean CLI_mode = false;
 
@@ -2710,7 +2712,8 @@ class MenuListener implements ActionListener
 
  					for (int i = 0; i < theFiles.length; i++)
 						if (theFiles[i].isFile())
-							collfiles[icf].add(theFiles[i].getAbsolutePath());
+							collfiles[icf].add(new XInputFile(theFiles[i]));
+						//	collfiles[icf].add(theFiles[i].getAbsolutePath());
 
 					list3.setListData(collfiles[icf].toArray());
 				}
@@ -2804,7 +2807,7 @@ class MenuListener implements ActionListener
 		{
 			String value = null;
 			XInputFile inputValue = null;
-			java.net.URL url = null;
+			URL url = null;
 
 			while (true)
 			{
@@ -2815,7 +2818,7 @@ class MenuListener implements ActionListener
 
 				try
 				{
-					url = new java.net.URL(value);
+					url = new URL(value);
 
 					String protocol = url.getProtocol();
 
@@ -2827,7 +2830,7 @@ class MenuListener implements ActionListener
 
 					else if (protocol.equals("file"))
 					{
-						inputValue = new XInputFile(url.toString());
+						inputValue = new XInputFile(new File(url.toString()));
 						break;
 					}
 
@@ -2838,7 +2841,7 @@ class MenuListener implements ActionListener
 				}
 				catch (Exception u1)
 				{
-					Msg("!> URL Exc: " + u1, true);
+					Msg("!> URL Exc: " + u1 + " (" + value + ")", true);
 				}
 			}
 
@@ -5248,6 +5251,7 @@ public static void loadCutPoints(String file)
 
 			if (point == null) 
 				break;
+
 
 			if (point.trim().equals("")) 
 				continue;
@@ -16789,6 +16793,7 @@ class makeVDR
 			if (first)
 			{
 				out.write(packBA); 
+
 
 				options[39]+= 14; 
 				options[41]+= 14;         // write first pack

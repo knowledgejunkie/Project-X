@@ -38,7 +38,7 @@ roehrist in Arbeit 16.11. - Performance Problem von TFRAW beheben.
 dvbmatt erl 20.11. - nullpointer bei 'patch video basics' ohne file
 20.11. - Möglichkeit der Eingabe einer URL über Menü ergänzt.
          Problem, String muß als gültiger XInputFile-Typ akzeptiert werden
-20.11. - laden von Dateien via 'hinzufügen' und dann anklick für dateiinfo führt zu exception, 
+dvbmatt erl 20.11. - laden von Dateien via 'hinzufügen' und dann anklick für dateiinfo führt zu exception, 
          bei dragndrop geht's normal
 20.11. - wie oben, Erkennung des Dateityps bei Ausführung via CLI nicht implementiert?, geht nicht
 20.11. - CLI: extern angebenes ini-File wirkt nicht mehr (wohl seit 081.9)
