@@ -10,7 +10,7 @@ del ProjectX.jar
 
 mkdir build
 
-javac.exe -O -classpath lib\commons-net-1.2.2.jar -d build @sources.lst
+javac.exe -O -classpath lib\commons-net-1.3.0.jar -d build @sources.lst
 
 pause
 

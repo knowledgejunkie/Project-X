@@ -93,6 +93,7 @@ import java.io.StringWriter;
 import java.io.InputStreamReader;
 
 import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -192,8 +193,8 @@ public class X extends JPanel
 {
 
 /* main version index */
-static String version_name = "ProjectX 0.82.0.04b";
-static String version_date = "04.02.2005";
+static String version_name = "ProjectX 0.82.0.05";
+static String version_date = "12.03.2005";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -220,7 +221,9 @@ PrintStream logging;
 static String loggin="", workouts ="", loggin2="";
 static boolean comchange=false, outchange=false, singleraw=false, newvideo=true, running=false, qinfo=false, qbreak=false, qpause=false;
 static String outalias = "";
+
 static String newOutName = "";
+static ArrayList newOutNameList = new ArrayList();
 
 private static long process_time = 0;
 
@@ -385,6 +388,8 @@ protected void buildPopupMenu()
 	menuitem_2.setActionCommand("add");
 	JMenuItem menuitem_3 = popup.add(Resource.getString("popup.remove"));
 	menuitem_3.setActionCommand("remove");
+	JMenuItem menuitem_9 = popup.add(Resource.getString("popup.newOutName"));
+	menuitem_9.setActionCommand("newOutName");
 	popup.addSeparator();
 
 	JMenuItem menuitem_4 = popup.add(Resource.getString("popup.rename"));
@@ -411,6 +416,7 @@ protected void buildPopupMenu()
 	menuitem_6.addActionListener(menulistener);	
 	menuitem_7.addActionListener(menulistener);
 	menuitem_8.addActionListener(menulistener);
+	menuitem_9.addActionListener(menulistener);
 }
 
 //DM20032004 081.6 int18 add
@@ -983,6 +989,8 @@ protected void buildAutoloadPanel()
 						else 
 							collout.add(outalias);
 
+						newOutNameList.add("");
+
 						comchange = true;
 						comBox[0].addItem("" + ix);
 						speciallist.add(new ArrayList());
@@ -1031,6 +1039,8 @@ protected void buildAutoloadPanel()
 						collout.add(comBox[13].getSelectedItem());
  					else 
 						collout.add(outalias);
+
+					newOutNameList.add("");
 
 					comchange = true;
 					comBox[0].addItem("" + ix);
@@ -2835,6 +2845,26 @@ class MenuListener implements ActionListener
 				return;
 			}
 		}
+
+		else if (actName.equals("newOutName"))
+		{
+			if (list3.isSelectionEmpty())
+				return;
+
+			int icf = comBox[0].getSelectedIndex();
+
+			String name = ((XInputFile) collfiles[icf].get(0)).getName(); 
+
+			String newoutname = Dialogs.getUserInput( name, Resource.getString("autoload.dialog.newOutName") + " " + name);
+
+			if (newoutname != null)
+			{
+				newOutNameList.set(icf, newoutname);
+
+				comBox[0].setSelectedIndex(icf);
+			}
+		}
+
 		else if (actName.equals("remove"))
 		{
 			int[] indc = list3.getSelectedIndices();
@@ -2983,6 +3013,8 @@ class MenuListener implements ActionListener
 		else 
 			collout.add(outalias);
 
+		newOutNameList.add("");
+
 		comchange = true;
 
 		comBox[0].addItem("" + ix);
@@ -3019,8 +3051,6 @@ class FileListener implements ActionListener
 				File theFile = chooser.getSelectedFile();
 				if(theFile != null && theFile.isFile())
 				{
-
-
 					bb = theFile.getAbsolutePath(); 
 
 					if (comBox[0].getItemAt(0)=="") 
@@ -3146,10 +3176,14 @@ class FileListener implements ActionListener
 			collfiles = new ArrayList[ix+1];
 			collfiles[ix] = new ArrayList();
 			System.arraycopy(cf,0,collfiles,0,cf.length);
+
 			if (comBox[13].getItemCount()>0) 
 				collout.add(comBox[13].getSelectedItem());
 			else 
 				collout.add(outalias);
+
+			newOutNameList.add("");
+
 			comchange=true;
 			comBox[0].addItem(""+ix);
 			speciallist.add(new ArrayList());
@@ -3171,6 +3205,9 @@ class FileListener implements ActionListener
 				collout.remove(ix);
 				speciallist.remove(ix);
 				cutlist.remove(ix);
+
+				newOutNameList.remove(ix);
+
 				comchange=true;
 				comBox[0].removeAllItems();
 				for (int a=0;a<cl-1;a++) 
@@ -3209,9 +3246,13 @@ class FileListener implements ActionListener
 						collout.add(comBox[13].getSelectedItem());
 					else 
 						collout.add(outalias);
+
 					speciallist.add(new ArrayList());
 					cutlist.add(new ArrayList());
+
+					newOutNameList.add("");
 				}
+
 				comchange=false;
 				comBox[0].setSelectedIndex(comBox[0].getItemCount()-1);
 			}
@@ -3266,6 +3307,15 @@ class FileListener implements ActionListener
 			{
 				collectionlist = collfiles[comBox[0].getSelectedIndex()].toArray();
 				outfield.setText(collout.get(comBox[0].getSelectedIndex()).toString());
+
+				String str;
+				if ((str = newOutNameList.get(comBox[0].getSelectedIndex()).toString()).length() > 0)
+				{
+					outfield.setText(outfield.getText() + " {" + str + "}");
+					outfield.setBackground(new Color(255,225,255));
+				}
+				else
+					outfield.setBackground(new Color(225,255,225));
 			}
 			else
 			{ 
@@ -3280,6 +3330,15 @@ class FileListener implements ActionListener
 			{
 				collout.set(comBox[0].getSelectedIndex(),comBox[13].getSelectedItem());
 				outfield.setText(collout.get(comBox[0].getSelectedIndex()).toString());
+
+				String str;
+				if ((str = newOutNameList.get(comBox[0].getSelectedIndex()).toString()).length() > 0)
+				{
+					outfield.setText(outfield.getText() + " {" + str + "}");
+					outfield.setBackground(new Color(255,225,255));
+				}
+				else
+					outfield.setBackground(new Color(225,255,225));
 			} 
 		}
 		else if (actName.equals("exec")) {
@@ -4658,7 +4717,10 @@ class DNDListener implements DropTargetListener
 
 					speciallist.add(new ArrayList());
 					cutlist.add(new ArrayList());
+
+					newOutNameList.add("");
 				}
+
 				comchange=false;
 				comBox[0].setSelectedIndex(comBox[0].getItemCount()-1);
 			}
@@ -4677,6 +4739,8 @@ class DNDListener implements DropTargetListener
 					collout.add(comBox[13].getSelectedItem());
 				else 
 					collout.add(outalias);
+
+				newOutNameList.add("");
 
 				comchange=true;
 				comBox[0].addItem(""+ix);
@@ -5599,7 +5663,8 @@ public static void main(String[] args)
 					outchange=false;
 					aaa1+=2;
 				} else if ( args[f].equalsIgnoreCase("-n") ) {
-					newOutName = args[f+1];
+					//newOutName = args[f+1];
+					newOutNameList.add(args[f+1]);
 					aaa1+=2;
 				} else if ( args[f].equalsIgnoreCase("-l") ) {
 					cBox[21].setSelected(true);
@@ -5638,21 +5703,6 @@ public static void main(String[] args)
 
 					if(str.endsWith("bfl") || str.endsWith("tpl"))
 					{
-				/**
-						FileInputStream fstream = new FileInputStream(args[a]);
-						BufferedReader d = new BufferedReader(new InputStreamReader(fstream));
-
-						while(d.ready())
-						{
-							xif = getInputFile(d.readLine());
-
-							if (xif != null)
-								collfiles[0].add(xif);
-						}
-
-						d.close();
-				**/
-
 						XInputFile _xif = getInputFile(args[a]);
 
 						if (_xif != null)
@@ -5689,9 +5739,6 @@ public static void main(String[] args)
 				}
 			}
 
-	//		for (int a=aaa1; a < args.length; a++) 
-	//			collfiles[0].add(args[a]);
-	
 			if (comBox[13].getItemCount()>0) 
 				collout.add(comBox[13].getItemAt(0));
 			else 
@@ -5764,6 +5811,8 @@ public static void main(String[] args)
 					startup.close();
 				}
 			}
+			else
+				setVisible0(true);
 		}
 	}
 	catch(Exception e) // catch all other unhandled exception
@@ -6233,6 +6282,8 @@ public void run() {
 				tf.setfirstID();
 				workouts = collout.get(a).toString();
 				String firstfile = workinglist.get(0).toString();
+
+				newOutName = newOutNameList.get(a).toString();
 
 				messageSettings();
 
@@ -7935,6 +7986,7 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 					in.skip(sOff);
 					count += sOff;
 					continue pvaloop;
+
 
 
 
@@ -11819,11 +11871,6 @@ public boolean processAudio(String[] args)
 			n-=4;
 
 			/********* read entire frame ********/
-
-
-
-
-
 			frame = new byte[audio.Size];
 			audioin.read(frame,0,frame.length);
 			System.arraycopy(frame,0,header_copy,0,4);
@@ -11862,7 +11909,7 @@ public boolean processAudio(String[] args)
 			if ( n < audiosize-4 ) {
 				if (!cBox[69].isSelected()){ //DM30122003 081.6 int10 new
 					audioin.read(pushmpa,0,4);
-					ERRORCODE = audio.MPA_parseNextHeader(pushmpa,0);
+					ERRORCODE = audio.MPA_parseNextHeader(pushmpa, 0);
 					audioin.unread(pushmpa);
 					if (ERRORCODE<1) {
 						audioin.unread(frame,1,frame.length-1);
@@ -15331,6 +15378,36 @@ public String rawvideo(XInputFile aXInputFile)
 
 
 
+	/**
+	 * gop dropp
+	 */
+	private static void messageDropError(byte[] gop, byte[] pts, DateFormat sms, int maxtref, int frame, long startpts, long lastpts, String dumpname) throws IOException
+	{
+		Msg(Resource.getString("video.msg.error.gop.drop", "" + (clv[6]-1), sms.format(new java.util.Date(startpts/90L)), "" + startpts));
+		Msg(Resource.getString("video.msg.error.gop.diff", "" + (maxtref+1) + "/" + (frame+1), "" + ((lastpts-startpts)/90)) + " " + sms.format(new java.util.Date((long)((options[7])*(double)(videoframerate/90.0f)) )));
+
+		/**
+		 * dump dropped gop to file
+		 */
+		if (cBox[43].isSelected())
+		{
+			String gopdumpname = dumpname + "-GOP#" + (clv[6] - 1) + ".bin";
+			DataOutputStream dump = new DataOutputStream(new FileOutputStream(gopdumpname));
+			dump.writeInt((clv[6] - 1)); 
+			dump.writeInt(maxtref); 
+			dump.writeInt(frame);
+			dump.write(dumpfill, 0, 4); 
+			dump.write(pts); 
+			dump.write(dumpfill); 
+			dump.write(gop); 
+			dump.write(Video.getSequenceEndCode());
+			dump.flush(); 
+			dump.close();
+
+			Msg(Resource.getString("video.msg.error.gop.dump") + " " + dumpname);
+		}
+	}
+
 
 /**
  * gop changing/testing
@@ -15443,7 +15520,7 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 
 	try 
 	{
-	String[] aspratio = {"res.","1.000 (1:1)","0.6735 (4:3)","0.7031 (16:9)","0.7615 (2.21:1)","0.8055","0.8437","0.9375","0.9815","1.0255","1.0695","1.1250","1.1575","1.2015","res." };
+	String[] aspratio = {"res.","1.000 (1:1)","0.6735 (4:3)","0.7031 (16:9)","0.7615 (2.21:1)","0.8055","0.8437","0.9375","0.9815","1.0255","1.0695","1.1250","1.1575","1.2015","res.","res." };
 	String[] fps_tabl1 = {"forbidden fps","23.976fps","24fps","25fps","29.97fps","30fps","50fps","59.94fps","60fps","n.def.","n.def.","n.def.","n.def.","n.def.","n.def.","n.def."};
 	//int[] fps_tabl2 = {0,3753,3750,3600,3003,3000,1800,1501,1500,0,0,0,0,0,0,0};
 	double[] fps_tabl2 = { 0, 3753.7537, 3750, 3600, 3003.003, 3000, 1800, 1501.5015, 1500, 0,0,0,0,0,0,0};
@@ -15525,21 +15602,41 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 	/* header check */
 	if (options[13] == 1)
 	{
-
 		/**
 		 * get new header, check if valid and not 0!!
 		 */
-		videoframerate = fps_tabl2[15 & gop[s + 7]];  // framerateconstant
-		options[15] = 16 * 1024 * ( (31 & gop[s + 10])<<5 | (248 & gop[s + 11])>>>3 );
+		int _h_reso = ((0xFF & gop[s + 4])<<4 | (0xF0 & gop[s + 5])>>>4);
+		int _v_reso = ((0xF & gop[s + 5])<<8 | (0xFF & gop[s + 6]));
+		int _framerate = 0xF & gop[s + 7];
+		int _dar = 0xF & gop[s + 7]>>>4;
+
+		double d = fps_tabl2[_framerate];
+
+		if (_h_reso == 0 || _v_reso == 0 || d == 0 || _dar == 0 || _dar > 13)
+		{
+			clv[4]++;
+
+			messageDropError(gop, pts, sms, maxtref, frame, startpts, lastpts, dumpname);
+
+			options[13] = 0;
+			gopbuffer.close();
+			frametypebuffer.close();
+			gop = null;
+
+			return;
+		}
+
+		videoframerate = d;  // framerateconstant
+		options[15] = 16 * 1024 * ( (0x1F & gop[s + 10])<<5 | (0xF8 & gop[s + 11])>>>3 );
 
 		String[] vbasics = { 
-			"" + ((255 & gop[s + 4])<<4 | (240 & gop[s + 5])>>>4),
-			"" + ((15 & gop[s + 5])<<8 | (255 & gop[s + 6])),
-			(fps_tabl1[15 & gop[s + 7]]),
-			aspratio[(255 & gop[s + 7])>>>4] 
+			String.valueOf(_h_reso),
+			String.valueOf(_v_reso),
+			fps_tabl1[_framerate],
+			aspratio[_dar] 
 		};
 
-		clv[7] = ((0xFF & gop[s + 7])>>>4) - 1;
+		clv[7] = _dar - 1;
 
 		if (newvideo || options[7] == 0)
 		{
@@ -15589,8 +15686,8 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 	boolean sequenceheader_complete = false;
 	boolean SDE_found = false;
 	int SDE_marker = -1;
+	int pD_marker = -1;
 
-	ArrayList dropList = new ArrayList();
 
 	/* gop check */
 	goploop:
@@ -15619,10 +15716,14 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 			continue goploop;
 		}
 
-//
-		if ((dropList.size() & 1) != 0 && !dropList.get(dropList.size() - 1).toString().startsWith("_"))
+		/**
+		 * action on next found startcode
+		 */
+		if (pD_marker > -1 && cBox[35].isSelected())
 		{
-			dropList.add(String.valueOf(s));
+			Arrays.fill( gop, pD_marker, s, (byte)0); //clear privare data on behalf of cdf flag setting
+
+			pD_marker = -1;
 		}
 
 		/**
@@ -15643,9 +15744,7 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 		 */
 		if (gop[s + 3] == (byte)0xB2)
 		{
-
-			if ((dropList.size() & 1) == 0)
-				dropList.add(String.valueOf(s));
+			pD_marker = s;
 
 			s += 3;
 
@@ -15874,9 +15973,6 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 				if ( trefcheck > tref )
 				{
 					writeframe = false;
-
-					if ((dropList.size() & 1) == 0)
-						dropList.add("_" + String.valueOf(s));
 				}
 
 				else
@@ -15884,10 +15980,6 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 					writeframe = true;
 					gop[s + 4] = (byte)( (tref - trefcheck)>>>2);
 					gop[s + 5] = (byte)( (63 & gop[s + 5]) | ((tref - trefcheck)<<6));
-
-
-					if ((dropList.size() & 1) == 1)
-						dropList.add("_" + String.valueOf(s));
 
 				}
 			}
@@ -15940,9 +16032,6 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 					gop[a + 9]  = 0;
 					gop[a + 10] = 0;
 
-					if ((dropList.size() & 1) == 0)
-						dropList.add(String.valueOf(a + 9));
-
 					s = a;
 
 				}
@@ -15958,22 +16047,6 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 		}
 	} // end of gop search
 
-/**
-	for (int dl = 0; dl < dropList.size(); dl++)
-	{
-		String str = dropList.get(dl).toString();
-
-		if (str.startsWith("_"))
-			str = "_" + Integer.toHexString(Integer.parseInt(str.substring(1)));
-
-		else
-			str = Integer.toHexString(Integer.parseInt(str));
-
-		Msg("dl " + dl + " : '0x" + str.toUpperCase() + "'");
-	}
-
-
-**/
 	/**
 	 * put the rest of data into buffer, if gop was changed 
 	 */
@@ -16093,6 +16166,12 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 		error = false;
 	}
 
+	/**
+	 * error, if gop on mp@ml too big
+	 */
+	if (Integer.parseInt(VBASIC[0]) <= 720 && gop.length > 2750000)
+		error = true;
+
 	/** 
 	 * return last orig pts for plain mpv
 	 */
@@ -16103,29 +16182,7 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 		options[7] = lastframes; 
 		clv[4]++;
 
-		Msg(Resource.getString("video.msg.error.gop.drop", "" + (clv[6]-1), sms.format(new java.util.Date(startpts/90L)), "" + startpts));
-		Msg(Resource.getString("video.msg.error.gop.diff", "" + (maxtref+1) + "/" + (frame+1), "" + ((lastpts-startpts)/90)) + " " + sms.format(new java.util.Date((long)((options[7])*(double)(videoframerate/90.0f)) )));
-
-		/**
-		 * dump dropped gop to file
-		 */
-		if (cBox[43].isSelected())
-		{
-			String gopdumpname = dumpname + "-GOP#" + (clv[6] - 1) + ".bin";
-			DataOutputStream dump = new DataOutputStream(new FileOutputStream(gopdumpname));
-			dump.writeInt((clv[6] - 1)); 
-			dump.writeInt(maxtref); 
-			dump.writeInt(frame);
-			dump.write(dumpfill, 0, 4); 
-			dump.write(pts); 
-			dump.write(dumpfill); 
-			dump.write(gop); 
-			dump.write(Video.getSequenceEndCode());
-			dump.flush(); 
-			dump.close();
-
-			Msg(Resource.getString("video.msg.error.gop.dump") + " " + dumpname);
-		}
+		messageDropError(gop, pts, sms, maxtref, frame, startpts, lastpts, dumpname);
 	}
 
 	else
@@ -16950,8 +17007,23 @@ class PIDdemux {
 
 			format = (ID == 0xBD) ? __ttx : 2;
 			isttx = (format == 1) ? true : false;
-			//subid = (format < 2 && (ismpg != 0 || isttx)) ? (0xFF & _data[9 + (0xFF & _data[8])]) : 0;
-			subid = (format < 2 && (ismpg != 0 || isttx || __isAligned)) ? (0xFF & _data[9 + (0xFF & _data[8])]) : 0;
+			subid = (format < 2 && ((ismpg == 0 && __isAligned) || ismpg == 2)) ? (0xFF & _data[9 + (0xFF & _data[8])]) : 0;
+
+			switch (subid>>>4)
+			{
+			case 1:
+			case 2:
+			case 3:
+			case 8:
+			case 9:
+			case 0xA:
+				break;
+
+			default:
+				if (ismpg != 2)
+					subid = 0;
+			}
+
 
 			switch (subid>>>4)
 			{
@@ -16995,6 +17067,8 @@ class PIDdemux {
 		if (!writedata) 
 			return;
 
+		if (out == null)
+			return;
 
 		try {
 

@@ -124,13 +124,16 @@ public final class CRC
 			return 0;
 	}
 
-	public static int checkCRC16ofMPA(Audio Audio, byte[] data)
+	public static int checkCRC16ofMPA(Audio Audio, byte[] _data)
 	{
 		if (Audio.Layer < 2 || Audio.Protection_bit==0)
 			return 0;
 
-		int crc_val = (0xFF & data[4])<<8 | (0xFF & data[5]);
-		data = Audio.MPA_deleteCRC(data);
+		int crc_val = (0xFF & _data[4])<<8 | (0xFF & _data[5]);
+		byte[] data = new byte[_data.length];
+
+		System.arraycopy(_data, 0, data, 0, 4);
+		System.arraycopy(_data, 6, data, 4, _data.length - 6);
 
 		int ch, sb, offset = 2, nr_bits = 16, BitPos[] = { 32 };
 

@@ -318,17 +318,40 @@ public class Audio
 		return MPA_displayHeader();
 	}
 	
-	/*** delete CRC in mpa ***/
-	public byte[] MPA_deleteCRC(byte[] frame) {
-		if ( (frame[1]&1) == 1) 
+	/**
+	 * remove CRC from mpa 
+	 **/
+	public byte[] MPA_deleteCRC(byte[] frame)
+	{
+		MPA_removePrivateBit(frame);
+
+		if ( (frame[1] & 1) == 1) 
 			return frame;
+
 		byte[] newframe = new byte[frame.length];
-		System.arraycopy(frame,0,newframe,0,4);
-		System.arraycopy(frame,6,newframe,4,frame.length-6);
+
+		System.arraycopy(frame, 0, newframe, 0, 4);
+		System.arraycopy(frame, 6, newframe, 4, frame.length - 6);
+
 		newframe[1] |= 1;
+
+		Protection_bit = 1;
+
 		return newframe;
 	}
-	
+
+	/**
+	 * remove private Bit from mpa 
+	 **/
+	private void MPA_removePrivateBit(byte[] frame)
+	{
+		if ( (frame[2] & 1) == 0) 
+			return;
+
+		frame[2] &= ~1;
+
+		Private_bit = 0;
+	}
 	
 	int ac3_frequency_index[] = { 
 		48000,44100,32000,0 
