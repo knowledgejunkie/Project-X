@@ -47,7 +47,7 @@ public class XInputFileImpl implements XInputFileIF {
 
 		if (debug) System.out.println("Try to create XInputFile of Type FILE");
 
-		if (!aFile.isFile()) { throw new IllegalArgumentException("aFile is not a file!"); }
+		if (!aFile.isFile()) { throw new IllegalArgumentException("File is not of type FileType.FILE"); }
 		file = aFile;
 		fileType = FileType.FILE;
 

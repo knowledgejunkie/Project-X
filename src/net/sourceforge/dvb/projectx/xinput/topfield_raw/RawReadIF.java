@@ -48,8 +48,6 @@ public interface RawReadIF {
 
 	public void add_native_files(ArrayList arraylist);
 
-	public boolean isAccessibleDisk(String sourcefile);
-
 	public boolean AccessEnabled();
 
 }

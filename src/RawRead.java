@@ -83,7 +83,8 @@ public class RawRead implements RawReadIF
 
 		return;
 	}
-
+	
+/*
 	public boolean isAccessibleDisk(String sourcefile)
 	{
 		// make sure it's not a PC file (c: or UNC prefix) and not a Linux file (/ prefix)
@@ -94,7 +95,8 @@ public class RawRead implements RawReadIF
 		else
 			return false;
 	}
-
+*/
+	
 	public boolean AccessEnabled()
 	{
 		return DllLoaded;

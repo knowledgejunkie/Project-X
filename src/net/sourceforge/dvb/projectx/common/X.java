@@ -4981,9 +4981,12 @@ public void inputlist()
 	}
 
 	// Get all Topfield files (instead of a full XInputDirectory integration)
-	/* TODO Ist das genug? */
 	/** TODO Direkte Benutzung von RawInterface noch ändern */
-	(new RawInterface()).add_native_files(arraylist);
+	try {
+		(new RawInterface("")).add_native_files(arraylist);
+	} catch (Throwable t) {
+		// Assume no dll available or no hd or no file, so do nothing!
+	}
 
 	if (arraylist.size() > 0) 
 		inputfiles = arraylist.toArray();
@@ -5080,7 +5083,7 @@ public void javaEV()
 
 	//DM18062004 081.7 int05 add
 	/** TODO Direkte Benutzung von RawInterface noch ändern */
-	TextArea.append("\n" + Resource.getString("javaev.java.disk.access") + "\t" + (new RawInterface()).GetLoadStatus());
+	TextArea.append("\n" + Resource.getString("javaev.java.disk.access") + "\t" + (new RawInterface("")).GetLoadStatus());
 }
 
 /****************

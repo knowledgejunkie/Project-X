@@ -1,13 +1,10 @@
-package net.sourceforge.dvb.projectx.xinput.ftp;
+package net.sourceforge.dvb.projectx.xinput.topfield_raw;
 
 import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URL;
-
-import org.apache.commons.net.ftp.FTPFile;
 
 import net.sourceforge.dvb.projectx.xinput.FileType;
 import net.sourceforge.dvb.projectx.xinput.XInputFileIF;
@@ -15,7 +12,7 @@ import net.sourceforge.dvb.projectx.xinput.XInputStream;
 
 public class XInputFileImpl implements XInputFileIF {
 
-	private boolean debug = false;
+	private boolean debug = true;
 
 	// Members, which are type independent
 	private FileType fileType = null;
@@ -28,11 +25,10 @@ public class XInputFileImpl implements XInputFileIF {
 	
 	private int randomAccessPushBack = -1;
 
-	// Members used for type FileType.FTP
-	private FtpVO ftpVO = null;
-
-	private FTPFile ftpFile = null;
-
+	// Members used for type FileType.TFRAW
+	private RawInterface rawInterface = null;
+	private String fileName = null;
+	
 	/**
 	 * Private Constructor, don't use!
 	 */
@@ -42,24 +38,27 @@ public class XInputFileImpl implements XInputFileIF {
 	}
 
 	/**
-	 * Create a XInputFile of type FileType.FTP.
+	 * Create a XInputFile of type FileType.TFRAW.
 	 * 
 	 * @param aFtpVO
 	 *          Directory data to use
 	 * @param aFtpFile
 	 *          File data to use
 	 */
-	public XInputFileImpl(FtpVO aFtpVO) {
+	public XInputFileImpl(String aFileName) {
 
-		if (debug) System.out.println("Try to create XInputFile of Type FTP");
+		if (debug) System.out.println("Try to create XInputFile of Type TFRAW");
 
-		ftpVO = aFtpVO;
-		ftpFile = aFtpVO.getFtpFile();
-		fileType = FileType.FTP;
-
-		if (!exists()) { throw new IllegalArgumentException("File is not of type FileType.FTP"); }
-
-		if (debug) System.out.println("Succeeded to create XInputFile of Type FTP");
+		try {
+			fileName = aFileName;
+			fileType = FileType.TFRAW;
+			rawInterface = new RawInterface(aFileName);
+			rawInterface.getStream(1024).close();
+		} catch (IOException e) {
+			throw new IllegalArgumentException("File is not of type FileType.TFRAW");
+		}
+		
+		if (debug) System.out.println("Succeeded to create XInputFile of Type TFRAW");
 	}
 
 	/**
@@ -68,32 +67,7 @@ public class XInputFileImpl implements XInputFileIF {
 	 * @return String representation of the object
 	 */
 	public String toString() {
-
-		String s;
-
-		String name = ftpFile.getName();
-		name = name.replaceAll("Ã¤", "ä");
-		name = name.replaceAll("Ã¶", "ö");
-		name = name.replaceAll("Ã¼", "ü");
-		name = name.replaceAll("Ã„", "Ä");
-		name = name.replaceAll("Ã–", "Ö");
-		name = name.replaceAll("Ãœ", "Ü");
-		name = name.replaceAll("ÃŸ", "ß");
-		name = name.replaceAll("Ã¡", "á");
-		name = name.replaceAll("Ã ", "à");
-		name = name.replaceAll("Ã©", "é");
-		name = name.replaceAll("Ã¨", "è");
-		name = name.replaceAll("Ã­", "í");
-		name = name.replaceAll("Ã¬", "ì");
-		name = name.replaceAll("Ã³", "ó");
-		name = name.replaceAll("Ã²", "ò");
-		name = name.replaceAll("Ãº", "ú");
-		name = name.replaceAll("Ã¹", "ù");
-
-		s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getDirectory() + "/"
-				+ name;
-
-		return s;
+		return fileName;
 	}
 	
 	/* (non-Javadoc)
@@ -112,8 +86,7 @@ public class XInputFileImpl implements XInputFileIF {
 
 		String s;
 
-		s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getDirectory() + "/"
-				+ ftpFile.getName() + ";type=b";
+		s = "tfraw://" + fileName;
 
 		return s;
 	}
@@ -124,8 +97,7 @@ public class XInputFileImpl implements XInputFileIF {
 	 * @return Length of file in bytes
 	 */
 	public long length() {
-
-		return ftpFile.getSize();
+		return rawInterface.getFileSize();
 	}
 
 	/**
@@ -134,8 +106,7 @@ public class XInputFileImpl implements XInputFileIF {
 	 * @return Time in milliseconds from the epoch
 	 */
 	public long lastModified() {
-
-		return ftpFile.getTimestamp().getTimeInMillis();
+		return rawInterface.rawRead.lastModified(fileName);
 	}
 
 	/**
@@ -147,19 +118,11 @@ public class XInputFileImpl implements XInputFileIF {
 
 		boolean b = false;
 
-		// This method is more exact, but too expensive
-		//		try {
-		//			b = true;
-		//			inputStream = getInputStream();
-		//			inputStream.close();
-		//			inputStream = null;
-		//		} catch (Exception e) {
-		//			b = false;
-		//		}
-
-		// If ftpFile is set, it was possible to retrieve it, so the file exists
-		if (ftpFile != null) {
+		try {
+			rawInterface.getStream(1024).close();
 			b = true;
+		} catch (IOException e) {
+			b = false;
 		}
 
 		return b;
@@ -171,29 +134,8 @@ public class XInputFileImpl implements XInputFileIF {
 	 * @return Name of file
 	 */
 	public String getName() {
-
-		String s = null;
-
-		s = ftpFile.getName();
-		s = s.replaceAll("Ã¤", "ä");
-		s = s.replaceAll("Ã¶", "ö");
-		s = s.replaceAll("Ã¼", "ü");
-		s = s.replaceAll("Ã„", "Ä");
-		s = s.replaceAll("Ã–", "Ö");
-		s = s.replaceAll("Ãœ", "Ü");
-		s = s.replaceAll("ÃŸ", "ß");
-		s = s.replaceAll("Ã¡", "á");
-		s = s.replaceAll("Ã ", "à");
-		s = s.replaceAll("Ã©", "é");
-		s = s.replaceAll("Ã¨", "è");
-		s = s.replaceAll("Ã­", "í");
-		s = s.replaceAll("Ã¬", "ì");
-		s = s.replaceAll("Ã³", "ó");
-		s = s.replaceAll("Ã²", "ò");
-		s = s.replaceAll("Ãº", "ú");
-		s = s.replaceAll("Ã¹", "ù");
-
-		return s;
+		/** TODO Substring einführen, um Pfad abzutrennen - Wie ist fileName aufgebaut? */
+		return fileName;
 	}
 
 	/**
@@ -202,8 +144,8 @@ public class XInputFileImpl implements XInputFileIF {
 	 * @return Path of parent
 	 */
 	public String getParent() {
-
-		return ftpVO.getDirectory();
+		/** TODO Substring einführen, um Dateinamen abzutrennen - Wie ist fileName aufgebaut? */
+		return fileName;
 	}
 
 	/**
@@ -212,8 +154,7 @@ public class XInputFileImpl implements XInputFileIF {
 	 * @return Input stream from the file
 	 */
 	public InputStream getInputStream() throws FileNotFoundException, MalformedURLException, IOException {
-
-		return new XInputStream((new URL(getUrl())).openConnection().getInputStream());
+		return new XInputStream(rawInterface.getStream(1024));
 	}
 
 	/**
@@ -227,7 +168,7 @@ public class XInputFileImpl implements XInputFileIF {
 
 		if (isopen) { throw new IllegalStateException("XInputFile is already open!"); }
 
-		if (mode.compareTo("r") != 0) { throw new IllegalStateException("Illegal access mode for FileType.FTP"); }
+		if (mode.compareTo("r") != 0) { throw new IllegalStateException("Illegal access mode for FileType.TFRAW"); }
 		inputStream = getInputStream();
 		inputStream.mark(10 * 1024 * 1024);
 
@@ -365,7 +306,7 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public void randomAccessWrite(byte[] aBuffer) throws IOException {
 
-		throw new IllegalStateException("Illegal access for FileType.FTP");
+		throw new IllegalStateException("Illegal access for FileType.TFRAW");
 	}
 
 	/**
