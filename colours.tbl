@@ -6,6 +6,8 @@
 //model=final colour link depth of this table in bits (2, 4, 8) (means max. 4, 16, 256 paletized colours, best value depends on broadcasters std. table)
 //0..x=ARGB (alpha,red,green,blue as 32bit uimsbf, 8bit each)  (undefined colour links are fully transparent)
 
+//you can add as many tables you wish
+
 table=SVT
 model=4
 0=0

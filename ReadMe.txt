@@ -45,15 +45,20 @@
 
  If you need an executable, you have to compile the package by yourself,
  or you ask someone to do so for you.
- For compilation, you need a Java SDK, which is available for various platforms.
+
+ For a compilation, you need a Java SDK, which is available for various platforms.
 
  All classes should work with Sun's JDK/J2RE 1.2.2 and higher.
+ Note: under special circumstances, some graphic drivers/locales cause 
+       big troubles with some versions of JRE's on different OS's.
+
 
  Extract all files from the received archive to a separate directory.
  the archive contains:
 
 	COPYING
 	readme.txt
+	ReleaseNotes.txt
 	ac3.bin      - optional, copy to the same place as your compiled version of X
 	colours.tbl  - optional, copy to the same place as your compiled version of X
 
@@ -61,41 +66,44 @@
 	index.html   - optional, copy to the same place as your compiled version of X
 
 	src/..
-	AUDIO.java
+	Audio.java
 	AudioFrameConstants.java
 	Bitmap.java
 	BMP.java
-	BR_MONITOR.java
+	BRMonitor.java
 	CharSet.java
 	Common.java
 	CRC.java
 	D2V.java
 	DVBSubpicture.java
-	HEXVIEWER.java
+	HexViewer.java
 	Html.java
 	IDDBufferedOutputStream.java
 	Ifo.java
-	LOGAREA.java
+	LogArea.java
 	MPAC.java
 	MPAD.java
 	MPVD.java
-	PREVIEW.java
+	Preview.java
 	PreviewObject.java
 	RawInterface.java
-	RAWREAD.java	- symbolical class
-	RawFileInputStream.java	- symbolical class
-	RIFFHEADER.java
-	SCAN.java
+	RawFileInputStream.java	 - symbolical class
+	RawRead.java	         - symbolical class
+	RIFFHeader.java
+	Scan.java
 	StartUp.java
-	SUBPICTURE.java
+	SubPicture.java
 	Teletext.java
 	TeletextPageMatrix.java
 	TS.java
 	UISwitchListener.java
-	VIDEO.java
+	Video.java
 	WSS.java
 	X.java
 	MANIFEST.MF	- manifest (refers to the main class and JDK version)
+
+
+	sample of a compilation (may differ on your system) :
 
 	(A) compile the sources:
 		your_extract_path/src> [location_of_javac]javac [-O] *.java
@@ -107,6 +115,7 @@
 		plus the manifest in  META-INF\MANIFEST.MF
 
 	(C) execute the <new archive_name.jar>
+		your_extract_path/src> [location_of_java]java -jar <new archive_name.jar>
 
 	the compiling process doesn't take more than about 30 seconds.
 
