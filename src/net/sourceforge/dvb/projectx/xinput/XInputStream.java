@@ -6,7 +6,7 @@ import java.io.InputStream;
 
 public class XInputStream extends FilterInputStream {
 
-	private boolean debug = false;
+	private boolean debug = true;
 
 	private byte[] buffer = new byte[1];
 
@@ -29,7 +29,6 @@ public class XInputStream extends FilterInputStream {
 	 * @see java.io.InputStream#read()
 	 */
 	public final int read() throws IOException {
-		// byte[] buffer = new byte[1]; is now Attribute of class
 		if (read(buffer, 0, 1) == 1)
 			return (int) buffer[0];
 		else
@@ -62,13 +61,13 @@ public class XInputStream extends FilterInputStream {
 	 */
 	public final int read(byte[] aBuffer, int off, int len) throws IOException {
 
-		if (debug) System.out.println("Enter read(aBuffer,off,len)");
+		if (debug) System.out.println("Enter XInputStream.read(" + aBuffer + ", " + off + ", " + len + ")");
 
 		int result = 0;
 		long read = 0;
 		long readBytes = 0;
 		long remaining = len;
-//		byte[] streamBuffer = new byte[len];
+		long retryCount = 0;
 
 		try {
 			do {
@@ -76,23 +75,28 @@ public class XInputStream extends FilterInputStream {
 				if (debug) System.out.println("    Bytes read in this cycle: " + read);
 				if (read > 0) {
 					readBytes += read;
-//					System.arraycopy(streamBuffer, 0, aBuffer, (int) (len - remaining + off), (int) read);
 					remaining -= read;
 				}
-			} while ((remaining > 0) && (read != -1));
+				if (read == 0) {
+					retryCount++;
+				} else {
+					retryCount = 0;
+				}
+
+			} while ((remaining > 0) && (read != -1) && (retryCount <= 100));
 			result = (int) (len - remaining);
 
 			if ((read == -1) && (result == 0)) {
-				if (debug) System.out.println("Leave read(aBuffer,off,len) returning -1");
+				if (debug) System.out.println("Leave XInputStream.read(aBuffer,off,len) returning -1");
 				return -1;
 			} else {
-				if (debug) System.out.println("Leave read(aBuffer,off,len) returning " + result);
+				if (debug) System.out.println("Leave XInputStream.read(aBuffer,off,len) returning " + result);
 				return result;
 			}
 		} finally {
 			if (debug && (readBytes != len))
-					System.out.println("net.sourceforge.dvb.projectx.xinput.XInputStream.read(aBuffer,off,len): Bytes to read: "
-							+ len + ", Read: " + readBytes + ", Difference: " + (len - readBytes) + "\n");
+					System.out.println("********** ATTENTION! Bytes to read: "
+							+ len + ", Read: " + readBytes + ", Difference: " + (len - readBytes) + "**********");
 		}
 	}
 
@@ -100,8 +104,9 @@ public class XInputStream extends FilterInputStream {
 	 * @see java.io.InputStream#close()
 	 */
 	public final void close() throws IOException {
+		if (debug) System.out.println("Enter XInputStream.close()");
 		super.close();
-		if (debug) System.out.println("InputStream closed!\n");
+		if (debug) System.out.println("Leave XInputStream.close()");
 	}
 
 	/**
@@ -109,9 +114,7 @@ public class XInputStream extends FilterInputStream {
 	 */
 	public final long skip(long n) throws IOException {
 
-		boolean debug = true;
-
-		if (debug) System.out.println("Enter skip(" + n + ")");
+		if (debug) System.out.println("Enter XInputStream.skip(" + n + ")");
 
 		long retryCount = 0;
 		long skiped = 0;
@@ -129,13 +132,13 @@ public class XInputStream extends FilterInputStream {
 				} else {
 					retryCount = 0;
 				}
-			} while ((remaining > 0) && (retryCount <= 10));
-			if (debug) System.out.println("Leave skip(" + n + ") returning " + skipedBytes);
+			} while ((remaining > 0) && (retryCount <= 100));
+			if (debug) System.out.println("Leave XInputStream.skip(" + n + ") returning " + skipedBytes);
 			return skipedBytes;
 		} finally {
 			if (debug && (skipedBytes != n))
-					System.out.println("net.sourceforge.dvb.projectx.xinput.XInputStream.skip(n):\n  Bytes to skip: " + n
-							+ ", Skiped: " + skipedBytes + ", Difference: " + (n - skipedBytes) + "\n");
+					System.out.println("********** ATTENTION! Bytes to skip: " + n
+							+ ", Skiped: " + skipedBytes + ", Difference: " + (n - skipedBytes) + "**********");
 		}
 	}
 }

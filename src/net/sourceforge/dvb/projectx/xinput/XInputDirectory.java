@@ -8,6 +8,8 @@ public class XInputDirectory implements XInputDirectoryIF {
 	private XInputDirectoryIF impl = null;
 
 	private boolean debug = true;
+	
+	private Object constructorParameter = null;
 
 	/**
 	 * Private Constructor, don't use!
@@ -24,8 +26,16 @@ public class XInputDirectory implements XInputDirectoryIF {
 		Class[] parameterTypes = { aVO.getClass() };
 		Object[] parameterValues = { aVO };
 		retrieveImplementation(parameterTypes, parameterValues);
+		constructorParameter = aVO;
 
 		if (debug) System.out.println("Leave XInputDirectory(Object '" + aVO + "')");
+	}
+	
+	public XInputDirectory getNewInstance() {
+		if (debug) System.out.println("Enter XInputDirectory.getNewInstance()");
+		XInputDirectory xid = new XInputDirectory(constructorParameter);
+		if (debug) System.out.println("Leave XInputDirectory.getNewInstance() returning " + xid);
+		return xid;
 	}
 
 	/**

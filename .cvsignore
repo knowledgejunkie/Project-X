@@ -3,5 +3,5 @@ test
 *.log
 *.jar
 tfdisk.img
-rawread.dll
+*.dll
 

@@ -13,6 +13,8 @@ public class XInputFile implements XInputFileIF {
 
 	private boolean debug = true;
 
+	private Object constructorParameter = null;
+
 	/**
 	 * Private Constructor, don't use!
 	 */
@@ -28,8 +30,16 @@ public class XInputFile implements XInputFileIF {
 		Class[] parameterTypes = { aVO.getClass() };
 		Object[] parameterValues = { aVO };
 		retrieveImplementation(parameterTypes, parameterValues);
+		constructorParameter = aVO;
 
 		if (debug) System.out.println("Leave XInputFile(Object '" + aVO + "')");
+	}
+
+	public XInputFile getNewInstance() {
+		if (debug) System.out.println("Enter XInputFile.getNewInstance()");
+		XInputFile xif = new XInputFile(constructorParameter);
+		if (debug) System.out.println("Leave XInputFile.getNewInstance() returning " + xif);
+		return xif;
 	}
 
 	/**
