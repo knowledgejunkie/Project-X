@@ -80,6 +80,11 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+
+import net.sourceforge.dvb.projectx.video.IDCTRefNative;
+
+
+
 public class MPVD extends JFrame {
 
 public static Picture picture;
@@ -101,6 +106,11 @@ public MPVD(){
 
 
 public class Picture extends JPanel implements Runnable {
+
+
+//
+private IDCTRefNative idct;
+//
 
 private JFileChooser chooser;  //DM02092003
 private int bmpCount=0; //DM02092003
@@ -134,6 +144,14 @@ public Picture(){
 		}
 	});
 	//DM02092003-
+
+//
+	idct = new IDCTRefNative();
+
+	if (idct.isLibraryLoaded())
+		idct.init();
+//
+
 }
 
 //DM27042004 081.7 int02 add
@@ -2219,7 +2237,24 @@ public void motion_compensation(int MBA[], int macroblock_type[], int motion_typ
 	/* copy or add block data into picture */
 	for (comp=0; comp<block_count; comp++)	{
 		/* ISO/IEC 13818-2 section Annex A: inverse DCT */
-		IDCT_reference(block[comp],FAST?1:8);
+
+		if ( !idct.isLibraryLoaded() )
+			IDCT_reference(block[comp], FAST ? 1 : 8);
+
+		else
+		{
+//
+			short[][] newblock = new short[8][8];
+
+			for (int i = 0; i < 8; i++)
+				System.arraycopy(block[comp], i*8, newblock[i], 0, 8);
+
+			newblock = idct.referenceIDCT(newblock);
+
+			for (int i = 0; i < 8; i++)
+				System.arraycopy(newblock[i], 0, block[comp], i*8, 8);
+		}
+//
 
 		/* ISO/IEC 13818-2 section 7.6.8: Adding prediction and coefficient data */
 		Add_Block(comp, bx, by, dct_type, (macroblock_type[0] & MACROBLOCK_INTRA)==0);
