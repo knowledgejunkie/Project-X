@@ -8,7 +8,7 @@ del ProjectX.jar
 
 mkdir build
 
-javac.exe -O -classpath lib\commons-net-1.1.0\commons-net-1.1.0.jar -d build @sources.lst
+javac.exe -O -classpath lib\commons-net-1.2.2.jar -d build @sources.lst
 
 pause
 

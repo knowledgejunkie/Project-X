@@ -3,7 +3,7 @@
 rm -f ProjectX.jar
 perl -pe 's|\\|/|g' sources.lst > sources-linux.lst
 mkdir -p build
-javac -O -classpath lib/commons-net-1.1.0/commons-net-1.1.0.jar -d build @sources-linux.lst
+javac -O -classpath lib/commons-net-1.2.2.jar -d build @sources-linux.lst
 cp resources/*.* build
 jar cfvm projectx.jar MANIFEST.MF -C build .
 #start von projectx

@@ -3,6 +3,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry sourcepath="lib/commons-net-1.1.0/src/java" kind="lib" path="lib/commons-net-1.1.0/commons-net-1.1.0.jar"/>
+	<classpathentry sourcepath="lib/commons-net-1.2.2-src.jar" kind="lib" path="lib/commons-net-1.2.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
