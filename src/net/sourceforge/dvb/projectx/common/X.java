@@ -858,7 +858,7 @@ protected void buildAutoloadPanel()
 	bb.add(add_input);
 
 	// Button to add a ftp server directory to the autoload list
-	JButton add_inputftp = new JButton("f"); // TODO: localize or use gif
+	JButton add_inputftp = new JButton(Resource.loadIcon("ftp.gif")); // TODO: localize or use gif
 	add_inputftp.setActionCommand("+iftp");
 	add_inputftp.setPreferredSize(new Dimension(50,28));
 	add_inputftp.setMaximumSize(new Dimension(50,24));

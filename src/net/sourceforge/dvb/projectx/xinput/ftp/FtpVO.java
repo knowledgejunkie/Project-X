@@ -1,6 +1,7 @@
 package net.sourceforge.dvb.projectx.xinput.ftp;
 
 import org.apache.commons.net.ftp.FTPFile;
+import java.util.StringTokenizer;
 
 public class FtpVO implements Cloneable {
 
@@ -33,6 +34,22 @@ public class FtpVO implements Cloneable {
 		return "ftp://|" + server + "|" + directory + "|" + user + "|" + password;
 	}
 
+
+	public void fromString(String string) {
+		StringTokenizer st = new StringTokenizer(string, "|");
+		String[] tokens = new String[5];
+
+		for (int i=0; st.hasMoreTokens(); i++)
+			tokens[i] = st.nextElement().toString();
+
+		server = tokens[1];
+		directory = tokens[2];
+		user = tokens[3];
+		password = tokens[4];
+	}
+
+	/** not available on jdk1.2 **/
+	/**
 	public void fromString(String string) {
 		String[] tokens = string.split("|");
 		server = tokens[1];
@@ -40,6 +57,7 @@ public class FtpVO implements Cloneable {
 		user = tokens[3];
 		password = tokens[4];
 	}
+	**/
 
 	/**
 	 * @return Returns the directory.
