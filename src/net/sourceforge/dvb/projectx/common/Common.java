@@ -217,13 +217,13 @@ public final class Common
 				
 				byte[] check = bao.toByteArray();
 			
-				X.Msg(""); //DM22062004 081.7 int05 add
+				X.TextArea.append("\r\n");
 			
 				int a=0, frame_counter=0;
 				while (a < check.length) 
 				{
 					audio.AC3_parseHeader(check,a);
-					X.Msg("("+frame_counter+") "+audio.AC3_saveAnddisplayHeader());
+					X.TextArea.append("\r\n(" + frame_counter + ") " + audio.AC3_saveAnddisplayHeader());
 					byte[] ac3data = new byte[audio.Size];
 					System.arraycopy(check,a,ac3data,0,audio.Size);
 					AC3list.add(ac3data);
@@ -235,13 +235,13 @@ public final class Common
 		} 
 		catch (IOException e5) 
 		{ 
-			X.Msg(Resource.getString("ac3.msg.loading.error")); 
+			X.TextArea.append("\r\n" + Resource.getString("ac3.msg.loading.error")); 
 			AC3list.clear();
 		}
 	
 		if (AC3list.size() > 0)
 		{
-			X.Msg(Resource.getString("ac3.msg.frames", ""+AC3list.size()));
+			X.TextArea.append("\r\n" + Resource.getString("ac3.msg.frames", ""+AC3list.size()));
 		}
 	}
 	

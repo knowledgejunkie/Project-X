@@ -203,6 +203,8 @@ static boolean comchange=false, outchange=false, singleraw=false, newvideo=true,
 static String outalias = "";
 static String newOutName = "";
 
+private static long process_time = 0;
+
 public static long[] options = new long[58];
 static byte[] headerrescue= new byte[1];
 Object[] DAR = {"1.000 (1:1)","0.6735 (4:3)","0.7031 (16:9)","0.7615 (2.21:1)","0.8055","0.8437","0.9375","0.9815","1.0255","1.0695","1.1250","1.1575","1.2015" };
@@ -230,7 +232,7 @@ static JButton doitButton, breakButton, scanButton, pauseButton, extract, exeBut
 
 public static JRadioButton[] RButton = new JRadioButton[25];
 public static JComboBox[] comBox = new JComboBox[39];
-public static JCheckBox[] cBox = new JCheckBox[72];
+public static JCheckBox[] cBox = new JCheckBox[73];
 
 // radio buttons for look and feels in general menu
 private JRadioButtonMenuItem lf_item[] = null; 
@@ -1383,17 +1385,24 @@ protected JPanel buildMessagePanel()
 
 	cBox[40] = new JCheckBox(Resource.getString("tab.msg.msg1"));
 	cBox[40].setToolTipText(Resource.getString("tab.msg.msg1_tip"));
-	cBox[40].setPreferredSize(new Dimension(400,20));
-	cBox[40].setMaximumSize(new Dimension(400,20));
+	cBox[40].setPreferredSize(new Dimension(400, 20));
+	cBox[40].setMaximumSize(new Dimension(400, 20));
 	msgPanel_1.add(cBox[40]);
 
 	cBox[3] = new JCheckBox(Resource.getString("tab.msg.msg2"));
 	cBox[3].setToolTipText(Resource.getString("tab.msg.msg2_tip"));
-	cBox[3].setPreferredSize(new Dimension(400,20));
-	cBox[3].setMaximumSize(new Dimension(400,20));
+	cBox[3].setPreferredSize(new Dimension(400, 20));
+	cBox[3].setMaximumSize(new Dimension(400, 20));
 	msgPanel_1.add(cBox[3]);
 
+	cBox[72] = new JCheckBox(Resource.getString("tab.msg.msg3"));
+	cBox[72].setToolTipText(Resource.getString("tab.msg.msg3_tip"));
+	cBox[72].setPreferredSize(new Dimension(400, 20));
+	cBox[72].setMaximumSize(new Dimension(400, 20));
+	msgPanel_1.add(cBox[72]);
+
 	msgPanel.add(msgPanel_1);
+
 	return msgPanel;
 }
 
@@ -2916,6 +2925,7 @@ class FileListener implements ActionListener
 				File theFile = chooser.getSelectedFile();
 				if(theFile != null && theFile.isFile())
 				{
+
 
 					bb = theFile.getAbsolutePath(); 
 
@@ -5200,7 +5210,10 @@ class GoListener implements ActionListener
 			options[31]=1; 
 			options[30]=0;
 			options[33]=Integer.parseInt(comBox[9].getSelectedItem().toString(),16);
-			TextArea.setText(Resource.getString("golistener.msg.extracting") + comBox[9].getSelectedItem().toString() + "...");
+
+			TextArea.setText(null);
+			Msg(Resource.getString("golistener.msg.extracting") + comBox[9].getSelectedItem().toString() + "...");
+
 			new WORK().start();
 		}
 	}
@@ -5647,14 +5660,19 @@ public static String[] getVersion()
 }
 
 
-/************
- * messages *
- ************/
+/**
+ * messages
+ *
+ * @param1 - the msg
+ * @param2 - force windows visibility
+ */
 public static void Msg(String msg, boolean tofront)
 {
-	//DM25072004 081.7 int07 add
 	if (msg == null) 
 		return;
+
+	if (cBox[72].isSelected()) 
+		msg = "[" + Common.formatTime_1(System.currentTimeMillis() - process_time) + "] " + msg;
 
 	if (options[30] == 1) 
 		System.out.println(msg); 
@@ -5665,9 +5683,11 @@ public static void Msg(String msg, boolean tofront)
 	else
 	{
 		TextArea.append("\r\n" + msg);
-		viewport.setViewPosition(new Point(0,TextArea.getHeight()));
+		viewport.setViewPosition(new Point(0, TextArea.getHeight()));
 
-		//ensure Logmsg is visible
+		/**
+		 * ensure Logmsg is visible in GUI mode
+		 */
 		if (tofront)
 			logtab.setSelectedIndex(0);
 	}
@@ -5675,6 +5695,11 @@ public static void Msg(String msg, boolean tofront)
 	messagelog += "\r\n" + msg;
 }
 
+/**
+ * messages
+ *
+ * @param1 - the msg
+ */
 public static void Msg(String msg)
 {
 	Msg(msg, false);
@@ -5917,8 +5942,6 @@ class WORK extends Thread {
 /** normal process **/ 
 public void run() {
 
-	//thread = this.currentThread(); //DM26032004 081.6 int18 add //unused ATM
-
 	boolean stop_on_error = false;
 
 	try 
@@ -5926,10 +5949,8 @@ public void run() {
 
 	java.text.DateFormat sms = new java.text.SimpleDateFormat("HH:mm:ss.SSS");
 	sms.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
-	long timeneeded = System.currentTimeMillis();
 
-
-
+	process_time = System.currentTimeMillis();
 
 	TextArea.setBackground(Color.white); //DM26032004 081.6 int18 changed
 
@@ -5955,7 +5976,8 @@ public void run() {
 
 	if (options[33]==-1)
 	{
-		TextArea.setText(java.text.DateFormat.getDateInstance(java.text.DateFormat.FULL).format(new Date())+"  "+java.text.DateFormat.getTimeInstance(java.text.DateFormat.FULL).format(new Date()));
+		TextArea.setText(null);
+		Msg(java.text.DateFormat.getDateInstance(java.text.DateFormat.FULL).format(new Date())+"  "+java.text.DateFormat.getTimeInstance(java.text.DateFormat.FULL).format(new Date()));
 		Msg(version_name + " (" + version_date + ")");
 
 		if (cBox[18].isSelected()) 
@@ -5965,7 +5987,8 @@ public void run() {
 			b = a+1;
 		}
 
-		Msg("\r\n" + Resource.getString("run.session.infos"));
+		Msg("");
+		Msg(Resource.getString("run.session.infos"));
 
 		for ( ; a < b ; a++,d++)
 		{
@@ -5974,7 +5997,8 @@ public void run() {
 			comBox[0].setSelectedIndex(a);
 			currentcoll = a;
 
-			Msg("\r\n" + Resource.getString("run.working.coll") + " " + a);
+			Msg("");
+			Msg(Resource.getString("run.working.coll") + " " + a);
 
 			if (workinglist.size() > 0)
 			{ 
@@ -6134,19 +6158,9 @@ public void run() {
 			Msg(Resource.getString("run.coll.empty"));
 	} 
 
-	timeneeded = System.currentTimeMillis() - timeneeded;
-	progress.setString(Resource.getString("run.done", ""+d) + " "+sms.format(new java.util.Date(timeneeded)));
+	progress.setString(Resource.getString("run.done", "" + d) + " " + Common.formatTime_1(System.currentTimeMillis() - process_time));
 	progress.setStringPainted(true);
 
-/**
-	doitButton.setEnabled(true);
-	scanButton.setEnabled(true);
-	pauseButton.setEnabled(false);
-	breakButton.setEnabled(false);
-	yield();
-	options[30]=0;
-	options[31]=0;
-**/
 	}
 
 	catch (Exception e8)
@@ -6315,17 +6329,18 @@ private void messageSettings()
 
 
 
-/*********
- * pause *
- *********/
-
-public void pause(){
+/**
+ * stops the processing until next user action
+ */
+public void pause()
+{
 	try
 	{ 
-	sleep(1000); 
+		sleep(1000); 
 	}
-	catch (InterruptedException ie) { 
-		Msg(""+ie); 
+	catch (InterruptedException ie)
+	{ 
+		Msg("" + ie); 
 	}
 }
 
@@ -6456,17 +6471,6 @@ public void working() {
 	}
 
 
-	/**
-	Hashtable ht = new Hashtable();
-	ht.put("0",new FileInputStream(file));
-	ht.put("1",new FileInputStream(file));
-	ht.put("2",new FileInputStream(file));
-	SequenceInputStream in2 = new SequenceInputStream(ht.elements());
-	File ff = new File(file);
-	System.out.println(" "+in2.skip((ff.length()*3)-5000000));
-	**/
-
-
 	brm.surf.start();
 
 	while ( options[21]>=0 ) {
@@ -6492,7 +6496,8 @@ public void working() {
 		{
 			XInputFile xInputFile = (XInputFile)workinglist.get(h);
 
-			Msg("\r\n" + Resource.getString("working.file", "" + h, xInputFile, "" + xInputFile.length()));
+			Msg("");
+			Msg(Resource.getString("working.file", "" + h, xInputFile, "" + xInputFile.length()));
 
 			if (!xInputFile.exists())
 			{
