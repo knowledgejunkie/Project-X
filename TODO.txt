@@ -130,3 +130,5 @@ dvbmatt änd 24.12. - ptsoffset bei wechsel in nä. 'fremde' datei ist nun statt 2
 dvbmatt neu 25.12. - SDE patch/ergänzung der Auflösung, manche SA-Player machen Probleme bei nicht DVD-konformer Auflösung und/oder Fehlen dieser Extension (z.b. kein Vollbild)
 
 dvbmatt fix 25.12. - mpac: mpa konvertierung mono/stereo etc. hat seit umstellung fehler/formatunstimmigkeiten nicht mehr gemeldet und führte u.U. zu fehlerhaften Ausgaben ohne jeden Hinweis.
+
+dvbmatt neu 25.12. - programm nach durchlauf selbst beenden mit inisave

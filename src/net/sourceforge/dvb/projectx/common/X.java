@@ -178,7 +178,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "25.12.2004 21:00";
+static String version_date = "26.12.2004 10:00";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -236,7 +236,7 @@ static JButton doitButton, breakButton, scanButton, pauseButton, extract, exeBut
 
 public static JRadioButton[] RButton = new JRadioButton[25];
 public static JComboBox[] comBox = new JComboBox[39];
-public static JCheckBox[] cBox = new JCheckBox[78];
+public static JCheckBox[] cBox = new JCheckBox[79];
 
 // radio buttons for look and feels in general menu
 private JRadioButtonMenuItem lf_item[] = null; 
@@ -2600,6 +2600,12 @@ protected JPanel buildoptionPanel() {
 	d2vfield[8].setToolTipText(Resource.getString("tab.options.startpath_tip"));
 	op0.add(new JLabel(Resource.getString("tab.options.startpath")));
 	op0.add(d2vfield[8]);
+
+	cBox[78] = new JCheckBox(Resource.getString("tab.options.close"));
+	cBox[78].setToolTipText(Resource.getString("tab.options.close_tip"));
+	cBox[78].setPreferredSize(new Dimension(250,20));
+	cBox[78].setMaximumSize(new Dimension(250,20));
+	op0.add(cBox[78]);
 
 	option.add(op0);
 
@@ -6365,6 +6371,12 @@ public void run() {
 	if (running) 
 		System.exit(0);
 
+	if (cBox[78].isSelected())
+	{
+		inisave();
+		System.exit(0);
+	}
+
 	frame.setTitle(frametitle);
 }  
 
@@ -9066,6 +9078,8 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 
 						if (ToVDR==0) 
 							demux.init(fparent,options,bs/TSdemuxlist.size(),TSdemuxlist.size(),2);
+
+
 
 						//DM09072004 081.7 int06 changed
 						if (ToVDR > 0) 
