@@ -25,9 +25,11 @@
  */
 package net.sourceforge.dvb.projectx.common;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -35,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * The Settings class handles the settings for Project-X.
@@ -67,9 +70,22 @@ public class Settings {
 	public Settings(String filename){
 		try{
 			inifile = filename;
-			FileInputStream fis = new FileInputStream(filename);
-			props.load(fis);
-			fis.close();
+			BufferedReader r = new BufferedReader(new FileReader(filename));
+			String line = null;
+			while ((line = r.readLine()) != null){
+				if (line.startsWith("#")){
+					continue;
+				}
+				
+				int pos = line.indexOf('=');
+				if (pos != -1)
+				{
+					String key = line.substring(0, pos);
+					String value = line.substring(pos+1);
+					props.put(key, value);
+				}
+			}
+			r.close();
 		}catch(IOException e){
 			System.out.println(Resource.getString("msg.loadini.error") + " " + e);
 		}
@@ -81,9 +97,15 @@ public class Settings {
 	public void save()
 	{
 		try{
-			FileOutputStream fos = new FileOutputStream(inifile);
-			props.store(fos, "Project-X INI-File");
-			fos.close();
+			PrintWriter w = new PrintWriter(new FileWriter(inifile));
+			w.println("# Project-X INI");
+			TreeMap map = new TreeMap(props);
+			Set keys = map.keySet();
+			for (Iterator iter = keys.iterator(); iter.hasNext();) {
+				String element = (String) iter.next();
+				w.println(element + "=" + map.get(element));
+			}
+			w.close();
 		}catch(IOException e){
 			X.Msg(Resource.getString("msg.saveini.error") + " " + e);
 		}
@@ -189,7 +211,7 @@ public class Settings {
 	 * @return
 	 */
 	public void setBooleanProperty(String key, boolean value){
-		props.setProperty(key, new Boolean(value).toString());
+		props.setProperty(key, value?"1":"0");
 	}
 
 	/**
@@ -205,10 +227,11 @@ public class Settings {
 		{
 			return null;
 		}
-		else
+		else if (value.equals("1") || value.equals("true") || value.equals("yes") || value.equals("on"))
 		{
-			return new Boolean(props.getProperty(key));
+			return Boolean.TRUE;
 		}
+		return Boolean.FALSE;
 	}
 	
 	/**
@@ -219,15 +242,13 @@ public class Settings {
 	 * @return
 	 */
 	public boolean getBooleanProperty(String key, boolean defaultValue){
-		String value = getProperty(key);
+		Boolean value = getBooleanProperty(key);
 		if (value == null)
 		{
 			return defaultValue;
 		}
-		else
-		{
-			return new Boolean(props.getProperty(key)).booleanValue();
-		}
+
+		return value.booleanValue();
 	}
 
 	/**
