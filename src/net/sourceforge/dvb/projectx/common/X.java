@@ -177,8 +177,8 @@ public class X extends JPanel
 {
 
 /* main version index */
-static String version_name = "ProjectX 0.82.0.03";
-static String version_date = "21.01.2005";
+static String version_name = "ProjectX 0.82.0.04";
+static String version_date = "26.01.2005";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -4255,6 +4255,8 @@ class COLLECTION extends JFrame
 		ArrayList infiles = (ArrayList)collfiles[activecoll];
 		previewList.clear();
 
+		file = !infiles.isEmpty() ? infiles.get(0).toString() : "";
+
 		long start=0,end=0;
 
 		//DM24062004 081.7 int05 changed
@@ -4395,7 +4397,7 @@ class COLLECTION extends JFrame
 		if (comBox[14].getItemCount()==0)
 			return;
 
-		String newfile = file+"["+activecoll+"].Xcl";
+		String newfile = file + "[" + activecoll +"].Xcl";
 		chooser.setSelectedFile(new File(newfile));
 		chooser.rescanCurrentDirectory();
 
@@ -10021,7 +10023,7 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 		pa2name=fparent+"_0x"+Integer.toHexString((int)options[33])+".raw";
 
 	boolean cpts=false, ende=false;
-	boolean md = (!cBox[28].isSelected()) ? true : false;
+	boolean md = !cBox[28].isSelected();
 	int pid, ptsflag, packlength, counter;
 	clv = new int[10];
 	long pts=0, lastpts=0, ptsoffset=0, packet=0;
@@ -10031,8 +10033,6 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 	RAWFILE rawfile = new RAWFILE();
 	TSPID TSPid = null;
 	PIDdemux demux = null;
-	//TSPID TSPid = new TSPID();
-	//PIDdemux demux = new PIDdemux();
 
 	if (options[19]==0) {
 		PVAPidlist.clear();
@@ -10179,6 +10179,9 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 	long qexit = count+options[56];
 	boolean miss=false;
 
+	int pre_bytes;
+	int post_bytes;
+
 	morepva:
 	while (true) {
 
@@ -10207,47 +10210,60 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 					}
 			}
 
-			in.read(push8,0,8);
+			in.read(push8, 0, 8);
 
 			/*** check 0x4156 is PVA (ascii AV) ***/
-			if ((255&push8[0])!=0x41 || (255&push8[1])!=0x56 || (255&push8[4])!=0x55) {
-				in.unread(push8,1,7);
-				if (!cBox[3].isSelected() && !miss) //DM03112003 081.5++ info
-					Msg(Resource.getString("pvaparse.missing.sync")+" "+count);
-				miss=true;
+			if (push8[0] != 0x41 || push8[1] != 0x56 || push8[4] != 0x55)
+			{
+				in.unread(push8, 1, 7);
+
+				if (!cBox[3].isSelected() && !miss)
+					Msg(Resource.getString("pvaparse.missing.sync") + " " + count);
+
+				miss = true;
 				count++;
+
 				continue pvaloop;
 			}
 
-			if (!cBox[3].isSelected() && miss) //DM03112003 081.5++ info
-				Msg(Resource.getString("pvaparse.found.sync")+" "+count);
+			if (!cBox[3].isSelected() && miss)
+				Msg(Resource.getString("pvaparse.found.sync") + " " + count);
+
 			miss=false;
 
 			/**** overlapcheck ***/
-			//if (cBox[48].isSelected() && combvideo.size()>1) {
-			if (cBox[48].isSelected() && FileNumber < combvideo.size()-1) {
+			if (cBox[48].isSelected() && FileNumber < combvideo.size() - 1)
+			{
 				in.unread(push8);
-				in.read(push256,0,256);
-				if (java.util.Arrays.equals(overlapnext,push256)) { 
-					Msg(Resource.getString("pvaparse.file.overlap")+" "+count);
+				in.read(push256, 0, 256);
+
+				if (java.util.Arrays.equals(overlapnext, push256))
+				{ 
+					Msg(Resource.getString("pvaparse.file.overlap") + " " + count);
+
 					break pvaloop;
 				}
+
 				in.unread(push256);
-				in.read(push8,0,8);
+				in.read(push8, 0, 8);
 			}
 
 			/**** mark for split at sequenceheader ***/
-			options[20]=count;
-			CUT_BYTEPOSITION=count;
+			options[20] = count;
+			CUT_BYTEPOSITION = count;
 
-			count+=8;
+			count += 8;
 			packet++;
 
-			pid = 0xFF&push8[2];          // 0x01 is Video, 0x02 is Audio
-			ptsflag = 0xFF&push8[5];      // read byte pts-flag & pre/postbytes
-			counter = 0xFF&push8[3];                             
-			packlength = (0xFF&push8[6])<<8 | (0xFF&push8[7]);    // av pack length bytes to follow
-			cpts = ( (16 & ptsflag) !=0 ) ? true : false;
+			pid = 0xFF & push8[2];          // 0x01 is Video, 0x02 is Audio
+			counter = 0xFF & push8[3];                             
+			ptsflag = 0xFF & push8[5];      // read byte pts-flag & pre/postbytes
+
+			cpts = (0x10 & ptsflag) != 0 ? true : false;
+			pre_bytes = 3 & ptsflag>>>2;
+			post_bytes = 3 & ptsflag;
+
+			packlength = (0xFF & push8[6])<<8 | (0xFF & push8[7]);    // av pack length bytes to follow
 
 			progress.setValue((int)((count-base)*100/(size-base))+1);
 			yield();
@@ -10367,60 +10383,83 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 				}
 			}
 
-			if (pid!=1 && !cpts && md && packlength>3) {
-				int p=0;
-				if (data[p]==0 && data[p+1]==0 && data[p+2]==1 && (data[p+3]==(byte)0xBD || (0xE0&data[p+3])==0xC0)) 
-					cpts=true;
+			if (pid != 1 && !cpts && md && packlength > (3 + post_bytes))
+			{
+				//int p = 0;
+				int p = post_bytes;
+
+				if (data[p] == 0 && data[p + 1] == 0 && data[p + 2] == 1 && (data[p + 3] == (byte)0xBD || (0xE0 & data[p + 3]) == 0xC0)) 
+					cpts = true;
 			}
+
+			if (!cpts)
+				post_bytes = 0;
 
 			if (TSPid.isStarted()) 
 				demux = (PIDdemux)PVAdemuxlist.get(TSPid.getID());
-			else {   // create new ID object
-				String IDtype="";
-				switch (pid) {
-				case 1: { 
+
+			else
+			{   // create new ID object
+				String IDtype = "";
+
+				switch (pid)
+				{
+				case 1:
 					IDtype=Resource.getString("idtype.video");
 					demux = new PIDdemux(ptsoffset);
-					//demux = new PIDdemux();
+
 					TSPid.setStarted(true);
+
 					demux.setID(0xE0);
 					demux.setnewID(newID[0]++);
 					demux.setPID(pid);
 					demux.setsubID(0);
 					demux.setStreamType(ismpg);
 					demux.setType(3);
+
 					TSPid.setID(PVAdemuxlist.size());
 					PVAdemuxlist.add(demux);
+
 					if (ToVDR==0) 
 						demux.initVideo(fparent,options,bs,PVAdemuxlist.size(),3);
 					else 
 						IDtype+=" " + Resource.getString("idtype.mapped.to.e0") + streamtypes[3];
+
 					break; 
-				}
-				case 2: { 
+
+				case 2:
 					IDtype=Resource.getString("idtype.main.audio");
 					//do not break
-				}
-				default: { 
+
+				default: 
 					IDtype=Resource.getString("idtype.additional"); 
+
 					if (!cpts) 
 						continue pvaloop;
-					int streamID = 0xFF&data[3];
-					if ((0xE0&streamID)!=0xC0 && streamID!=0xBD) { 
+
+					int streamID = 0xFF & data[post_bytes + 3];
+
+					if ((0xE0 & streamID) != 0xC0 && streamID != 0xBD)
+					{ 
 						TSPid.setneeded(false); 
 						break; 
 					}
+
 					demux = new PIDdemux(ptsoffset);
-					//demux = new PIDdemux();
+
 					TSPid.setStarted(true);
+
 					demux.setPID(pid);
-					demux.setType((streamID!=0xBD)?2:0);    // MPA?
+					demux.setType((streamID != 0xBD) ? 2 : 0);    // MPA?
 					demux.setID(streamID);
 					demux.setsubID(0);
-					boolean ttx = ((0xFF&data[8])==0x24) ? true : false;
-					demux.setnewID(((streamID==0xBD)?((ttx)?newID[3]++:newID[2]++):newID[1]++));
+
+					boolean ttx = ((0xFF & data[post_bytes + 8]) == 0x24) ? true : false;
+
+					demux.setnewID(((streamID == 0xBD) ? ((ttx) ? newID[3]++ : newID[2]++) : newID[1]++));
 					demux.setTTX(ttx);
 					demux.setStreamType(ismpg);
+
 					TSPid.setID(PVAdemuxlist.size());
 					PVAdemuxlist.add(demux);
 
@@ -10433,74 +10472,127 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 
 					break; 
 				}
-				}
+
 				Msg(Resource.getString("pvaparse.id.0x")+Integer.toHexString(pid).toUpperCase()+" "+IDtype);
 			}
 
 
 			//DM14072004 081.7 int06 add
 			if (!demux.StreamEnabled())
-			{
 				continue pvaloop;
-			}
 
-			if (ToVDR==0) {
-				if (demux.getType()==3) 
-					demux.writeVideo(data,options,true);
-				else { 
-					if (cpts) {
-						data[4] = (byte)((data.length-6)>>>8);
-						data[5] = (byte)(0xFF&(data.length-6));
+
+			if (ToVDR == 0)
+			{
+				if (demux.getType() == 3) 
+					demux.writeVideo(data, options, true);
+
+				else
+				{ 
+					if (cpts)
+					{
+						if (post_bytes > 0)
+						{
+							data2 = new byte[post_bytes];
+							System.arraycopy(data, 0, data2, 0, data2.length);
+
+							demux.write(data2, false);
+
+							data2 = new byte[data.length - post_bytes];
+							System.arraycopy(data, post_bytes, data2, 0, data2.length);
+
+							data = data2;
+						}
+
+						data[4] = (byte)((data.length - 6)>>>8);
+						data[5] = (byte)(0xFF & (data.length - 6));
 					}
-					demux.write(data,cpts);
+
+					demux.write(data, cpts);
 				}
-				if (demux.getPTS()>lastpts) 
-					lastpts=demux.getPTS();
+
+				if (demux.getPTS() > lastpts) 
+					lastpts = demux.getPTS();
 
 				/****** split size reached *****/
-				if ( options[18]>0 && options[18]<options[41] ) 
+				if ( options[18] > 0 && options[18] < options[41] ) 
 					break pvaloop;
 
 				continue pvaloop;
 			}
 
-			/*** create header + pts for video ***/
-			if (pid==1) {
-				if (cpts) {
-					pes2[4] = (byte)((packlength+8)>>>8);
-					pes2[5] = (byte)(0xFF&(packlength+8));
-					pes2[9] = (byte)(0x21 | (0xE&(pts>>>29)));
-					pes2[10] = (byte)(0xFF&(pts>>>22));
-					pes2[11] = (byte)(1 | (0xFE&(pts>>>14)));
-					pes2[12] = (byte)(0xFF&(pts>>>7));
-					pes2[13] = (byte)(1 | (0xFE&(pts<<1)));
+			/**
+			 * create header + pts for video 
+			 */
+			if (pid==1)
+			{
+				if (cpts)
+				{
+					pes2[4] = (byte)((packlength + 8)>>>8);
+					pes2[5] = (byte)(0xFF & (packlength+8));
+					pes2[9] = (byte)(0x21 | (0xE & (pts>>>29)));
+					pes2[10] = (byte)(0xFF & (pts>>>22));
+					pes2[11] = (byte)(1 | (0xFE & (pts>>>14)));
+					pes2[12] = (byte)(0xFF & (pts>>>7));
+					pes2[13] = (byte)(1 | (0xFE & (pts<<1)));
 
-					data2 = new byte[14+data.length];
-					System.arraycopy(pes2,0,data2,0,14);
-					System.arraycopy(data,0,data2,14,data.length);
-				} else {
-
-					pes1[4] = (byte)((packlength+3)>>>8);
-					pes1[5] = (byte)(0xFF&(packlength+3));
-
-					data2 = new byte[9+data.length];
-					System.arraycopy(pes1,0,data2,0,9);
-					System.arraycopy(data,0,data2,9,data.length);
+					data2 = new byte[14 + data.length];
+					System.arraycopy(pes2, 0, data2, 0, 14);
+					System.arraycopy(data, 0, data2, 14, data.length);
 				}
-			} else {
-				if (cpts) {
-					data2=data;
+
+				else
+				{
+					pes1[4] = (byte)((packlength + 3)>>>8);
+					pes1[5] = (byte)(0xFF & (packlength + 3));
+
+					data2 = new byte[9 + data.length];
+					System.arraycopy(pes1, 0, data2, 0, 9);
+					System.arraycopy(data, 0, data2, 9, data.length);
+				}
+			}
+
+			else
+			{
+				if (cpts)
+				{
+					if (post_bytes > 0)
+					{
+						pes1[4] = (byte)((post_bytes + 3)>>>8);
+						pes1[5] = (byte)(0xFF & (post_bytes + 3));
+
+						data2 = new byte[9 + post_bytes];
+						System.arraycopy(pes1, 0, data2, 0, 9);
+						System.arraycopy(data, 0, data2, 9, post_bytes);
+						data2[3] = (byte)(demux.getID());
+
+						options = makevdr.write(ToVDR, data2, options, demux, 0, CUT_BYTEPOSITION);
+
+						data2 = new byte[data.length - post_bytes];
+						System.arraycopy(data, post_bytes, data2, 0, data2.length);
+						packlength -= post_bytes;
+
+						data = data2;
+					}
+
+
+					data2 = data;
 					data2[3] = (byte)(demux.getID());
-					data2[4] = (byte)((packlength-6)>>>8);
-					data2[5] = (byte)(0xFF&(packlength-6));
-					if ((0x80&data2[7])!=0) 
+					data2[4] = (byte)((packlength - 6)>>>8);
+					data2[5] = (byte)(0xFF & (packlength - 6));
+
+					if ((0x80 & data2[7]) != 0) 
 						data2[9] &= ~8;
-				} else {
-					pes1[4] = (byte)((packlength+3)>>>8);
-					pes1[5] = (byte)(0xFF&(packlength+3));
-					data2 = new byte[9+data.length];
-					System.arraycopy(pes1,0,data2,0,9);
-					System.arraycopy(data,0,data2,9,data.length);
+				}
+
+				else
+				{
+					pes1[4] = (byte)((packlength + 3)>>>8);
+					pes1[5] = (byte)(0xFF & (packlength + 3));
+
+					data2 = new byte[9 + data.length];
+					System.arraycopy(pes1, 0, data2, 0, 9);
+					System.arraycopy(data, 0, data2, 9, data.length);
 					data2[3] = (byte)(demux.getID());
 				}
 			}
@@ -10512,8 +10604,10 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 			if (ToVDR > 0)  //DM06022004 081.6 int15 fix
 				options[20] = count;
 
-			/****** split size reached *****/
-			if ( options[18]>0 && options[18]<options[41] ) 
+			/**
+			 * split size reached 
+			 **/
+			if ( options[18] > 0 && options[18] < options[41] ) 
 				break pvaloop;
 
 		}  // end while pvaloop
