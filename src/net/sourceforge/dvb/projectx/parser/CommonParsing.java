@@ -26,6 +26,12 @@
 
 package net.sourceforge.dvb.projectx.parser;
 
+import java.io.IOException;
+import java.io.File;
+import java.io.RandomAccessFile;
+
+import net.sourceforge.dvb.projectx.common.Resource;
+import net.sourceforge.dvb.projectx.common.X;
 
 /**
  * common stuff for parsing functions
@@ -100,4 +106,44 @@ public final class CommonParsing {
 
 		return newdata;
 	}
+
+	/**
+	 * create PTS alias 
+	 */
+	public static void logAlias(String _vptslog, String _datalog, long[] _options, boolean _PureVideo)
+	{
+		File vpts = new File(_vptslog); 
+
+		try {
+			RandomAccessFile log = new RandomAccessFile(_datalog, "rw");
+
+			log.seek(0);
+
+			if (vpts.exists() && vpts.length() > 0)
+			{
+				RandomAccessFile vlog = new RandomAccessFile(_vptslog, "r");
+				long p = vlog.readLong();
+
+				if (!_PureVideo && _options[19] == 0)
+					_options[25] = p;
+
+				log.writeLong(_options[25] + _options[28]);
+
+				vlog.close();
+			}
+			else 
+				log.writeLong((0L + _options[28]));
+
+			log.writeLong(0L); 
+			log.close();
+
+			X.Msg("");
+			X.Msg(Resource.getString("all.msg.pts.faked"));
+
+		} catch (IOException e) {
+
+			X.Msg(Resource.getString("logalias.error.io") + " " + e);
+		}
+	}
+
 }

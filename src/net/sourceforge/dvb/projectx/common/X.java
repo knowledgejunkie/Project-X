@@ -7938,6 +7938,7 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 
 
 
+
 				}
 				case 0xBF:  //split cellids
 					//DM09112003+ 081.5++
@@ -14934,7 +14935,8 @@ public void rawaudio(XInputFile aXInputFile,String vptslog, String type)
 	String fchild = (newOutName.equals("")) ? aXInputFile.getName() : newOutName;
 	String fparent = ( fchild.lastIndexOf(".") != -1 ) ? workouts+fchild.substring(0,fchild.lastIndexOf(".")) : workouts+fchild;
 
-	logAlias(vptslog,fparent+".pts");
+	CommonParsing.logAlias(vptslog, fparent + ".pts", options, PureVideo);
+
 	options[11]=1;
 	String[] synchit = { aXInputFile.toString(),fparent+".pts",type,vptslog };
 	/* TODO mpt muss noch auf xinput umgestellt werden, oder nicht??
@@ -15956,7 +15958,7 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 		}
 	} // end of gop search
 
-//
+/**
 	for (int dl = 0; dl < dropList.size(); dl++)
 	{
 		String str = dropList.get(dl).toString();
@@ -15971,7 +15973,7 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 	}
 
 
-//
+**/
 	/**
 	 * put the rest of data into buffer, if gop was changed 
 	 */
@@ -16548,46 +16550,6 @@ public static void setvideoheader(String videofile, String logfile)
 
 } // end methode setvideoheader
 
-
-/*************** create PTS alias **************/
-public void logAlias(String vptslog, String datalog)
-{
-	try
-	{
-
-		RandomAccessFile log = new RandomAccessFile(datalog, "rw");
-		log.seek(0);
-
-		File vpts = new File(vptslog); 
-
-		if (vpts.exists() && vpts.length() > 0)
-		{
-			RandomAccessFile vlog = new RandomAccessFile(vptslog, "r");
-			long p = vlog.readLong();
-
-			if (!PureVideo && options[19] == 0)
-				options[25] = p;
-
-			log.writeLong(options[25] + options[28]);
-
-			vlog.close();
-		}
-		else 
-			log.writeLong((0L + options[28]));
-
-		log.writeLong(0L); 
-		log.close();
-
-		Msg(""); //DM20072004 081.7 int07 add
-		Msg(Resource.getString("all.msg.pts.faked")); // *** add (fix5)
-
-	}
-	catch (IOException e)
-	{
-		//DM25072004 081.7 int07 add
-		Msg(Resource.getString("logalias.error.io") + " " + e);
-	}
-}
 
 //DM08032004 081.6 int18 new
 public static int[] getVideoBasics()
@@ -17209,7 +17171,7 @@ class PIDdemux {
 			log.close(); 
 
 			if (new File(__pts_name).length() < 10) 
-				logAlias(_vptslog, __pts_name); // logAlias
+				CommonParsing.logAlias(_vptslog, __pts_name, options, PureVideo);
 
 			if (new File(name).length() < 10)
 			{

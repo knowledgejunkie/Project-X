@@ -66,18 +66,30 @@ public final class WSS
 		float fx = 0;
 		float Xdecimate = width / (float)(nx);
 
-		//DM28082004 081.7 int10 changed
 		for (int x = 0; fx < width && x < nx; fx += Xdecimate, x++)
 			pixels[x] = 0xFF & source_pixels[(int)fx]>>>16;
 
 		a = 0;
 
-		handlepixels();  // read out
+		handlepixels("line 0 (23)");  // read out
+
+		if (str == null)
+		{
+			fx = 0;
+
+			for (int x = 0; fx < width && x < nx; fx += Xdecimate, x++)
+				pixels[x] = 0xFF & source_pixels[width + (int)fx]>>>16;
+
+			a = 0;
+
+			handlepixels("line 1 (24)");  // read out
+		}
 	}
 
-	private static void handlepixels()
+	private static void handlepixels(String _str)
 	{
-		str = "WSS status:<p>";
+		str = "WSS status @ " + _str;
+		str += ":<p>";
 
 		if (getRunIn())
 		{
