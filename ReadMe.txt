@@ -83,7 +83,7 @@
              that's not critical, as long as an actual JDK still supports these mehods
 
        *)
-       newer versions you'll find at:
+       newer versions (mostly compiled with JDK 1.4.2) you'll find at:
        'jakarta.apache.org/site/binindex.cgi', look for 'Commons Net' and  'ORO'
        - using newer lib's requires an update of the 'build.bat' and 'MANIFEST.MF' !
 
