@@ -159,6 +159,7 @@ import net.sourceforge.dvb.projectx.video.MPVD;
 import net.sourceforge.dvb.projectx.video.PatchPanel;
 import net.sourceforge.dvb.projectx.video.Preview;
 import net.sourceforge.dvb.projectx.video.PreviewObject;
+import net.sourceforge.dvb.projectx.xinput.DirType;
 import net.sourceforge.dvb.projectx.xinput.XInputDirectory;
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
 import net.sourceforge.dvb.projectx.xinput.ftp.FtpChooser;
@@ -4980,10 +4981,24 @@ public void inputlist()
 		}
 	}
 
-	// Get all Topfield files (instead of a full XInputDirectory integration)
-	/** TODO Direkte Benutzung von RawInterface noch ändern */
 	try {
-		(new RawInterface("")).add_native_files(arraylist);
+		// Get input files from topfield raw disk access
+		XInputDirectory xInputDirectory = new XInputDirectory(DirType.TFRAW_DIR);
+		XInputFile[] addlist = xInputDirectory.getFiles();
+		// Sort them
+		if (addlist.length > 0) {
+			class MyComparator implements Comparator {
+
+				public int compare(Object o1, Object o2) {
+					return o1.toString().compareTo(o2.toString());
+				}
+			}
+			Arrays.sort(addlist, new MyComparator());
+		}
+		// Add them to the list
+		for (int b = 0; b < addlist.length; b++) {
+			arraylist.add(addlist[b]);
+		}
 	} catch (Throwable t) {
 		// Assume no dll available or no hd or no file, so do nothing!
 	}

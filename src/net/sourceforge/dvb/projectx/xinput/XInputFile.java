@@ -23,11 +23,22 @@ public class XInputFile implements XInputFileIF {
 	/**
 	 */
 	public XInputFile(Object aVO) {
+		if (debug) System.out.println("Enter XInputFile(Object '" + aVO + "')");
 
-		FileType fileType = null;
 		Class[] parameterTypes = { aVO.getClass() };
 		Object[] parameterValues = { aVO };
+		retrieveImplementation(parameterTypes, parameterValues);
+		
+		if (debug) System.out.println("Leave XInputFile(Object '" + aVO + "')");
+	}
 
+	/**
+	 */
+	private void retrieveImplementation(Class[] parameterTypes, Object[] parameterValues) {
+		if (debug) System.out.println("Enter XInputFile.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
+
+		FileType fileType = null;
+		
 		for (Iterator fileTypes = FileType.getFileTypes().iterator(); fileTypes.hasNext();) {
 			fileType = (FileType) fileTypes.next();
 
@@ -37,8 +48,10 @@ public class XInputFile implements XInputFileIF {
 
 			try {
 				if (debug) System.out.println("Try FileType '" + fileType.getName() + "'");
-				impl = (XInputFileIF) fileType.getImplementation().getConstructor(parameterTypes).newInstance(parameterValues);
+				impl = (XInputFileIF) fileType.getImplementation().getConstructor(parameterTypes).newInstance(
+						parameterValues);
 				if (debug) System.out.println("Use FileType '" + fileType.getName() + "' for file '" + impl.toString() + "'");
+				if (debug) System.out.println("Leave XInputFile.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
 				return;
 			} catch (Exception e) {
 				// Failed, try next type
@@ -48,16 +61,17 @@ public class XInputFile implements XInputFileIF {
 		try {
 			fileType = FileType.DEFAULT;
 			if (debug) System.out.println("Try default FileType '" + fileType.getName() + "'");
-			impl = (XInputFileIF) fileType.getImplementation().getConstructor(parameterTypes).newInstance(parameterValues);
-			if (debug)
-					System.out.println("Use default FileType '" + fileType.getName() + "' for file '" + impl.toString() + "'");
+			impl = (XInputFileIF) fileType.getImplementation().getConstructor(parameterTypes)
+					.newInstance(parameterValues);
+			if (debug) System.out.println("Use default FileType '" + fileType.getName() + "' for file '" + impl.toString() + "'");
+			if (debug) System.out.println("Leave XInputFile.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
 			return;
 		} catch (Exception e) {
 			// Failed, no type left, so this is final failure
 			impl = null;
-			String s = "No matching FileType found or file doesn't exist";
-			if (debug) System.out.println(s);
-			throw new IllegalArgumentException(s);
+			if (debug) System.out.println("No matching FileType found or file doesn't exist");
+			if (debug) System.out.println("Leave XInputFile.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
+			throw new IllegalArgumentException("No matching FileType found or file doesn't exist");
 		}
 	}
 
@@ -65,7 +79,10 @@ public class XInputFile implements XInputFileIF {
 	 * @return
 	 */
 	public boolean exists() {
-		return impl.exists();
+		if (debug) System.out.println("Enter XInputFile.exists()");
+		boolean b = impl.exists();
+		if (debug) System.out.println("Leave XInputFile.exists() returning " + (new Boolean(b)));
+		return b;
 	}
 
 	/**
@@ -75,28 +92,40 @@ public class XInputFile implements XInputFileIF {
 	 * @throws IOException
 	 */
 	public InputStream getInputStream() throws FileNotFoundException, MalformedURLException, IOException {
-		return impl.getInputStream();
+		if (debug) System.out.println("Enter XInputFile.getInputStream()");
+		InputStream is = impl.getInputStream();
+		if (debug) System.out.println("Leave XInputFile.getInputStream() returning " + is);
+		return is;
 	}
 
 	/**
 	 * @return
 	 */
 	public String getName() {
-		return impl.getName();
+		if (debug) System.out.println("Enter XInputFile.getName()");
+		String s = impl.getName();
+		if (debug) System.out.println("Leave XInputFile.getName() returning " + s);
+		return s;
 	}
 
 	/**
 	 * @return
 	 */
 	public String getParent() {
-		return impl.getParent();
+		if (debug) System.out.println("Enter XInputFile.getParent()");
+		String s = impl.getParent();
+		if (debug) System.out.println("Leave XInputFile.getParent() returning " + s);
+		return s;
 	}
 
 	/**
 	 * @return
 	 */
 	public String getUrl() {
-		return impl.getUrl();
+		if (debug) System.out.println("Enter XInputFile.getUrl()");
+		String s = impl.getUrl();
+		if (debug) System.out.println("Leave XInputFile.getUrl() returning " + s);
+		return s;
 	}
 
 	/*
@@ -105,28 +134,39 @@ public class XInputFile implements XInputFileIF {
 	 * @see java.lang.Object#hashCode()
 	 */
 	public int hashCode() {
-		return impl.hashCode();
+		if (debug) System.out.println("Enter XInputFile.hashCode()");
+		int i = impl.hashCode();
+		if (debug) System.out.println("Leave XInputFile.hashCode() returning " + i);
+		return i;
 	}
 
 	/**
 	 * @return
 	 */
 	public long lastModified() {
-		return impl.lastModified();
+		if (debug) System.out.println("Enter XInputFile.lastModified()");
+		long l = impl.lastModified();
+		if (debug) System.out.println("Leave XInputFile.lastModified() returning " + l);
+		return l;
 	}
 
 	/**
 	 * @return
 	 */
 	public long length() {
-		return impl.length();
+		if (debug) System.out.println("Enter XInputFile.length()");
+		long l = impl.length();
+		if (debug) System.out.println("Leave XInputFile.length() returning " + l);
+		return l;
 	}
 
 	/**
 	 * @throws IOException
 	 */
 	public void randomAccessClose() throws IOException {
+		if (debug) System.out.println("Enter XInputFile.randomAccessClose()");
 		impl.randomAccessClose();
+		if (debug) System.out.println("Leave XInputFile.randomAccessClose()");
 	}
 
 	/**
@@ -134,7 +174,9 @@ public class XInputFile implements XInputFileIF {
 	 * @throws IOException
 	 */
 	public void randomAccessOpen(String aMode) throws IOException {
+		if (debug) System.out.println("Enter XInputFile.randomAccessOpen(String '" + aMode + "')");
 		impl.randomAccessOpen(aMode);
+		if (debug) System.out.println("Leave XInputFile.randomAccessOpen(String '" + aMode + "')");
 	}
 
 	/**
@@ -142,7 +184,10 @@ public class XInputFile implements XInputFileIF {
 	 *         IOException
 	 */
 	public int randomAccessRead() throws IOException {
-		return impl.randomAccessRead();
+		if (debug) System.out.println("Enter XInputFile.randomAccessRead()");
+		int i = impl.randomAccessRead();
+		if (debug) System.out.println("Leave XInputFile.randomAccessRead() returning " + i);
+		return i;
 	}
 
 	/**
@@ -151,7 +196,10 @@ public class XInputFile implements XInputFileIF {
 	 *         IOException
 	 */
 	public int randomAccessRead(byte[] aBuffer) throws IOException {
-		return impl.randomAccessRead(aBuffer);
+		if (debug) System.out.println("Enter XInputFile.randomAccessRead(byte[] aBuffer)");
+		int i = impl.randomAccessRead(aBuffer);
+		if (debug) System.out.println("Leave XInputFile.randomAccessRead(byte[] aBuffer) returning " + i);
+		return i;
 	}
 
 	/**
@@ -162,7 +210,10 @@ public class XInputFile implements XInputFileIF {
 	 *         IOException
 	 */
 	public int randomAccessRead(byte[] aBuffer, int aOffset, int aLength) throws IOException {
-		return impl.randomAccessRead(aBuffer, aOffset, aLength);
+		if (debug) System.out.println("Enter XInputFile.randomAccessRead(byte[] aBuffer, int aOffset, int aLength)");
+		int i = impl.randomAccessRead(aBuffer, aOffset, aLength);
+		if (debug) System.out.println("Leave XInputFile.randomAccessRead(byte[] aBuffer, int aOffset, int aLength) returning " + i);
+		return i;
 	}
 
 	/**
@@ -170,7 +221,10 @@ public class XInputFile implements XInputFileIF {
 	 * @throws IOException
 	 */
 	public String randomAccessReadLine() throws IOException {
-		return impl.randomAccessReadLine();
+		if (debug) System.out.println("Enter XInputFile.randomAccessReadLine()");
+		String s = impl.randomAccessReadLine();
+		if (debug) System.out.println("Leave XInputFile.randomAccessReadLine() returning " + s);
+		return s;
 	}
 
 	/**
@@ -178,7 +232,9 @@ public class XInputFile implements XInputFileIF {
 	 * @throws IOException
 	 */
 	public void randomAccessSeek(long aPosition) throws IOException {
+		if (debug) System.out.println("Enter XInputFile.randomAccessSeek(long '" + aPosition + "')");
 		impl.randomAccessSeek(aPosition);
+		if (debug) System.out.println("Leave XInputFile.randomAccessSeek(long '" + aPosition + "')");
 	}
 
 	/**
@@ -186,7 +242,10 @@ public class XInputFile implements XInputFileIF {
 	 *         IOException
 	 */
 	public long randomAccessGetFilePointer() throws IOException {
-		return impl.randomAccessGetFilePointer();
+		if (debug) System.out.println("Enter XInputFile.randomAccessGetFilePointer()");
+		long l = impl.randomAccessGetFilePointer();
+		if (debug) System.out.println("Leave XInputFile.randomAccessGetFilePointer() returning " + l);
+		return l;
 	}
 
 	/**
@@ -195,7 +254,9 @@ public class XInputFile implements XInputFileIF {
 	 * @throws IOException
 	 */
 	public void randomAccessSingleRead(byte[] aBuffer, long aPosition) throws IOException {
+		if (debug) System.out.println("Enter XInputFile.randomAccessSingleRead(byte[] aBuffer, long aPosition)");
 		impl.randomAccessSingleRead(aBuffer, aPosition);
+		if (debug) System.out.println("Leave XInputFile.randomAccessSingleRead(byte[] aBuffer, long aPosition)");
 	}
 
 	/**
@@ -203,7 +264,9 @@ public class XInputFile implements XInputFileIF {
 	 * @throws IOException
 	 */
 	public void randomAccessWrite(byte[] aBuffer) throws IOException {
+		if (debug) System.out.println("Enter XInputFile.randomAccessWrite(byte[] aBuffer)");
 		impl.randomAccessWrite(aBuffer);
+		if (debug) System.out.println("Leave XInputFile.randomAccessWrite(byte[] aBuffer)");
 	}
 
 	/**
@@ -211,7 +274,10 @@ public class XInputFile implements XInputFileIF {
 	 *         IOException
 	 */
 	public long readLong() throws IOException {
-		return impl.readLong();
+		if (debug) System.out.println("Enter XInputFile.readLong()");
+		long l = impl.readLong();
+		if (debug) System.out.println("Leave XInputFile.readLong() returning " + l);
+		return l;
 	}
 
 	/*
@@ -220,21 +286,30 @@ public class XInputFile implements XInputFileIF {
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	public boolean equals(Object aObj) {
+		if (debug) System.out.println("Enter XInputFile.equals(Object '" + aObj + "')");
+
 		if (!(aObj instanceof XInputFile)) {
+			if (debug) System.out.println("Leave XInputFile.equals(Object '" + aObj + "') returning false");
 			return false;
 		}
 		XInputFile other = (XInputFile)aObj;
 		if (other.getFileType().equals(getFileType()) && other.toString().equals(toString())) {
+			if (debug) System.out.println("Leave XInputFile.equals(Object '" + aObj + "') returning true");
 			return true;
+		} else {
+			if (debug) System.out.println("Leave XInputFile.equals(Object '" + aObj + "') returning false");
+			return false;
 		}
-		return false;
 	}
 
 	/* (non-Javadoc)
 	 * @see net.sourceforge.dvb.projectx.xinput.XInputFileIF#getFileType()
 	 */
 	public FileType getFileType() {
-		return impl.getFileType();
+		if (debug) System.out.println("Enter XInputFile.getFileType()");
+		FileType ft = impl.getFileType();
+		if (debug) System.out.println("Leave XInputFile.getFileType() returning " + ft);
+		return ft;
 	}
 	
 	/*
@@ -243,6 +318,9 @@ public class XInputFile implements XInputFileIF {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return impl.toString();
+		if (debug) System.out.println("Enter XInputFile.toString()");
+		String s = impl.toString();
+		if (debug) System.out.println("Leave XInputFile.toString() returning " + s);
+		return s;
 	}
 }

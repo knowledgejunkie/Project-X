@@ -74,4 +74,8 @@ public class FileType {
 	public static Collection getFileTypes() {
 		return fileTypes;
 	}
+
+	public String toString() {
+		return getName();
+	}
 }
