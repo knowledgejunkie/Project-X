@@ -29,7 +29,7 @@
 /*
  * @(#)MPVD.java - still Picture Decoder
  * 
- * Copyright (c) 2003-2004 by dvb.matt. 
+ * Copyright (c) 2003-2004 by dvb.matt, All Rights Reserved. 
  *
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.
@@ -37,7 +37,7 @@
  * 
  * necessary codes are derived from the MSSG mpeg2dec
  *
- * display modifications: Copyright (c) 2003 by dvb.matt
+ * display modifications: shows I-Frames only
  * 
  *
  * This program is free software; you can redistribute it free of charge
@@ -90,15 +90,17 @@ private JFileChooser chooser;  //DM02092003
 private int bmpCount=0; //DM02092003
 
 //DM08022004 081.6 int16 changed and new
-private int pixels2[] = new int[300*300];
+//private int pixels2[] = new int[300*300];
+private int pixels2[] = new int[512 * 288]; //DM02092004 081.7 int02 changed
 private Image image;
 private MemoryImageSource source;
 private boolean FAST=false;
 
 public Picture(){
 	//DM08022004 081.6 int16 changed and new
-	java.util.Arrays.fill(pixels2,0xFF000000);
-	source = new MemoryImageSource(256,192,pixels2,0,256);
+	java.util.Arrays.fill(pixels2, 0xFF505050); //DM24042004 081.7 int02 changed
+	//source = new MemoryImageSource(256, 192, pixels2, 0, 256);
+	source = new MemoryImageSource(512, 288, pixels2, 0, 512); //DM02092004 081.7 int02 changed
 	source.setAnimated(true);
 	image = createImage(source);
 
@@ -117,6 +119,14 @@ public Picture(){
 	//DM02092003-
 }
 
+//DM27042004 081.7 int02 add
+private long cutfiles_length = 0;
+private long cutfiles_points[] = null;
+private String info_4 = "";
+private String info_3 = "";
+private String info_2 = "";
+private String info_1 = "";
+
 private String file="";
 private int Fault_Flag=0;
 private boolean[] Bits=new boolean[0];
@@ -124,7 +134,6 @@ private byte[] buf=new byte[0];
 private int BitPos=0;
 private int BufferPos=0;
 private int pixels[] = new int[250];
-private String TC = "";
 private boolean PLAY=true, DIRECTION=false, ERROR1=false, ERROR2=false;
 private long StartPos=0;
 private int SequenceHeader=0; //DM28112003 081.5++
@@ -911,10 +920,14 @@ public int extern_Get_Hdr() {
 			StartPos=BufferPos-4;
 			sequence_header();
 			next_start_code();
-			if ((start_code=Get_Bits(32))==GROUP_START_CODE){
+
+			if ((start_code=Get_Bits(32))==GROUP_START_CODE)
+			{
 				group_of_pictures_header();
 				next_start_code();
-				if ((start_code=Get_Bits(32))==PICTURE_START_CODE){
+
+				if ((start_code=Get_Bits(32))==PICTURE_START_CODE)
+				{
 					picture_header();
 					return 1;
 				}
@@ -1017,7 +1030,13 @@ public void sequence_header(){
 
 	frame_rate = (float)frame_rate_Table[frame_rate_code]; //DM06022004 081.6 int15 add
 
+	//DM06052004 081.7 int02 add
+	info_4 = "";
+
 	extension_and_user_data();
+
+	//DM06052004 081.7 int02 add
+	info_3 = ", " + (bit_rate_value * 400) + "bps, vbv " + vbv_buffer_size + ", cpf=" + constrained_parameters_flag;
 }
 
 /* decode group of pictures header */
@@ -1069,6 +1088,7 @@ public void extension_and_user_data(){
 			}
 			next_start_code();
 		}else{
+			info_4 += ", user_data"; //DM06052004 081.7 int02 add
 			Flush_Bits(32);	// ISO/IEC 13818-2  sections 6.3.4.1 and 6.2.2.2.2
 			next_start_code();	// skip user data
 		}
@@ -1155,6 +1175,9 @@ public void sequence_display_extension(){
 	display_horizontal_size = Get_Bits(14);
 	Flush_Bits(1);	// marker bit
 	display_vertical_size   = Get_Bits(14);
+
+	//DM06052004 081.7 int02 add
+	info_4 = ", SDE: " + display_horizontal_size + "*" + display_vertical_size;
 }
 
 /* decode quant matrix entension */
@@ -1292,6 +1315,8 @@ public void copyright_extension(){
 
 /* set std for lower profiles as mpeg1 */
 public void resetDecoder(){
+	Fault_Flag=0; //DM14052004 081.7 int02 add,fix
+	picture_coding_type=0; //DM14052004 081.7 int02 add,fix
 	SequenceHeader=1;
 	video_format=5;
 	progressive_sequence=1;
@@ -1346,13 +1371,15 @@ public void Decode_Picture(){
 	String picture_struc[] = {"-","T","B","F"}; //DM08022004 081.6 int16 add
 
 	//DM26022004 081.6 int18 changed
-	TC = ""+gop_hour+":"+gop_minute+":"+gop_sec+":"+gop_frame+" "+
-		drop_flag+"/"+closed_gop+"/"+broken_link+" "+
-		(Math.round(frame_rate*1000)/1000.0f)+"fps "+  //DM06022004 081.6 int15 change
-		SH[SequenceHeader]+" "+
-		picture_struc[picture_structure]+  //DM08022004 081.6 int16 add
-		((progressive_sequence==0) ? fieldorder[top_field_first] : "-")+" "+ //<==TheHorse 221003 
-		cf[chroma_format];
+	//DM06052004 081.7 int02 changed
+	info_2 = "" + gop_hour + ":" + gop_minute + ":" + gop_sec + ":" + gop_frame + " ";
+	info_2 += ", " + drop_flag + "/" + closed_gop + "/" + broken_link + " ";
+	info_2 += ", " + (Math.round(frame_rate * 1000) / 1000.0f) + "fps ";  //DM06022004 081.6 int15 change
+	info_2 += ", " + SH[SequenceHeader] + " ";
+	info_2 += ", " + picture_struc[picture_structure];  //DM08022004 081.6 int16 add
+	info_2 += ", " + ((progressive_sequence==0) ? fieldorder[top_field_first] : "-") + " "; //<==TheHorse 221003 
+	info_2 += ", " + cf[chroma_format];
+	info_2 += info_3;
 
 	SequenceHeader=0;
 	Update_Picture_Buffers();
@@ -1418,6 +1445,7 @@ public void picture_data(){
 
 	if (picture_structure!=FRAME_PICTURE)
 		MBAmax>>=1;
+
 	for (;;)
 		if (slice(MBAmax)<0)
 			return;
@@ -1498,7 +1526,8 @@ public int slice(int MBAmax){
 			if (decode_macroblock(macroblock_type, motion_type, dct_type, PMV,
 				dc_dct_pred, motion_vertical_field_select, dmvector)<1) {
 					Fault_Flag = 0;
-					return -1; // return 0;	// trigger: go to next slice
+					//DM14052004 081.7 int02 changed
+					return 0; //return -1; // return 0;	// trigger: go to next slice
 			}
 		}else{ /* MBAinc[0]!=1: skipped macroblock */	/* ISO/IEC 13818-2 section 7.6.6 */
 			skipped_macroblock(dc_dct_pred, PMV, motion_type, 
@@ -1556,6 +1585,7 @@ public int decode_macroblock(int macroblock_type[], int motion_type[], int dct_t
 	/* ISO/IEC 13818-2 section 6.3.17.1: Macroblock modes */
 	macroblock_modes(macroblock_type, motion_type, motion_vector_count, mv_format,
 					 dmv, mvscale, dct_type);
+
 	if (Fault_Flag>0) return 0;	// trigger: go to next slice
 
 	if ( (macroblock_type[0] & MACROBLOCK_QUANT)>0 ){
@@ -1924,6 +1954,7 @@ public int start_of_slice(int MBA[], int MBAinc[],  int dc_dct_pred[], int PMV[]
 
 	/* decode macroblock address increment */
 	MBAinc[0] = Get_macroblock_address_increment();
+
 	if (Fault_Flag>0) return -1;
 
 	/* set current location */
@@ -2279,6 +2310,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 
 	/* get macroblock_type */
 	macroblock_type = Get_macroblock_type();
+
 	if (Fault_Flag>0) return;
 
 	/* get frame/field motion type */
@@ -2433,71 +2465,142 @@ public int Get_dmvector(){
 		return 0;
 }
 
-//DM08022004 081.6 int16 changed
-public void scale_Picture() {
-	int nx=256, ny=192;
-	float Y=0, X=0, Ydecimate = vertical_size/(float)ny, Xdecimate = horizontal_size/(float)nx;
-	for (int y=0; Y<vertical_size && y<ny; Y+=Ydecimate,y++,X=0)
-		for (int x=0; X<horizontal_size && x<nx; X+=Xdecimate,x++)
-			pixels2[x+(y*nx)] = 0xFF000000 | pixels[(int)X+((int)Y*horizontal_size)];
+//DM08022004 081.6 int16 changed, 
+//DM24042004 081.7 int02 changed
+private void scale_Picture()
+{
+	java.util.Arrays.fill(pixels2,0xFF505050);
+
+	int x_offset = ((aspect_ratio_information == 3 || aspect_ratio_information == 4) && profile_and_level_indication != 0) ? 0 : 64;
+	int scanline = 512;
+	int ny = 288;
+	int nx = x_offset == 0 ? scanline : scanline - x_offset;
+	float Y = 0, X = 0;
+	float Ydecimate = vertical_size / (float)ny;
+	float Xdecimate = horizontal_size / (float)(nx - x_offset);
+
+	for (int y = 0; Y < vertical_size && y < ny; Y += Ydecimate, y++, X=0)
+		for (int x = x_offset; X < horizontal_size && x < nx; X += Xdecimate, x++)
+			pixels2[x + (y * scanline)] = 0xFF000000 | pixels[(int)X + ((int)Y * horizontal_size)];
 
 	source.newPixels();
 }
 
+
 //DM08022004 081.6 int16 changed
-public void paint(Graphics g) {
-	int x[] = { 10,10,30 };
-	int y[] = { 198,218,208 };
+//DM24042004 081.7 int02 changed
+public void paint(Graphics g)
+{
+	int x[] = { 10, 10, 30 };
+	int y[] = { 294, 314, 304 };
 
 	g.setColor(Color.black);
-	g.fillRect(0,0,300,300);
+	g.fillRect(0, 0, 600, 600);
+
 	g.drawImage(image, 0, 0, this);
 
-	String prog[] = { "i","p" };
+	String prog[] = { "i", "p" };
 
 	//DM21022004 081.6 int18 changed
-	String INFO = ""+horizontal_size+"*"+vertical_size+
-			prog[progressive_sequence]+" "+
-			aspect_ratio_string[aspect_ratio_information]+" "+
-			picture_coding_type_string[picture_coding_type]+
-			"("+temporal_reference+")"+
-			progressive_string[progressive_frame]+" "+
-			video_format_S[video_format]+" "+
-			(profile_and_level_indication==0?"MPEG1":(1&profile_and_level_indication>>>7)+"|"+
-			prof[7&profile_and_level_indication>>>4]+"@"+lev[15&profile_and_level_indication]);
+	info_1 = horizontal_size + "*" + vertical_size;
+	info_1 +=	prog[progressive_sequence] + " ";
+	info_1 +=	aspect_ratio_string[aspect_ratio_information] + " ";
+	info_1 += picture_coding_type_string[picture_coding_type];
+	info_1 +=	"(" + temporal_reference + ")";
+	info_1 +=	progressive_string[progressive_frame] + " ";
+	info_1 += ", " + video_format_S[video_format] + " ";
+	info_1 += ", " + (profile_and_level_indication==0 ? "MPEG1" : (1 & profile_and_level_indication>>>7) + "|" +
+			prof[7 & profile_and_level_indication>>>4] + "@" + lev[15 & profile_and_level_indication]);
+	info_1 += info_4;
 
 	g.setColor(Color.white);
-	g.drawString(INFO,36,205);
-	g.drawString(TC,36,220);
+	g.drawString(info_1, 36, 301);
+	g.drawString(info_2, 36, 316);
 
-	if (PLAY){
+	if (PLAY)
+	{
 		g.setColor(Color.green);
-		g.fillPolygon(x,y,3);
-	}else{
-		g.setColor(Color.red);
-		g.fillRect(10,198,20,20);
+		g.fillPolygon(x, y, 3);
 	}
-	if (ERROR1){
+	else
+	{
 		g.setColor(Color.red);
-		g.drawString("error while decoding frame",10,15);
+		g.fillRect(10, 294, 20, 20);
 	}
-	if (ERROR2){
+
+
+	if (ERROR1)
+	{
+		g.setColor(Color.white);
+		g.fill3DRect(150, 120, 200, 20, true);
 		g.setColor(Color.red);
-		g.drawString("cannot find sequence header",10,30);
+		g.drawString("error while decoding frame", 160, 133);
 	}
-	if (ERROR1 || ERROR2){
-		g.drawLine(0,35,256,192);
-		g.drawLine(256,35,0,192);
+
+	if (ERROR2)
+	{
+		g.setColor(Color.white);
+		g.fill3DRect(150, 135, 200, 20, true);
+		g.setColor(Color.red);
+		g.drawString("cannot find sequence header", 160, 148);
+	}
+
+	if (cutfiles_length > 0)
+	{
+		int x1 = 10, y1 = 326, w1 = 492, h1 = 6;
+		g.setColor(new Color(0, 200, 0));
+		g.fillRect(x1, y1, w1, h1);
+		g.setColor(Color.white);
+		g.drawRect(x1 -2, y1 -2, w1 +3, h1 +3);
+
+		if (cutfiles_points != null && cutfiles_points.length > 0)
+		{
+			g.setColor(new Color(150, 0, 0));
+
+			int p0 = 0, p1 = 0;
+			for (int a=0; a < cutfiles_points.length; a+=2)
+			{
+				if (cutfiles_points[a] > cutfiles_length)
+					break; 
+
+				p0 = a == 0 ? 0 : (int)(cutfiles_points[a-1] * w1 / cutfiles_length);
+				p1 = (int)(cutfiles_points[a] * w1 / cutfiles_length);
+
+				g.fillRect(x1 + p0, y1, p1 - p0, h1);
+			}
+
+			if ((cutfiles_points.length & 1) == 0)
+			{
+				p0 = (int)(cutfiles_points[cutfiles_points.length -1] * w1 / cutfiles_length);
+				g.fillRect(x1 + p0, y1, w1 - p0, h1);
+			}
+		}
 	}
 }
 
 //DM08022004 081.6 int16 changed
-public void run() {
+public void run()
+{
 	//source.newPixels();
 }
 
-public void showCut(boolean play) {
+//DM27042004 081.7 int02 changed
+public void showCut(boolean play, long cutPoints[], java.util.ArrayList previewList)
+{
 	PLAY = play;
+
+	if ( !previewList.isEmpty() )
+	{
+		Object filedata[] = (Object[])previewList.get(previewList.size()-1);
+		cutfiles_length = ((long[])filedata[1])[1];
+		cutfiles_points = cutPoints;
+	}
+	else
+	{
+		cutfiles_length = 0;
+		cutfiles_points = null;
+	}
+
 	repaint();
 }
 
@@ -2615,8 +2718,10 @@ private byte bmpHead[] = {
 	0x18, 0, //bitcount 24b
 	0, 0, 0, 0, //ncompr
 	0, 0, 0, 0, //image bytesize
-	(byte)0x88, 0xB, 0, 0, (byte)0x88, 0xE, 0, 0, //nxpm,nypm
-	0, 0, 0, 0, 0, 0, 0, 0 //nclrused,nclrimp
+	(byte)0x88, 0xB, 0, 0, //nxpm
+	(byte)0x88, 0xB, 0, 0, //nypm  //DM24042007 081.7 int02 changed
+	0, 0, 0, 0,  //nclrused,
+	0, 0, 0, 0   //nclrimp
 };
 
 public void littleEndian(byte[] array, int aPos, int value) {

@@ -1,7 +1,7 @@
 /*
  * @(#)StartUp.java - mini info, holf a place for start infos
  *
- * Copyright (c) 2004 by dvb.matt. 
+ * Copyright (c) 2004 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.
@@ -103,6 +103,7 @@ public class StartUp extends JFrame
 		getContentPane().add(container2);
 		pack();
 		setLocation(200,200);
+		setResizable(false); //DM17042004 081.7 int02 add
 
 		addWindowListener (new WindowAdapter() { 
 			public void windowClosing(WindowEvent e) { 

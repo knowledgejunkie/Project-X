@@ -1,7 +1,7 @@
 /*
  * @(#)X_Help.java - provides an external HTML pane for additional infos
  *
- * Copyright (c) 2004 by dvb.matt. 
+ * Copyright (c) 2004 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.

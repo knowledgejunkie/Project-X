@@ -1,7 +1,7 @@
 /*
  * @(#)TELETEXT.java - constants/decode of teletext System B
  *
- * Copyright (c) 2001-2004 by dvb.matt. 
+ * Copyright (c) 2001-2004 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.
@@ -29,26 +29,34 @@ import java.awt.*;
 
 public class TeleText {
 
-static char[][] ncs = { //DM14032004 081.6 int18 changed
+//DM14032004 081.6 int18 changed
+//DM05052004 081.7 int02 changed
+static char[][] ncs = {
 	/**** # is original ****/
-	{ '£','$','@','«','½','»','^','#','-','¼','¦','¾','÷' },  // westeuropean, polish 000
+	//{ '£','$','@','«','½','»','^','#','-','¼','¦','¾','÷' },  // westeuropean, polish 000
+	{ '£','$','@','Z','\u015A','\u0141','\u0107','\u00F3','\u0119','\u017C','\u015B','\u0142','\u017A' },  // westeuropean, polish unicode
 	{ 'é','ï','à','ë','ê','ù','î','#','è','â','ô','û','ç' },  // french 001, checked
 	{ '#','¤','É','Ä','Ö','Å','Ü','_','é','ä','ø','å','ü' },  // 010 nor,swe  010, checked
-	{ '#','û','@','t','z','ý','í','r','é','á','ê','ú','s' },  // turkish, czech, greek 011, some wrong w/o unicode
+	//{ '#','û','@','t','z','ý','í','r','é','á','ê','ú','s' },  // turkish, czech, greek 011, some wrong w/o unicode
+	{ '#','\u016F','\u010D','\u0165','\u017E','ý','í','\u0159','é','á','\u011B','ú','\u0161' },  // czech, using unicode
 	{ '#','$','§','Ä','Ö','Ü','^','_','°','ä','ö','ü','ß' },  // german 100, checked
 	{ 'ç','$','@','á','é','í','ó','ú','¿','ã','ñ','õ','à' },  // portugal 101
 	{ '£','$','é','°','ç','»','^','ë','ù','à','ò','è','ì' },  // italian, jugoslav 110, checked
-	{ '#','¤','T','Â','S','Ä','Î','i','t','â','s','â','î' },  // rumanian,english thai 111, some wrong w/o unicode
+	//{ '#','¤','T','Â','S','Ä','Î','i','t','â','s','â','î' },  // rumanian,english thai 111, some wrong w/o unicode
+	{ ' ','¤','\u0163','Â','\u015E','Ä','Î','i','\u0164','â','\u015F','\u0103','î' },  // rumanian,using unicode
 
 	/**** # is replaced ****/
-	{ '£','$','@','«','½','»','^','#','-','¼','¦','¾','÷' },  // westeuropean, polish 000
+	//{ '£','$','@','«','½','»','^','#','-','¼','¦','¾','÷' },  // westeuropean, polish 000
+	{ '£','$','@','Z','\u015A','\u0141','\u0107','\u00F3','\u0119','\u017C','\u015B','\u0142','\u017A' },  // westeuropean, polish unicode
 	{ 'é','ï','à','ë','ê','ù','î',' ','è','â','ô','û','ç' },  // french  001, checked
 	{ ' ','¤','É','Ä','Ö','Å','Ü','_','é','ä','ø','å','ü' },  // 010 nor,swe 010, checked
-	{ ' ','û','@','t','z','ý','í','r','é','á','ê','ú','s' },  // turkish, czech, greek 011, some wrong w/o unicode
+	//{ ' ','û','@','t','z','ý','í','r','é','á','ê','ú','s' },  // turkish, czech, greek 011, some wrong w/o unicode
+	{ ' ','\u016F','\u010D','\u0165','\u017E','ý','í','\u0159','é','á','\u011B','ú','\u0161' },  // czech, using unicode
 	{ ' ','$','§','Ä','Ö','Ü','^','_','°','ä','ö','ü','ß' },  // german 100, checked
 	{ 'ç','$','@','á','é','í','ó','ú','¿','ã','ñ','õ','à' },  // portugal 101
 	{ '£','$','é','°','ç','»','^','ë','ù','à','ò','è','ì' },  // italian, jugoslav 110,  checked
-	{ ' ','¤','T','Â','S','Ä','Î','i','t','â','s','â','î' }  // rumanian,english thai 111, some wrong w/o unicode
+	//{ ' ','¤','T','Â','S','Ä','Î','i','t','â','s','â','î' }  // rumanian,english thai 111, some wrong w/o unicode
+	{ ' ','¤','\u0163','Â','\u015E','Ä','Î','i','\u0164','â','\u015F','\u0103','î' }  // rumanian,using unicode
 }; 
 
 String[] ssaHeader = {
@@ -113,6 +121,37 @@ String[] stlHeader = {
 	"$ColorIndex4 = 3",
 	"//Subtitles"
 };
+
+//DM14052004 081.7 int02 add
+String[] sonHeader = {
+	"st_format\t2",
+	"Display_Start\tnon_forced",
+	"TV_Type\t\tPAL",
+	"Tape_Type\tNON_DROP",
+	"Pixel_Area\t(0 575)",
+	"Directory\t",
+	"",
+	"SP_NUMBER\tSTART\t\tEND\t\tFILE_NAME"
+};
+
+//DM14052004 081.7 int02 add
+public String[] getSONHead(String path, long frame_rate)
+{
+	if (frame_rate != 3600)
+	{
+		sonHeader[2] = "TV_Type\t\tNTSC";
+		sonHeader[3] = "Tape_Type\tDROP";
+	}
+	else
+	{
+		sonHeader[2] = "TV_Type\t\tPAL";
+		sonHeader[3] = "Tape_Type\tNON_DROP";
+	}
+
+	sonHeader[5] = "Directory\t" + path;
+
+	return sonHeader;
+}
 
 String[] colors = {
 	"{\\c&HC0C0C0&}",   // black /gray

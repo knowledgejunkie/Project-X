@@ -1,7 +1,7 @@
 /*
  * @(#)X.java - main incl. GUI
  *
- * Copyright (c) 2001-2004 by dvb.matt. All rights reserved.
+ * Copyright (c) 2001-2004 by dvb.matt, All rights reserved.
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.
@@ -60,8 +60,8 @@ public class X extends JPanel
 {
 
 static String version[] = { 
-	"ProjectX 0.81.7_int01",
-	"16.04.2004",
+	"ProjectX 0.81.7_int02",
+	"21.05.2004",
 	"TEST PROJECT ONLY",
 	", User: " + System.getProperty("user.name")
 };
@@ -137,7 +137,7 @@ static X_JFileChooser chooser; //DM12122003 081.6 int05
 static JLabel msoff, audiostatusLabel, splitLabel, cutnum, ttxheaderLabel, ttxvpsLabel, outSize;
 static JProgressBar progress;
 static JTextField outfield;
-static JTextField[] d2vfield = new JTextField[9], //DM12122003 081.6 int05
+static JTextField[] d2vfield = new JTextField[10], //DM18052004 081.7 int02 changed
 	patchfield = new JTextField[3], exefield = new JTextField[9];
 
 
@@ -177,16 +177,16 @@ JMenuBar menuBar; //DM20032004 081.6 int18 add
 JFrame autoload; //DM26032004 081.6 int18 add
 Hashtable Options = new Hashtable();  //DM26032004 081.6 int18 add, intended for new ini or langauge
 
+TeletextPageMatrix tpm = new TeletextPageMatrix();  //DM17042004 081.7 int02 add
 
 public X()	//DM20032004 081.6 int18 changed
 {
+
 	// don't re-use ATM!
 	RButton[0] = new JRadioButton();
 	RButton[1] = new JRadioButton();
-	comBox[11] = new JComboBox();
 
 	/*** unused ***/
-	RButton[17] = new JRadioButton();
 
 	chooser = new X_JFileChooser(); //DM12122003 081.6 int05
 
@@ -213,7 +213,7 @@ public X()	//DM20032004 081.6 int18 changed
 	add(Box.createRigidArea(new Dimension(1,5)));
 
 	base_time.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
-	subpicture.picture.run();  // start Pic
+	//subpicture.picture.run();  // start Pic , DM18052004 081.7 int02 changed
 	java.util.Arrays.fill(dumpfill,(byte)0xFF);
 
 }
@@ -326,11 +326,11 @@ protected JMenu buildFileMenu()
 protected JMenu buildLanguageMenu()
 {
 	JMenu language = new JMenu("Language");
-	JMenuItem english = new JMenuItem("English");
-	english.setMnemonic('e');
-	english.setEnabled(false);
 
-	language.add(english);
+	JMenuItem item_eng = new JMenuItem("English");
+	item_eng.setEnabled(false);
+
+	language.add(item_eng);
 
 	return language;
 }
@@ -410,18 +410,30 @@ protected JMenu buildViewerMenu()
 	preview.add(hex);
 	preview.addSeparator();
 
-	JMenuItem basic = new JMenuItem("patch VideoBasics..");
+	JMenuItem basic = new JMenuItem("patch Video Basics..");
 	basic.setActionCommand("editBasics");
 	basic.setMnemonic('p');
 
 	preview.add(basic);
 	preview.addSeparator();
 
-	JMenuItem subtitle = new JMenuItem("open SubtitlePreview..");
+	JMenuItem subtitle = new JMenuItem("show Subtitle Preview..");
 	subtitle.setActionCommand("subpreview");
 	subtitle.setMnemonic('s');
 
 	preview.add(subtitle);
+
+	//DM17042004 081.7 int02 add+
+	preview.addSeparator();
+
+	JMenuItem pagematrix = new JMenuItem("show TeletextPageMatrix..");
+	pagematrix.setActionCommand("pagematrix");
+	pagematrix.setMnemonic('t');
+
+	preview.add(pagematrix);
+
+	pagematrix.addActionListener(menulistener);
+	//DM17042004 081.7 int02 add-
 
 	video.addActionListener(menulistener);
 	subtitle.addActionListener(menulistener);
@@ -1036,23 +1048,25 @@ protected JPanel buildLogPanel()
 
 	JPanel logwindow = buildlogwindowPanel();
 	JPanel fileinfo = buildfileinfoPanel();
+	JPanel msg = buildMessagePanel(); //DM14052004 081.7 int02 add
 	JPanel split = buildsplitPanel();
 	JPanel ids = buildidPanel();
 	JPanel video1 = buildvideo1Panel();
 	JPanel extern = buildexternPanel();
 	JPanel audio = buildaudioPanel();
-	JPanel teletext = buildteletextPanel();
+	JPanel subtitle = buildsubtitlePanel(); //DM18052004 0817. int02 changed
 	JPanel option = buildoptionPanel();
 
 	logtab = new JTabbedPane();
 	logtab.addTab( "logwindow", logwindow );
 	logtab.setSelectedIndex(0);
-	logtab.addTab( "fileinfo", fileinfo );
+	logtab.addTab( "info", fileinfo ); //DM14052004 081.7 int02 changed
+	logtab.addTab( "msg", msg ); //DM14052004 081.7 int02 add
 	logtab.addTab( "out", split );
 	logtab.addTab( "special", ids );
 	logtab.addTab( "video", video1 );
 	logtab.addTab( "audio", audio );
-	logtab.addTab( "teletext", teletext );
+	logtab.addTab( "subtitle", subtitle ); //DM18052004 0817. int02 changed
 	logtab.addTab( "extern", extern );
 	logtab.addTab( "options", option );
 
@@ -1154,6 +1168,35 @@ protected JPanel buildStatusPanel()
 	return status;
 }
 
+//DM14052004 081.7 int02 new, smth moved
+protected JPanel buildMessagePanel()
+{
+	JPanel msgPanel = new JPanel();
+	msgPanel.setLayout( new GridLayout(1,2) );
+
+	JPanel msgPanel_1 = new JPanel();
+	msgPanel_1.setLayout ( new ColumnLayout() );
+	msgPanel_1.setBorder( BorderFactory.createTitledBorder("message handling") );
+
+	cBox[40] = new JCheckBox("don't message 'packets out of sequence'");
+	cBox[40].setToolTipText("enable, if this message bombs the logwindow (and decrease the speed)");
+	cBox[40].setPreferredSize(new Dimension(300,20));
+	cBox[40].setMaximumSize(new Dimension(300,20));
+	cBox[40].setSelected(false);
+	msgPanel_1.add(cBox[40]);
+
+	cBox[3] = new JCheckBox("don't message 'missing startcode'");
+	cBox[3].setToolTipText("enable, if this message bombs the logwindow (and decrease the speed)");
+	cBox[3].setPreferredSize(new Dimension(250,20));
+	cBox[3].setMaximumSize(new Dimension(250,20));
+	cBox[3].setSelected(false);
+	msgPanel_1.add(cBox[3]);
+
+	msgPanel.add(msgPanel_1);
+	return msgPanel;
+}
+
+//DM14052004 081.7 int02 changed
 protected JPanel buildidPanel()
 {
 	JPanel idbigPanel = new JPanel();
@@ -1163,12 +1206,45 @@ protected JPanel buildidPanel()
 	idPanel3.setLayout ( new ColumnLayout() );
 	idPanel3.setBorder( BorderFactory.createTitledBorder("specials 1") );
 
-	cBox[26] = new JCheckBox("create CellTimes.txt for multiple infiles/cuts");
-	cBox[26].setToolTipText("add's an entry for the framenumber on file switchin' and cut-in's (new chapter)");
-	cBox[26].setSelected(false);
-	cBox[26].setPreferredSize(new Dimension(270,20));
-	cBox[26].setMaximumSize(new Dimension(270,20));
-	idPanel3.add(cBox[26]);
+	//DM14052004 081.7 int02 moved++
+	JLabel gpts = new JLabel("global PTS shift (in hours): ");
+	gpts.setToolTipText("try 'auto or 1..13', in case of source A/V PTS mismatch, or if it doesn't demux audio (std=0)");
+	comBox[27] = new JComboBox();
+	comBox[27].addItem("auto");
+	for (int d=0;d<14;d++) 
+		comBox[27].addItem(""+d);
+	comBox[27].setPreferredSize(new Dimension(60,20));
+	comBox[27].setMaximumSize(new Dimension(60,20));
+	comBox[27].setSelectedIndex(1);
+	comBox[27].setEditable(true); //DM26022004 081.6 int18 add
+
+	JPanel spec5 = new JPanel();
+	spec5.setLayout(new BoxLayout(spec5, BoxLayout.X_AXIS));
+	spec5.add(gpts);  
+	spec5.add(comBox[27]);  
+	idPanel3.add(spec5);
+	//DM14052004 081.7 int02 moved--
+
+	//DM14052004 081.7 int02 add
+	idPanel3.add(new JLabel("only PVA related:"));
+
+	//DM14052004 081.7 int02 moved
+	cBox[48] = new JCheckBox("check for overlapping PVAs on read");
+	cBox[48].setPreferredSize(new Dimension(250,20));
+	cBox[48].setMaximumSize(new Dimension(250,20));
+	cBox[48].setSelected(false);
+	cBox[48].setToolTipText("disable, if multiple PVA's of one recording has been recorded without overlap");
+	idPanel3.add(cBox[48]);
+
+	//DM14052004 081.7 int02 moved
+	cBox[28] = new JCheckBox("strictly PVA specs. for audio streams");
+	cBox[28].setToolTipText("enable to avoid audio detection errors; but on some recordings there are missing flags! (MD)");
+	cBox[28].setPreferredSize(new Dimension(250,20));
+	cBox[28].setMaximumSize(new Dimension(250,20));
+	idPanel3.add(cBox[28]);
+
+	//DM14052004 081.7 int02 add
+	idPanel3.add(new JLabel("only TS related:"));
 
 	cBox[38] = new JCheckBox("ignore scrambled packets in TS");
 	cBox[38].setToolTipText("disable, if you think the packets are not, but marked as scrambled");
@@ -1177,47 +1253,13 @@ protected JPanel buildidPanel()
 	cBox[38].setSelected(true);
 	idPanel3.add(cBox[38]);
 
-	cBox[40] = new JCheckBox("don't message 'packets out of sequence'");
-	cBox[40].setToolTipText("enable, if this message bombs the logwindow (and decrease the speed)");
-	cBox[40].setPreferredSize(new Dimension(250,20));
-	cBox[40].setMaximumSize(new Dimension(250,20));
-	cBox[40].setSelected(false);
-	idPanel3.add(cBox[40]);
-
-	cBox[3] = new JCheckBox("don't message 'missing startcode'");
-	cBox[3].setToolTipText("enable, if this message bombs the logwindow (and decrease the speed)");
-	cBox[3].setPreferredSize(new Dimension(250,20));
-	cBox[3].setMaximumSize(new Dimension(250,20));
-	cBox[3].setSelected(false);
-	idPanel3.add(cBox[3]);
-
-	cBox[36] = new JCheckBox("generate PCR/SCR from PTS");
-	cBox[36].setSelected(true);
-	cBox[36].setToolTipText("specify the PCR-Offset, DVB needs more than DVD, high bitrates needs more than low");
-	cBox[36].setPreferredSize(new Dimension(185,20));
-	cBox[36].setMaximumSize(new Dimension(185,20));
-
-	cBox[46] = new JCheckBox("incTScnt");
-	cBox[46].setSelected(false);
-	cBox[46].setToolTipText("increment TS-packet counter even without payload(PCR-only); non-conform, but sometimes necessary!");
-	cBox[46].setPreferredSize(new Dimension(80,20));
-	cBox[46].setMaximumSize(new Dimension(80,20));
-
-	JPanel spec3 = new JPanel();
-	spec3.setLayout(new BoxLayout(spec3, BoxLayout.X_AXIS));
-	spec3.add(cBox[36]);  
-	spec3.add(cBox[46]);  
-	idPanel3.add(spec3);
-
-	Object[] pcrdelta = { "25000","35000","45000","55000","65000","80000","100000","125000","150000" };
-	comBox[23] = new JComboBox(pcrdelta);
-	comBox[23].setMaximumRowCount(7);
-	comBox[23].setEditable(true);
-	comBox[23].setPreferredSize(new Dimension(100,20));
-	comBox[23].setMaximumSize(new Dimension(100,20));
-	comBox[23].setSelectedIndex(4);
-	comBox[23].addActionListener(mytabListener);
-	idPanel3.add(comBox[23]);
+	//Ghost23012004 081.6 int11 add
+	//DM14052004 081.7 int02 moved
+	cBox[53] = new JCheckBox("join TS file segments (of Dreambox)");
+	cBox[53].setToolTipText("join incomplete TS packets on boundaries of multiple file segments");
+	cBox[53].setPreferredSize(new Dimension(250,20));
+	cBox[53].setMaximumSize(new Dimension(250,20));
+	idPanel3.add(cBox[53]);
 
 	cBox[41] = new JCheckBox("generate PMT stream dependent");
 	cBox[41].setToolTipText("disable, to generate an independent pre-defined PMT that also fit most streams");
@@ -1245,23 +1287,6 @@ protected JPanel buildidPanel()
 	cBox[37].setMaximumSize(new Dimension(250,20));
 	idPanel3.add(cBox[37]);
 
-	JLabel gpts = new JLabel("global PTS shift (in hours): ");
-	gpts.setToolTipText("try 'auto or 1..13', in case of source A/V PTS mismatch, or if it doesn't demux audio (std=0)");
-	comBox[27] = new JComboBox();
-	comBox[27].addItem("auto");
-	for (int d=0;d<14;d++) 
-		comBox[27].addItem(""+d);
-	comBox[27].setPreferredSize(new Dimension(60,20));
-	comBox[27].setMaximumSize(new Dimension(60,20));
-	comBox[27].setSelectedIndex(1);
-	comBox[27].setEditable(true); //DM26022004 081.6 int18 add
-
-	JPanel spec5 = new JPanel();
-	spec5.setLayout(new BoxLayout(spec5, BoxLayout.X_AXIS));
-	spec5.add(gpts);  
-	spec5.add(comBox[27]);  
-	idPanel3.add(spec5);
-
 	idbigPanel.add(idPanel3);
 
 
@@ -1269,20 +1294,13 @@ protected JPanel buildidPanel()
 	idPanel2.setLayout ( new ColumnLayout() );
 	idPanel2.setBorder( BorderFactory.createTitledBorder("specials 2") );
 
-	cBox[48] = new JCheckBox("check for overlapping PVAs on read");
-	cBox[48].setPreferredSize(new Dimension(250,20));
-	cBox[48].setMaximumSize(new Dimension(250,20));
-	cBox[48].setSelected(false);
-	cBox[48].setToolTipText("disable, if multiple PVA's of one recording has been recorded without overlap");
-	idPanel2.add(cBox[48]);
-
-	//Ghost23012004 081.6 int11 add
-	cBox[53] = new JCheckBox("join TS file segments (of Dreambox)");
-	cBox[53].setToolTipText("join incomplete TS packets on boundaries of multiple file segments");
-	cBox[53].setSelected(false);
-	cBox[53].setPreferredSize(new Dimension(250,20));
-	cBox[53].setMaximumSize(new Dimension(250,20));
-	idPanel2.add(cBox[53]);
+	//DM14052004 081.7 int02 moved
+	cBox[33] = new JCheckBox("get only enclosed PES packets");
+	cBox[33].setToolTipText("disable, if no packets were found (on packet end, the next mpeg-startcode is missing, e.g. on Images)");
+	cBox[33].setSelected(true);
+	cBox[33].setPreferredSize(new Dimension(250,20));
+	cBox[33].setMaximumSize(new Dimension(250,20));
+	idPanel2.add(cBox[33]);
 
 	cBox[49] = new JCheckBox("concatenate different recordings");
 	cBox[49].setPreferredSize(new Dimension(250,20));
@@ -1318,12 +1336,6 @@ protected JPanel buildidPanel()
 	cBox[15].setMaximumSize(new Dimension(250,20));
 	idPanel2.add(cBox[15]);
 
-	cBox[28] = new JCheckBox("strictly PVA specs. for audio streams");
-	cBox[28].setToolTipText("enable to avoid audio detection errors; but on some recordings there are missing flags! (MD)");
-	cBox[28].setPreferredSize(new Dimension(250,20));
-	cBox[28].setMaximumSize(new Dimension(250,20));
-	idPanel2.add(cBox[28]);
-
 	cBox[39] = new JCheckBox("ignore Video errors after 1st PTS/GOP");
 	cBox[39].setToolTipText("enable, if probably only Video PTS errors occurs (Pics seems ok)");
 	cBox[39].setSelected(false);
@@ -1331,19 +1343,45 @@ protected JPanel buildidPanel()
 	cBox[39].setMaximumSize(new Dimension(250,20));
 	idPanel2.add(cBox[39]);
 
-	cBox[23] = new JCheckBox("toX: ensure 1st PES-packet start with video");
+	//DM14052004 081.7 int02 add
+	idPanel2.add(new JLabel("only to'XYZ' conversions related:"));
+
+	cBox[23] = new JCheckBox("ensure 1st PES-packet start with video");
 	cBox[23].setToolTipText("enable, if some players have problems if it's not;  disable for audio-only conversions");
 	cBox[23].setSelected(true);
 	cBox[23].setPreferredSize(new Dimension(270,20));
 	cBox[23].setMaximumSize(new Dimension(270,20));
 	idPanel2.add(cBox[23]);
 
-	cBox[33] = new JCheckBox("get only enclosed PES packets");
-	cBox[33].setToolTipText("disable, if no packets were found (on packet end, the next mpeg-startcode is missing, e.g. on Images)");
-	cBox[33].setSelected(true);
-	cBox[33].setPreferredSize(new Dimension(250,20));
-	cBox[33].setMaximumSize(new Dimension(250,20));
-	idPanel2.add(cBox[33]);
+	//DM14052004 081.7 int02 moved++
+	cBox[36] = new JCheckBox("generate PCR/SCR from PTS");
+	cBox[36].setSelected(true);
+	cBox[36].setToolTipText("specify the PCR-Offset, DVB needs more than DVD, high bitrates needs more than low");
+	cBox[36].setPreferredSize(new Dimension(185,20));
+	cBox[36].setMaximumSize(new Dimension(185,20));
+
+	cBox[46] = new JCheckBox("incTScnt");
+	cBox[46].setSelected(false);
+	cBox[46].setToolTipText("increment TS-packet counter even without payload(PCR-only); non-conform, but sometimes necessary!");
+	cBox[46].setPreferredSize(new Dimension(80,20));
+	cBox[46].setMaximumSize(new Dimension(80,20));
+
+	JPanel spec3 = new JPanel();
+	spec3.setLayout(new BoxLayout(spec3, BoxLayout.X_AXIS));
+	spec3.add(cBox[36]);  
+	spec3.add(cBox[46]);  
+	idPanel2.add(spec3);
+
+	Object[] pcrdelta = { "25000","35000","45000","55000","65000","80000","100000","125000","150000" };
+	comBox[23] = new JComboBox(pcrdelta);
+	comBox[23].setMaximumRowCount(7);
+	comBox[23].setEditable(true);
+	comBox[23].setPreferredSize(new Dimension(100,20));
+	comBox[23].setMaximumSize(new Dimension(100,20));
+	comBox[23].setSelectedIndex(4);
+	comBox[23].addActionListener(mytabListener);
+	idPanel2.add(comBox[23]);
+	//DM14052004 081.7 int02 moved--
 
 	idbigPanel.add(idPanel2);
 
@@ -1679,6 +1717,13 @@ protected JPanel buildexternPanel() { //DM30122003 081.6 int10 changed
 	cBox[54].setToolTipText("created vdr file segments will then be renamed to 00x.vdr");
 	video2Panel.add(cBox[54]);
 
+	//DM14052004 081.7 int02 moved
+	cBox[26] = new JCheckBox("create cellTimes.txt for multiple infiles/cuts");
+	cBox[26].setToolTipText("demux only, add's an entry for the framenumber on file switchin' and cut-in's (new chapter)");
+	cBox[26].setPreferredSize(new Dimension(270,20));
+	cBox[26].setMaximumSize(new Dimension(270,20));
+	video2Panel.add(cBox[26]);
+
 	//DM18022004 081.6 int17 new
 	RButton[11] = new JRadioButton("autosave PTS values of cutpoints");
 	RButton[11].setPreferredSize(new Dimension(250,20));
@@ -1873,7 +1918,7 @@ protected JPanel buildaudioPanel() {
 	cBox[1].setMaximumSize(new Dimension(250,20));
 
 	cBox[0] = new JCheckBox("fill gaps with prev. frame");
-	cBox[0].setToolTipText("instead of using silent frames (<- for AC-3 ac3.bin required)");
+	cBox[0].setToolTipText("instead of inserting silent frames; is std for AC-3, when ac3.bin doesn't contain a suitable silent frame for AC-3");
 	cBox[0].setSelected(false);
 
 	cBox[20] = new JCheckBox("add frames");
@@ -1973,20 +2018,38 @@ protected JPanel buildaudioPanel() {
 }
 
 
-/***** 4rd panel ****/
-protected JPanel buildteletextPanel() {
+//DM18052004 0817. int02 changed
+protected JPanel buildsubtitlePanel()
+{
 	JPanel teletext = new JPanel();
 	teletext.setLayout( new GridLayout(1,0) );
 
 	JPanel tt0 = new JPanel();
 	tt0.setLayout( new ColumnLayout() );
-	tt0.setBorder( BorderFactory.createTitledBorder("decode teletext") );
+	tt0.setBorder( BorderFactory.createTitledBorder("DVB teletext, DVB subtitles") ); //DM18052004 0817. int02 changed
 
 	cBox[17] = new JCheckBox("export MegaRadio MP3-stream (from NBC/Giga Teletext) test");
 	cBox[17].setToolTipText("formerly transmitted via Hotbird 13°E, 11.054GHz Hor., SR 27500, FEC 5/6, TTX-PID 553");
+	cBox[17].setPreferredSize(new Dimension(400,22));
+	cBox[17].setMaximumSize(new Dimension(400,22));
 	tt0.add(cBox[17]);
 
-	tt0.add(new JLabel("pages to decode: (fields editable, set to 'null' to ignore a field)"));
+	cBox[22] = new JCheckBox("decode hidden rows of teletext (id 0xFF); usually not recommended!");
+	cBox[22].setToolTipText("some pages or complete teletexts/subtitles are hidden, so that may help");
+	cBox[22].setPreferredSize(new Dimension(400,22));
+	cBox[22].setMaximumSize(new Dimension(400,22));
+	tt0.add(cBox[22]);
+
+	//DM09032004 081.6 int18 add
+	RButton[13] = new JRadioButton("keep original Timecode (PTS) on independent decoding (for tests only)");
+	RButton[13].setToolTipText("without a leading video to demux, new Timecode doesn't start at 0");
+	RButton[13].setPreferredSize(new Dimension(500,25));
+	RButton[13].setMaximumSize(new Dimension(500,25));
+	tt0.add(RButton[13]);
+
+	JLabel page_decode = new JLabel("teletext pages to decode: (fields editable, set to 'null' to ignore a field)");
+	page_decode.setToolTipText("autodetection of special characters based on LATIN 1 codepage & Unicode (ATM for czech & polish)");
+	tt0.add(page_decode);
 
 	Object[] pagenumber = {"null","149","150","777","779","784","785","786","881","882","884","885","886","887","888","889"};
 
@@ -2000,36 +2063,39 @@ protected JPanel buildteletextPanel() {
 		tt1.add(comBox[28+p]);
 	}
 	tt0.add(tt1);
-	tt0.add(new JLabel("-synchronized at a previous demuxed videofile (video cut-outs may cause errors)"));
-	tt0.add(new JLabel("-autodetection of special characters based on LATIN 1 codepage"));
 
 	JPanel ttPanel = new JPanel();
 	ttPanel.setLayout(new BoxLayout(ttPanel, BoxLayout.X_AXIS));
-	ttPanel.setToolTipText("select your favourite file format");
+	ttPanel.setToolTipText("select your favourite export format");
 
 	ButtonGroup ttGroup = new ButtonGroup();
 	RButton[18] = new JRadioButton("free");
-	RButton[18].setToolTipText("free text format ");
+	RButton[18].setToolTipText("teletext only; free text format ");
 
 	RButton[19] = new JRadioButton("SC");
-	RButton[19].setToolTipText("text, special sub format 1 (timecount & multilines)");
+	RButton[19].setToolTipText("teletext only; text, special sub format 1 (timecount & multilines)");
 
 	RButton[20] = new JRadioButton("SUB");
-	RButton[20].setToolTipText("text, special sub format 2 (framecount & multilines)");
+	RButton[20].setToolTipText("teletext only; text, special sub format 2 (framecount & multilines)");
 	RButton[20].setSelected(true);
 
 	RButton[21] = new JRadioButton("SRT");
-	RButton[21].setToolTipText("text, special sub format 3 (timecount & multilines)");
+	RButton[21].setToolTipText("teletext only; text, special sub format 3 (timecount & multilines)");
 
 	RButton[24] = new JRadioButton("STL");
-	RButton[24].setToolTipText("text, special sub format 4 (timecount & multilines)");
+	RButton[24].setToolTipText("teletext only; text, special sub format 4 (timecount & multilines)");
 
 	RButton[22] = new JRadioButton("SSA");
-	RButton[22].setToolTipText("text, Sub Station Alpha Script V4, with color support");
+	RButton[22].setToolTipText("teletext only; text, Sub Station Alpha Script V4, with color support");
+
+	//DM14052004 081.7 int02 add
+	RButton[17] = new JRadioButton("SON");
+	RButton[17].setToolTipText("DVB sub's only; text + binary(bitmap), special sub format 5 (timecount & multilines)");
 
 	RButton[23] = new JRadioButton("SUP");
-	RButton[23].setToolTipText("binary, 2-bit coloured RLE");
+	RButton[23].setToolTipText("teletext, DVB & DVD sub's; binary, 2-bit coloured RLE");
 
+	ttGroup.add(RButton[17]); //DM14052004 081.7 int02 add
 	ttGroup.add(RButton[18]);
 	ttGroup.add(RButton[19]);
 	ttGroup.add(RButton[20]);
@@ -2045,26 +2111,40 @@ protected JPanel buildteletextPanel() {
 	ttPanel.add(RButton[21]);
 	ttPanel.add(RButton[24]);
 	ttPanel.add(RButton[22]);
+	ttPanel.add(RButton[17]); //DM14052004 081.7 int02 add
 	ttPanel.add(RButton[23]);
 
 	tt0.add(ttPanel);
 
-	cBox[22] = new JCheckBox("decode hidden rows (0xFF); usually not recommended!");
-	cBox[22].setToolTipText("some pages or complete teletexts/subtitles are hidden, so that may help");
-	//DM09032004 081.6 int18 add
-	cBox[22].setPreferredSize(new Dimension(400,25));
-	cBox[22].setMaximumSize(new Dimension(400,25));
+	//DM24042004 081.7 int02 add++
+	Object model[] = { "4 colors", "16 colors", "256 colors" };
+	comBox[11] = new JComboBox(model);
+	comBox[11].setSelectedIndex(1);
+	comBox[11].setPreferredSize(new Dimension(100,22));
+	comBox[11].setMaximumSize(new Dimension(100,22));
 
-	tt0.add(cBox[22]);
+	d2vfield[9] = new JTextField("");
+	d2vfield[9].setEditable(true);
+	d2vfield[9].setPreferredSize(new Dimension(40,22));
+	d2vfield[9].setMaximumSize(new Dimension(100,22));
+	d2vfield[9].setToolTipText("empty field = use what comes, else: key in the page ID of interest (depends on broadcast)");
 
-	//DM09032004 081.6 int18 add
-	RButton[13] = new JRadioButton("keep original Timecode (PTS) on independent decoding (for tests only)");
-	RButton[13].setToolTipText("without a leading video to demux, new Timecode doesn't start at 0");
-	RButton[13].setPreferredSize(new Dimension(500,25));
-	RButton[13].setMaximumSize(new Dimension(500,25));
-	tt0.add(RButton[13]);
+	JPanel IRDPanel = new JPanel();
+	IRDPanel.setLayout(new BoxLayout(IRDPanel, BoxLayout.X_AXIS));
+
+	JLabel color_model = new JLabel("simulate DVB Subpictures IRD color model:  ");
+	color_model.setToolTipText("that extremely affects the look of exported subtitles, best setting depends on what you want");
+
+	IRDPanel.add(color_model);
+	IRDPanel.add(comBox[11]);
+	IRDPanel.add(new JLabel("  fix to pageID: "));
+	IRDPanel.add(d2vfield[9]);
+
+	tt0.add(IRDPanel);
+	//DM24042004 081.7 int02 add--
 
 	tt0.add(new JLabel("settings for SUP format only:"));
+
 	picButton = new JButton("show Subtitle Preview");
 	picButton.setPreferredSize(new Dimension(180,25));
 	picButton.setActionCommand("picview");
@@ -2207,6 +2287,21 @@ protected JPanel buildoptionPanel() {
 	scanL.setToolTipText("higher values if known filetypes are not detected");
 	op2.add(scanL);
 	op2.add(comBox[37]);
+
+
+	//DM04052004 081.7 int02 add
+	JButton garbagecollector = new JButton("garbage collector");
+	garbagecollector.setToolTipText("calls the garbage collector");
+	op2.add(new JLabel(" "));
+	op2.add(garbagecollector);
+	garbagecollector.addActionListener( new ActionListener()
+	{
+		public void actionPerformed(ActionEvent e)
+		{
+			System.gc();
+		}
+ 	});
+
 
 	option.add(op2);
 
@@ -2365,7 +2460,11 @@ class MenuListener implements ActionListener
 		}
 
 		else if (actName.equals("subpreview"))
-			subpicture.open();
+			subpicture.show();  //DM18052004 081.7 int02 changed
+
+		//DM17042004 081.7 int02 add
+		else if (actName.equals("pagematrix"))
+			tpm.show();
 
 		else if (actName.equals("exit"))
 		{
@@ -2632,7 +2731,7 @@ class FileListener implements ActionListener
 			if (subpicture.isVisible()) 
 				subpicture.close();
 			else 
-				subpicture.open();
+				subpicture.show(); //DM18052004 081.7 int02 changed
 		}
 		else if (actName.equals("oa")) {
 			autoload.show();
@@ -3340,10 +3439,11 @@ class COLLECTION extends JFrame {
 					comBox[14].addItem(parseValue(cutPoints[a]));
 				comBox[14].setSelectedItem(selectedItem);
 
+				//DM27042004 081.7 int02 changed
 				if ((comBox[14].getSelectedIndex()&1)==1) 
-					MPVDecoder.picture.showCut(false);
+					MPVDecoder.picture.showCut(false, cutPoints, previewList);
 				else
-					MPVDecoder.picture.showCut(true);
+					MPVDecoder.picture.showCut(true, cutPoints, previewList);
 
 				if (actName.equals("cutbox") || actName.equals("del point")){
 					if (comBox[17].getSelectedIndex()==0){
@@ -3354,7 +3454,7 @@ class COLLECTION extends JFrame {
 			}else{
 				cutdel.setEnabled(false);
 				cutPoints = new long[0];
-				MPVDecoder.picture.showCut(true);
+				MPVDecoder.picture.showCut(true, cutPoints, previewList); //DM27042004 081.7 int02 changed
 			}
 			if (comBox[17].getSelectedIndex()==0)
 				search.requestFocus();
@@ -3371,26 +3471,27 @@ class COLLECTION extends JFrame {
 		JPanel container = new JPanel();
 		container.setLayout( new BorderLayout() );
 
+		//DM27042004 081.7 int02 changed++
 		JPanel grid = new JPanel();
-		grid.setLayout( new GridLayout(1,3) );
-
+		grid.setLayout(new BorderLayout());
 
 		JPanel previewPanel = new JPanel();
-		previewPanel.setBorder(BorderFactory.createTitledBorder("videofile cuts (demux only!)")); //DM24012004 081.6 int11 changed
+		previewPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLoweredBevelBorder(), "videofile cuts (demux only!)")); //DM27042004 081.7 int02 changed
 		previewPanel.setLayout ( new BorderLayout() );
+		previewPanel.setToolTipText("also use the keyboard keys for navigation"); //DM18052004 081.7 int02 add
 		previewPanel.add(MPVDecoder.picture);
 
-		search = new JSlider(0,(10240000/16),0);
-		search.setPreferredSize(new Dimension(256,20));
-		search.setMaximumSize(new Dimension(256,20));
+		search = new JSlider(0, (10240000/16), 0);
+		search.setPreferredSize(new Dimension(512,24));
+		search.setMaximumSize(new Dimension(512,24));
 		search.setValue(0);
 
 		JPanel jumpPanel = new JPanel();
 		jumpPanel.setLayout(new BoxLayout(jumpPanel, BoxLayout.X_AXIS));
 
-		String jumpstring[] = { "<<","<",">",">>" };
+		String jumpstring[] = { "<<", "<", ">", ">>" };
 		JButton jump[] = new JButton[4];
-		for (int a=0;a<4;a++){
+		for (int a=0; a<4; a++){
 			jump[a] = new JButton(jumpstring[a]);
 			jump[a].setPreferredSize(new Dimension(60,20));
 			jump[a].setMaximumSize(new Dimension(60,20));
@@ -3401,23 +3502,15 @@ class COLLECTION extends JFrame {
 		JPanel jump2Panel = new JPanel();
 		jump2Panel.setLayout(new ColumnLayout());
 
-		//DM08022004 081.6 int16 new
-		scannedPID = new JLabel(" ");
-		jump2Panel.add(scannedPID);
-
-		firstfile = new JLabel(file);
-		jump2Panel.add(firstfile);
-
 		jump2Panel.add(jumpPanel);
-		jump2Panel.add(search);
+		jump2Panel.add((firstfile = new JLabel(file)));
+		jump2Panel.add((scannedPID = new JLabel(" ")));
 
-		JPanel CL0 = new JPanel();
-		CL0.setLayout(new BoxLayout(CL0, BoxLayout.X_AXIS));
-		CL0.add(new JLabel("Number of Points: "));
-		CL0.setToolTipText("all numbers are automatically sorted");
-		pointscount = new JLabel("");
-		CL0.add(pointscount);
-		jump2Panel.add(CL0);
+		firstfile.setToolTipText("active segment/number of segments + filename of active segment");
+		scannedPID.setToolTipText("processed (P)ID to get the current picture");
+
+		JPanel jump3Panel = new JPanel();
+		jump3Panel.setLayout(new ColumnLayout());
 
 		JPanel CL1 = new JPanel();
 		CL1.setLayout(new BoxLayout(CL1, BoxLayout.X_AXIS));
@@ -3434,7 +3527,7 @@ class COLLECTION extends JFrame {
 		cutadd.setMaximumSize(new Dimension(100,25));
 		CL1.add(cutadd);
 
-		jump2Panel.add(CL1);
+		jump3Panel.add(CL1);
 
 		JPanel CL5 = new JPanel();
 		CL5.setLayout(new BoxLayout(CL5, BoxLayout.X_AXIS));
@@ -3452,14 +3545,34 @@ class COLLECTION extends JFrame {
 		cutdel.setEnabled(false);
 		CL5.add(cutdel);
 
-		jump2Panel.add(CL5);
+		jump3Panel.add(CL5);
+
+		JPanel CL0 = new JPanel();
+		CL0.setLayout(new BoxLayout(CL0, BoxLayout.X_AXIS));
+		CL0.add(new JLabel("Number of Points: "));
+		CL0.setToolTipText("all numbers are automatically sorted");
+		CL0.add((pointscount = new JLabel("")));
+
+		jump3Panel.add(CL0);
 
 		cutdel.addActionListener(cutAction);
 		cutadd.addActionListener(cutAction);
 		comBox[14].addActionListener(cutAction);
 		framecutfield.addActionListener(cutAction);
 
-		previewPanel.add(jump2Panel,BorderLayout.SOUTH);
+		JPanel grid_1 = new JPanel();
+		grid_1.setLayout(new GridLayout(0,2));
+		grid_1.add(jump2Panel);
+		grid_1.add(jump3Panel);
+
+		JPanel grid_2 = new JPanel();
+		grid_2.setLayout(new BorderLayout());
+		grid_2.setBorder(BorderFactory.createRaisedBevelBorder());
+		grid_2.add(search);
+		grid_2.add(grid_1, BorderLayout.SOUTH);
+
+		previewPanel.add(grid_2,BorderLayout.SOUTH);
+		//DM27042004 081.7 int02 changed--
 
 		search.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e)  {
@@ -3530,23 +3643,23 @@ class COLLECTION extends JFrame {
 
 
 		JPanel cutPanel = new JPanel();
-		cutPanel.setBorder(BorderFactory.createTitledBorder("various"));
+		cutPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createRaisedBevelBorder(), "various")); //DM27042004 081.7 int02 changed
 		cutPanel.setLayout ( new ColumnLayout() );
 
 		//DM08022004 081.6 int16 new
-		RButton[10] = new JRadioButton("fast/worse decoding of preview");
+		RButton[10] = new JRadioButton("faster/worse decoding of preview");
 		RButton[10].setToolTipText("reconstruct and interpolate only the upper/left pixel of each macroblock");
 		RButton[10].setPreferredSize(new Dimension(230,20));
 		RButton[10].setMaximumSize(new Dimension(230,20));
-		RButton[10].setSelected(false);
 		cutPanel.add(RButton[10]);
 
 		RButton[6] = new JRadioButton("also preview GOPs w/o sequ.header");
 		RButton[6].setToolTipText("for DVB data it's not recommended, enable only for some streams with only one sequ.header!");
 		RButton[6].setPreferredSize(new Dimension(230,20));
 		RButton[6].setMaximumSize(new Dimension(230,20));
-		RButton[6].setSelected(false);
 		cutPanel.add(RButton[6]);
+
+		cutPanel.add(new JLabel(" "));
 
 		cutPanel.add(new JLabel("PES(&Sub)-ID/PID list: "));
 
@@ -3555,8 +3668,6 @@ class COLLECTION extends JFrame {
 		includeField.setEditable(true);
 		includeField.setActionCommand("ID");
 		includeField.setToolTipText("enter PES-ID or sub-ID (MPG etc) or PID (PVA,TS); empty list == use all IDs");
-
-
 
 		includeList = new JList();
 		includeList.setToolTipText("doubleclick to remove a selected entry");
@@ -3598,8 +3709,7 @@ class COLLECTION extends JFrame {
 		cpoints.addActionListener(cutAction);
 		cutPanel.add(cpoints);
 
-		//cutPanel.add(new JLabel(" "));
-		//cutPanel.add(new JLabel(" "));
+		cutPanel.add(new JLabel(" ")); //DM27042004 081.7 int02 changed
 
 		cBox[2] = new JCheckBox("create coll# as subdirectory");
 		cBox[2].setToolTipText("global: create new subdirectory for each collection number (better for same files in diff. collections)");
@@ -3607,12 +3717,15 @@ class COLLECTION extends JFrame {
 		cBox[2].setMaximumSize(new Dimension(230,20));
 		cutPanel.add(cBox[2]);
 
+		cutPanel.add(new JLabel(" ")); //DM27042004 081.7 int02 changed
+
 		cutPanel.add(new JLabel("additional export limits:"));
 
 		cBox[52] = new JCheckBox("H-Resol.: ");
 		cBox[52].setToolTipText("global,..that will automatically ignore any other video sequences");
 		cBox[52].setPreferredSize(new Dimension(110,20));
 		cBox[52].setMaximumSize(new Dimension(110,20));
+
 		comBox[34] = new JComboBox(H_RESOLUTION);
 		comBox[34].setMaximumRowCount(7);
 		comBox[34].setPreferredSize(new Dimension(90,20));
@@ -3630,6 +3743,7 @@ class COLLECTION extends JFrame {
 		cBox[47].setToolTipText("global,..that will automatically ignore any other video sequences");
 		cBox[47].setPreferredSize(new Dimension(80,20));
 		cBox[47].setMaximumSize(new Dimension(80,20));
+
 		comBox[24] = new JComboBox(DAR);
 		comBox[24].setMaximumRowCount(7);
 		comBox[24].setPreferredSize(new Dimension(120,20));
@@ -3642,7 +3756,7 @@ class COLLECTION extends JFrame {
 		CL3.add(comBox[24]);  
 		cutPanel.add(CL3);
 
-		//cutPanel.add(new JLabel(" "));
+		cutPanel.add(new JLabel(" ")); //DM27042004 081.7 int02 changed
 
 		//DM17012004 081.6 int11 changed, DM18022004 081.6 int17 changed
 		Object[] cut_types = 
@@ -3678,7 +3792,7 @@ class COLLECTION extends JFrame {
 		dropTarget_3 = new DropTarget(loadlist, dnd2);
 		dropTarget_4 = new DropTarget(framecutfield,dnd2);
 
-		grid.add(cutPanel);
+		grid.add(cutPanel, BorderLayout.EAST); //DM27042004 081.7 int02 changed
 
 		container.add(grid);
 
@@ -3701,10 +3815,12 @@ class COLLECTION extends JFrame {
 
 	public void getType() {
 		int keyIndex = java.util.Arrays.binarySearch(cutPoints,lastpos); //DM17012004 081.6 int11 changed , DM29012004 081.6 int12 fix
+
+		//DM27042004 081.7 int02 changed
 		if (cutPoints.length!=0)
-			MPVDecoder.picture.showCut((keyIndex&1)==0);
+			MPVDecoder.picture.showCut((keyIndex&1)==0, cutPoints, previewList);
 		else
-			MPVDecoder.picture.showCut(true);
+			MPVDecoder.picture.showCut(true, cutPoints, previewList);
 	}
 
 	public void preview(long pos) {
@@ -3836,6 +3952,7 @@ class COLLECTION extends JFrame {
 			if (comBox[14].getItemCount()>0) {
 				for (int a=0;a<comBox[14].getItemCount();a++)
 					abc.add(comBox[14].getItemAt(a).toString());
+
 			}
 			cutlist.set(activecoll,abc);
 
@@ -3958,6 +4075,9 @@ class COLLECTION extends JFrame {
 		if (cutPoints.length==0) {
 			cutdel.setEnabled(false);
 		} else { 
+
+
+
 			for (int a=0;a<cutPoints.length;a++)
 				comBox[14].addItem(parseValue(cutPoints[a]));
 			action=true;
@@ -4372,7 +4492,8 @@ public void ScanInfo(String file)
 		values += type;
 		values += "Video:\t" + scan.getVideo() + "\n";
 		values += "Audio:\t" + scan.getAudio() + "\n";
-		values += "Text:\t" + scan.getText()+ "\n";
+		values += "Teletext:\t" + scan.getText()+ "\n"; //DM28042004 081.7 int02 changed
+		values += "Subpict.:\t" + scan.getPics()+ "\n"; //DM28042004 081.7 int02 add
 		values += "est. Playtime:\t" + scan.getPlaytime()+ "\n";
 		FileInfoTextArea.setBackground(scan.isSupported() ? new Color(225,255,225) : new Color(255,225,225));
 	}
@@ -4601,6 +4722,7 @@ class GoListener implements ActionListener
 		else if (actName.equals("C"))
 		{ 
 			Msg("--- process cancelled ----"); 
+			TextArea.setBackground(new Color(230, 230, 255)); //DM14052004 081.7 int02 add
 			qpause=false; 
 			qbreak=true; 
 			options[18]=0; 
@@ -4610,7 +4732,7 @@ class GoListener implements ActionListener
 			if (!qpause)
 			{ 
 				Msg("--- process paused ----"); 
-				TextArea.setBackground(new Color(255,255,220)); //DM26032004 081.6 int18 add
+				TextArea.setBackground(new Color(255, 255, 220)); //DM26032004 081.6 int18 add
 				qpause=true; 
 			}
 			else
@@ -4967,7 +5089,6 @@ public static void main(String[] args) {
 			setVisible0(true);
 			startup.close();
 		}
-
 	}
 }   // end methode main
 
@@ -6417,6 +6538,12 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 				case 0xF3:
 				case 0xF4:
 				case 0xF5:
+
+
+
+
+
+
 				case 0xF6:
 				case 0xF7:
 				case 0xF8:
@@ -6983,7 +7110,7 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 	try 
 	{
 
-	int[] newID = { 0xE0, 0xC0, 0x80, 0x90 };
+	int[] newID = { 0xE0, 0xC0, 0x80, 0x90, 0xA0, 0x20 }; //DM27042004 081.7 int02 changed
 	byte[] push189 = new byte[189];
 	long packet=0;
 	boolean pack=false;
@@ -7043,6 +7170,7 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 			Msg(" Video " + scan.getVideo());
 			Msg(" Audio " + scan.getAudio());
 			Msg(" Teletext " + scan.getText());
+			Msg(" Subpict. " + scan.getPics());  //DM28042004 081.7 int02 add
 			Msg("");
 
 			for (int a=2; a<pids.length;a++)
@@ -7123,7 +7251,8 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 
 	boolean error = false, start = false, ttx=false;
 	int pid=0, scram=0, addfield=0, counter=0, addlength=0, pesID=0, psiID=0, rd=0; //ghost 23012004 081.6 int11 add
-	int counter1=-1;
+	int counter1 = -1; 
+	int subid = 0; //DM27042004 081.7 int02 add
 	long qexit = count+options[56];
 	boolean miss=false, dontread=false; //ghost 23012004 081.6 int11 add
 
@@ -7251,9 +7380,19 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 			// PSI id, if packet start
 			psiID = (start) ? pesID>>>16 : 0;
 
+			//DM27042004 081.7 int02 changed++
 			ttx = false;
-			if (pesID==0x1BD) 
-				ttx = ((0xFF&push189[12+addlength])==0x24 && (0xFF&push189[13+addlength+(0xFF&push189[12+addlength])])>>>4==1) ? true : false;
+			subid = 0;
+			if (pesID == 0x1BD) 
+			{
+				int pes_extension_size = 0xFF & push189[12 + addlength];
+				int pes_offset = 13 + addlength + pes_extension_size;
+				ttx = (pes_extension_size == 0x24 && (0xFF & push189[pes_offset])>>>4 == 1) ? true : false;
+
+				if (!ttx)
+					subid = ((0xFF & push189[pes_offset]) == 0x20 && (0xFF & push189[pes_offset + 1]) == 0 && (0xFF & push189[pes_offset + 2]) == 0xF) ? 0x20 : 0;
+			}
+			//DM27042004 081.7 int02 changed--
 			//DM18092003-
 
 			int pidcheck=-1;
@@ -7360,23 +7499,47 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 							type+=" mapped to 0x"+Integer.toHexString(newID[1]-1).toUpperCase();
 						break;
 					}
-					switch (pesID) {
+					switch (pesID)
+					{
+					//DM27042004 081.7 int02 changed++
 					case 0x1bd: 
-						type="(private stream 1)"+((ttx)?" (TTX)":""); 
+						type = "(private stream 1)";
+						type += (ttx ? " (TTX) ": "") + (subid != 0 ? " (SubID 0x" + Integer.toHexString(subid).toUpperCase() + ")" : ""); 
+
 						TSPid.setDemux(TSdemuxlist.size());
 						demux = new PIDdemux();
 						demux.setPID(pid);
 						demux.setID(pesID);
-						demux.setsubID(0);
+						demux.setsubID(subid);
 						demux.setTTX(ttx);
-						demux.setnewID(((ttx)?newID[3]++:newID[2]++));
-						demux.setStreamType(0);
+
+						if (ttx)
+							demux.setnewID(newID[3]++);
+
+						else if (subid == 0x20)
+							demux.setnewID(newID[5]++);
+
+						else
+							demux.setnewID(newID[2]++);
+
+						demux.setStreamType(subid == 0x20 ? 2 : 0);
 						TSdemuxlist.add(demux);
-						if (ToVDR==0) 
-							demux.init(fparent,options,bs/TSdemuxlist.size(),TSdemuxlist.size(),2);
-						if (ToVDR>1 && !ttx) 
-							type+=" mapped to 0x"+Integer.toHexString(newID[2]-1).toUpperCase();
+
+						if (ToVDR == 0) 
+							demux.init(fparent, options, bs/TSdemuxlist.size(), TSdemuxlist.size(), 2);
+
+						if (ToVDR > 0 && subid != 0) 
+						{
+							type += " -> ignored";
+							TSPid.setneeded(false);
+						}
+
+						if (ToVDR > 1 && !ttx) 
+							type += " mapped to 0x" + Integer.toHexString(newID[2]-1).toUpperCase();
+
 						break;
+					//DM27042004 081.7 int02 changed--
+
 					case 0x1bf:
 						Msg("--> PID 0x"+Integer.toHexString(pid).toUpperCase()+" (private stream 2) -> ignored");
 
@@ -7476,15 +7639,22 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 					sethead[6] |= (byte)0x80;
 					byte[] set = new byte[0];
 
-					while (setcount < setorig.length) {
-						int newsize = (setorig.length-setcount < 0x17F0) ? (setorig.length-setcount) : 0x17F0 ; 
-						set = new byte[pesoff+newsize];
-						System.arraycopy(setorig,setcount,set,pesoff,newsize);
-						if (setcount>0) 
-							System.arraycopy(sethead,0,set,0,9);
-						setcount+=0x17F0;
-						pesoff=9;
-						int setlength = set.length-6; 
+					//28042004 081.7 int02 add, don't fragment subpicture packet
+					int packet_maximum = demux.subID() == 0x20 ? 0xFFFF : 0x17F0; 
+
+					//28042004 081.7 int02 changed++
+					while (setcount < setorig.length)
+					{
+						int newsize = (setorig.length - setcount < packet_maximum) ? (setorig.length - setcount) : packet_maximum; 
+						set = new byte[pesoff + newsize];
+						System.arraycopy(setorig, setcount, set, pesoff, newsize);
+
+						if (setcount > 0) 
+							System.arraycopy(sethead, 0, set, 0, 9);
+
+						setcount += packet_maximum;
+						pesoff = 9;
+						int setlength = set.length - 6; 
 						set[4] = (byte)(setlength>>>8);
 						set[5] = (byte)(0xff & setlength);
 
@@ -7496,14 +7666,18 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 							options = makevdr.writePVA(set,options,demux,0);
 						else if (ToVDR==4) 
 							options = makevdr.writeTS(set,options,demux,0);
-						else {
-							if (demux.getType()==3){
-								demux.writeVideo(set,options,false);
+						else
+						{
+							if (demux.getType()==3)
+							{
+								demux.writeVideo(set, options, false);
 								CUT_BYTEPOSITION = next_CUT_BYTEPOSITION;
-							}else 
+							}
+							else 
 								demux.write(set,true);
 						}
 					}
+					//28042004 081.7 int02 changed--
 				}
 				TSPid.reset();
 				TSPid.writeData(push189,4+addlength,184-addlength);
@@ -7589,43 +7763,59 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 		} 
 
 		//DM04032004 081.6 int18 changed
-		int[] lfn = new int[3];
-		for (int a=0;a<TSdemuxlist.size();a++) {
+		//DM27042004 081.7 int02 changed
+		int[] lfn = new int[6];
+		for (int a=0; a < TSdemuxlist.size(); a++)
+		{
 			demux = (PIDdemux)TSdemuxlist.get(a);
-		if (demux.getType()==3) 
-			continue;
-		String[] values = demux.close(vptslog);
-		if (values[0].equals("")) 
-			continue;
-		String newfile = values[3]+ ((lfn[demux.getType()]>0) ? ("_"+lfn[demux.getType()]) : "") + "." + values[2];
 
-		Common.renameTo(values[0], newfile); //DM13042004 081.7 int01 changed
-		//new File(values[0]).renameTo(new File(newfile));
+			if (demux.getType()==3) 
+				continue;
 
-		values[0] = newfile;
-		values[3] = vptslog;     // set videolog
-		switch (demux.getType()) {
-		case 0:
-			Msg("");
-			Msg("--> AC-3/DTS Audio on PID 0x"+Integer.toHexString(demux.getPID()).toUpperCase()); //DM19122003 081.6 int07 changed
-			mpt(values);
-			break;
-		case 1: //DM30122003 081.6 int10 changed
-			Msg("");
-			Msg("--> Teletext on PID 0x"+Integer.toHexString(demux.getPID()).toUpperCase()+" (SubID 0x"+Integer.toHexString(demux.subID()).toUpperCase()+")");
-			processTeletext(values);
-			break;
-		case 2: 
-			Msg("");
-			Msg("--> MPEG Audio (0x"+Integer.toHexString(0xFF&demux.getID()).toUpperCase()+") on PID 0x"+Integer.toHexString(demux.getPID()).toUpperCase());
-			mpt(values);
-			break;
+			String[] values = demux.close(vptslog);
+
+			if (values[0].equals("")) 
+				continue;
+
+			String newfile = values[3]+ ((lfn[demux.getType()]>0) ? ("_"+lfn[demux.getType()]) : "") + "." + values[2];
+
+			Common.renameTo(values[0], newfile); //DM13042004 081.7 int01 changed
+			//new File(values[0]).renameTo(new File(newfile));
+
+			values[0] = newfile;
+			values[3] = vptslog;     // set videolog
+			switch (demux.getType())
+			{
+			case 0:
+				Msg("");
+				Msg("--> AC-3/DTS Audio on PID 0x"+Integer.toHexString(demux.getPID()).toUpperCase()); //DM19122003 081.6 int07 changed
+				mpt(values);
+				break;
+
+			case 1: //DM30122003 081.6 int10 changed
+				Msg("");
+				Msg("--> Teletext on PID 0x"+Integer.toHexString(demux.getPID()).toUpperCase()+" (SubID 0x"+Integer.toHexString(demux.subID()).toUpperCase()+")");
+				processTeletext(values);
+				break;
+
+			case 2: 
+				Msg("");
+				Msg("--> MPEG Audio (0x"+Integer.toHexString(0xFF&demux.getID()).toUpperCase()+") on PID 0x"+Integer.toHexString(demux.getPID()).toUpperCase());
+				mpt(values);
+				break;
+
+			case 5: //DM27042004 081.7 int02 add
+				Msg("");
+				Msg("--> Subpicture (SubID 0x"+Integer.toHexString(demux.subID()).toUpperCase()+")");
+				processSubpicture(values);
+				break;
+			}
+			lfn[demux.getType()]++;
+			new File(newfile).delete();
+			new File(values[1]).delete();
+
+			System.gc();
 		}
-		lfn[demux.getType()]++;
-		new File(newfile).delete();
-		new File(values[1]).delete();
-		System.gc();
-	}
 
 	} // tovdr==0
 
@@ -9524,6 +9714,11 @@ public boolean processAudio(String[] args) {
 			n-=4;
 
 			/********* read entire frame ********/
+
+
+
+
+
 			frame = new byte[Audio.Size];
 			audioin.read(frame,0,frame.length);
 			System.arraycopy(frame,0,header_copy,0,4);
@@ -10443,8 +10638,14 @@ public boolean processAudio(String[] args) {
 	if (cBox[50].isSelected())
 		audio_type[1] = audio_type[2] = "(pcm)";
 
-	//DM12042004 081.7 int01 changed
-	String comparedata = "Audio " + (NoOfAudio++) + " " + audio_type[layertype] + ":\t"+frame_counter+" Frames\t"+tc+"\t"+cb+"/"+ce+"/"+cc+"/"+cd;
+	String comparedata = "";	//DM27042004 081.7 int02 moved, fix
+
+	if (layertype < 0)
+		layertype = 10;
+
+	else
+		//DM12042004 081.7 int01 changed, //DM27042004 081.7 int02 changed
+		comparedata = "Audio " + (NoOfAudio++) + " " + audio_type[layertype] + ":\t"+frame_counter+" Frames\t"+tc+"\t"+cb+"/"+ce+"/"+cc+"/"+cd;
 
 	switch (layertype) { 
 	case 0: { 
@@ -10579,6 +10780,9 @@ public boolean processAudio(String[] args) {
 			audioout1.delete();
 		else { 
 			Common.renameTo(audioout1, wavname); //DM13042004 081.7 int01 changed
+
+
+
 			//audioout1.renameTo(wavname); 
 
 			Msg("===> new File: "+wavname); 
@@ -10588,6 +10792,16 @@ public boolean processAudio(String[] args) {
 			audioout2.delete();
 
 		audiooutL.renameIddTo(wavname);
+		audiooutR.deleteIdd();
+		break;
+	}
+	case 10: //DM27042004 081.7 int02 add
+	{
+		Msg("!> no Audio found on this stream data..."); 
+
+		audioout1.delete();
+		audioout2.delete();
+		audiooutL.deleteIdd();
 		audiooutR.deleteIdd();
 		break;
 	}
@@ -10623,14 +10837,15 @@ public String FramesToTime(int framenumber, double framelength)
 public void processTeletext(String[] args)
 {
 	int LB1 = -1;
-	if (RButton[23].isSelected()) // SUP, set variables
+
+	//DM14052004 081.7 int02 changed
+	if (RButton[23].isSelected() || RButton[17].isSelected()) // SUP + SON, set variables
 		LB1 = subpicture.picture.set(comBox[26].getSelectedItem().toString(),d2vfield[6].getText().toString());
 
 	for (int LB=0; LB<2; LB++)
 	{
 		for (int pn=0; pn<6; pn++)
 		{
-
 			String page = "0";
 			if (!cBox[17].isSelected())
 			{
@@ -10648,6 +10863,9 @@ public void processTeletext(String[] args)
 
 			String fchild = (new File(args[0]).getName()).toString();
 			String fparent = ( fchild.lastIndexOf(".") != -1 ) ? workouts + fchild.substring(0, fchild.lastIndexOf(".")) : workouts + fchild;
+
+			//DM17042004 081.7 int02 add
+			tpm.picture.init(fchild);
 
 			String LBs = LB==1 ? "[1]" : "";
 
@@ -10697,11 +10915,18 @@ public void processTeletext(String[] args)
 				ttxfile = fparent + ".stl";
 				subtitle_type = 7;
 			}
+			else if (RButton[17].isSelected()) //DM14052004 081.7 int02 add, placeholder for .son export
+			{
+				ttxfile = fparent + ".ssa"; //.son
+				subtitle_type = 5;  // 8
+			}
 			else
 			{
 				Msg("!> no output format for teletext specified...");
 				break;
 			}
+
+			Msg("-> export format: " + ttxfile.substring(ttxfile.length() - 3));
 
 
 			java.text.DateFormat timeformat_1 = new java.text.SimpleDateFormat("HH:mm:ss.SSS");
@@ -10726,8 +10951,7 @@ public void processTeletext(String[] args)
 			ByteArrayOutputStream byte_buffer = new ByteArrayOutputStream();
 			PrintWriter print_buffer = new PrintWriter(byte_buffer, true);
 
-			Msg("");
-			Msg(filename+"  ("+size+" bytes)");
+			Msg("-> temp. file: " + filename + "  (" + size + " bytes)"); //DM18052004 081.7 int02 changed
 
 			progress.setString("searching & decoding "+(subtitle_type==0 ? "MegaRadio mp3-stream":"page number "+page));
 			progress.setStringPainted(true);
@@ -10860,6 +11084,17 @@ public void processTeletext(String[] args)
 				String[] STLhead = ttc.getSTLHead(version[0]+" on "+java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM).format(new java.util.Date(System.currentTimeMillis())));
 				for (int a=0;a<STLhead.length;a++) 
 					print_buffer.println(STLhead[a]);
+				print_buffer.flush();
+				byte_buffer.writeTo(out);
+				byte_buffer.reset();
+				break;
+
+			case 8:  //DM14052004 081.7 int02 add, still unused!
+				String[] SONhead = ttc.getSONHead(new File(ttxfile).getParent(), options[14]);
+
+				for (int a=0; a < SONhead.length; a++) 
+					print_buffer.println(SONhead[a]);
+
 				print_buffer.flush();
 				byte_buffer.writeTo(out);
 				byte_buffer.reset();
@@ -11086,6 +11321,9 @@ public void processTeletext(String[] args)
 					else
 						page_match = false;
 
+					//DM17042004 081.7 int02 add
+					tpm.picture.update("" + magazine + page_number);
+
 					// show header_line in GUI
 					if (cBox[19].isSelected() || options[30] == 1) 
 					{
@@ -11250,11 +11488,11 @@ public void processTeletext(String[] args)
 											if ( write_buffer.containsKey("" + a) )
 												picture_String.add(write_buffer.get("" + a));
 
-										while (picture_String.size()>4) 
+										while (picture_String.size() > 4) // max. 4 lines
 											picture_String.remove(0);
 
 										subpicture.picture.showPicTTX( picture_String.toArray());
-										byte_buffer.write( subpicture.picture.writeRLE( sup_in_time, 0xB4)); // alias duration 2.000 sec if out_time is missing
+										byte_buffer.write( subpicture.picture.writeRLE( sup_in_time, 0xB4)); // alias duration 1.800 sec if out_time is missing
 
 										if ( write_buffer.containsKey("out_time") )
 											out.write(subpicture.picture.setTime( byte_buffer.toByteArray(), Long.parseLong( write_buffer.get("out_time").toString())));
@@ -11478,6 +11716,8 @@ public void processTeletext(String[] args)
 
 							out.write(subpicture.picture.setTime( byte_buffer.toByteArray(), Long.parseLong( write_buffer.get("out_time").toString())));
 						}
+
+
 						picture_String.clear();
 					}
 
@@ -11568,6 +11808,9 @@ public void processTeletext(String[] args)
 			}
 			else
 			{ 
+				if (subtitle_type == 6)  //DM14052004 081.7 int02 add
+					Ifo.createIfo(ttxfile, subpicture.picture.getUserColorTableArray());
+
 				options[39] += ttxfile1.length();
 				InfoAtEnd.add("Teletext "+(NoOfPictures++)+":\t"+seiten+" pages of No. "+page+"\t\t "+ttxfile1); //DM04032004 081.6 int18 changed
 			}
@@ -11596,6 +11839,7 @@ public void processTeletext(String[] args)
 
 	}  // end for
 
+
 	//DM13042004 081.7 int01 add
 	progress.setValue(100);
 	yield();
@@ -11606,22 +11850,26 @@ public void processTeletext(String[] args)
 }   // end methode processTeletext
 
 
-//02032004 081.6 int18 new
+//DM02032004 081.6 int18 new
 final String subdecode_errors[] = {
 	"",
+	"", //DM24042004 081.7 int02 add // -1 = correct decoded dvb-subpicture segments, can export
+	"", //DM24042004 081.7 int02 add // -2 = correct decoded dvb-subpicture segments, w/o export
+	"!> error while decoding DVB Subpicture", //DM24042004 081.7 int02 add // -3 = error while decoding dvb-subpicture
 	"!> lack of packet data",
 	"!> packet size doesn't match packet data",
 	"!> wrong chunk position index",
 	"!> wrong chunk position",
 	"!> wrong end of chunk index",
-	"!> wrong end of chunk",
-	"!> DVB subpictures not yet supported" //DM13042004 081.7 int01 add
+	"!> wrong end of chunk"
 };
 
-//02032004 081.6 int18 new
+
 /****************************
  * decoding subpicture stream *
  ****************************/
+//02032004 081.6 int18 new
+//18052004 081.7 int02 changed a lot
 public void processSubpicture(String[] args)
 {
 
@@ -11630,19 +11878,30 @@ public void processSubpicture(String[] args)
 
 	String fchild = (new File(args[0]).getName()).toString();
 	String fparent = ( fchild.lastIndexOf(".") != -1 ) ? workouts+fchild.substring(0,fchild.lastIndexOf(".")) : workouts+fchild;
+	fparent += options[11] == 1 ? "_0" : "";
 
-	String subfile = fparent + (options[11]==1 ? "_0": "")+".sup";
-
-	java.text.DateFormat sms = new java.text.SimpleDateFormat("HH:mm:ss.SSS");
-	sms.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
+	String subfile = fparent + ".sup";
 
 	byte[] parse12 = new byte[12];
 	byte[] packet = new byte[0];
 	long count=0, startPoint=0, time_difference=0, display_time=0;
-	long source_pts=0, new_pts=0, first_pts=-1;
+	long source_pts = 0, new_pts = 0, first_pts = -1, last_pts = 0;
 	boolean vptsdata=false, ptsdata=false, write=false, miss=false;
-	int x=0, pics=0, v=0, packetlength=0;
+	int x=0, pics=0, v=0, packetlength=0, export_type = 0, last_pgc_set = 0;
 
+	boolean DVBpicture = false;
+
+	subpicture.picture.dvb.setIRD(2<<comBox[11].getSelectedIndex(), (options[30]==1 ? true : false), d2vfield[9].getText().toString());
+
+	Msg("-> selected DVB subpicture color model: " + comBox[11].getSelectedItem() + " ; fixed to page id: " + d2vfield[9].getText().toString());
+
+	if (RButton[17].isSelected())
+	{
+		subfile = fparent + ".son";
+		export_type = 1;
+	}
+
+	Msg("-> export format: " + subfile.substring(subfile.length() - 3));
 
 	try 
 	{
@@ -11650,7 +11909,9 @@ public void processSubpicture(String[] args)
 	PushbackInputStream in = new PushbackInputStream(new FileInputStream(filename),65536);
 	IDDBufferedOutputStream out = new IDDBufferedOutputStream(new FileOutputStream(subfile),65536);
 
-	Msg(filename+"  ("+size+" bytes)");
+	PrintStream print_out = new PrintStream(out);
+
+	Msg("-> temp. file: " + filename + "  (" + size + " bytes)");
 	progress.setString("check & synchronize "+filename);
 	progress.setStringPainted(true);
 	progress.setValue(0);
@@ -11678,7 +11939,7 @@ public void processSubpicture(String[] args)
 		}
 		vbin.close();
 
-		Msg("Video PTS: start 1.GOP "+sms.format(new java.util.Date(vptsval[0]/90))+", end last GOP "+sms.format(new java.util.Date(vptsval[vptsval.length-1]/90)));
+		Msg("Video PTS: start 1.GOP " + Common.formatTime_1(vptsval[0] / 90) + ", end last GOP " + Common.formatTime_1( vptsval[vptsval.length-1] / 90));
 		vptsdata=true;
 	}
 
@@ -11741,7 +12002,7 @@ public void processSubpicture(String[] args)
 		yield();
 		bin.close();
 
-		Msg("Subpicture PTS: first packet "+sms.format(new java.util.Date(ptsval[0]/90))+", last packet "+sms.format(new java.util.Date(ptsval[ptsval.length-2]/90)));
+		Msg("Subpicture PTS: first packet " + Common.formatTime_1(ptsval[0] / 90) + ", last packet " + Common.formatTime_1(ptsval[ptsval.length-2] / 90));
 		ptsdata=true; 
 	}
 
@@ -11838,19 +12099,13 @@ public void processSubpicture(String[] args)
 		if (first_pts == -1)
 			first_pts = source_pts;
 
+		if (source_pts == 0)
+			source_pts = last_pts;
+		else
+			last_pts = source_pts;
+
 		if (options[30]==1)
 			System.out.println(" "+(count-packetlength)+"/ "+packetlength+"/ "+source_pts);
-
-		if ((display_time = subpicture.picture.decode_picture(packet, 10, subpicture.isVisible())) < 0)
-		{
-			Msg(subdecode_errors[Math.abs((int)display_time)]+" @ "+(count-packetlength)+", dropping picture..");
-
-			//DM13042004 081.7 int01 add
-			if (display_time == -7)
-				break readloop;
-			else
-				continue readloop;
-		}
 
 		if (ptsdata)
 		{
@@ -11876,9 +12131,102 @@ public void processSubpicture(String[] args)
 		else
 			write = true;
 
-		if (write)
+		if (!vptsdata && time_difference == 0 && !RButton[13].isSelected())
+			time_difference = source_pts;
+
+		new_pts = source_pts - time_difference;
+
+		if ((display_time = subpicture.picture.decode_picture(packet, 10, subpicture.isVisible(), new_pts, write, subpicture.isVisible())) < -2)
+			Msg(subdecode_errors[Math.abs((int)display_time)] + " @ " + (count-packetlength) + ", dropping picture..");
+
+		if (options[30] == 1)
+			System.out.println("PTS: source " + Common.formatTime_1(source_pts / 90) + "(" + source_pts + ")" + " /new " + Common.formatTime_1(new_pts / 90) + "(" + new_pts + ")" + " / write: " + write + " / dec.state: " + display_time);
+
+		if (display_time < 0)  //dvb_subpic
 		{
-			new_pts = source_pts - time_difference;
+			if (!DVBpicture)
+				Msg("-> source is DVB Subtitle..");
+
+			DVBpicture = true;
+
+			if (display_time == -1) // -1 full data, -2 forced end_time
+			{
+				String num = "00000" + pics;
+				String outfile_base = fparent + "_st" + num.substring(num.length() - 5);
+
+				String key, object_id_str, outfile;
+				int object_id;
+
+				for (Enumeration e = BMP.getKeys(); e.hasMoreElements() ; )
+				{
+					key = e.nextElement().toString();
+					object_id = Integer.parseInt(key);
+					object_id_str = Integer.toHexString(object_id).toUpperCase();
+					outfile = outfile_base + "p" + object_id_str;
+
+					Bitmap bitmap = BMP.getBitmap(object_id);
+
+					if (export_type == 0)  //.sup
+						out.write( subpicture.picture.writeRLE(bitmap));
+
+					else    //.son + .bmp
+					{
+						if (pics == 0)
+						{
+							String[] SONhead = ttc.getSONHead(new File(subfile).getParent(), options[14]);
+
+							for (int a=0; a < SONhead.length; a++) 
+								print_out.println(SONhead[a]);
+						}
+
+						subpicture.picture.updateUserColorTable(bitmap);
+						outfile = BMP.buildBMP_palettized(outfile, bitmap, subpicture.picture.getUserColorTable(), 256);
+
+						options[39] += new File(outfile).length();
+
+						int pgc_values = subpicture.picture.setPGClinks();
+
+						// a change in color_links
+						if ((0xFFFF & pgc_values) != (0xFFFF & last_pgc_set))
+						{
+							String pgc_colors = "";
+							for (int a=0; a < 4; a++)
+								pgc_colors += "" + (0xF & pgc_values>>>(a * 4)) + " ";
+
+							print_out.println("Color\t\t(" + pgc_colors.trim() + ")");
+						}
+
+						// a change in alpha_links
+						if ((0xFFFF0000 & pgc_values) != (0xFFFF0000 & last_pgc_set))
+						{
+							String pgc_alphas = "";
+							for (int a=0; a < 4; a++)
+								pgc_alphas += "" + (0xF & pgc_values>>>((4 + a) * 4)) + " ";
+
+							print_out.println("Contrast\t(" + pgc_alphas.trim() + ")");
+						}
+
+						last_pgc_set = pgc_values;
+
+						print_out.println("Display_Area\t(" + Common.adaptString(bitmap.getX(), 3) + " " + Common.adaptString(bitmap.getY(), 3) + " " + Common.adaptString(bitmap.getMaxX(), 3) + " " + Common.adaptString(bitmap.getMaxY(), 3) + ")");
+						print_out.println(outfile_base.substring(outfile_base.length() - 4) + "\t\t" + Common.formatTime_2(bitmap.getInTime() / 90, options[14]) + "\t" + Common.formatTime_2((bitmap.getInTime() / 90) + (bitmap.getPlayTime() * 10), options[14]) + "\t" + new File(outfile).getName());
+					}
+
+					//Msg(subpicture.picture.getArea());
+					//BMP.buildBMP_24bit(outfile, key);
+
+					subpicture.newTitle(" / page id " + bitmap.getPageId() + " / picture " + pics + " -> in: " + Common.formatTime_1(new_pts / 90) + " duration: " + Common.formatTime_1(bitmap.getPlayTime() * 10));
+				}
+
+				if (!BMP.isEmpty())
+					showExportStatus("pic's:", ++pics);
+
+				BMP.clear();
+			}
+		}
+
+		else if (write) //dvd_subpic
+		{
 			for (int a=0; a<8; a++)
 				packet[2+a] = (byte)(0xFFL & new_pts>>>(a*8));
 
@@ -11887,9 +12235,11 @@ public void processSubpicture(String[] args)
 			//	packet = subpicture.picture.setTime(packet,display_time);
 
 			out.write(packet);
+
 			showExportStatus("pic's:", ++pics);
-			subpicture.newTitle(" / picture "+pics+" -> in: "+sms.format(new java.util.Date(new_pts/90))+" duration: "+sms.format(new java.util.Date((display_time)/90)));
+			subpicture.newTitle(" / picture "+pics+" -> in: " + Common.formatTime_1(new_pts / 90) + " duration: " + Common.formatTime_1(display_time / 90));
 		}
+
 		else
 			subpicture.newTitle(" / picture not exported...");
 
@@ -11899,13 +12249,24 @@ public void processSubpicture(String[] args)
 	}
 
 	in.close();
+
+	print_out.flush();
+	print_out.close();
+
 	out.flush(); 
 	out.close();
 
 	if (args[1].equals("-1"))
-		Msg("Subpicture PTS: first packet "+sms.format(new java.util.Date(first_pts/90))+", last packet "+sms.format(new java.util.Date(source_pts/90)));
+		Msg("Subpicture PTS: first packet " + Common.formatTime_1(first_pts / 90) + ", last packet " + Common.formatTime_1(source_pts / 90));
 
-	Msg(" "+pics+" subpictures written..");
+	Msg(" " + pics + " subpictures written..");
+
+	if (!DVBpicture && export_type == 1)
+	{
+		String renamed_file = subfile.substring(0, subfile.length() - 3) + "sup";
+		Common.renameTo(subfile, renamed_file);
+		subfile = renamed_file;
+	}
 
 	File subfile1 = new File(subfile); 
 
@@ -11913,12 +12274,18 @@ public void processSubpicture(String[] args)
 		subfile1.delete();
 	else
 	{ 
-		Msg("===> new File "+subfile);
+		if (DVBpicture && export_type == 0)
+			options[39] += Ifo.createIfo(subfile, subpicture.picture.getUserColorTableArray());
+
+		else if (DVBpicture && export_type == 1)
+			options[39] += new File( BMP.write_ColorTable(fparent, subpicture.picture.getUserColorTable(), 256)).length();
+
+		Msg("===> new File " + subfile);
 		options[39] += subfile1.length();
-		InfoAtEnd.add("SubPicture "+(NoOfPictures++)+":\t"+pics+" subpictures\t\t "+subfile1);
+		InfoAtEnd.add("SubPicture " + (NoOfPictures++) + ":\t" + pics + " subpictures\t\t " + subfile1);
 	}
 
-	progress.setValue(100); 	//DM13042004 081.7 int01 add
+	progress.setValue(100);
 	yield();
 
 	}  // end try
@@ -13894,7 +14261,18 @@ class PIDdemux {
 					LSB(subpic_header,pts,2,8);
 					out.write(subpic_header);
 					target += subpic_header.length;
+
+					//DM20022004 081.7 int02 add, DVB subs adaption
+					if (Common.nextBits(data, (shift+ptslength)*8, 16) == 0xF)
+					{
+						out.write(((datalength + 3) >>> 8) & 0xFF);
+						out.write((datalength + 3) & 0xFF);
+						out.write(0); //padding
+						target += 3;
+					}
+
 					break;
+
 				case 4:
 					LSB(pcm_header,pts,3,5);
 					pcm_header[8] = (byte)(0xFF & datalength>>>8);
@@ -13904,6 +14282,20 @@ class PIDdemux {
 					break;
 				}
 			}
+
+			//DM28042004 081.7 int02 add, prevent lost packets
+			else if (format == 5 && Common.nextBits(data, (shift+ptslength)*8, 16) == 0xF)
+			{
+				LSB(subpic_header, 0, 2, 8);
+				out.write(subpic_header);
+				target += subpic_header.length;
+
+				out.write(((datalength + 3) >>> 8) & 0xFF);
+				out.write((datalength + 3) & 0xFF);
+				out.write(0); //padding
+				target += 3;
+			}
+
 			target += datalength;
 			out.write(data, shift+ptslength, datalength);
 		}
@@ -13920,26 +14312,44 @@ class PIDdemux {
 			data[off+a] = (byte)(0xFFL & value>>>(a*8));
 	}
 
-	public String[] close(String vptslog) { 
-		String[] getit = { name,name+".pts",type[format],parentname  };
+	//DM10052004 081.7 int02 changed, fix
+	public String[] close(String vptslog)
+	{ 
+		String pts_name = name + ".pts";
+		String parameters[] = { name, pts_name, type[format], parentname  };
+
 		try 
 		{
+
+		if (out == null)
+		{
+			parameters[0] = "";
+			return parameters;
+		}
+
 		out.flush(); 
 		out.close();
+
 		log.flush(); 
 		log.close(); 
-		if (new File(name+".pts").length()<10) 
-			logAlias(vptslog,name+".pts"); // logAlias
-		if (new File(name).length()<10) {
+
+		if (new File(pts_name).length() < 10) 
+			logAlias(vptslog, pts_name); // logAlias
+
+		if (new File(name).length() < 10)
+		{
 			new File(name).delete();
-			new File(name+".pts").delete();
-			getit[0]="";
+			new File(pts_name).delete();
+			parameters[0] = "";
 		}
+
 		} 
-		catch (IOException e) { 
+		catch (IOException e)
+		{ 
 			Msg("PESAudio error3"+e); 
 		}
-		return getit;
+
+		return parameters;
 	} 
 
 	public void initVideo(String name1, long[] options, int buffersize1, int lfn1, int sourcetype1) {
@@ -14810,6 +15220,9 @@ class makeVDR {
 						return options; // must start with video  
 					if (type!=1){
 						data = searchHeader(data,type,overhead);
+
+
+
 						datalength=data.length-overhead;  //DM16112003 081.5++ fix
 					}
 					if (data.length==0) 

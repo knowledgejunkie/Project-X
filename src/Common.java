@@ -1,7 +1,7 @@
 /*
  * @(#)Common.java - carries various stuff 
  *
- * Copyright (c) 2004 by dvb.matt. 
+ * Copyright (c) 2004 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.
@@ -30,9 +30,15 @@ import java.io.*;
 import java.awt.*;
 import javax.swing.*;
 
+import java.util.zip.*;
+
 //DM13042004 081.7 int01 introduced
 public final class Common
 {
+	//DM18052004 081.7 int02 add
+	private static java.text.DateFormat time_format_1 = new java.text.SimpleDateFormat("HH:mm:ss.SSS");
+	private static java.text.DateFormat time_format_2 = new java.text.SimpleDateFormat("HH:mm:ss:SSS");
+
 	private Common()
 	{}
 
@@ -51,4 +57,52 @@ public final class Common
 	{
 		renameTo(new File(oldfile), new File(newfile));
 	}
+
+	//DM202004 081.7 int02 add
+	public static int nextBits(byte buffer[], int BitPos, int N)
+	{
+		int Pos, Val;
+		Pos = BitPos>>>3;
+		Val =   (0xFF & buffer[Pos])<<24 |
+			(0xFF & buffer[Pos+1])<<16 |
+			(0xFF & buffer[Pos+2])<<8 |
+			(0xFF & buffer[Pos+3]);
+		Val <<= BitPos & 7;
+		Val >>>= 32-N;
+		return Val;
+	}
+
+	//DM18052004 081.7 int02 add
+	public static String adaptString(int str, int len)
+	{
+		return adaptString(String.valueOf(str), len);
+	}
+
+	//DM18052004 081.7 int02 add
+	public static String adaptString(String str, int len)
+	{
+		StringBuffer strbuf = new StringBuffer(str.trim());
+
+		while (strbuf.length() < len)
+			strbuf.insert(0, "0");
+
+		return strbuf.toString();
+	}
+
+	//DM18052004 081.7 int02 add
+	public static String formatTime_1(long time_value)
+	{
+		time_format_1.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
+		return time_format_1.format(new java.util.Date(time_value));
+	}
+
+	//DM18052004 081.7 int02 add
+	public static String formatTime_2(long time_value, long frame_rate)
+	{
+		time_format_2.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
+		String time_str = time_format_2.format(new java.util.Date(time_value));
+
+		return (time_str.substring(0, time_str.length() - 3) + adaptString((Integer.parseInt(time_str.substring(time_str.length() - 3)) * 90 / (int)frame_rate), 2));
+	}
+
 }

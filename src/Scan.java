@@ -1,7 +1,7 @@
 /*
  * @(#)SCAN.java - pre-scanning to check supported files
  *
- * Copyright (c) 2002-2004 by dvb.matt. 
+ * Copyright (c) 2002-2004 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.
@@ -50,7 +50,7 @@ String[] type = {
 	"ES (Subpicture 2-bit RLE)" //DM31012004 081.6 int13
 };
 
-String video =" ", audio=" ", addInfo="", origFile="", playtime="", text=""; //DM10032004 081.6 int18 add
+String video =" ", audio=" ", addInfo="", origFile="", playtime="", text="", pics=""; //DM10032004 081.6 int18 add, //DM28042004 081.7 int02 changed
 ArrayList pidlist = new ArrayList();
 boolean hasVideo=false, nullpacket=false;
 byte[] vbasic = new byte[12];
@@ -97,6 +97,12 @@ public String getAudio() {
 public String getText()
 {
 	return text; 
+}
+
+//DM28042004 081.7 int02 add
+public String getPics()
+{
+	return pics; 
 }
 
 //DM10032004 081.6 int18 changed
@@ -209,12 +215,24 @@ public void loadMPG2(byte[] check, int b, boolean vdr, boolean mpg1) {
 		} else {
 			switch (0xFF & check[a+3]) {
 			case 0xBB:
+			case 0xBC:
 			case 0xBE:
 			case 0xBF:
 			case 0xF0:
 			case 0xF1:
 			case 0xF2:
 			case 0xF3:
+			case 0xF4:
+			case 0xF5:
+			case 0xF6:
+			case 0xF7:
+			case 0xF8:
+			case 0xF9:
+			case 0xFA:
+			case 0xFB:
+			case 0xFC:
+			case 0xFD:
+			case 0xFE:
 			case 0xFF: { 
 				jump = 6+((255&check[a+4])<<8 | (255&check[a+5])); 
 				break; 
@@ -351,6 +369,7 @@ public void PMTcheck(byte[] check, int a) {
 	video = "no PMT found";
 	audio = "no PMT found";
 	text = "no PMT found"; //DM10032004 081.6 int18 add
+	pics = "no PMT found"; //DM28042004 081.7 int02 add
 	pidlist.clear();
 
 	tscheck:
@@ -388,6 +407,7 @@ public void PMTcheck(byte[] check, int a) {
 		video="PIDs:";
 		audio="PIDs:";
 		text="PIDs:"; //DM10032004 081.6 int18 add
+		pics="PIDs:"; //DM28042004 081.7 int02 add
 
 		int pmt_len = (0xF&pmt[2])<<8 | (0xFF&pmt[3]);  //DM30122003 081.6 int10 add
 
@@ -437,15 +457,40 @@ public void PMTcheck(byte[] check, int a) {
 }
 
 //DM10032004 081.6 int18 new
+//DM04052004 081.7 int02 fix
 private void getIsoLanguage(byte check[], int off, int end, int pid, int type)
 {
 	String str = "";
 	int chunk_end = 0;
+
+	try
+	{
+
 	loop:
-	for (; off < end; off++)
+	for (; off < end && off < check.length; off++)
 	{
 		switch(0xFF & check[off])
 		{
+		//DM28042004 081.7 int02 add
+		case 0x59:  //dvb subtitle descriptor
+			type = 0x59;
+			chunk_end = off + 2 + (0xFF & check[off+1]);
+			str += "(";
+			for (int a=off+2; a<chunk_end; a+=8)
+			{
+				for (int b=a; b<a+3; b++) //language
+					str += (char)(0xFF & check[b]);
+
+				int page_type = 0xFF & check[a+3];
+				int comp_page_id = (0xFF & check[a+4])<<16 | (0xFF & check[a+5]);
+				int anci_page_id = (0xFF & check[a+6])<<16 | (0xFF & check[a+7]);
+				str += "_0x" + Integer.toHexString(page_type).toUpperCase();
+				str += "_p" + comp_page_id;
+				str += "_a" + anci_page_id + " ";
+			}
+			str += ")";
+			break loop;
+
 		case 0x56:  //teletext descriptor incl. index page + subtitle pages
 			type = 0x56;
 			chunk_end = off + 2 + (0xFF & check[off+1]);
@@ -495,17 +540,30 @@ private void getIsoLanguage(byte check[], int off, int end, int pid, int type)
 
 	switch (type)
 	{
+	case 0x59:  //DM28042004 081.7 int02 add
+		pics += out + str;
+		break;
+
 	case 0x56:
 		text += out + str;
 		break;
+
 	case 2:
 		video += out + str;
 		break;
+
 	case 4:
 		audio += out + str;
 		break;
+
 	default:
 		audio += out + str + "_PD";
+	}
+
+	}
+	catch (ArrayIndexOutOfBoundsException ae)
+	{
+		playtime += "PMT parsing error (language) ";
 	}
 }
 
@@ -528,6 +586,7 @@ public int testFile(String infile, boolean more) { //DM04122003 081.6_int02 chan
 	video = "no video found at a short scan";
 	audio = "no audio found at a short scan"; 
 	text = "no teletext found at a short scan"; 
+	pics = "no subpicture found at a short scan";  //DM28042004 081.7 int02 add
 	addInfo="";
 	playtime="";
 	hasVideo=false; 
@@ -614,7 +673,7 @@ public int testFile(String infile, boolean more) { //DM04122003 081.6_int02 chan
 						xe= (0xF & check[d])<<8 | (0xFF & check[++d]);
 						ya= (0xFF & check[++d])<<4 | (0xF0 & check[++d])>>>4;
 						ye= (0xF & check[d])<<8 | (0xFF & check[++d]);
-						video = "up.left x"+xa+",y"+ya+" @ size "+(xe-xa)+"*"+(ye-ya);
+						pics = "up.left x" + xa + ",y" + ya + " @ size " + (xe - xa + 1) + "*" + (ye - ya + 1); //DM05052004 081.7 int02 changed,fix
 					}
 					break;
 				}

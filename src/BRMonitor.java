@@ -1,7 +1,7 @@
 /*
  * @(#)BR_MONITOR.java
  *
- * Copyright (c) 2002-2004 by dvb.matt. 
+ * Copyright (c) 2002-2004 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.
@@ -107,8 +107,18 @@ public class Surface extends JPanel implements Runnable {
 
 	public Dimension getPreferredSize() { return new Dimension(54,72); }
 
-	public void paint(Graphics g) {
+	//DM18052004 081.7 int02 changed
+	public void paint(Graphics g)
+	{
+		if (big == null) 
+			return;
 
+		g.drawImage(bimg, 0, 0, this);
+	}
+
+	//DM18052004 081.7 int02 changed
+	public void refresh()
+	{
 		if (big == null) 
 			return;
 
@@ -199,7 +209,6 @@ public class Surface extends JPanel implements Runnable {
 			} else
 				ptNum++;
 		}
-		g.drawImage(bimg, 0, 0, this);
 	}
 
 
@@ -230,6 +239,9 @@ public class Surface extends JPanel implements Runnable {
 			minbitrate = bitrate;
 		timeStr = vtime;
 		frame = frame1;
+
+		refresh(); //DM18052004 081.7 int02 add
+
 		repaint();
 	}
 
@@ -252,6 +264,7 @@ public class Surface extends JPanel implements Runnable {
 			}
 
 			if (first) {
+				refresh();
 				repaint(); 
 				first=false;
 			}

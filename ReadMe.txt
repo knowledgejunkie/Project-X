@@ -1,7 +1,7 @@
 /==============================================================================/
 
  X - a free Java based demux utility
- Copyright (C) 2001-2004 dvb.matt
+ Copyright (C) 2001-2004 dvb.matt, All Rights Reserved
 
  It is intended for educational purposes only, as a non-commercial test project.
  It may not be used otherwise. Most parts are only experimental.
@@ -52,29 +52,37 @@
  Extract all files from the received archive to a separate directory.
  the archive contains:
 
-	ac3.bin	- copy to the same place as your compiled version of X
+	ac3.bin   - optional, copy to the same place as your compiled version of X
 	COPYING
 	readme.txt
 
-	htmls/..
+	htmls/..  - optional, copy to the same place as your compiled version of X
 	index.html
 
 	src/..
 	AUDIO.java
 	AudioFrameConstants.java
+	Bitmap.java
+	BMP.java
 	BR_MONITOR.java
 	Common.java
 	CRC.java
 	D2V.java
+	DVBSubpicture.java
 	HEXVIEWER.java
+	Html.java
+	IDDBufferedOutputStream.java
+	Ifo.java
 	LOGAREA.java
 	MPAC.java
 	MPAD.java
 	MPVD.java
 	RIFFHEADER.java
 	SCAN.java
+	StartUp.java
 	SUBPICTURE.java
 	TELETEXT.java
+	TeletextPageMatrix.java
 	TS.java
 	UISwitchListener.java
 	VIDEO.java

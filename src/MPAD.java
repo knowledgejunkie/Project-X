@@ -1,7 +1,7 @@
 /*
  * @(#)MPAD.java - MPA dec
  *
- * Copyright (c) 2003-2004 by dvb.matt. 
+ * Copyright (c) 2003-2004 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.
@@ -1006,7 +1006,8 @@ private static HEADER head = new HEADER();
 private static WORK work = new WORK();
 private static ByteArrayOutputStream out1 = new ByteArrayOutputStream();
 private static ByteArrayOutputStream out2 = new ByteArrayOutputStream();
-private static short savePCM[] = new short[2];
+private static double saveS[] = new double[2]; //DM14052004 081.7 int02 changed
+
 private static int LEFT_RIGHT=0;
 public static boolean MOTOROLA=false, DOWNSAMPLE=false, DOWNMIX=false, 
 		WAVE=true, MONO=false, RESET=false, NORMALIZE=false;
@@ -1446,6 +1447,35 @@ public static int decode_layer2() throws IOException {
 					s[0] *= 32768;
 					s[1] *= 32768;
 
+					//DM14052004 081.7 int02 changed++
+					if (resample == Resample[LEFT_RIGHT>>>3 & 1].length)
+						resample=0;
+
+					if (head.sampling_frequency == 48000 && (LEFT_RIGHT & 0xC) != 0)  //resample
+					{
+						double interpolator = Resample[LEFT_RIGHT>>>3 & 1][resample];
+
+						if (interpolator == -1)
+							resample++;
+
+						if (interpolator == 0)
+						{
+							resample++;
+							System.arraycopy(s, 0, saveS, 0, 2);
+							continue;
+						}
+						else if (interpolator > 0)
+						{
+							resample++;
+							double saveS2[] = new double[2];
+							System.arraycopy(s, 0, saveS2, 0, 2);
+							s[0] = interpolator * s[0] + (1 - interpolator) * saveS[0];
+							s[1] = interpolator * s[1] + (1 - interpolator) * saveS[1];
+							System.arraycopy(saveS2, 0, saveS, 0, 2);
+						}
+					}
+					//DM14052004 081.7 int02 changed--
+
 					ss[0] = (int)(s[0] * MULTIPLY);
 					ss[1] = (int)(s[1] * MULTIPLY);
 
@@ -1487,27 +1517,6 @@ public static int decode_layer2() throws IOException {
 						pcm[1] = (short)ss[1];
 					}
 					//DM10042004 081.7 int01 changed-
-
-					if (resample == Resample[LEFT_RIGHT>>>3 & 1].length)
-						resample=0;
-
-					if (head.sampling_frequency==48000 && (LEFT_RIGHT & 0xC) != 0) { //resample
-						float interpolator = Resample[LEFT_RIGHT>>>3 & 1][resample];
-						if (interpolator==-1)
-							resample++;
-						if (interpolator==0) {
-							resample++;
-							System.arraycopy(pcm,0,savePCM,0,2);
-							continue;
-						} else if (interpolator>0) {
-							resample++;
-							short savePCM2[] = new short[2];
-							System.arraycopy(pcm,0,savePCM2,0,2);
-							pcm[0] = (short)(interpolator*pcm[0] + (1-interpolator)*savePCM[0]);
-							pcm[1] = (short)(interpolator*pcm[1] + (1-interpolator)*savePCM[1]);
-							System.arraycopy(savePCM2,0,savePCM,0,2);
-						}
-					}
 
 					if ((LEFT_RIGHT & 1) != 1)  // exchange r<->l
 						out1.write(intel_ByteOrder(pcm[0])); // write left or mix
@@ -1681,6 +1690,34 @@ public static int decode_layer1() throws IOException {
 			s[0] *= 32768;
 			s[1] *= 32768;
 
+			//DM14052004 081.7 int02 changed++
+			if (resample == Resample[LEFT_RIGHT>>>3 & 1].length)
+				resample=0;
+
+			if (head.sampling_frequency == 48000 && (LEFT_RIGHT & 0xC) != 0)  //resample
+			{
+				double interpolator = Resample[LEFT_RIGHT>>>3 & 1][resample];
+				if (interpolator == -1)
+					resample++;
+
+				if (interpolator == 0)
+				{
+					resample++;
+					System.arraycopy(s, 0, saveS, 0, 2);
+					continue;
+				}
+				else if (interpolator > 0)
+				{
+					resample++;
+					double saveS2[] = new double[2];
+					System.arraycopy(s, 0, saveS2, 0, 2);
+					s[0] = interpolator * s[0] + (1 - interpolator) * saveS[0];
+					s[1] = interpolator * s[1] + (1 - interpolator) * saveS[1];
+					System.arraycopy(saveS2, 0, saveS, 0, 2);
+				}
+			}
+			//DM14052004 081.7 int02 changed++
+
 			ss[0] = (int)(s[0] * MULTIPLY);
 			ss[1] = (int)(s[1] * MULTIPLY);
 
@@ -1723,27 +1760,6 @@ public static int decode_layer1() throws IOException {
 			}
 			//DM10042004 081.7 int01 changed-
 
-			if (resample == Resample[LEFT_RIGHT>>>3 & 1].length)
-				resample=0;
-
-			if (head.sampling_frequency==48000 && (LEFT_RIGHT & 0xC) != 0) { //resample
-				float interpolator = Resample[LEFT_RIGHT>>>3 & 1][resample];
-				if (interpolator==-1)
-					resample++;
-				if (interpolator==0) {
-					resample++;
-					System.arraycopy(pcm,0,savePCM,0,2);
-					continue;
-				} else if (interpolator>0) {
-					resample++;
-					short savePCM2[] = new short[2];
-					System.arraycopy(pcm,0,savePCM2,0,2);
-					pcm[0] = (short)(interpolator*pcm[0] + (1-interpolator)*savePCM[0]);
-					pcm[1] = (short)(interpolator*pcm[1] + (1-interpolator)*savePCM[1]);
-					System.arraycopy(savePCM2,0,savePCM,0,2);
-				}
-			}
-
 			if ((LEFT_RIGHT & 1) != 1) out1.write(intel_ByteOrder(pcm[0]));
 			else out1.write(intel_ByteOrder(pcm[1]));
 			
@@ -1773,7 +1789,7 @@ public static void init_work(int resample_type) {
 	resample=0;
 	Frame=0;
 	BufferPos=0;
-	savePCM = new short[2];
+	saveS = new double[2]; //DM14052004 081.7 int02 changed
 	LEFT_RIGHT = resample_type<<2; //DM22112003 081.5++ fix
 }
 

@@ -1,7 +1,7 @@
 /*
  * @(#)SUBPICTURE.java - creates SUP file to use as DVD subtitles
  *
- * Copyright (c) 2003-2004 by dvb.matt. 
+ * Copyright (c) 2003-2004 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.
@@ -38,92 +38,149 @@ import java.io.*;
 import java.util.*;
 import java.awt.image.BufferedImage;
 
-public class SubPicture extends JFrame {
+import java.awt.image.*;
+
+
+public class SubPicture extends JFrame
+{
 
 public Picture picture;
 
 String title = "Subtitle PreViewer";
 
-public SubPicture() {
-	addWindowListener(new WindowAdapter() {
-		public void windowClosing(WindowEvent e) { close();}
+public SubPicture()
+{
+	addWindowListener(new WindowAdapter()
+	{
+		public void windowClosing(WindowEvent e)
+		{
+			close();
+		}
 	});
+
 	picture = new Picture();
-	getContentPane().add("Center",picture);
+	picture.run(); //DM18052004 081.7 int02 add
+
+	getContentPane().add("Center", picture);
 
 	setTitle(title);
-	setSize(new Dimension(730,300)); //DM24012004 081.6 int11 changed
+	setSize(new Dimension(726,601)); //DM24012004 081.6 int11 changed, //DM20042004 081.7 int02 changed
 	setLocation(100,100);
-	setVisible(false);
+	setResizable(false); //DM17042004 081.7 int02 add
+	//setVisible(false);
 }
 
-public void newTitle(String newtitle) { 
+public void newTitle(String newtitle)
+{
 	setTitle(title+" "+newtitle); 
 }
 
-public void open() { 
-	show(); //DM26032004 081.6 int18 changed
-}
-
-public void close() { 
-	setVisible(false); 
+public void close()
+{ 
+	dispose(); //DM18052004 081.7 int02 changed
 }
 
 
-public class Picture extends JPanel implements Runnable {
-
+public class Picture extends JPanel implements Runnable
+{
 	public java.text.DateFormat sms = new java.text.SimpleDateFormat("HH:mm:ss.SSS");
 	public Thread thread;
-	private int w=720, h=288, x=20, nibble=0, val=0, even=2, alpha=10; //DM24012004 081.6 int11 changed
+	private int w=720, h=576, x=20, nibble=0, val=0, default_alpha=10; //DM24012004 081.6 int11 changed, //DM20042004 081.7 int02 changed
 	private BufferedImage bimg;
 	private Graphics2D big;
 	private Font font, font_alt, font_std; //DM30122003 081.6 int10 add, //DM01032004 081.6 int18 add
 	private FontRenderContext frc;
-	private byte[] suppic = new byte[0];
-	private Color[] color = {
-		Color.gray,    // black /gray
-		Color.red,     // red
-		Color.green,   // green
-		Color.yellow,  // yellow
-		new Color(0xFF9090FF),    // blue, not to deep
-		Color.magenta, // magenta
-		Color.cyan,    // cyan
-		Color.white,   // white
-		Color.black,   // black background
+
+	private final int default_teletext_colors[] = {
+		0xFF808080, //Y 50%
+		0xFFEB8080, //red light
+		0xFF10EB10, //green
+		0xFFEBEB10, //yellow
+		0xFF9090EB, //blue light
+		0xFFEB10EB, //magenta
+		0xFF10EBEB, //cyan
+		0xFFEBEBEB, //Y 100%
+		0xFF101010, //black
+		0xFFEB8080, //red lighter
+		0xFF80EB80, //green lighter
+		0xFFEBEB80, //yellow lighter
+		0xFF8080EB, //blue lighter
+		0xFFEB80EB, //magante lighter
+		0xFF80EBEB, //cyan lighter
+		0 // full transparency black bg
 	};
+
+	private final int default_sup_colors[] = {
+		0xFF101010, //black
+		0xFFA0A0A0, //Y 50%
+		0xFFEBEBEB, //Y 100%
+		0xFF606060, //Y 25%
+		0xFFEB1010, //red
+		0xFF10EB10, //green
+		0xFFEBEB10, //yellow
+		0xFF1010EB, //blue
+		0xFFEB10EB, //magenta
+		0xFF10EBEB, //cyan
+		0xFFEB8080, //red lighter
+		0xFF80EB80, //green lighter
+		0xFFEBEB80, //yellow lighter
+		0xFF8080EB, //blue lighter
+		0xFFEB80EB, //magante lighter
+		0xFF80EBEB, //cyan lighter
+		0 // full transparency black bg
+	};
+
 	private Object[] str = new Object[0];
 	private byte[] RLEheader = { 0x53,0x50,0,0,0,0,0,0,0,0,0,0,0,0 }; // startcode + later reverse 5PTS, DTS=0
 	private byte[] sections = {
-		0,0,           // size  
-		3,0x32,0x10,         // color palette linkage
-		4,(byte)0xFF,(byte)0xFA,         // color alpha channel linkage F=opaque
-		5,0,0,0,0,0,0, // coordinates Xa,Ya,Xe,Ye
-		6,0,0,0,0,     // bytepos start odd, start even
-		1,(byte)0xFF,    // 0xFF
-		1,0x50,0,0,2,(byte)0xFF     // section 01, end sequ: timedur in pts/900, size s.a. , add 0xFF if size is not even
+		0, 0,           // size  
+		3, 0x32, 0x10,         // color palette linkage
+		4, (byte)0xFF, (byte)0xFA,         // color alpha channel linkage F=opaque
+		5, 0, 0, 0, 0, 0, 0, // coordinates Xa,Ya,Xe,Ye
+		6, 0, 0, 0, 0,     // bytepos start top_field, start bottom_field
+		1, (byte)0xFF,    // 0xFF
+		1, 0x50, 0, 0, 2, (byte)0xFF     // section 01, end sequ: timedur in pts/900, size s.a. , add 0xFF if size is not WORD aligned
 	};
+
 	private ByteArrayOutputStream out = new ByteArrayOutputStream();
-	private byte[] newline = { 0,0 };
-	private int Rect[] = new int[4], pos[] = new int[4];
-	private int[] pgc = new int[4], pgca = { 0,13,14,15 };
-	private int[] option = new int[8];
-	private int[] std = { 28,10,32,60,600,720,576 };  // ("Font pointsize; Backgr. Alpha value; Xoffset; Yoffset; Screenwidth");
+	private byte newline[] = { 0,0 };
+	private int Rect[] = new int[4];
+	private int pos[] = new int[4];
+	private int option[] = new int[8];
+	private int standard_values[] = { 28, 10, 32, 60, 600, 720, 576 };  // ("Font pointsize; Backgr. Alpha value; Xoffset; Yoffset; Screenwidth");
 
+	private ArrayList user_color_table = new ArrayList();
+	private Bitmap bitmap;
+	private boolean read_from_Image = false;
 
-	public Picture() { 
+	DVBSubpicture dvb = new DVBSubpicture(); //DM24042004 081.7 int02 new
+
+	public Picture()
+	{ 
+		bimg = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+		big = bimg.createGraphics();
+
+		set("SansSerif", ("" + "28;10;32;60;600;720;576;-1"));
+		frc = big.getFontRenderContext();
+
+		//   big.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
 		setBackground(Color.gray);
-		setVisible(true);
+		//setVisible(true);
 		sms.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
 	}
 
-	public void paint(Graphics g) {
+	public void paint(Graphics g)
+	{
 		if (big == null) 
 			return;
+
 		g.drawImage(bimg, 0, 0, this);
 	}
 
 	/*** paint pic from ttx **/
-	public void showPicTTX(Object[] str) {
+	public void showPicTTX(Object[] str)
+	{
 		this.str = str;
 		buildImgTTX();
 		repaint();
@@ -143,242 +200,445 @@ public class Picture extends JPanel implements Runnable {
 		int tp = (0xFF & tmp[12])<<8 | (0xFF & tmp[13]);
 		tmp[34+tp] = (byte)(0xFF & difference>>>8);
 		tmp[35+tp] = (byte)(0xFF & difference);
+
 		newTitle(" / in: "+sms.format(new java.util.Date(in_time / 90))+" duration: "+sms.format(new java.util.Date(difference * 10)) );
 
 		return tmp;
 	}
 
-	/*** build Image **/
-	public void buildImgTTX() {   //DM30122003 081.6 int10 changed
-		Rect[0] = option[3];          // x 60
-		Rect[1] = h-option[2]-(option[0]*(1+str.length));   // y 188-32-(28*2) = 100
-		Rect[2] = option[4];          // w 600
-		Rect[3] = 12+(option[0]*str.length);      // h 12+(28*1) höhe
-		pos[0] = Rect[0];     //x = 60
-		pos[1] = option[6]-option[2]-Rect[3];    //+y 576-32-40
-		pos[2] = pos[0]+Rect[2];   //x2 = 660
-		pos[3] = pos[1]+Rect[3]; //+y2  = (504+40) 544
-		//   pos[3] = pos[1]+Rect[1]+Rect[3]; //+y2
+	/*** build Image from text **/
+	//DM30122003 081.6 int10 changed
+	//DM05052004 081.7 int02 changed
+	public void buildImgTTX()
+	{
+		int space = 6;
+		Rect[0] = option[3];
+		Rect[3] = (2 * space) + (option[0] * str.length);
+		Rect[1] = option[6] - option[2] - Rect[3];
+		Rect[2] = option[4];
+
+		pos[0] = Rect[0];
+		pos[1] = Rect[1];
+		pos[2] = Rect[0] + Rect[2] - 1;
+		pos[3] = Rect[1] + Rect[3] - 1;
 
 		//DM08032004 081.6 int18 add
 		paintVideoSize();
+
 		big.setColor(Color.white);
-		big.drawRect(Rect[0]-1,Rect[1]-1,Rect[2]+2,Rect[3]+2);
+		big.drawRect(Rect[0] - 1, Rect[1] - 1, Rect[2] + 1, Rect[3] + 1);
 		big.setFont(font_std);
-		big.drawString("x"+pos[0]+", y"+pos[1]+" / "+(pos[2]-pos[0])+"*"+(pos[3]-pos[1]), Rect[0] - 1, Rect[1] - 5);
+		big.drawString("x" + pos[0] + ", y" + pos[1] + " / " + (pos[2] - pos[0] + 1) + "*" + (pos[3] - pos[1] + 1), Rect[0] - 1, Rect[1] - 5);
 
-		big.setColor(color[8]);
-		big.fillRect(Rect[0],Rect[1],Rect[2],Rect[3]); // black background
+		int color_table[] = getColorTable(1);
 
-		for (int a=0;a<str.length;a++) {  // paint ascii char
+		big.setColor(new Color(color_table[8]));
+		big.fillRect(Rect[0], Rect[1], Rect[2], Rect[3]); // black background
+
+		// paint ascii char
+		for (int a=0; a < str.length; a++)
+		{
 			int[] chars = (int[])str[a];
 			x=option[3];
-			for (int b=0;b<chars.length;b++) {
-				if ((0xF&(chars[b]>>>4))>0)
+
+			for (int b=0; b < chars.length; b++)
+			{
+				if ( (0xF & (chars[b]>>>4) ) > 0)
 					big.setFont(font_alt);
 				else
 					big.setFont(font);
-				big.setColor(color[7&chars[b]]);
-				big.drawString(""+(char)(chars[b]>>>8),x,(h-option[2])-(option[0]*(str.length-a)));
-				x += font.getStringBounds(""+(char)(chars[b]>>>8),frc).getWidth();
+
+				big.setColor(new Color(color_table[7 & chars[b]]));
+				big.drawString("" + (char)(chars[b]>>>8), x, Rect[1] + (option[0] * (1 + a)));
+				x += font.getStringBounds("" + (char)(chars[b]>>>8), frc).getWidth();
 			}
 		}
 	}
 
-	/*** return sup format for writing **/
-	public byte[] writeRLE(long pts, int duration) {
+	public void resetUserColorTable()
+	{
+		user_color_table.clear();
+	}
+
+	public Object[] getUserColorTableArray()
+	{
+		return user_color_table.toArray();
+	}
+
+	public ArrayList getUserColorTable()
+	{
+		return user_color_table;
+	}
+
+	public void updateUserColorTable(Bitmap new_bitmap)
+	{
+		bitmap = new_bitmap;
+
+		int pixel[] = bitmap.getPixel();
+
+		for (int a=0; a < pixel.length; a++)
+		{
+			String pixel_str = "" + pixel[a];
+
+			if (!user_color_table.contains(pixel_str))
+				user_color_table.add(pixel_str);
+
+			bitmap.getColorIndex(getUserColorTableIndex(pixel[a]));
+		}
+	}
+
+	private void updateUserColorTable(int pixel[])
+	{
+		for (int a=0; a < pixel.length; a++)
+		{
+			String pixel_str = "" + pixel[a];
+
+			if (user_color_table.contains(pixel_str))
+				continue;
+
+			else
+				user_color_table.add(pixel_str);
+		}
+	}
+
+	private int getUserColorTableIndex(int color_index)
+	{
+		int value;
+
+		if ((value = user_color_table.indexOf("" + color_index)) < 0)
+			return 0;
+
+		return value;
+	}
+
+	public byte[] writeRLE(long pts, int onscreen_time) throws IOException
+	{
+		read_from_Image = true; // use user defined alpha value for color index 0
+
+		//depth, pageid, regionid, objectid, pts, playtime at 90khz ticks
+		bitmap = new Bitmap( Rect[0], Rect[1], Rect[2], Rect[3], bimg.getRGB(Rect[0], Rect[1], Rect[2], Rect[3], null, 0, Rect[2]), 2, 0, 1, 2, pts, onscreen_time);
+
+		return buildRLE();
+	}
+
+	public byte[] writeRLE(Bitmap new_bitmap) throws IOException
+	{
+		bitmap = new_bitmap;
+		setArea();
+
+		return buildRLE();
+	}
+
+	private byte[] buildRLE()
+	{
+		byte picture_packet[] = null;
+
 		try 
 		{
 
-		int[] pixels = new int[Rect[2]*Rect[3]];  
-		bimg.getRGB(Rect[0],Rect[1],Rect[2],Rect[3],pixels,0,Rect[2]);
-		System.arraycopy(pgca,0,pgc,0,4);
+		int pixels[] = bitmap.getPixel();
+
+		updateUserColorTable(pixels);
 
 		out.reset(); 
 		out.write(RLEheader);   //start picture in .sup form
-		even=0;
 
-		for (int i=0,l=0,a=0,b=0,co=0; i<2; i++) {        // read out interlaced RGB
-			for (l=0,co=0,a=i*Rect[2]; a<pixels.length; a+=(2*Rect[2])) {   // odd lines first
-				for (l=0,co=0,b=0; b<Rect[2]; b++,l++) {   // l-1 = len??
-					if ((0xFFFFFF&pixels[a+b])!=co) {
-						updateRLE(l,co);      // write last RLE nibbles, while color change
-						co=(0xFFFFFF&pixels[a+b]); 
+		int bottom_field_start_pos = 0;
+
+		// read out interlaced RGB
+		for (int i=0, l=0, a=0, b=0, color_index=0; i < 2; i++)
+		{
+			// top_field first
+			for (l=0, color_index=0, a = i * bitmap.getWidth(); a < pixels.length; a += (2 * bitmap.getWidth()))
+			{
+				for (l=0, color_index=0, b=0; b < bitmap.getWidth(); b++, l++)
+				{
+					if (pixels[a + b] != color_index)
+					{
+						// write last RLE nibbles, while color change
+						updateRLE(l, color_index);
+						color_index = pixels[a + b];
 						l=0;
-					} else if ( l>254 ) {
-						updateRLE(l,co);      // write last RLE nibbles, cannot incl. more than 255 pixels
+					}
+					else if ( l > 254 )
+					{
+						// write last RLE nibbles, cannot incl. more than 255 pixels
+						updateRLE(l, color_index);
 						l=0;
 					}
 					// std: adds l-bit to active color
 				}
-				while ( l>255 ) { 
-					updateRLE(255,co); 
-					l=l-255; 
+
+				l -= 1;
+
+				while ( l > 255 )  // never used ?!
+				{ 
+					updateRLE(255, color_index); 
+					l -= 255; 
 				}
-				updateRLE(l,co);   // write last RLE nibbles, line end
+
+				updateRLE(l, color_index);   // write last RLE nibbles, line end
 				alignRLE();
 				out.write(newline);  // new line CR, byte aligned
 			}
+
 			alignRLE();
-			if (even==0) 
-				even = out.size()-10;        // save startpos of even pic (size-14)
+
+			if (bottom_field_start_pos == 0) 
+				bottom_field_start_pos = out.size() - 10;        // save startpos of bottom_field (size-14)
 		}
 
-		int pack = out.size()-12;
-		int control = pack+24;
-		int dur = out.size()+22;
+		int pack = out.size() - 12;
+		int control_block_pos = pack + 24;
+		int onscreen_time_pos = out.size() + 22;
 
-		// set planned pic pos. on tvscreen
-		sections[9] = (byte)(pos[0]>>>4);
-		sections[10] = (byte)(pos[0]<<4 | pos[2]>>>8);
-		sections[11] = (byte)pos[2];
-		sections[12] = (byte)(pos[1]>>>4);
-		sections[13] = (byte)(pos[1]<<4 | pos[3]>>>8);
-		sections[14] = (byte)pos[3];
+		setScreenPosition(bitmap.getX(), bitmap.getY(), bitmap.getMaxX() - 1, bitmap.getMaxY() - 1);
+		setControlBlockPosition(control_block_pos, bottom_field_start_pos);
+		setPGCsection();
 
-		// set byte pos. for pic start
-		sections[16] = 0;
-		sections[17] = 4;
-		sections[18] = (byte)(0xFF&even>>>8);
-		sections[19] = (byte)(0xFF&even);
-		sections[0] = sections[24] = (byte)(0xFF&control>>>8);
-		sections[1] = sections[25] = (byte)(0xFF&control);
+		out.write(sections);  //write control_block
 
-		// set color links for PGCITI
-		sections[3] = (byte)(pgc[3]<<4 | pgc[2]);
-		sections[4] = (byte)(pgc[1]<<4 | pgc[0]);
-		sections[7] = (byte)((0xF0&sections[7]) | (0xF&alpha));
-
-		out.write(sections);  //write control block
-		if ((out.size()&1) == 1)   // changed for X0.81
+		if ((out.size() & 1) == 1)
 			out.write((byte)255);
-		out.flush();
-		suppic = out.toByteArray();
-		int size = suppic.length-10;
-		suppic[10] = (byte)(0xFF&size>>>8);
-		suppic[11] = (byte)(0xFF&size);
-		suppic[12] = (byte)(0xFF&pack>>>8);
-		suppic[13] = (byte)(0xFF&pack);
 
-		for (int a=0;a<4;a++) 
-			suppic[a+2] = (byte)(0xFF & pts>>>(a*8));
-		suppic[dur] = (byte)(0xFF & duration>>>8);
-		suppic[dur+1] = (byte)(0xFF & duration);
+		out.flush();
+
+		picture_packet = out.toByteArray();
+
+		int size = picture_packet.length - 10;
+
+		picture_packet[10] = (byte)(0xFF & size>>>8);
+		picture_packet[11] = (byte)(0xFF & size);
+		picture_packet[12] = (byte)(0xFF & pack>>>8);
+		picture_packet[13] = (byte)(0xFF & pack);
+
+		for (int a=0; a < 4; a++) 
+			picture_packet[a + 2] = (byte)(0xFF & bitmap.getInTime()>>>(a*8));
+
+		picture_packet[onscreen_time_pos] = (byte)(0xFF & bitmap.getPlayTime()>>>8);
+		picture_packet[onscreen_time_pos + 1] = (byte)(0xFF & bitmap.getPlayTime());
 
 		} 
-		catch (IOException e) { 
+		catch (IOException e)
+		{ 
 			X.Msg("-> subpic write error"); 
 		}
 
-		return suppic;
+		read_from_Image = false;
+
+		return picture_packet;
 	}
 
-	/***  **/
-	public void alignRLE() {  // write last nibble, if it was not aligned
-		if (nibble==0) 
+	// write last nibble, if it was not aligned
+	private void alignRLE()
+	{
+		if (nibble == 0) 
 			return;
-		else { 
+
+		else
+		{ 
 			out.write((byte)val); 
-			val=nibble=0; 
+			val = nibble = 0; 
 		}
 	}
 
-	/*** add pixels to RLE **/
-	public void updateRLE(int l, int co) {  // max 1 bgr + 3 text color links per RLE
-		int pgcco=0;
-		switch (co) { 
-			case        0: { pgcco=0; break; }   //black meant for half trans background
-			case 0xFFFFFF: { pgcco=1; break; }    //white
-			case 0xFF0000: { pgcco=2; break; }    //red
-			case   0xFF00: { pgcco=3; break; }    //green
-			case 0x9090FF: { pgcco=4; break; }    //light blue
-			case 0xFFFF00: { pgcco=5; break; }    //yellow
-			case   0xFFFF: { pgcco=6; break; }    //cyan
-			case 0xFF00FF: { pgcco=7; break; }    //magenta
-			case 0x808080: { pgcco=12; break; }    //gray
-			default:       { pgcco=0; break; }
-		}
+	private void updateRLE(int l, int color_index)
+	{
+		if (l < 1)
+			return;
 
-		for (int a=1; pgcco>0 && a<pgc.length; a++) {  // set colorlinks for PGCITI
-			co=-1;
-			if (pgc[a]>12 || pgc[a]==pgcco) { 
-				pgc[a]=pgcco; 
-				co=a; 
-				break; 
-			}
-		}
-		if (co==-1) 
-			co=1;
+		// color_index shall not exceed value 3!
+		int pgc_color = getUserColorTableIndex(color_index);
 
-		l = l<<2 | co;  // combine bits + color
+		pgc_color = bitmap.getColorIndex(pgc_color);
 
-		if (nibble==0) {  // new byte begin
-			if (l>0xFF) { 
+		l = l<<2 | pgc_color;  // combine bits + color_index
+
+		// new byte begin
+		if (nibble == 0)
+		{  
+			if (l > 0xFF) // 16
+			{ 
 				out.write((byte)(0xFF & l>>>8)); 
 				out.write((byte)(0xFF & l)); 
-			} // 16
-			else if (l>0x3F) { 
+			} 
+			else if (l > 0x3F)  // 12
+			{ 
 				out.write((byte)(0xFF & l>>>4)); 
-				val=0xF0 & l<<4; 
-				nibble=4; 
-			}  // 12;
-			else if (l>0xF)  { 
+				val = 0xF0 & l<<4; 
+				nibble = 4; 
+			}
+			else if (l > 0xF)  // 8
+			{
 				out.write((byte)(0xFF & l)); 
-			} // 8
-			else { 
-				val=0xF0 & l<<4; 
-				nibble=4; 
-			}   // 4
-		} else {          // middle of byte
-			if (l>0xFF) { 
+			} 
+			else   // 4
+			{ 
+				val = 0xF0 & l<<4; 
+				nibble = 4; 
+			}
+		}
+		else  // middle of byte
+		{
+			if (l > 0xFF) // 16
+			{ 
 				out.write((byte)(val | (0xF & l>>>12))); 
 				out.write((byte)(0xFF & l>>>4)); 
-				val=0xF0 & l<<4; 
-			} // 16
-			else if (l>0x3F) { 
+				val = 0xF0 & l<<4; 
+			} 
+			else if (l > 0x3F) // 12
+			{
 				out.write((byte)(val | (0xF & l>>>8))); 
 				out.write((byte)(0xFF & l)); 
-				val=nibble=0; 
-			}  // 12;
-			else if (l>0xF)  { 
+				val = nibble = 0; 
+			}  
+			else if (l > 0xF)  // 8
+			{ 
 				out.write((byte)(val | (0xF & l>>>4))); 
-				val=0xF0 & l<<4; 
-			} // 8
-			else { 
+				val = 0xF0 & l<<4; 
+			} 
+			else  // 4
+			{ 
 				out.write((byte)(val | (0xF & l))); 
-				val=nibble=0; 
-			}   // 4
+				val = nibble = 0; 
+			}  
 		}
 	}
 
+	private void setScreenPosition(int minX, int minY, int maxX, int maxY)
+	{
+		// set planned pic pos. on tvscreen
+		sections[9]  = (byte)(minX>>>4);
+		sections[10] = (byte)(minX<<4 | maxX>>>8);
+		sections[11] = (byte)maxX;
+		sections[12] = (byte)(minY>>>4);
+		sections[13] = (byte)(minY<<4 | maxY>>>8);
+		sections[14] = (byte)maxY;
+	}
 
-	public void set2() { 
-		option[2]=option[7]; 
-	};
+	private void setControlBlockPosition(int control_block_pos, int bottom_field_start_pos)
+	{
+		// top_field
+		sections[16] = 0;
+		sections[17] = 4;
+
+		// bottom_field
+		sections[18] = (byte)(0xFF & bottom_field_start_pos>>>8);
+		sections[19] = (byte)(0xFF & bottom_field_start_pos);
+
+		// control_block
+		sections[0] = sections[24] = (byte)(0xFF & control_block_pos>>>8);
+		sections[1] = sections[25] = (byte)(0xFF & control_block_pos);
+	}
+
+	private void setPGCsection()
+	{
+		int pgc_values = setPGClinks();
+
+		// color index 3,2 + 1,0
+		sections[3] = (byte)(0xFF & pgc_values>>>8);
+		sections[4] = (byte)(0xFF & pgc_values);
+
+		// alpha index 3,2 + 1,0
+		sections[6] = (byte)(0xFF & pgc_values>>>24);
+		sections[7] = (byte)(0xFF & pgc_values>>>16);
+	}
+
+	public int setPGClinks()
+	{
+		Object pgc_color_links[] = bitmap.getColorIndices();
+		Object pgc_alpha_links[] = getUserColorTableArray();
+		int pgc_colors = 0xFE10;
+		int pgc_alphas = 0xFFF9;
+		int pgc_color_value, pgc_alpha_value;
+
+		for (int a=0; a < 4; a++)
+		{
+			if (a < pgc_color_links.length)
+			{
+				pgc_color_value = 0xF & Integer.parseInt(pgc_color_links[a].toString());
+				pgc_alpha_value = 0xF & Integer.parseInt(pgc_alpha_links[pgc_color_value].toString())>>>28;
+				pgc_colors = (pgc_colors & ~(0xF<<(a * 4))) | pgc_color_value<<(a * 4);
+				pgc_alphas = (pgc_alphas & ~(0xF<<(a * 4))) | pgc_alpha_value<<(a * 4);
+			}
+		}
+
+		if (read_from_Image)
+			pgc_alphas &= (0xFFF0 | default_alpha);
+
+		return (pgc_alphas<<16 | pgc_colors);
+	}
+
+	public void set2()
+	{ 
+		option[2] = option[7];
+	}
 
 	/*** set user data ("Font pointsize; Backgr. Alpha value; Yoffset; Xoffset; Screenwidth"); **/
-	public int set(String nm, String values) {
-		System.arraycopy(std,0,option,0,std.length);
-		StringTokenizer st = new StringTokenizer(values,";");
+	public int set(String nm, String values)
+	{
+		resetUserColorTable();
+
+		System.arraycopy(standard_values, 0, option, 0, standard_values.length);
+		StringTokenizer st = new StringTokenizer(values, ";");
 		int a=0;
-		while (st.hasMoreTokens() && a<option.length) {
+
+		while (st.hasMoreTokens() && a < option.length)
+		{
 			option[a] = Integer.parseInt(st.nextToken());
 			a++;
 		}
-		alpha = 0xF & option[1];
+
+		default_alpha = 0xF & option[1];
 		font = new Font(nm, Font.BOLD, option[0]);
-		font_alt = new Font(nm, Font.BOLD|Font.ITALIC, option[0]); //DM30122003 081.6 int10 add
+		font_alt = new Font(nm, Font.BOLD | Font.ITALIC, option[0]); //DM30122003 081.6 int10 add
 		font_std = new Font("Sans Serif", Font.PLAIN, 14); //DM01032004 081.6 int18 add
 		return option[7];
 	}
 
-	public void run() {
-		bimg = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-		big = bimg.createGraphics();
-		set("SansSerif", (""+"28;10;32;60;600;720;576;-1"));
-		//   big.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-		frc = big.getFontRenderContext();
+	private int[] getColorTable(int flag)
+	{
+		//define alternative color_table here
+		if (flag == 0)
+			return default_sup_colors;
+
+		else
+			return default_teletext_colors;
 	}
+
+	//DM05052004 081.7 int02 new
+	private void setArea()
+	{
+		Rect[0] = bitmap.getX();
+		Rect[1] = bitmap.getY();
+		Rect[2] = bitmap.getWidth();
+		Rect[3] = bitmap.getHeight();
+
+		pos[0] = bitmap.getX();
+		pos[1] = bitmap.getY();
+		pos[2] = bitmap.getMaxX();
+		pos[3] = bitmap.getMaxY();
+	}
+
+	//DM05052004 081.7 int02 new
+	public String getArea()
+	{
+		String string = "";
+		string += "x " + Rect[0];
+		string += " y " + Rect[1];
+		string += " w " + Rect[2];
+		string += " h " + Rect[3];
+
+		string += " x1 " + pos[0];
+		string += " y1 " + pos[1];
+		string += " x2 " + pos[2];
+		string += " y2 " + pos[3];
+
+		return string;
+	}
+
+	public void run()
+	{}
 
 	//DM08032004 081.6 int18 new
 	private int paintVideoSize()
@@ -395,7 +655,7 @@ public class Picture extends JPanel implements Runnable {
 
 		//picture area which the subpicture must not exceed, have to adjust to the hor. middle of it
 		big.setColor(Color.gray);
-		big.fillRect(0, 0, video_basics[0], video_basics[1]-h);
+		big.fillRect(0, 0, video_basics[0], video_basics[1]); //DM20042004 081.7 int02 changed
 
 		return video_basics[1];
 	}
@@ -444,22 +704,22 @@ public class Picture extends JPanel implements Runnable {
 			Flush_Bits( BPos, 4);
 	}
 
-	//DM28022004 081.6 int18 new
-	private final int std_colors[] = {
-		0xFF000000, 0xFFFFFFFF, 0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 
-		0xFFFFFF00, 0xFFFF00FF,	0xFF00FFFF, 0xFFFF5555, 0xFF55FF55,	
-		0xFF5555FF, 0xFFFFFF55, 0xFFFF55FF,	0xFF55FFFF, 0xFF993333, 
-		0xFF333399
-	};
-
-	//DM28022004 081.6 int18 new
+	//DM14052004 081.7 int02 add
 	public int decode_picture(byte packet[], int off, boolean decode)
 	{
+		return decode_picture(packet, off, decode, 0, false, true);
+	}
+
+	//DM28022004 081.6 int18 new
+	//DM05052004 081.7 int02 changed
+	public int decode_picture(byte packet[], int off, boolean decode, long pts, boolean save, boolean visible)
+	{
+		read_from_Image = false;
+
 		boolean simple_picture = false;
 		int picture_length = packet.length;
 		byte data[] = new byte[picture_length +4];
-		System.arraycopy(packet,0,data,0,picture_length);
-
+		System.arraycopy(packet, 0, data, 0, picture_length);
 
 		int BPos[] = { off, off<<3 }; //BytePos, BitPos
 		int position[] = new int[4];
@@ -467,16 +727,24 @@ public class Picture extends JPanel implements Runnable {
 		int print_colors[] = new int[4];
 
 		if (BPos[0] > picture_length-4)
-			return -1;
+			return -4;
 
 		int packetlength = Get_Bits(data, BPos, 16); // required pack length
 
 		//DM13042004 081.7 int01 add
-		if (packetlength == 0xF) // DVB subpicture: subtitle_stream_id 0x00 & start of subtitle segment 0x0F
-			return -7;
+		//DM28042004 081.7 int02 changed
+		if (Show_Bits(data, BPos, 24) == 0xF) // DVB subpicture: 8bit padding 0x00 + 8bit subtitle_stream_id 0x00 + start of subtitle segment 0x0F
+		{
+			int ret = dvb.decodeDVBSubpicture(data, BPos, big, bimg, pts, save, visible);
+
+			if (ret > -2)
+				repaint();
+
+			return ret;
+		}
 
 		if (BPos[0] + packetlength != picture_length + 2)
-			return -2;
+			return -5;
 
 		start_pos[2] = Get_Bits(data, BPos, 16) - 2;
 		Flush_Bits(BPos, start_pos[2]<<3); // jump to sections chunk
@@ -492,6 +760,8 @@ public class Picture extends JPanel implements Runnable {
 		else
 			start_pos[2] += off+2;
 
+		int color_table[] = getColorTable(0);
+
 		while (BPos[0] < off + playtime_pos)  // read sections chunk
 		{
 			switch(Get_Bits(data, BPos, 8))
@@ -503,11 +773,11 @@ public class Picture extends JPanel implements Runnable {
 				break;
 			case 3: // 4 color links
 				for (int b=0; b<4; b++)
-					print_colors[b] |= (std_colors[Get_Bits(data, BPos, 4)] & 0xFFFFFF);
+					print_colors[3 - b] |= (color_table[Get_Bits(data, BPos, 4)] & 0xFFFFFF);
 				break;
 			case 4: // alpha blending
 				for (int b=0; b<4; b++)
-					print_colors[b] |= (0x11 * (0xF ^ Get_Bits(data, BPos, 4)))<<24;
+					print_colors[3 - b] |= (0x11 * (0xF ^ Get_Bits(data, BPos, 4)))<<24;
 				break;
 			case 5: // x,y pos.
 				for (int b=0; b<4; b++)
@@ -521,23 +791,23 @@ public class Picture extends JPanel implements Runnable {
 		}
 
 		if (off + playtime_pos != BPos[0])
-			return -3;
+			return -6;
 
 		int playtime = 0;
 		if (!simple_picture)
 		{
 			playtime = Get_Bits(data, BPos, 16);
 			if (playtime_pos != Get_Bits(data, BPos, 16))
-				return -4;
+				return -7;
 
 			if (Get_Bits(data, BPos, 8) != 2)
-				return -5;
+				return -8;
 
 			Flush_Bits( BPos, ((BPos[0] & 1) != 1) ? 16 : 8 );
 		}
 
 		if (BPos[0] != picture_length)
-			return -6;
+			return -9;
 
 		if (!decode)
 			return (playtime * 900);
@@ -546,13 +816,17 @@ public class Picture extends JPanel implements Runnable {
 		for (int b=0; b<2; b++)
 			start_pos[b] += off;
 
-		int v_res = paintVideoSize();
+		paintVideoSize();
 
-		int y0 = position[2] - (v_res - h);
+		int y0 = position[2];
+
+		int width = position[1] - position[0] + 1;
+		int height = position[3] - position[2] + 1;
+
 		big.setColor(Color.white);
-		big.drawRect(position[0]-1,y0-1,position[1]-position[0]+2,position[3]-position[2]+2);
+		big.drawRect(position[0] - 1, y0 - 1, width + 1, height + 1);
 		big.setFont(font_std);
-		big.drawString("x"+position[0]+", y"+position[2]+" / "+(position[1]-position[0])+"*"+(position[3]-position[2]), position[0] - 1, y0 - 5);
+		big.drawString("x" + position[0] + ", y" + position[2] + " / " + width + "*" + height, position[0] - 1, y0 - 5);
 
 		for (int b=0; b<2; b++)
 		{
@@ -563,28 +837,28 @@ public class Picture extends JPanel implements Runnable {
 			{
 				if ((Val = Get_Bits(data, BPos, 4)) > 3) //4..F (0..3 never encodable)
 				{
-					big.setColor(new Color(std_colors[Val & 3]));
-					big.drawLine(x1,y1,(x1+=Val>>>2),y1);
+					big.setColor(new Color(print_colors[Val & 3]));
+					big.drawLine(x1, y1, (x1 += Val>>>2), y1);
 				}
 				else if ((Val = Val<<4 | Get_Bits(data, BPos, 4)) > 0xF) //10..3F
 				{
-					big.setColor(new Color(std_colors[Val & 3]));
-					big.drawLine(x1,y1,(x1+=Val>>>2),y1);
+					big.setColor(new Color(print_colors[Val & 3]));
+					big.drawLine(x1, y1, (x1 += Val>>>2), y1);
 				}
 				else if ((Val = Val<<4 | Get_Bits(data, BPos, 4)) > 0x3F) //40..FF
 				{
-					big.setColor(new Color(std_colors[Val & 3]));
-					big.drawLine(x1,y1,(x1+=Val>>>2),y1);
+					big.setColor(new Color(print_colors[Val & 3]));
+					big.drawLine(x1, y1, (x1 += Val>>>2), y1);
 				}
 				else if ((Val = Val<<4 | Get_Bits(data, BPos, 4)) > 0) //100..3FF
 				{
-					big.setColor(new Color(std_colors[Val & 3]));
-					big.drawLine(x1,y1,(x1+=Val>>>2),y1);
+					big.setColor(new Color(print_colors[Val & 3]));
+					big.drawLine(x1, y1, (x1 += Val>>>2), y1);
 				}
 				else  // 0 forced carriage return
 				{
-					x1=position[0];
-					y1+=2;
+					x1 = position[0];
+					y1 += 2;
 					align_Bits(BPos);
 					continue;
 				}
@@ -606,6 +880,5 @@ public class Picture extends JPanel implements Runnable {
 	}
 
 
-}
-
-}
+} // end inner class
+} // end class
