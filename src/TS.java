@@ -234,15 +234,19 @@ static byte[] ttx = {
 	4,55,-105,118,-89,4,76,-51, 4,107,67,-110,4,-116,-12,-99,4,11,42,-53,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
 };
 
-public byte[] getTTX(TeleText ttc, byte[] data, String pts) {
+//DM26052004 081.7 int03 changed
+//public byte[] getTTX(TELETEXT ttc, byte[] data, String pts) {
+public byte[] getTTX(byte[] data, String pts)
+{
 	byte[] tPTS = pts.getBytes();
-	for (int a=0; a<tPTS.length; a++) 
-		tPTS[a] = ttc.bytereverse(ttc.parity(tPTS[a]));
+	for (int a=0; a < tPTS.length; a++) 
+		tPTS[a] = Teletext.bytereverse(Teletext.parity(tPTS[a]));
 
-	System.arraycopy(tPTS,0,ttx,169,tPTS.length);
-	System.arraycopy(data,9,ttx,13,5);
+	System.arraycopy(tPTS, 0, ttx, 169, tPTS.length);
+	System.arraycopy(data, 9, ttx, 13, 5);
 	ttx[13] &= ~0x10;
-	ttx[3] = (byte)(0x10 | (0xf&(count3++)));
+	ttx[3] = (byte)(0x10 | (0xF & (count3++)));
+
 	return ttx;
 }
 

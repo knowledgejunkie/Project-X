@@ -1,0 +1,31 @@
+01.06.2004
+replace the provided updated source files from the basic version 0.81.7
+it's recommended to backup the old.
+
+Note: all changes are subject to test ATM
+
+short description of changes:
+-------------------------
+0.81.7 int03 / 31.05.2004
+
+modified sources:
+Bitmap
+DVBSubpicture
+MPVD
+SUBPICTURE
+Teletext (replacement of TELETEXT)
+TS
+X
+
+
+
+changelog:
+-teletext.java is now static class
+-change: .sup creation from DVB Subpic: force top field of pic. to start at an even line (prevents interlace flickering of NRK STs)
+-change: .sup creation from teletext: mapping multiple colors (of actors) with different fore- and backgrounds to more different foregrounds, better use of .ifo's 16-color table (sometimes used by german ZDF) 
+ (replacement of the alternative font_style <italic>)
+-change: .sup creation 
+ * changed time_out calculation, provides better displaying 
+ * max. rows for export now user_defined (std. 4 = new 9th value of the "26;9;32;80;560;720;576;-1;4" set)
+-change: on demux, there was double memory allocation for one GOP
+-fix: MPEG ES demux, wrong GOP detection depending on set read_buffersize

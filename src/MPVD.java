@@ -1152,6 +1152,8 @@ public void sequence_extension(){
 
 	horizontal_size = (horizontal_size_extension<<12) | (horizontal_size&0xfff);
 	vertical_size = (vertical_size_extension<<12) | (vertical_size&0xfff);
+
+	info_4 += ", low delay=" + low_delay; //DM26052004 081.7 int03 add
 }
 
 /* decode sequence display extension */
@@ -1177,7 +1179,8 @@ public void sequence_display_extension(){
 	display_vertical_size   = Get_Bits(14);
 
 	//DM06052004 081.7 int02 add
-	info_4 = ", SDE: " + display_horizontal_size + "*" + display_vertical_size;
+	//DM26052004 081.7 int03 changed
+	info_4 += ", SDE: " + display_horizontal_size + "*" + display_vertical_size;
 }
 
 /* decode quant matrix entension */

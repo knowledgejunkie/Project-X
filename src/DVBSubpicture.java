@@ -246,7 +246,9 @@ public class DVBSubpicture
 
 	private void prepare_output()
 	{
-		long new_time_out = (long)Math.round((pts - page.getTimeIn()) / 900.0);
+		//DM26052004 081.7 int03 changed
+		//long new_time_out = (long)Math.round((pts - page.getTimeIn()) / 900.0);
+		long new_time_out = 1L + ((pts - page.getTimeIn()) / 1000);
 
 		if (page.getTimeOut() > 0 && new_time_out > page.getTimeOut())
 			new_time_out = page.getTimeOut();
@@ -273,7 +275,8 @@ public class DVBSubpicture
 	{
 		int segment_end = getBits(16) + BytePosition;
 		int segment_type = 0x10;
-		int time_out = getBits(8) * 100; //page_time_out, seconds 'til disappearing without another erase event
+
+		int time_out = getBits(8) * 100; //page_time_out, milliseconds 'til disappearing without another erase event
 
 		page.setVersionNumber(getBits(4)); //page_version_number, if number exists, update isn't necessary
 

@@ -81,7 +81,7 @@
 	SCAN.java
 	StartUp.java
 	SUBPICTURE.java
-	TELETEXT.java
+	Teletext.java
 	TeletextPageMatrix.java
 	TS.java
 	UISwitchListener.java

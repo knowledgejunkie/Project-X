@@ -60,8 +60,8 @@ public class X extends JPanel
 {
 
 static String version[] = { 
-	"ProjectX 0.81.7_int02",
-	"21.05.2004",
+	"ProjectX 0.81.7_int03",
+	"31.05.2004",
 	"TEST PROJECT ONLY",
 	", User: " + System.getProperty("user.name")
 };
@@ -81,8 +81,9 @@ static String terms[] = {
 static BRMonitor brm;
 static SubPicture subpicture = new SubPicture(); //DM06032004 081.6 int18 changed
 
+//TELETEXT Teletext = new TELETEXT(); //now static methods
+
 Scan scan = new Scan();
-TeleText ttc = new TeleText();
 MPAC MPAConverter = new MPAC();
 MPAD MPADecoder = new MPAD();
 static MPVD MPVDecoder = new MPVD();
@@ -2155,7 +2156,7 @@ protected JPanel buildsubtitlePanel()
 	comBox[26].setSelectedItem("SansSerif");
 	comBox[26].setPreferredSize(new Dimension(150,25));
 
-	d2vfield[6] = new JTextField("28;10;32;60;600;720;576;-1");
+	d2vfield[6] = new JTextField("26;10;32;80;560;720;576;-1;4"); //DM26052004 081.7 int03 changed
 	d2vfield[6].setEditable(true);
 	d2vfield[6].setPreferredSize(new Dimension(170,20));
 	d2vfield[6].setToolTipText("(offsets from left bottom) Font pointsize; BckGrd Alpha; Yoffset; Xoffset; Xwidth; H(unused); V; Yoffset2");
@@ -2903,6 +2904,10 @@ class PATCH extends JDialog {
 		JButton changebutton = new JButton("change");
 		changebutton.addActionListener(patchAction);
 		grid.add(changebutton);
+
+
+
+
 
 		JButton cancelbutton = new JButton("cancel");
 		cancelbutton.addActionListener(patchAction);
@@ -3950,6 +3955,7 @@ class COLLECTION extends JFrame {
 		if (activecoll<comBox[0].getItemCount()) {
 			ArrayList abc = new ArrayList();
 			if (comBox[14].getItemCount()>0) {
+
 				for (int a=0;a<comBox[14].getItemCount();a++)
 					abc.add(comBox[14].getItemAt(a).toString());
 
@@ -6395,6 +6401,8 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 		startPoint = options[20]-(comBox[25].getSelectedIndex()*1048576L);
 
 	//*** jump near to first cut-in point to collect more audio
+
+
 	if (comBox[17].getSelectedIndex()==0 && ctemp.size()>0 && cutcount==0 && (!RButton[6].isSelected() || ToVDR>0)) //DM28112003 081.5++
 		startPoint = Long.parseLong(ctemp.get(cutcount).toString())-((ToVDR==0)?2048000:0);
 
@@ -11072,7 +11080,7 @@ public void processTeletext(String[] args)
 				break;
 
 			case 5:
-				String[] SSAhead = ttc.getSSAHead();
+				String[] SSAhead = Teletext.getSSAHead();
 				for (int a=0; a<SSAhead.length; a++) 
 					print_buffer.println(SSAhead[a]);
 				print_buffer.flush();
@@ -11081,7 +11089,7 @@ public void processTeletext(String[] args)
 				break;
 
 			case 7:
-				String[] STLhead = ttc.getSTLHead(version[0]+" on "+java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM).format(new java.util.Date(System.currentTimeMillis())));
+				String[] STLhead = Teletext.getSTLHead(version[0]+" on "+java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM).format(new java.util.Date(System.currentTimeMillis())));
 				for (int a=0;a<STLhead.length;a++) 
 					print_buffer.println(STLhead[a]);
 				print_buffer.flush();
@@ -11090,7 +11098,7 @@ public void processTeletext(String[] args)
 				break;
 
 			case 8:  //DM14052004 081.7 int02 add, still unused!
-				String[] SONhead = ttc.getSONHead(new File(ttxfile).getParent(), options[14]);
+				String[] SONhead = Teletext.getSONHead(new File(ttxfile).getParent(), options[14]);
 
 				for (int a=0; a < SONhead.length; a++) 
 					print_buffer.println(SONhead[a]);
@@ -11246,7 +11254,7 @@ public void processTeletext(String[] args)
 
 				if (!vps)
 				{
-					row = 0xFF & ttc.bytereverse((byte)((0xF & ttc.hamming_decode(packet[4]))<<4 | (0xF & ttc.hamming_decode(packet[5]))));
+					row = 0xFF & Teletext.bytereverse((byte)((0xF & Teletext.hamming_decode(packet[4]))<<4 | (0xF & Teletext.hamming_decode(packet[5]))));
 					magazine = (7 & row) == 0 ? 8 : (7 & row);
 					row >>>= 3;
 				}
@@ -11288,10 +11296,10 @@ public void processTeletext(String[] args)
 					int flag = 0;
 
 					for (int a=0; a<6; a++)
-						flag |= (0xF & ttc.bytereverse( ttc.hamming_decode(packet[8+a]) )>>>4 ) <<(a*4);
+						flag |= (0xF & Teletext.bytereverse( Teletext.hamming_decode(packet[8+a]) )>>>4 ) <<(a*4);
 
-					page_number = Integer.toHexString(0xF & ttc.bytereverse( ttc.hamming_decode(packet[7]) )>>>4 ).toUpperCase() +
-						Integer.toHexString(0xF & ttc.bytereverse( ttc.hamming_decode(packet[6]) )>>>4 ).toUpperCase();
+					page_number = Integer.toHexString(0xF & Teletext.bytereverse( Teletext.hamming_decode(packet[7]) )>>>4 ).toUpperCase() +
+						Integer.toHexString(0xF & Teletext.bytereverse( Teletext.hamming_decode(packet[6]) )>>>4 ).toUpperCase();
 
 					int o[] = { 0xF, 7, 0xF, 3 };
 					subpage_number = "";
@@ -11312,7 +11320,7 @@ public void processTeletext(String[] args)
 					flags.put("magazine_serial", "" + (1 & flag>>>20));
 					flags.put("character_set", "" + (7 & flag>>>21));
 
-					// page_number matches -- subpage_numer currently ignored
+					// page_number matches -- subpage_numer currently always accepted
 					if ( page.equalsIgnoreCase( Integer.toHexString(magazine) + page_number) )
 					{
 						character_set = 7 & flag>>>21;
@@ -11329,7 +11337,7 @@ public void processTeletext(String[] args)
 					{
 						byte chars[] = new byte[32];
 						System.arraycopy(packet, 14, chars, 0, 32);
-						String str = magazine + page_number + "  " + subpage_number + "  " + ttc.makestring(chars, character_set, 0);
+						String str = magazine + page_number + "  " + subpage_number + "  " + Teletext.makestring(chars, character_set, 0);
 
 						if (cBox[19].isSelected())
 							ttxheaderLabel.setText(str);
@@ -11455,8 +11463,8 @@ public void processTeletext(String[] args)
 									break;
 
 								case 2:  // SC
-									print_buffer.print( ttc.SMPTE( timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), options[14]) + "&");
-									print_buffer.print( ttc.SMPTE( timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), options[14]) + "#");
+									print_buffer.print( Teletext.SMPTE( timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), options[14]) + "&");
+									print_buffer.print( Teletext.SMPTE( timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), options[14]) + "#");
 									break;
 
 								case 3:  // SUB
@@ -11471,13 +11479,13 @@ public void processTeletext(String[] args)
 									break;
 
 								case 5:  // SSA
-									print_buffer.print( ttc.getSSALine()[0] + timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ).substring(1, 11) + ",");
-									print_buffer.print( timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ).substring(1, 11) + ttc.getSSALine()[1]);
+									print_buffer.print( Teletext.getSSALine()[0] + timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ).substring(1, 11) + ",");
+									print_buffer.print( timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ).substring(1, 11) + Teletext.getSSALine()[1]);
 									break;
 
 								case 7:  // STL
-									print_buffer.print( ttc.SMPTE(timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), options[14]) + ",");
-									print_buffer.print( ttc.SMPTE(timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), options[14]) + ",");
+									print_buffer.print( Teletext.SMPTE(timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), options[14]) + ",");
+									print_buffer.print( Teletext.SMPTE(timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), options[14]) + ",");
 									break;
 
 								case 6:  // SUP
@@ -11488,7 +11496,8 @@ public void processTeletext(String[] args)
 											if ( write_buffer.containsKey("" + a) )
 												picture_String.add(write_buffer.get("" + a));
 
-										while (picture_String.size() > 4) // max. 4 lines
+										//DM26052004 081.7 int03 changed
+										while (picture_String.size() > subpicture.picture.getMaximumLines()) // max. lines as defined
 											picture_String.remove(0);
 
 										subpicture.picture.showPicTTX( picture_String.toArray());
@@ -11608,7 +11617,7 @@ public void processTeletext(String[] args)
 				if (subtitle_type == 0)  // megaradio, simple decode the bytes
 				{
 					for (int b = (row == 1) ? 17: 0; b<39; b++) // framebytes to MSB
-						out.write(ttc.bytereverse(packet[7+b]));
+						out.write(Teletext.bytereverse(packet[7+b]));
 
 					continue readloop;
 				}
@@ -11623,25 +11632,25 @@ public void processTeletext(String[] args)
 				switch (subtitle_type)
 				{
 				case 1:
-					str = ttc.makestring(chars, character_set, 0);
+					str = Teletext.makestring(chars, character_set, 0);
 					break;
 
 				case 3:
 				case 4:
-					str = ttc.makestring(chars, character_set, 0).trim();
+					str = Teletext.makestring(chars, character_set, 0).trim();
 					break;
 
 				case 2:
 				case 7:
-					str = ttc.makestring(chars, character_set + 8, 0).trim();
+					str = Teletext.makestring(chars, character_set + 8, 0).trim();
 					break;
 
 				case 5:
-					str = ttc.makestring(chars, character_set, 1).trim();
+					str = Teletext.makestring(chars, character_set, 1).trim();
 					break;
 
 				case 6:
-					picture_data = ttc.makepic(chars, character_set);
+					picture_data = Teletext.makepic(chars, character_set);
 				}
 
 				if (str != null && !str.equals(""))
@@ -11675,8 +11684,8 @@ public void processTeletext(String[] args)
 						break;
 
 					case 2:  // SC
-						print_buffer.print( ttc.SMPTE(timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), options[14]) + "&");
-						print_buffer.print( ttc.SMPTE( timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), options[14]) + "#");
+						print_buffer.print( Teletext.SMPTE(timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), options[14]) + "&");
+						print_buffer.print( Teletext.SMPTE( timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), options[14]) + "#");
 						break;
 
 					case 3:  // SUB
@@ -11691,13 +11700,13 @@ public void processTeletext(String[] args)
 						break;
 
 					case 5:  // SSA
-						print_buffer.print( ttc.getSSALine()[0] + timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ).substring(1, 11) + ",");
-						print_buffer.print( timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ).substring(1, 11) + ttc.getSSALine()[1]);
+						print_buffer.print( Teletext.getSSALine()[0] + timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ).substring(1, 11) + ",");
+						print_buffer.print( timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ).substring(1, 11) + Teletext.getSSALine()[1]);
 						break;
 
 					case 7:  // STL
-						print_buffer.print( ttc.SMPTE(timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), options[14]) + ",");
-						print_buffer.print( ttc.SMPTE(timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), options[14]) + ",");
+						print_buffer.print( Teletext.SMPTE(timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), options[14]) + ",");
+						print_buffer.print( Teletext.SMPTE(timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), options[14]) + ",");
 						break;
 
 					case 6:  // SUP
@@ -11708,7 +11717,8 @@ public void processTeletext(String[] args)
 								if ( write_buffer.containsKey("" + a) )
 									picture_String.add(write_buffer.get("" + a));
 
-							while (picture_String.size()>4) 
+							//DM26052004 081.7 int03 changed
+							while (picture_String.size() > subpicture.picture.getMaximumLines())
 								picture_String.remove(0);
 
 							subpicture.picture.showPicTTX( picture_String.toArray());
@@ -12173,7 +12183,7 @@ public void processSubpicture(String[] args)
 					{
 						if (pics == 0)
 						{
-							String[] SONhead = ttc.getSONHead(new File(subfile).getParent(), options[14]);
+							String[] SONhead = Teletext.getSONHead(new File(subfile).getParent(), options[14]);
 
 							for (int a=0; a < SONhead.length; a++) 
 								print_out.println(SONhead[a]);
@@ -12780,6 +12790,9 @@ public String rawvideo(String args) {
 	}
 	**/
 
+	//DM31052004 081.7 int03 add
+	boolean lead_sequenceheader = false;
+
 	videoloop:
 	while (pos < filelength) {
 
@@ -12822,8 +12835,21 @@ public String rawvideo(String args) {
 
 			//DM06022004 081.6 int15 changed
 			int start_code = 0xFF & vload[a+3];
+
+			//DM31052004 081.7 int03 add
+			if (start_code == 0xB8 && lead_sequenceheader)
+			{
+				lead_sequenceheader = false;
+				a += 8;
+				continue arrayloop;
+			}
+
 			if (start_code==0xB3 || start_code==0xB7 || start_code==0xB8)
 			{
+				//DM31052004 081.7 int03 add
+				if (start_code == 0xB3)
+					lead_sequenceheader = true;
+
 				vbuffer.write(vload,mark,a-mark);
 				mark = a;
 				CUT_BYTEPOSITION = pos-load+mark;
@@ -12934,6 +12960,7 @@ public String rawvideo(String args) {
 		//vbuffer.write(vload,mark,vload.length-3-mark);
 		//in.unread(vload,vload.length-3,3); 
 		//pos-=3;
+
 	}
 
 	/*** d2v project ***/
@@ -13054,11 +13081,11 @@ public static byte[] searchHeader(byte[] data, int type, int overhead) {
 }
 
 
-
 /************************
 * gop changing/testing *
 ************************/
-public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts, DataOutputStream log, String dumpname) {
+public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts, DataOutputStream log, String dumpname)
+{
 
 	//DM14092003+ fix
 	if (gop.length<12){
@@ -13200,12 +13227,12 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 			vpts[1][a]+=headerrescue.length;
 	}
 
-
 	/* header check */
 	if (options[13]==1) {
 
 		options[14] = fps_tabl2[15 & gop[s+7]];  // framerateconstant
 		options[15] = 16*1024*( (31 & gop[s+10])<<5 | (248 & gop[s+11])>>>3 );
+
 		if ( ((15&gop[s+5])<<8 | gop[s+6]) <480 ) 
 			options[12]=options[12]/2; 
 
@@ -13274,6 +13301,7 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 		}
 
 		else if (!mpegtype && gop[s+3]==(byte)0xb5 && gop[s+4]>>>4==1) {   /*** 0xb5 MPEG-2 extension ***/
+
 			MPGVideotype=1; 
 			mpegtype=true; 
 			prog_seq=s+5;
@@ -13284,7 +13312,9 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 				frametypebuffer.reset();
 				frametypebuffer.write((byte)(8 | (8 & gop[prog_seq])<<4));
 			}
+
 		} else if ( (255 & gop[s+3])==0xb8 ) {   /*** 0xb8 set timecode ***/
+
 			closedgop=s+7;
 			writeframe=true;
 			broken_link=(0x20&gop[s+7])!=0?true:false; 
@@ -13313,7 +13343,9 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 			gop[s+7] = (byte)( 127 & gop[s+7] | vf<<7 );
 
 			s+=6;
+
 		} else if ( gop[s+3]==0 ) {   /* 0x0 new frame */
+
 			tref = ((255 & gop[s+4]) << 2) | (192 & gop[s+5])>>>6;  // timerefence of picture
 			frametype = (56&gop[s+5])>>>3;
 			if (frametype==0 || frametype>4) {
@@ -13480,7 +13512,7 @@ public static void goptest(IDDBufferedOutputStream vseq, byte[] gop, byte[] pts,
 
 	if (Pics.length==0) //DM30122003 081.6 int10 changed,fix
 	{
-		Msg("!> GOP#" + (clv[6]-1) + "contains no frames");
+		Msg("!> GOP#" + (clv[6]-1) + " contains no frames");
 		error=true;
 	}
 
@@ -14007,6 +14039,7 @@ class PIDdemux {
 		parentname=name1;
 		lfn=lfn1;
 		buffersize=buffersize1;
+
 		sourcetype=sourcetype1;
 		name=name1+source[sourcetype]+lfn;
 		addoffset = options[28];                           // time offset for data
@@ -14614,11 +14647,16 @@ class PIDdemux {
 
 				vidbuf.write(data,t,s);  //DM20032004 081.6 int18 changed
 
-				if (!first) 
-					goptest( out, vidbuf.toByteArray(),vptsbytes.toByteArray(),log , parentname);
+				//DM26052004 081.7 int03 add++
+				byte vidbuf_array[] = vidbuf.toByteArray();
+				byte vptsbytes_array[] = vptsbytes.toByteArray();
 
 				vptsbytes.reset();
 				vidbuf.reset(); 
+
+				if (!first) 
+					goptest( out, vidbuf_array, vptsbytes_array, log, parentname);
+				//DM26052004 081.7 int03 changed--
 
 				/****** split size reached *****/
 				if ( options[18]>0 && options[18]<options[41] ) 
@@ -15189,6 +15227,7 @@ class makeVDR {
 			for (;i<IDs.size();i++) {          // new ID arrived, save for PMT
 				if (newID==(0xFF&Integer.parseInt(IDs.get(i).toString()))) 
 					break;
+
 			}
 
 			datalength = data.length-overhead;
@@ -15220,6 +15259,7 @@ class makeVDR {
 						return options; // must start with video  
 					if (type!=1){
 						data = searchHeader(data,type,overhead);
+
 
 
 
@@ -15318,8 +15358,11 @@ class makeVDR {
 				pmtcount++;
 			}
 
-			if (pcr && cBox[41].isSelected() && cBox[42].isSelected()) {
-				buf.write(tf.getTTX(ttc,data,base_time.format(new java.util.Date((pcrbase+options[57])/90))));
+			//DM26052004 081.7 int03 changed
+			if (pcr && cBox[41].isSelected() && cBox[42].isSelected())
+			{
+				//buf.write(tf.getTTX(Teletext,data,base_time.format(new java.util.Date((pcrbase+options[57])/90))));
+				buf.write( tf.getTTX(data, base_time.format(new java.util.Date((pcrbase + options[57]) / 90))));
 			}
 
 			if (pcr && cBox[36].isSelected()) {
