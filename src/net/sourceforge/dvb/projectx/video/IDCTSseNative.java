@@ -36,6 +36,8 @@ public class IDCTSseNative {
 	/** indicates whether the library is loaded */
 	private static boolean libraryLoaded = false;
 	
+	private static boolean debug = false;
+
 	/* load the native libray */
 	static
 	{
@@ -46,12 +48,14 @@ public class IDCTSseNative {
 		}
 		catch(Exception e)
 		{
-			System.out.println(e);
+			if (debug)
+				System.out.println(e);
 			//e.printStackTrace();
 		}
 		catch(UnsatisfiedLinkError ue)
 		{
-			System.out.println(ue);
+			if (debug)
+				System.out.println(ue);
 			//e.printStackTrace();
 		}
 	}

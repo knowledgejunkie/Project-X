@@ -178,6 +178,8 @@ public class FtpServer {
 				return false;
 			}
 
+			ftpClient.syst();
+
 			// Change directory
 			if (!ftpClient.changeWorkingDirectory(ftpVO.getDirectory())) {
 				testMsg = Resource.getString("ftpchooser.msg.nodirectory");
