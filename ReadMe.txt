@@ -25,11 +25,11 @@
 /==============================================================================/
 
  This program is completely designed as a test, therefore it mostly
- implement its own code instead of a derivation of an ISO reference
+ implements its own code instead of a derivation of an ISO reference
  source or any other code. Considerable effort has been expended to
  ensure an useful implementation, even in cases where the standards
  are ambiguous or misleading.
- Do not expect any useful output from it, even if that may possible.
+ Do not expect any useful output, even if that may be possible.
 
  For a program compliant to the international standards ISO 11172
  and ISO 13818 it is inevitable to use methods covered by patents
@@ -41,6 +41,8 @@
 
  This program includes software developed by the
  Apache Software Foundation (http://www.apache.org/).
+
+ This software contains fast high-quality IDCT decoder by Miha Peternel.
 
 /==============================================================================/
 
@@ -61,7 +63,7 @@
 
 
  Extract all files from the received archive to a separate directory.
- Note:  dependent on the used JDK/JRE, ensure that the directory does not start with a '!' or similars,
+ Note:  dependent on the used JDK/JRE, ensure that the directory does not start with a '!'-sign or similars,
         otherwise you'll get an error like 'main class not found'
 
    /**
@@ -85,12 +87,12 @@
              - lib/idct*.dll  (win32 optimized lib's for a faster preview)
              copy one of them to the systems folder or where the compiled .jar is located
        [iv]  dependent on the used JDK, you'll encounter some 'warnings' about 'using a deprecated API'
-             that's not critical, as long as an actual JDK still supports these mehods
+             that's not critical, as long as an actual JDK still supports these methods
 
        *)
        further informations and newer versions (mostly compiled with JDK 1.4.2) you'll find at:
        'jakarta.apache.org/site/binindex.cgi', look for 'Commons Net' and  'ORO'
-       - using newer lib's requires an update of the 'build.bat' and 'MANIFEST.MF' !
+       - using newer lib's possibly requires an update of the 'build.bat' and 'MANIFEST.MF' !
 
 
    (C) additional received resource files (e.g. other language files) can be added 
