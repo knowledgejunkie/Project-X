@@ -49,6 +49,14 @@ public class IDCTRefNative {
 	public native short[][] referenceIDCT(short[][] block);
 
 	/**
+	 * Performs the IDCT on an short[64] array.
+	 * 
+	 * @param block
+	 * @return
+	 */
+	public native void referenceIDCT(short[] block);
+
+	/**
 	 * Main method for testing.
 	 * 
 	 * @param args
@@ -62,7 +70,7 @@ public class IDCTRefNative {
 		{
 			for (int j = 0; j < 8; j++)
 			{
-				block[i][j]=(short)((short)i*(short)j);
+				block[i][j]=(short)(i*j);
 			}
 		}
 		System.out.println("block before");
@@ -71,6 +79,23 @@ public class IDCTRefNative {
 		System.out.println("block after");
 		printArray(block);
 		
+
+		short[] block2 = new short[64];
+
+		
+		for (int i = 0, k = 0; i < 8; i++)
+		{
+			for (int j = 0; j < 8; j++)
+			{
+				block2[k]=(short)(i*j);
+				k++;
+			}
+		}
+		System.out.println("block2 before");
+		printArray2(block2);
+		idct.referenceIDCT(block2);
+		System.out.println("block2 after");
+		printArray2(block2);
 	}
 	
 	/**
@@ -89,5 +114,23 @@ public class IDCTRefNative {
 			System.out.println();
 		}
 		
+	}
+
+	/**
+	 * Helper method to print the array.
+	 * 
+	 * @param block
+	 */
+	public static void printArray2(short[] block)
+	{
+		for (int i = 0; i < 64; i++)
+		{
+			if (i % 8 == 0)
+			{
+				System.out.println();
+			}
+			System.out.print(block[i] + " ");
+		}
+		System.out.println();
 	}
 }
