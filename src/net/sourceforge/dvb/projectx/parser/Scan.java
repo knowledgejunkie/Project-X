@@ -24,7 +24,7 @@
  *
  */
 
-package net.sourceforge.dvb.projectx.io;
+package net.sourceforge.dvb.projectx.parser;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -758,10 +758,32 @@ public class Scan
 						for (int b=a; b<a+3; b++) //language
 							str += (char)(0xFF & check[b]);
 
-						int page_type = (0x18 & check[a+3])>>>3;
+						int page_type = (0xF8 & check[a+3])>>>3;
 						int page_number = 0xFF & check[a+4];
 
-						str += "_" + (page_type == 2 ? "s" : "i");
+						str += "_";
+
+						switch (page_type)
+						{
+						case 1:
+							str += "i";
+							break;
+						case 2:
+							str += "s";
+							break;
+						case 3:
+							str += "ai";
+							break;
+						case 4:
+							str += "ps";
+							break;
+						case 5:
+							str += "s.hip";
+							break;
+						default:
+							str += "res";
+						}
+
 						str += Integer.toHexString((7 & check[a+3]) == 0 ? 8 : (7 & check[a+3])).toUpperCase();
 						str += (page_number < 0x10 ? "0" : "") + Integer.toHexString(page_number).toUpperCase() + " ";
 					}
@@ -792,13 +814,25 @@ public class Scan
 				case 0xC3:  //VBI descriptor
 					off++;
 
-					if  ((0xFF & check[off + 1]) == 4)
+					switch (0xFF & check[off + 1])
 					{
+					case 4:
 						str += "(VPS)";
 						type = 0xC3;
-					}
-					else
+						break;
+					case 5:
+						str += "(WSS)";
+						break;
+					case 6:
+						str += "(CC)";
+						break;
+					case 1:
+						str += "(EBU-TTX)";
+						break;
+					case 7:
 						str += "(VBI)";
+						break;
+					}
 
 					off += (0xFF & check[off]);
 					break;

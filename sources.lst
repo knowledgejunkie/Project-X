@@ -17,7 +17,6 @@ src/net/sourceforge/dvb/projectx/gui/Html.java
 src/net/sourceforge/dvb/projectx/gui/Dialogs.java
 src/net/sourceforge/dvb/projectx/io/IDDBufferedOutputStream.java
 src/net/sourceforge/dvb/projectx/io/StandardBuffer.java
-src/net/sourceforge/dvb/projectx/io/Scan.java
 src/net/sourceforge/dvb/projectx/subtitle/DVBSubpicture.java
 src/net/sourceforge/dvb/projectx/subtitle/SubPicture.java
 src/net/sourceforge/dvb/projectx/subtitle/Teletext.java
@@ -57,5 +56,12 @@ src/net/sourceforge/dvb/projectx/xinput/topfield_raw/RawInterface.java
 src/net/sourceforge/dvb/projectx/xinput/topfield_raw/RawReadIF.java
 src/net/sourceforge/dvb/projectx/xinput/topfield_raw/XInputDirectoryImpl.java
 src/net/sourceforge/dvb/projectx/xinput/topfield_raw/XInputFileImpl.java
+src/net/sourceforge/dvb/projectx/parser/VBI.java
+src/net/sourceforge/dvb/projectx/parser/PidBuffer.java
+src/net/sourceforge/dvb/projectx/parser/CommonParsing.java
+src/net/sourceforge/dvb/projectx/parser/Scan.java
+src/net/sourceforge/dvb/projectx/gui/X_JFileChooser.java
+src/net/sourceforge/dvb/projectx/gui/ColumnLayout.java
+src/net/sourceforge/dvb/projectx/io/RawFile.java
 src/edu/stanford/ejalbert/BrowserLauncher.java
 src/RawRead.java

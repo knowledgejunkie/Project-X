@@ -141,6 +141,7 @@ import net.sourceforge.dvb.projectx.audio.CRC;
 import net.sourceforge.dvb.projectx.audio.MPAC;
 import net.sourceforge.dvb.projectx.audio.MPAD;
 import net.sourceforge.dvb.projectx.audio.RIFFHeader;
+
 import net.sourceforge.dvb.projectx.gui.AboutBox;
 import net.sourceforge.dvb.projectx.gui.BRMonitor;
 import net.sourceforge.dvb.projectx.gui.HexViewer;
@@ -148,37 +149,51 @@ import net.sourceforge.dvb.projectx.gui.Html;
 import net.sourceforge.dvb.projectx.gui.LogArea;
 import net.sourceforge.dvb.projectx.gui.StartUp;
 import net.sourceforge.dvb.projectx.gui.UISwitchListener;
+import net.sourceforge.dvb.projectx.gui.Dialogs;
+
 import net.sourceforge.dvb.projectx.io.IDDBufferedOutputStream;
-import net.sourceforge.dvb.projectx.io.Scan;
 import net.sourceforge.dvb.projectx.io.StandardBuffer;
+
 import net.sourceforge.dvb.projectx.subtitle.BMP;
 import net.sourceforge.dvb.projectx.subtitle.Bitmap;
 import net.sourceforge.dvb.projectx.subtitle.SubPicture;
 import net.sourceforge.dvb.projectx.subtitle.Teletext;
 import net.sourceforge.dvb.projectx.subtitle.TeletextPageMatrix;
+
 import net.sourceforge.dvb.projectx.thirdparty.Chapters;
 import net.sourceforge.dvb.projectx.thirdparty.D2V;
 import net.sourceforge.dvb.projectx.thirdparty.Ifo;
 import net.sourceforge.dvb.projectx.thirdparty.TS;
+
 import net.sourceforge.dvb.projectx.video.MPVD;
 import net.sourceforge.dvb.projectx.video.PatchPanel;
 import net.sourceforge.dvb.projectx.video.Preview;
 import net.sourceforge.dvb.projectx.video.PreviewObject;
+import net.sourceforge.dvb.projectx.video.Video;
+
+import net.sourceforge.dvb.projectx.parser.VBI;
+import net.sourceforge.dvb.projectx.parser.PidBuffer;
+import net.sourceforge.dvb.projectx.parser.CommonParsing;
+import net.sourceforge.dvb.projectx.parser.Scan;
+
 import net.sourceforge.dvb.projectx.xinput.DirType;
 import net.sourceforge.dvb.projectx.xinput.XInputDirectory;
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
 import net.sourceforge.dvb.projectx.xinput.ftp.FtpChooser;
 import net.sourceforge.dvb.projectx.xinput.topfield_raw.RawInterface;
 
-import net.sourceforge.dvb.projectx.gui.Dialogs;
-import net.sourceforge.dvb.projectx.video.Video;
+
+import net.sourceforge.dvb.projectx.gui.X_JFileChooser;
+import net.sourceforge.dvb.projectx.gui.ColumnLayout;
+import net.sourceforge.dvb.projectx.io.RawFile;
+
 
 public class X extends JPanel
 {
 
 /* main version index */
-static String version_name = "ProjectX 0.82.0.04";
-static String version_date = "29.01.2005";
+static String version_name = "ProjectX 0.82.0.04b";
+static String version_date = "04.02.2005";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -186,7 +201,7 @@ public static boolean CLI_mode = false;
 static int loadSizeForward = 2560000;
 
 static BRMonitor brm;
-public static SubPicture subpicture = new SubPicture(); //DM06032004 081.6 int18 changed
+public static SubPicture subpicture = new SubPicture();
 
 MPAC MPAConverter = new MPAC();
 MPAD MPADecoder = new MPAD();
@@ -211,8 +226,6 @@ private static long process_time = 0;
 
 public static long[] options = new long[58];
 static byte[] headerrescue= new byte[1];
-Object[] DAR = {"1.000 (1:1)","0.6735 (4:3)","0.7031 (16:9)","0.7615 (2.21:1)","0.8055","0.8437","0.9375","0.9815","1.0255","1.0695","1.1250","1.1575","1.2015" };
-Object[] H_RESOLUTION = { "304","320","352","384","480","528","544","576","640","704","720" };
 
 static int[] clv = new int[10];
 static long CP[] = new long[2];
@@ -226,8 +239,8 @@ static ArrayList cutlist = new ArrayList(), ctemp = new ArrayList(), speciallist
 static ArrayList TSPidlist = new ArrayList(), PVAPidlist = new ArrayList();
 static ArrayList TSdemuxlist = new ArrayList(), PVAdemuxlist = new ArrayList(),	VDRdemuxlist = new ArrayList(), PESdemuxlist = new ArrayList();
 
-static JFrame frame = new JFrame(); //DM20032004 081.6 int18 changed
-static int[] framelocation = { 200, 100, 714, 460};  //DM26032004 081.6 int18 changed
+static JFrame frame = new JFrame();
+static int[] framelocation = { 200, 100, 714, 460};
 
 static String[] workfiles = {""}, VBASIC = new String[4];
 static String messagelog="";
@@ -236,20 +249,21 @@ static JButton doitButton, breakButton, scanButton, pauseButton, extract, exeBut
 
 public static JRadioButton[] RButton = new JRadioButton[25];
 public static JComboBox[] comBox = new JComboBox[39];
-public static JCheckBox[] cBox = new JCheckBox[81];
+public static JCheckBox[] cBox = new JCheckBox[82];
 
-// radio buttons for look and feels in general menu
+/**
+ * radio buttons for look and feels in general menu
+ */
 private JRadioButtonMenuItem lf_item[] = null; 
 	
 
 public static JList list1, list3, list4;
-static X_JFileChooser chooser; //DM12122003 081.6 int05
+static X_JFileChooser chooser;
 
 static JLabel msoff, audiostatusLabel, splitLabel, cutnum, ttxheaderLabel, ttxvpsLabel, outSize;
 static JProgressBar progress;
 public static JTextField outfield;
-static JTextField[] d2vfield = new JTextField[10], //DM18052004 081.7 int02 changed
-	exefield = new JTextField[10];
+static JTextField[] d2vfield = new JTextField[10], exefield = new JTextField[10];
 
 JTextField ftpcommand = null;
 
@@ -259,10 +273,10 @@ static byte[] dumpfill = new byte[16];
 static int ERRORCODE=0;
 static int currentcoll=0;
 static int origframes=0, cutcount=0, FileNumber=0;
-static int activecoll=-1, NoOfAudio=0, NoOfPictures=0, NoOfTTX=0, MPGVideotype=0; //DM04032004 081.6 int18 add
+static int activecoll=-1, NoOfAudio=0, NoOfPictures=0, NoOfTTX=0, MPGVideotype=0;
 static long CUT_BYTEPOSITION=0;
 
-private static long firstVideoPTS; //DM17012004 081.6 int11 new
+private static long firstVideoPTS;
 
 private COLLECTION dialog = null;
 private PatchPanel vpatch = null;
@@ -273,22 +287,22 @@ TabListener mytabListener = new TabListener();
 FileListener my0Listener = new FileListener();
 GoListener my2Listener = new GoListener();
 DNDListener dnd = new DNDListener();
-MenuListener menulistener = new MenuListener(); //DM26032004 081.6 int18 add
+MenuListener menulistener = new MenuListener();
 
 static AudioFrameConstants afc = new AudioFrameConstants();
 
-static DropTarget dropTarget_1, dropTarget_2, dropTarget_3, dropTarget_4; //DM26032004 081.6 int18 changed
+static DropTarget dropTarget_1, dropTarget_2, dropTarget_3, dropTarget_4;
 
 public static LogArea TextArea, FileInfoTextArea;
-static JViewport viewport, viewport_2; //DM26032004 081.6 int18 add
-static JTabbedPane logtab; //DM26032004 081.6 int18 add
-static JButton add_files;  //DM26032004 081.6 int18 add
+static JViewport viewport, viewport_2;
+static JTabbedPane logtab;
+static JButton add_files;
 
-JPopupMenu popup; //DM26032004 081.6 int18 changed
-JMenuBar menuBar; //DM20032004 081.6 int18 add
-JFrame autoload; //DM26032004 081.6 int18 add
+JPopupMenu popup;
+JMenuBar menuBar;
+JFrame autoload;
 
-TeletextPageMatrix tpm = null;  //DM17042004 081.7 int02 add
+TeletextPageMatrix tpm = null;
 
 static Chapters chapters = null;
 
@@ -1671,6 +1685,8 @@ protected JPanel buildsplitPanel()
 	cBox[59].setSelected(true);
 	cBox[60] = new JCheckBox(Resource.getString("tab.out.streamtypes.subpic"));
 	cBox[60].setSelected(true);
+	cBox[81] = new JCheckBox(Resource.getString("tab.out.streamtypes.vbi"));
+	cBox[81].setSelected(true);
 
 	JPanel panel_1 = new JPanel();
 	panel_1.setLayout ( new ColumnLayout() );
@@ -1683,6 +1699,7 @@ protected JPanel buildsplitPanel()
 	panel_2.add(cBox[58]);
 	panel_2.add(cBox[59]);
 	panel_2.add(cBox[60]);
+	panel_2.add(cBox[81]);
 
 	idPanel.add(panel_1);
 	idPanel.add(panel_2);
@@ -4069,6 +4086,11 @@ class COLLECTION extends JFrame
 		cBox[52].setPreferredSize(new Dimension(110,20));
 		cBox[52].setMaximumSize(new Dimension(110,20));
 
+		Object[] H_RESOLUTION = { 
+			"304", "320", "352", "384", "480",
+			"528", "544", "576", "640", "704", "720"
+		};
+
 		comBox[34] = new JComboBox(H_RESOLUTION);
 		comBox[34].setMaximumRowCount(7);
 		comBox[34].setPreferredSize(new Dimension(90,20));
@@ -4086,6 +4108,11 @@ class COLLECTION extends JFrame
 		cBox[47].setToolTipText(Resource.getString("collection.dar_tip"));
 		cBox[47].setPreferredSize(new Dimension(80,20));
 		cBox[47].setMaximumSize(new Dimension(80,20));
+
+		Object[] DAR = {
+			"1.000 (1:1)", "0.6735 (4:3)", "0.7031 (16:9)", "0.7615 (2.21:1)", "0.8055", 
+			"0.8437",	"0.9375", "0.9815", "1.0255", "1.0695", "1.1250", "1.1575", "1.2015"
+		};
 
 		comBox[24] = new JComboBox(DAR);
 		comBox[24].setMaximumRowCount(7);
@@ -4569,54 +4596,6 @@ class COLLECTION extends JFrame
 /*********************************/
 /*********************************/
 /*********************************/
-
-
-
-
-class ColumnLayout implements LayoutManager {
-
-	int xInset = 2;
-	int yInset = 0;
-	int yGap = 0;
-
-	public void addLayoutComponent(String s, Component c) {}
-
-	public void layoutContainer(Container c) {
-		Insets insets = c.getInsets();
-		int height = yInset + insets.top;
-      
-		Component[] children = c.getComponents();
-		Dimension compSize = null;
-		for (int i = 0; i < children.length; i++) {
-			compSize = children[i].getPreferredSize();
-			children[i].setSize(compSize.width, compSize.height);
-			children[i].setLocation( xInset + insets.left, height);
-			height += compSize.height + yGap;
-		}
-	}
-
-	public Dimension minimumLayoutSize(Container c) {
-		Insets insets = c.getInsets();
-		int height = yInset + insets.top;
-		int width = 0 + insets.left + insets.right;
-      
-		Component[] children = c.getComponents();
-		Dimension compSize = null;
-		for (int i = 0; i < children.length; i++) {
-			compSize = children[i].getPreferredSize();
-			height += compSize.height + yGap;
-			width = Math.max(width, compSize.width + insets.left + insets.right + xInset*2);
-		}
-		height += insets.bottom;
-		return new Dimension( width, height);
-	}
-  
-	public Dimension preferredLayoutSize(Container c) {
-		return minimumLayoutSize(c);
-	}
-   
-	public void removeLayoutComponent(Component c) {}
-}
 
 
 /**************************
@@ -5456,7 +5435,7 @@ public static void loadIDs(String nIDs)
 
 			return null;
 		} catch (Error err) {
-			return "\ncommons-net library is not accessible! see readme.txt [ii]\nensure the correct location/classpath, related to the executed .jar\n";
+			return "\ncommons-net library not accessible! see readme.txt [ii]\nensure the correct location/classpath, related to the executed .jar\n";
 		}
 	}
 
@@ -5823,36 +5802,21 @@ public static void setVisible0( boolean visible)
 	frame.setVisible(visible);
 }
 
-	//DM20032004 081.6 int18 add
-	public static void setButton(int button, boolean selected)
-	{
-		RButton[button].setSelected(selected);
-	}
 
 	/**
-	 * Returns the JCheckBox Selection status
+	 * Returns the Version information
 	 * 
-	 * @return bool
+	 * @return String[]
 	 */
-	public static boolean isBoxSelected(int index)
+	public static String[] getVersion()
 	{
-		return cBox[index].isSelected();
+		return new String[] { 
+			version_name,
+			version_date,
+			Resource.getString("version.info"),
+			Resource.getString("version.user") + System.getProperty("user.name")
+		};
 	}
-
-/**
- * Returns the Version information
- * 
- * @return String[]
- */
-public static String[] getVersion()
-{
-	return new String[]{ 
-		version_name,
-		version_date,
-		Resource.getString("version.info"),
-		Resource.getString("version.user") + System.getProperty("user.name")
-	};
-}
 
 
 	/**
@@ -6043,18 +6007,17 @@ public static String[] getVersion()
 	}
 
 
+	/**
+	 * make cut
+	 */
+	public static boolean makecut(long comparePoint)
+	{
+		return makecut(null, 0, comparePoint, new ArrayList(), 0);
+	}
 
-public static boolean makecut(long comparePoint)
-{
-	return makecut(null, 0, comparePoint, new ArrayList(), 0);
-}
-
-/************
- * make cut *
- ************/
-//DM17012004 081.6 int11 changed
-//DM29012004 081.6 int12 fix
-//DM18022004 081.6 int17 changed
+/**
+ * make cut
+ */
 public static boolean makecut(String cuts_filename, long startPTS, long comparePoint, ArrayList newcut, int lastframes)
 {
 	if (ctemp.isEmpty())
@@ -6136,46 +6099,48 @@ public static boolean makecut(String cuts_filename, long startPTS, long compareP
 	return bool;
 }
 
-//DM18022004 081.6 int17 new
-private static void saveCuts(long cutposition, long startPTS, long lastframes, String cuts_filename)
-{
-	if (cBox[64].isSelected() && cuts_filename != null)
+	/**
+	 * saves the cutpoint list from coll specials
+	 */
+	private static void saveCuts(long cutposition, long startPTS, long lastframes, String cuts_filename)
 	{
-		try
+		if (cBox[64].isSelected() && cuts_filename != null)
 		{
-		cuts_filename += ".Xpl";
-		PrintWriter pts_writer = new PrintWriter(new FileOutputStream(cuts_filename,lastframes>0?true:false));
+			try {
+				cuts_filename += ".Xpl";
 
-		if (new File(cuts_filename).length()==0)  //DM09032004 081.6 int18 add
-			pts_writer.println(comBox[17].getItemAt(3).toString());
+				PrintWriter pts_writer = new PrintWriter(new FileOutputStream(cuts_filename, lastframes > 0 ? true : false));
 
-		pts_writer.println(startPTS);
-		pts_writer.close();
-		Msg(Resource.getString("msg.savecut", ""+startPTS));
-		}
-		catch (IOException e)
-		{
-			//DM25072004 081.7 int07 add
-			Msg(Resource.getString("msg.savecut.error") + " " + e);
+				if (new File(cuts_filename).length() == 0)
+					pts_writer.println(comBox[17].getItemAt(3).toString());
+
+				pts_writer.println(startPTS);
+				pts_writer.close();
+
+				Msg(Resource.getString("msg.savecut", "" + startPTS));
+
+			} catch (IOException e) {
+				Msg(Resource.getString("msg.savecut.error") + " " + e);
+			}
 		}
 	}
-}
 
 
 
-/**************
- * log thread *
- **************/
-class LOG extends Thread {
-	public void run() {
-		try
-		{
-		logging=new PrintStream(new FileOutputStream(loggin));
-		System.setOut(logging);
+	/**
+	 * set systems log output for 'big log'
+	 */
+	public void setLogStream(String str)
+	{
+		try {
+
+			logging = new PrintStream(new FileOutputStream(str));
+			System.setOut(logging);
+
+		} catch (IOException e) { 
+			Msg(Resource.getString("msg.log.error") + " " + e);
 		}
-		catch (IOException e) { Msg(Resource.getString("msg.log.error") + " " + e); }
 	}
-}
 
 
 
@@ -6218,12 +6183,20 @@ public void run() {
 	ttxheaderLabel.setText("");
 	ttxvpsLabel.setText("");
 
+	TextArea.setText(null);
+
+	if (qinfo)
+	{
+		Msg(Resource.getString("run.start.quick.info"));
+		Msg("");
+	}
+
 	brm.surf.stop();
 	yield();
 
+
 	if (options[33]==-1)
 	{
-		TextArea.setText(null);
 		Msg(java.text.DateFormat.getDateInstance(java.text.DateFormat.FULL).format(new Date())+"  "+java.text.DateFormat.getTimeInstance(java.text.DateFormat.FULL).format(new Date()));
 		Msg(version_name + " (" + version_date + ")");
 
@@ -6315,9 +6288,11 @@ public void run() {
 				if (cBox[11].isSelected())
 				{
 					loggin = workouts + fchilds + "_log.txt";
+
 					options[31] = 0; 
 					options[30] = 1;
-					new LOG().start();
+
+					setLogStream(loggin);
 				} 
 
 				//DM09072004 081.7 int06 changed
@@ -6333,8 +6308,11 @@ public void run() {
 				/** quick pre-run for TS autoPMT **/ 
 				if (!qinfo && comBox[19].getSelectedIndex()==4 && cBox[41].isSelected())
 				{
+					Msg("");
+					Msg(Resource.getString("run.start.quick.info"));
+
 					qinfo = true;
-					options[56]= (0x100000L * Integer.parseInt(comBox[21].getSelectedItem().toString()));
+					options[56] = (0x100000L * Integer.parseInt(comBox[21].getSelectedItem().toString()));
 					long splitlen = options[18]; 
 					options[18] = 0;
 
@@ -6348,6 +6326,8 @@ public void run() {
 					qinfo = false;
 					options[18] = splitlen;
 					workinglist = (ArrayList)collfiles[a].clone();
+
+					Msg("");
 					Msg(Resource.getString("run.end.quick.info"));
 				}
 
@@ -6375,14 +6355,13 @@ public void run() {
 			}
 		}
 	}
+
 	else
 	{  // extract raw
 
 		workinglist.clear();
 		currentcoll = comBox[0].getSelectedIndex();
 		workinglist = (ArrayList)collfiles[currentcoll].clone();
-
-		TextArea.setText(null);
 
 		Msg(java.text.DateFormat.getDateInstance(java.text.DateFormat.FULL).format(new Date())+"  "+java.text.DateFormat.getTimeInstance(java.text.DateFormat.FULL).format(new Date()));
 		Msg(version_name + " (" + version_date + ")");
@@ -6465,8 +6444,11 @@ public void run() {
 	options[30]=0;
 	options[31]=0;
 
-	if (qinfo) 
+	if (qinfo)
+	{
+		Msg("");
 		Msg(Resource.getString("run.end.quick.info"));
+	}
 
 	qpause=false;
 	qbreak=false;
@@ -6514,39 +6496,39 @@ public void run() {
 }  
 
 
-/**
- * check write access
- */
-private boolean checkWriteAccess(String path)
-{
-	File _path = new File(path);
-	String _file = path + System.getProperty("file.separator") + "~$pjx$.tmp";
-
-	if (path == null || !_path.exists())
+	/**
+	 * check write access
+	 */
+	private boolean checkWriteAccess(String path)
 	{
-		Msg(Resource.getString("run.write.output.notexists") + ":");
-		Msg("\"" + path + "\"");
+		File _path = new File(path);
+		String _file = path + System.getProperty("file.separator") + "~$pjx$.tmp";
 
-		return false;
+		if (path == null || !_path.exists())
+		{
+			Msg(Resource.getString("run.write.output.notexists") + ":");
+			Msg("\"" + path + "\"");
+
+			return false;
+		}
+
+		try {
+
+			RandomAccessFile raf = new RandomAccessFile(_file, "rw");
+			raf.close();
+
+			new File(_file).delete();
+
+		} catch (IOException e) {
+
+			Msg(Resource.getString("run.write.output.nowriteaccess") + ":");
+			Msg("\"" + path + "\"");
+
+			return false;
+		}
+
+		return true;
 	}
-
-	try
-	{
-		RandomAccessFile raf = new RandomAccessFile(_file, "rw");
-		raf.close();
-
-		new File(_file).delete();
-	}
-	catch (IOException e)
-	{
-		Msg(Resource.getString("run.write.output.nowriteaccess") + ":");
-		Msg("\"" + path + "\"");
-
-		return false;
-	}
-
-	return true;
-}
 
 
 //list settings on start
@@ -6648,20 +6630,19 @@ private void messageSettings()
 
 
 
-/**
- * stops the processing until next user action
- */
-public void pause()
-{
-	try
-	{ 
-		sleep(1000); 
+	/**
+	 * stops the processing until next user action
+	 */
+	public void pause()
+	{
+		try { 
+
+			sleep(1000); 
+
+		} catch (InterruptedException ie) { 
+			Msg("" + ie); 
+		}
 	}
-	catch (InterruptedException ie)
-	{ 
-		Msg("" + ie); 
-	}
-}
 
 
 /*******************************
@@ -6694,6 +6675,8 @@ public void working() {
 	combvideo.clear();
 
 	firstVideoPTS=-1; //DM17012004 081.6 int11 new
+
+	VBI.reset();
 
 	//DM09072004 081.7 int06 changed
 	//options[43] = (comBox[18].getSelectedIndex()>0) ? (0L+(Integer.parseInt(comBox[18].getSelectedItem().toString().substring(2,4),16))) : 0;
@@ -7952,6 +7935,9 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 					in.skip(sOff);
 					count += sOff;
 					continue pvaloop;
+
+
+
 				}
 				case 0xBF:  //split cellids
 					//DM09112003+ 081.5++
@@ -8429,6 +8415,7 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 							demux.setType(4); //ändern
 						}
 					}
+
 					if (ToVDR==1)
 					{
 						if (ismpg > 0 && subID>>>4 != 8)
@@ -8437,6 +8424,7 @@ public String vdrparse(XInputFile aXInputFile, int ismpg, int ToVDR)
 							demux.setType(4); //ändern
 						}
 					}
+
 					break; 
 				}
 
@@ -8813,8 +8801,7 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 	else if (ToVDR==5) 
 		makevdr.init(fparent + "[filtered].ts", options, bs, ToVDR, (int)options[19]);
 
-	//TSPID TSPid = new TSPID();
-	TSPID TSPid = null;
+	PidBuffer TSPid = null;
 	PIDdemux demux = null;
 	ArrayList usedPIDs = new ArrayList();
 
@@ -8852,7 +8839,7 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 
 			for (int a=2; a<pids.length;a++)
 			{
-				TSPid = new TSPID();
+				TSPid = new PidBuffer();
 				TSPid.setPID(pids[a]);
 				TSPidlist.add(TSPid);
 			}
@@ -9131,14 +9118,14 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 	**/
 			int pidcheck=-1;
 			for (int a=0;a<TSPidlist.size();a++) {      // find PID object
-				TSPid = (TSPID)TSPidlist.get(a);
+				TSPid = (PidBuffer)TSPidlist.get(a);
 				if (pid==TSPid.getPID()) {
 					pidcheck=a; 
 					break; 
 				}
 			}
 			if (pidcheck==-1) {   // create new PID object
-				TSPid = new TSPID();
+				TSPid = new PidBuffer();
 				TSPid.setPID(pid);
 				if (pid==0x1FFF){
 					Msg(Resource.getString("rawparse.stuffing"));
@@ -10057,8 +10044,8 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 
 	int[] newID = { 0xE0, 0xC0, 0x80, 0x90 };
 
-	RAWFILE rawfile = new RAWFILE();
-	TSPID TSPid = null;
+	RawFile rawfile = new RawFile();
+	PidBuffer TSPid = null;
 	PIDdemux demux = null;
 
 	if (options[19]==0) {
@@ -10369,7 +10356,7 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 			int pidcheck = -1;
 			for (int a = 0; a < PVAPidlist.size(); a++)
 			{
-				TSPid = (TSPID)PVAPidlist.get(a);
+				TSPid = (PidBuffer)PVAPidlist.get(a);
 
 				if (pid == TSPid.getPID())
 				{ 
@@ -10380,7 +10367,7 @@ public String pvaparse(XInputFile aPvaXInputFile,int ismpg,int ToVDR, String vpt
 
 			if (pidcheck==-1)
 			{   // create new PID object
-				TSPid = new TSPID();
+				TSPid = new PidBuffer();
 				TSPid.setPID(pid);
 
 				Msg(Resource.getString("pvaparse.found.id")+Integer.toHexString(pid).toUpperCase()+" @ "+options[20]); //DM02022004 081.6 int14 changed
@@ -12417,6 +12404,12 @@ public boolean processAudio(String[] args)
 
 
 
+
+
+
+
+
+
 					if (options[16]==1) {				//add_copy prev. frame
 						if (audio.Layer>0 && cBox[50].isSelected()) { //DM30122003 081.6 int10 changed
 							audiooutL.write(MPAD.decodeArray(copyframe[0]));
@@ -13425,41 +13418,19 @@ public void processTeletext(String[] args)
 					if ((0x3F & packet[2]) != 0x30)
 						continue readloop;
 
-					// show vps status of VBI 16 in GUI
-					int vps_data = (0x3F & packet[11])<<24 | (0xFF & packet[12])<<16 | (0xFF & packet[13])<<8 | (0xFF & packet[14]);
-					String vps_sound_mode[] = { "n/a", "mono", "stereo", "dual" };
-					String vps_status = "";
+					/**
+					 * show vps status of VBI 16 in GUI
+					 */
+					String str = VBI.decodeVPS(packet, 2);
 
-					switch (0x1F & vps_data>>>16)
-					{ 
-					case 0x1C:
-						vps_status = "Contin."; 
-						break; 
-					case 0x1D:
-						vps_status = "Pause  "; 
-						break; 
-					case 0x1E:
-						vps_status = "Stop   "; 
-						break; 
-					case 0x1F:
-						vps_status = "Timer  "; 
-						break; 
-					default: 
-						vps_status = "" + (0x1F & (vps_data>>>25)) + "." + (0xF & (vps_data>>>21)) + ".  " +
-							(0x1F & (vps_data>>>16)) + ":" + (0x3F & (vps_data>>>10)) + "  ";
-					}
-
-					//DM23072004 081.7 int07 changed
-					vps_status += vps_sound_mode[(3 & packet[5]>>>6)] + " " + Integer.toHexString(0xF & vps_data>>>6).toUpperCase() + " " + Integer.toHexString(vps_data & 0x3F).toUpperCase();
-
-					if (cBox[19].isSelected())
-						ttxvpsLabel.setText(vps_status);
-
-					//DM23072004 081.7 int07 add
-					if (!vps_status.equals(vps_str))
+					if (str != null && !str.equals(vps_str))
 					{
-						vps_str = vps_status;
-						Msg(Resource.getString("teletext.msg.vps", vps_str) + " " + timeformat_1.format( new java.util.Date( source_pts / 90)) );
+						vps_str = str;
+
+						if (cBox[19].isSelected())
+							ttxvpsLabel.setText(vps_str);
+
+						Msg(Resource.getString("teletext.msg.vps", str) + " " + Common.formatTime_1(source_pts / 90));
 					}
 
 					continue readloop;
@@ -14346,7 +14317,7 @@ public void processSubpicture(String[] args)
 		for (int a=0; a<5; a++) // 5bytes for pts, maybe wrong
 			source_pts |= (0xFFL & packet[2+a])<<(a*8);
 
-		//DM15072004 081.7 int06 add, use add. time offset if not applied by class piddemux (e.g. ES)
+		//DM15072004 081.7 int06 add, use add. time offset if not applied by class-piddemux (e.g. ES)
 		if (args[1].equals("-1"))
 			source_pts += pts_offset;
 
@@ -15358,51 +15329,6 @@ public String rawvideo(XInputFile aXInputFile)
 
 
 
-/***************************************************************************
- * skip leading bytes before first valid startcodes and return fixed array *
- ***************************************************************************/
-public static byte[] searchHeader(byte[] data, int type, int overhead)
-{
-	int len=data.length-overhead, start=9+(0xFF&data[8]), end=len-3, s=start;
-	boolean found=false;
-	byte[] newdata = new byte[0];
-
-	packloop:
-	for (; s<end; s++) {
-		if (type==3) {
-			if ( data[s]!=0 || data[s+1]!=0 || data[s+2]!=1 || data[s+3]!=(byte)0xb3) 
-				continue packloop;
-			found=true;
-			break;
-		} else if (type==0) {
-			//R_one18122003 081.6 int07 changed
-			if ((data[s]!=0xB || data[s+1]!=0x77) && 
-				(data[s]!=0x7F || data[s+1]!=(byte)0xFE || data[s+2]!=(byte)0x80 || data[s+3]!=1)) 
-				continue packloop;
-			found=true; 
-			break;
-		} else if (type==2) {
-			if ( data[s]!=(byte)0xFF || (0xF0&data[s+1])!=0xF0)
-				continue packloop;
-			found=true; 
-			break;
-		}
-	}
-
-
-
-	if (!found) 
-		return newdata;
-
-	newdata = new byte[len-s+start+overhead];
-	System.arraycopy(data,0,newdata,0,start);
-	System.arraycopy(data,s,newdata,start,len-s+overhead);
-	newdata[4]=(byte)((newdata.length-6-overhead)>>>8);
-	newdata[5]=(byte)(0xFF&(newdata.length-6-overhead));
-
-	return newdata;
-}
-
 
 /**
  * gop changing/testing
@@ -15598,11 +15524,20 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 	if (options[13] == 1)
 	{
 
+		/**
+		 * get new header, check if valid and not 0!!
+		 */
 		videoframerate = fps_tabl2[15 & gop[s + 7]];  // framerateconstant
 		options[15] = 16 * 1024 * ( (31 & gop[s + 10])<<5 | (248 & gop[s + 11])>>>3 );
 
-		String[] vbasics = { ""+((255&gop[s+4])<<4 | (240&gop[s+5])>>>4),""+((15&gop[s+5])<<8 | (255&gop[s+6])),(fps_tabl1[15&gop[s+7]]),aspratio[(255&gop[s+7])>>>4] };
-		clv[7] = ((255 & gop[s + 7])>>>4) - 1;
+		String[] vbasics = { 
+			"" + ((255 & gop[s + 4])<<4 | (240 & gop[s + 5])>>>4),
+			"" + ((15 & gop[s + 5])<<8 | (255 & gop[s + 6])),
+			(fps_tabl1[15 & gop[s + 7]]),
+			aspratio[(255 & gop[s + 7])>>>4] 
+		};
+
+		clv[7] = ((0xFF & gop[s + 7])>>>4) - 1;
 
 		if (newvideo || options[7] == 0)
 		{
@@ -15653,9 +15588,11 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 	boolean SDE_found = false;
 	int SDE_marker = -1;
 
+	ArrayList dropList = new ArrayList();
+
 	/* gop check */
 	goploop:
-	for ( ; s<(gop.length-10); s++ )
+	for ( ; s < gop.length - 10; s++ )
 	{
 		//DM04062004 081.7 int04 add
 		if (gop[s + 2] != 1)
@@ -15668,45 +15605,86 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 
 			continue goploop;
 		}
+
 		else if (gop[s + 1] != 0)
 		{
 			s++;
 			continue goploop;
 		}
+
 		else if (gop[s] != 0) 
 		{
 			continue goploop;
 		}
 
-		else if ((0xF0 & gop[s+3]) == 0xE0)  //shit progdvb_data check
+//
+		if ((dropList.size() & 1) != 0 && !dropList.get(dropList.size() - 1).toString().startsWith("_"))
+		{
+			dropList.add(String.valueOf(s));
+		}
+
+		/**
+		 * slices
+		 */
+		if ((0xFF & gop[s + 3]) > 0 && (0xFF & gop[s + 3]) < 0xB0)
+		{
+			if (options[30] == 1)
+				System.out.println("A " + s + " /slice " + (0xFF & gop[s + 3]));
+
+			s += 8;
+
+			continue goploop;
+		}
+
+		/**
+		 * user data
+		 */
+		if (gop[s + 3] == (byte)0xB2)
+		{
+
+			if ((dropList.size() & 1) == 0)
+				dropList.add(String.valueOf(s));
+
+			s += 3;
+
+			continue goploop;
+		}
+//
+
+		/**
+		 * shit progdvb_data check
+		 */
+		else if ((0xF0 & gop[s+3]) == 0xE0)  
 		{
 			int drop_length = 4;	
 
-			if (gop[s+4] == 0 && gop[s+5] == 0 )
+			if (gop[s + 4] == 0 && gop[s + 5] == 0 )
 			{
-				drop_length += 5 + (0xFF & gop[s+8]);
+				drop_length += 5 + (0xFF & gop[s + 8]);
 
 				if (s + drop_length >= gop.length)
 					drop_length = gop.length - s;
 
-				java.util.Arrays.fill( gop, s, s + drop_length, (byte)0);
+				Arrays.fill( gop, s, s + drop_length, (byte)0);
 
 				if (!cBox[74].isSelected())
-					Msg(Resource.getString("video.msg.error.pesext_in_es", "" + (clv[6]-1), "" + s));
+					Msg(Resource.getString("video.msg.error.pesext_in_es", "" + (clv[6] - 1), "" + s));
 			}
+
 			else
 			{
-				java.util.Arrays.fill( gop, s, s + drop_length, (byte)0);
+				Arrays.fill( gop, s, s + drop_length, (byte)0);
 
 				if (!cBox[74].isSelected())
-					Msg(Resource.getString("video.msg.error.pes_in_es", "" + (clv[6]-1), "" + s));
+					Msg(Resource.getString("video.msg.error.pes_in_es", "" + (clv[6] - 1), "" + s));
 			}
 
 			s += drop_length - 1;
+
 			continue goploop;
 		}
 
-		else if (!mpegtype && gop[s+3]==(byte)0xb5 && gop[s+4]>>>4==1)    /*** 0xb5 sequence extension ***/
+		else if (!mpegtype && gop[s + 3] == (byte)0xb5 && gop[s + 4]>>>4 == 1)    /*** 0xb5 sequence extension ***/
 		{
 			MPGVideotype = 1; 
 			mpegtype = true; 
@@ -15732,7 +15710,10 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 			s += 8;
 		}
 
-		else if ( (0xFF & gop[s + 3]) == 0xB8 )    /*** 0xb8 gop timecode ***/
+		/**
+		 * 0xb8 gop header + timecode 
+		 */
+		else if ( (0xFF & gop[s + 3]) == 0xB8 )
 		{
 			sequenceheader_complete = true;
 
@@ -15741,10 +15722,10 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 			broken_link = (0x20 & gop[s + 7]) != 0 ? true : false; 
 
 			//DM12112003  gop TC 081.5++ 
-			TC = 90L* (3600000L*((0x7C&gop[s+4])>>>2) + 
-				60000L*((3&gop[s+4])<<4 | (0xF0&gop[s+5])>>>4) +
-				1000L* ((7&gop[s+5])<<3 | (0xE0&gop[s+6])>>>5) +
-				(long)(((0x1F&gop[s+6])<<1 | (0x80&gop[s+7])>>>7)*(double)(videoframerate/90.0f)) );
+			TC = 90L * (3600000L * ((0x7C & gop[s + 4])>>>2) + 
+				60000L * ((3 & gop[s + 4])<<4 | (0xF0 & gop[s + 5])>>>4) +
+				1000L * ((7 & gop[s + 5])<<3 | (0xE0 & gop[s + 6])>>>5) +
+				(long)(((0x1F & gop[s + 6])<<1 | (0x80 & gop[s + 7])>>>7) * (double)(videoframerate / 90.0f)) );
 
 			if (Math.abs(TC - options[53]) < videoframerate || origframes == 0)
 				options[53] = TC;
@@ -15758,31 +15739,44 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 				System.arraycopy(gop, 0, headerrescue, 0, s);
 			}
 
-
-			java.util.Date videotime = new java.util.Date((long)((options[7])*(double)(videoframerate/90.0f)));
+			/**
+			 * set Timezone (videoframerate may be 0!!, check this)
+			 */
+			java.util.Date videotime = new java.util.Date((long)((options[7]) * (double)(videoframerate / 90.0f)));
 			cal.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
 			cal.setTime(videotime);
-			int vh = cal.get(11), vm = cal.get(12), vs = cal.get(13), vf = (cal.get(14) / ((int)videoframerate/90)) ; // earlier versions +1 
+
+			/**
+			 * get SMPTE (videoframerate may be 0!!, check this)
+			 */
+			int vh = cal.get(11), vm = cal.get(12), vs = cal.get(13), vf = (cal.get(14) / ((int)videoframerate / 90)) ; // earlier versions +1 
+
 			gop[s+4] = (byte)( (128 & gop[s+4]) | vh<<2 | vm>>>4  );
 			gop[s+5] = (byte)( (15 & vm)<<4 | 8 | vs>>>3 );
 			gop[s+6] = (byte)( (7 & vs)<<5 | vf>>>1 );
 			gop[s+7] = (byte)( 127 & gop[s+7] | vf<<7 );
 
-			s+=6;
-
+			s += 6;
 		}
 
-		else if ( gop[s+3] == 0 )    /* 0x0 new frame */
+		/**
+		 * 0x0 new frame 
+		 */
+		else if ( gop[s + 3] == 0 )
 		{
 			sequenceheader_complete = true;
 
-			tref = ((255 & gop[s+4]) << 2) | (192 & gop[s+5])>>>6;  // timerefence of picture
-			frametype = (56&gop[s+5])>>>3;
-			if (frametype==0 || frametype>4) {
+			tref = ((0xFF & gop[s + 4]) << 2) | (0xC0 & gop[s + 5])>>>6;  // temporalrefence of picture
+			frametype = (0x38 & gop[s + 5])>>>3;
+
+			if (frametype == 0 || frametype > 4)
+			{
+
 				Msg(Resource.getString("video.msg.error.frame.wrong", "" + frametype) + " " + tref);
-				error=true;
+				error = true;
 			}
-			newPics.add(""+(tref<<4|frametype));
+
+			newPics.add("" + (tref<<4 | frametype));
 
 			// P-frames for cut in gop 
 			//if (frametype==2) {
@@ -15790,88 +15784,125 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 			//	newcut.add(cutdata);
 			//}
 
-			/*** vbv delay to 0xffff ***/
-			if (options[0]==0 && options[3]==0 && options[23]>0) {
-				gop[s+5] |= 7; 
-				gop[s+6] |= 255; 
-				gop[s+7] |= 248;
+			/**
+			 * vbv delay to 0xffff 
+			 */
+			if (options[0] == 0 && options[3] == 0 && options[23] > 0)
+			{
+				gop[s + 5] |= 0x07; 
+				gop[s + 6] |= 0xFF; 
+				gop[s + 7] |= 0xF8;
 			} 
  
 			if (tref > maxtref) 
-				maxtref=tref;
-			if (options[30]==1) 
-				System.out.println(frame+"/ "+maxtref+"/ "+tref+"/ "+s+" * "+frT[frametype]+"/ "+gop.length);
+				maxtref = tref;
 
-			if (!start && s >= vpts[1][0]) {
-				startpts = vpts[0][0] - (long)(videoframerate*tref); 
-				start=true;
-			} else if (!last && s >= vpts[1][vpts[1].length-1]) {
-				lastpts = vpts[0][vpts[0].length-1] - (long)(videoframerate*tref); 
-				last=true;
+			if (options[30] == 1) 
+				System.out.println(frame + "/ " + maxtref + "/ " + tref + "/ " + s + " * " + frT[frametype] + "/ " + gop.length);
+
+			if (!start && s >= vpts[1][0])
+			{
+				startpts = vpts[0][0] - (long)(videoframerate * tref); 
+				start = true;
 			}
 
-			/***** determine cuts ******/
-			if ( frame==-1 && frametype==1 ) {
+			else if (!last && s >= vpts[1][vpts[1].length - 1])
+			{
+				lastpts = vpts[0][vpts[0].length-1] - (long)(videoframerate * tref); 
+				last = true;
+			}
 
-				/***** determine vbv-delay of I-frame *****/
-				vbvdelay = (7 & gop[s+5])<<13 | (255 & gop[s+6])<<5 | (248 & gop[s+7])>>>3;
-				iframe=true;
+			/**
+			 *  determine cuts 
+			 */
+			if ( frame == -1 && frametype == 1 )
+			{
+				/**
+				 * determine vbv-delay of I-frame 
+				 */
+				vbvdelay = (7 & gop[s + 5])<<13 | (0xFF & gop[s + 6])<<5 | (0xF8 & gop[s + 7])>>>3;
+				iframe = true;
 
-				//DM08022004 081.6 int16 new
-				if (options[7]==0)
+				if (options[7] == 0)
 					infos.add(Resource.getString("video.msg.export.start") + " " + (clv[6]-1));
 
-				//if ( tref>0 && Math.abs(startpts-options[8]) > (int)videoframerate) {
-				//DM151003 081.5++ discard B-Frames also if broken_link flag is set
-				if (tref>0 && (Math.abs(startpts-options[8])>videoframerate || broken_link)) {
-					gop[s+4]=0;
-					gop[s+5] &= 0x3F;  /* set first I-Frame's tref to 0 */
+				/**
+				 * drop B-Frames, also if broken_link flag is set
+				 */
+				if (tref > 0 && (Math.abs(startpts - options[8]) > videoframerate || broken_link))
+				{
+					gop[s + 4] = 0;
+					gop[s + 5] &= 0x3F;  /* set first I-Frame's tref to 0 */
 					gop[closedgop] |= 0x40;
+
 					if (broken_link)
 						gop[closedgop] &= ~0x20;
-					gopbuffer.write(gop,0,s); 
 
-					smark=s;
+					gopbuffer.write(gop, 0, s); 
 
-					//DM03022004 081.6 int14 new
-					if (options[7]>0)
+					smark = s;
+
+					if (options[7] > 0)
 						infos.add(Resource.getString("video.msg.pts.diff", "" + (startpts-options[8]), sms.format(new java.util.Date((startpts-options[8])/90))) + " " + (broken_link ? Resource.getString("video.msg.error.brokenlink") : ""));
 
-					infos.add(Resource.getString("video.msg.frame.drop", "" + (clv[6]-1)) + " " + sms.format(new java.util.Date((long)((options[7])*(double)(videoframerate/90.0f)) )));
-					options[7]-=tref;
-					newframes-=tref;
-					trefcheck=tref;
-					changegop=true;
+					infos.add(Resource.getString("video.msg.frame.drop", "" + (clv[6] - 1)) + " " + sms.format(new java.util.Date((long)((options[7]) * (double)(videoframerate / 90.0f)) )));
+
+					options[7] -= tref;
+					newframes -= tref;
+					trefcheck = tref;
+					changegop = true;
 					clv[0]++;  //cut
 				}
 			}
 
 
-
-
-			/**** recalculate tref, timecode, frames + delete b-frames *****/
-			if (frame>-1 && changegop) {
+			/**
+			 * recalculate tref, timecode, frames + delete b-frames 
+			 */
+			if (frame > -1 && changegop)
+			{
 				if (writeframe)
-					gopbuffer.write(gop,smark,s-smark);
+					gopbuffer.write(gop, smark, s - smark);
 
-				smark=s;
-				/*** skip b-frame ***/
-				if ( trefcheck > tref ) 
+				smark = s;
+
+				/**
+				 * drop b-frame from temporal sequence
+				 */
+				if ( trefcheck > tref )
+				{
 					writeframe = false;
-				else {
+
+					if ((dropList.size() & 1) == 0)
+						dropList.add("_" + String.valueOf(s));
+				}
+
+				else
+				{
 					writeframe = true;
-					gop[s+4] = (byte)( (tref-trefcheck)>>>2);
-					gop[s+5] = (byte)( (63 & gop[s+5]) | ((tref-trefcheck)<<6));
+					gop[s + 4] = (byte)( (tref - trefcheck)>>>2);
+					gop[s + 5] = (byte)( (63 & gop[s + 5]) | ((tref - trefcheck)<<6));
+
+
+					if ((dropList.size() & 1) == 1)
+						dropList.add("_" + String.valueOf(s));
+
 				}
 			}
 
-			/*** P-frames for cut in gop ***/
-			if (frametype==2) {
-				if (!changegop) {
-					long[] cutdata = { origframes,s };
+			/**
+			 * P-frames for cut in gop
+			 */
+			if (frametype == 2)
+			{
+				if (!changegop)
+				{
+					long[] cutdata = { origframes, s };
 					newcut.add(cutdata);
-				} else {
-					long[] cutdata = { origframes,gopbuffer.size() };
+				}
+				else
+				{
+					long[] cutdata = { origframes, gopbuffer.size() };
 					newcut.add(cutdata);
 				}
 			}
@@ -15880,29 +15911,38 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 			options[7]++;
 			frame++;
 			newframes++;
-			progressive=0x80;         /* 0xb5 pic coding extension */
+			progressive = 0x80;         /* 0xb5 pic coding extension */
 
 			for ( int a = s + 6; a < s + 15 && a + 8 < gop.length; a++ )
 			{
-				if ( gop[a] != 0 || gop[a+1] != 0 || gop[a+2] != 1 || gop[a+3] != (byte)0xb5 || (0xF0 & gop[a+4]) != 0x80) 
+				if ( gop[a] != 0 || gop[a + 1] != 0 || gop[a + 2] != 1 || gop[a + 3] != (byte)0xb5 || (0xF0 & gop[a + 4]) != 0x80) 
 					continue;
 
-				progressive = (0x80 & gop[a+8]);
+				progressive = (0x80 & gop[a + 8]);
 
 				if (cBox[31].isSelected()) 
-					gop[a+8] |= (byte)0x80;  // mark as progressiv
+					gop[a + 8] |= (byte)0x80;  // mark as progressiv
+
 				else if (cBox[44].isSelected()) 
-					gop[a+8] &= (byte)~0x80;  // mark as interlaced
+					gop[a + 8] &= (byte)~0x80;  // mark as interlaced
 
 				if (cBox[45].isSelected()) 
-					gop[a+7] ^= (byte)0x80;  // toggle top field first
+					gop[a + 7] ^= (byte)0x80;  // toggle top field first
 
-				//DM29082004 081.7 int10 add
-				if (cBox[35].isSelected() && (0x40 & gop[a+8]) != 0)
-				{   // zero'es the comp.disp.flag infos
-					gop[a+8] &= (byte)0x80;
-					gop[a+9]  = 0;
-					gop[a+10] = 0;
+				/**
+				 * zero'es the comp.disp.flag infos
+				 */
+				if (cBox[35].isSelected() && (0x40 & gop[a + 8]) != 0)
+				{
+					gop[a + 8] &= (byte)0x80;
+					gop[a + 9]  = 0;
+					gop[a + 10] = 0;
+
+					if ((dropList.size() & 1) == 0)
+						dropList.add(String.valueOf(a + 9));
+
+					s = a;
+
 				}
 
 				break;
@@ -15911,77 +15951,117 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 			if (iframe || !changegop || (changegop && writeframe)) 
 				frametypebuffer.write((byte)(frametype | progressive));
 
-			s += 8; //DM14122003 081.6 int06  // slices B min 5, I min 50, p min 25
+			s += 8; // slices B min 5, I min 50, p min 25
 			iframe = false;
 		}
+	} // end of gop search
+
+//
+	for (int dl = 0; dl < dropList.size(); dl++)
+	{
+		String str = dropList.get(dl).toString();
+
+		if (str.startsWith("_"))
+			str = "_" + Integer.toHexString(Integer.parseInt(str.substring(1)));
+
+		else
+			str = Integer.toHexString(Integer.parseInt(str));
+
+		Msg("dl " + dl + " : '0x" + str.toUpperCase() + "'");
 	}
 
-	/**** put the rest of data into buffer, if gop was changed *****/
-	if (changegop) {
+
+//
+	/**
+	 * put the rest of data into buffer, if gop was changed 
+	 */
+	if (changegop)
+	{
 		if (writeframe)  
-			gopbuffer.write(gop,smark,gop.length-smark);
+			gopbuffer.write(gop, smark, gop.length - smark);
+
 		gop = gopbuffer.toByteArray();
 		gopbuffer.reset();
-		changegop=false;
+		changegop = false;
 	}
-	if (prog_seq!=-1 && prog_seq<gop.length) {
+
+	if (prog_seq != -1 && prog_seq < gop.length)
+	{
 		if (cBox[31].isSelected()) 
 			gop[prog_seq] |= (byte)8;  // mark as progressiv_seq
+
 		else if (cBox[44].isSelected()) 
 			gop[prog_seq] &= (byte)~8;  // unmark ^
 	} 
 
-	if (vpts[0].length < 2) {
+	if (vpts[0].length < 2)
+	{
 		lastpts = startpts; 
 		clv[1]++;
 	}
 
-	if (firstVideoPTS==-1) //DM17012004 081.6 int11 new
-		firstVideoPTS=startpts;
+	if (firstVideoPTS == -1) //DM17012004 081.6 int11 new
+		firstVideoPTS = startpts;
 
 	//DM05112003 081.5++
 	int Pics[] = new int[newPics.size()];
-	for (int a=0; a<Pics.length; a++)
-		Pics[a]=Integer.parseInt(newPics.get(a).toString());
-	int newTref[] = new int[Pics.length];
-	java.util.Arrays.fill(newTref,-1);
 
-	if (Pics.length==0) //DM30122003 081.6 int10 changed,fix
+	for (int a = 0; a < Pics.length; a++)
+		Pics[a] = Integer.parseInt(newPics.get(a).toString());
+
+	int newTref[] = new int[Pics.length];
+	java.util.Arrays.fill(newTref, -1);
+
+	/**
+	 * error, no Frames found
+	 */
+	if (Pics.length == 0) //DM30122003 081.6 int10 changed,fix
 	{
-		Msg(Resource.getString("video.msg.error.frame.not", "" + (clv[6]-1)));
-		error=true;
+		Msg(Resource.getString("video.msg.error.frame.not", "" + (clv[6] - 1)));
+		error = true;
 	}
 
+	/**
+	 * error, no leading I-Frame
+	 */
 	if (Pics.length > 0 && (Pics[0] & 0xF) != 1) //DM30032004 081.6 int18 changed
-		Msg(Resource.getString("video.msg.error.frame.not.i", "" + (clv[6]-1)));
+		Msg(Resource.getString("video.msg.error.frame.not.i", "" + (clv[6] - 1)));
 
-	for (int a=0; !error && a<Pics.length; a++){
-		int Tref=Pics[a]>>>4;
-		if (Tref<0 || Tref>Pics.length-1 || newTref[Tref]!=-1){
-			error=true;
+	for (int a = 0; !error && a < Pics.length; a++)
+	{
+		int Tref = Pics[a]>>>4;
+
+		if (Tref < 0 || Tref > Pics.length - 1 || newTref[Tref] != -1)
+		{
+			error = true;
 			break;
 		}
-		newTref[Tref]=Pics[a];
+
+		newTref[Tref] = Pics[a];
 	}
-	for (int a=0; !error && a<newTref.length; a++)
-		if (newTref[a]==-1)
-			error=true;
+
+	for (int a = 0; !error && a < newTref.length; a++)
+		if (newTref[a] == -1)
+			error = true;
 
 
-	//DM26022004 081.6 int18 new
+	/**
+	 * show and save I-frame when demuxing
+	 */
 	if (cBox[65].isSelected())
 	{
 		MPVD.picture.decodeArray(gop, false, RButton[6].isSelected(), RButton[10].isSelected());
 		MPVD.picture.saveBMP(true, running);
 	}
 
-
-	//DM13112003 081.5++
-	if (startpts<options[54]-videoframerate/2){
-		Msg(Resource.getString("video.msg.error.pts.early", "" + (clv[6]-1), "" + options[54]));
-		error=true;
+	/**
+	 * error, start pts is to early as last
+	 */
+	if (startpts < options[54] - videoframerate / 2)
+	{
+		Msg(Resource.getString("video.msg.error.pts.early", "" + (clv[6] - 1), "" + options[54]));
+		error = true;
 	}
-
 
 	/**
 	 * falls startpts kleiner als options[8] (lende letzte GOP) aber innerhalb toleranz, 
@@ -15995,85 +16075,118 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 		startpts = options[8];
 	}
 
-	if (maxtref!=frame || Math.abs(lastpts-startpts)>2000)
-		error=true;
+	/**
+	 * error, if pts diff. between frames > half of a frame
+	 */
+	if (maxtref != frame || Math.abs(lastpts - startpts) > 2000)
+		error = true;
 
-	/** ignore v-errors **/
-	if (origframes>0 && cBox[39].isSelected()) {
-		lastpts=startpts;
-		maxtref=frame;
-		error=false;
+	/**
+	 * ignore v-errors 
+	 */
+	if (origframes > 0 && cBox[39].isSelected())
+	{
+		lastpts = startpts;
+		maxtref = frame;
+		error = false;
 	}
 
-	/** return last orig pts for plain mpv **/
-	options[40] = startpts+(long)(trefcheck*videoframerate)+(long)((maxtref-trefcheck+1)*videoframerate);
+	/** 
+	 * return last orig pts for plain mpv
+	 */
+	options[40] = startpts + (long)(trefcheck * videoframerate) + (long)((maxtref - trefcheck + 1) * videoframerate);
 
-	if (error) {
+	if (error)
+	{
 		options[7] = lastframes; 
 		clv[4]++;
+
 		Msg(Resource.getString("video.msg.error.gop.drop", "" + (clv[6]-1), sms.format(new java.util.Date(startpts/90L)), "" + startpts));
 		Msg(Resource.getString("video.msg.error.gop.diff", "" + (maxtref+1) + "/" + (frame+1), "" + ((lastpts-startpts)/90)) + " " + sms.format(new java.util.Date((long)((options[7])*(double)(videoframerate/90.0f)) )));
 
-		//DM18022004 081.6 int17 changed
-		if (cBox[43].isSelected()) {
-			String gopdumpname = dumpname + "-GOP#"+(clv[6]-1)+".bin";
+		/**
+		 * dump dropped gop to file
+		 */
+		if (cBox[43].isSelected())
+		{
+			String gopdumpname = dumpname + "-GOP#" + (clv[6] - 1) + ".bin";
 			DataOutputStream dump = new DataOutputStream(new FileOutputStream(gopdumpname));
-			dump.writeInt((clv[6]-1)); 
+			dump.writeInt((clv[6] - 1)); 
 			dump.writeInt(maxtref); 
 			dump.writeInt(frame);
-			dump.write(dumpfill,0,4); 
+			dump.write(dumpfill, 0, 4); 
 			dump.write(pts); 
 			dump.write(dumpfill); 
 			dump.write(gop); 
 			dump.write(Video.getSequenceEndCode());
 			dump.flush(); 
 			dump.close();
+
 			Msg(Resource.getString("video.msg.error.gop.dump") + " " + dumpname);
 		}
+	}
 
-	} else {
+	else
+	{
+		/**
+		 * unused!
+		 * temp delete, disable for P-frame cutout
+		 */
+		newcut.clear(); 
 
-		newcut.clear(); // temp delete, disable for P-frame cutout
-
-		/*** gop TC 081.5++ **/
+		/**
+		 * read out gop timecode as long ,TC 081.5++ 
+		 */
 		options[53] += (long)(videoframerate * (maxtref + 1));
 		options[54] = startpts + (long)(videoframerate * (maxtref + 1));
 
-		long cutposition=0;
-		switch (comBox[17].getSelectedIndex()){
+		long cutposition = 0;
+
+		switch (comBox[17].getSelectedIndex())
+		{
 			case 0:
 				cutposition = CUT_BYTEPOSITION;
 				break;
+
 			case 1:
 				cutposition = clv[6];
 				break;
+
 			case 2:
 				cutposition = origframes;
 				break;
-			case 3:  //DM18022004 081.6 int17 add
-				cutposition = startpts+1000; //exclude jitter
+
+			case 3:
+				cutposition = startpts + 1000; //exclude jitter
 				break;
-			case 4:  //DM17012004 081.6 int11 add
-				cutposition = startpts-firstVideoPTS; 
+
+			case 4:
+				cutposition = startpts - firstVideoPTS; 
 		}
 
-		/*** cut using bytepos,frame#,gop#,timecode,pts  ***/
-		//DM18022004 081.6 int17 changed
-		if (!makecut(dumpname,startpts,cutposition,newcut,lastframes))
+		/**
+		 * cut using bytepos, frame#, gop#, timecode or pts
+		 */
+		if (!makecut(dumpname, startpts, cutposition, newcut, lastframes))
 			options[7] = lastframes;
 
-		/*** DAR 16:9<->4:3 request for auto cut  ***/
-		else if (cBox[47].isSelected() && comBox[24].getSelectedIndex()!=clv[7]) 
+		/**
+		 * DAR 16:9<->4:3 request for auto cut  
+		 */
+		else if (cBox[47].isSelected() && comBox[24].getSelectedIndex() != clv[7]) 
 			options[7] = lastframes;
 
-		/*** H Resolution request for auto cut  ***/
+		/**
+		 * H Resolution request for auto cut  
+		 */
 		else if (cBox[52].isSelected() && !comBox[34].getSelectedItem().toString().equals(""+VBASIC[0]))
 			options[7] = lastframes;
 
 		else if (!doWrite)
 		{}
 
-		else{
+		else
+		{
 
 			//  Msg(""+origframes+"\t"+CP[0]+"\t"+CP[1]+"/"+trefcheck+"/"+maxtref+"/"+newframes+"/"+options[7]);
 			/*** check for cutout on p-frames **/
@@ -16092,91 +16205,137 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 			**/
 			//Msg(""+origframes+"\t"+CP[0]+"\t"+CP[1]+"/"+trefcheck+"/"+maxtref+"/"+newframes+"/"+options[7]);
 
-			startpts += (long)(trefcheck*videoframerate);
+			startpts += (long)(trefcheck * videoframerate);
 
-			log.writeLong(startpts);
-
+			/**
+			 * videoframe-pts-counter 
+			 */
 			options[8] = startpts + (long)((maxtref - trefcheck + 1) * videoframerate);
+
+			/**
+			 * write V-PTS Log for audio/data sync
+			 */
+			log.writeLong(startpts);
 			log.writeLong(options[8]);
 
-			/** videoframetimecounter ***/
-			options[42]+=(long)((maxtref-trefcheck+1)*videoframerate);
+			/**
+			 * videoframetimecounter 
+			 */
+			options[42] += (long)((maxtref - trefcheck + 1) * videoframerate);
+
+			/**
+			 * write V-Time Log for audio/data sync
+			 */
 			log.writeLong(videotimes);
 			log.writeLong(options[42]);
 
-			/*** value for gop bitrate per second  ***/
-			double svbr = videoframerate * (maxtref - trefcheck + 1);  // fix 4 crash, if <=0
+			/**
+			 * value for gop bitrate per second  
+			 */
+			double svbr = videoframerate * (maxtref - trefcheck + 1);
 
 			if (svbr <= 0) 
 				svbr = videoframerate * 10;
 
+			/**
+			 * calculate the bitrate from gop length
+			 * !!renew determination
+			 */
 			int vbr =  (int)( ( (90000L * (gop.length * 8)) / svbr ) / 400);
 
-			/*** set value for gop bitrate per second ***/
-			if (options[13]==1) {
-
-				/*** value for bitrate per vbv ***/
-				if (options[0]==1 && vbvdelay<65535 ) 
+			/**
+			 * set value for gop bitrate per second 
+			 */
+			if (options[13] == 1)
+			{
+				/**
+				 * value for bitrate per vbv 
+				 */
+				if (options[0] == 1 && vbvdelay < 65535 )
 					vbr =  (int)( (90000L * options[15]) / vbvdelay / 400);
 
-				/*** set new aspectratio ***/
-				if (options[24]>0) 
-					gop[7] = (byte)((15&gop[7]) | options[24]<<4);
+				/**
+				 * set new aspectratio 
+				 */
+				if (options[24] > 0) 
+					gop[7] = (byte)((15 & gop[7]) | options[24]<<4);
 
-				/*** set new vbvsize ***/
-				if (options[22]>0) {
-					gop[10] = (byte)((0xE0&gop[10]) | 112>>>5);
-					gop[11] = (byte)((7&gop[11]) | (31&112)<<3);
+				/**
+				 * set new vbvsize 
+				 */
+				if (options[22] > 0)
+				{
+					gop[10] = (byte)((0xE0 & gop[10]) | 112>>>5);
+					gop[11] = (byte)((7 & gop[11]) | (31 & 112)<<3);
 				}
 			}
 
-			/*** determ. avg bitrates ***/
+			/**
+			 * determ. avg bitrates 
+			 */
 			if (vbr < (int)options[5]) 
-				options[5]=vbr;
+				options[5] = vbr;
+
 			if (vbr > (int)options[6]) 
-				options[6]=vbr;
+				options[6] = vbr;
 
 
-			if (options[13]==1) {
-				/*** set new bitrate ***/
-				if (options[3]==0) {
-					if (options[4]>0) 
+			if (options[13] == 1)
+			{
+				/**
+				 * set new bitrate in SH
+				 */
+				if (options[3]==0)
+				{
+					if (options[4] > 0) 
 						vbr = (int)options[4];
+
 					int vbr1 = vbr;
+
 					if (comBox[3].getSelectedIndex()==3) 
 						vbr1 = 262143;
 
-					/*** set sequence bitrate ***/
+					/**
+					 * set sequence bitrate 
+					 */
 					gop[8] = (byte)(vbr1>>>10);
-					gop[9] = (byte)(255&(vbr1>>2));
-					gop[10]= (byte)( (63 & gop[10]) | (3 & vbr1)<<6 );
+					gop[9] = (byte)(255 & (vbr1>>2));
+					gop[10] = (byte)( (63 & gop[10]) | (3 & vbr1)<<6 );
 					clv[2]++;
-				} else
+				}
+				else
 					clv[3]++;
 			}
+
+			/**
+			 * update data for the gop info picture
+			 */
 			frametypebuffer.flush();
 
-			//DM12042004 081.7 int01 add+
 			byte ftb[] = frametypebuffer.toByteArray();
 			int fields_in_frame = 0, min = 0x7FFF & clv[9]>>>15, max = 0x7FFF & clv[9], prog_flag = clv[9]>>>30;
+
 			for (int f=1; f < ftb.length; f++)
 			{
 				fields_in_frame += 2;
 				prog_flag |= (0x80 & ftb[f]) != 0 ? 2 : 1;
 			}
+
 			if (fields_in_frame < min || min == 0) 
 				min = fields_in_frame;
+
 			if (fields_in_frame > max || max == 0) 
 				max = fields_in_frame;
 
 			clv[9] = prog_flag<<30 | (0x7FFF & min)<<15 | (0x7FFF & max);
-			//DM12042004 081.7 int01 add-
 			
-			//DM12042004 081.7 int01 changed
-			brm.surf.update(vbr, ftb, sms.format(new java.util.Date((options[48]+options[42])/90)).substring(0,8));
+			/**
+			 * refresh the gop info picture
+			 */
+			brm.surf.update(vbr, ftb, sms.format(new java.util.Date((options[48] + options[42]) / 90)).substring(0, 8));
 
 			/**
-			 * add chapter index of 
+			 * add chapter index of a change in basic data
 			 */
 			if (newvideo && infos.size() > 0)
 				chapters.addChapter(ct, nv);
@@ -16209,6 +16368,9 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 			 */
 			if (cBox[6].isSelected())
 			{ 
+				/**
+				 * add SEC on a change of basic data
+				 */
 				if (format_changed && cBox[75].isSelected())
 				{
 					video_sequence.write(Video.getSequenceEndCode());
@@ -16218,6 +16380,9 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 					options[41] += 4;
 				}
 
+				/**
+				 * add SDE
+				 */
 				if (cBox[77].isSelected() && !SDE_found && options[13] == 1)
 				{
 					int offs = SDE_marker != -1 ? SDE_marker : headerrescue.length;
@@ -16247,10 +16412,10 @@ public static void goptest(IDDBufferedOutputStream video_sequence, byte[] gop, b
 	}
 
 	infos.clear();
-	options[13]=0;
+	options[13] = 0;
 	gopbuffer.close();
 	frametypebuffer.close();
-	gop=null;
+	gop = null;
 
 	}
 	catch (IOException e)
@@ -16437,138 +16602,53 @@ public static int[] getVideoBasics()
 
 
 
-/**********************
- * raw file from pva *
-
- **********************/
-class RAWFILE
-{
-	IDDBufferedOutputStream out;
-	String name="";
-
-	public void init(String name, int buffersize) throws IOException
-	{
-		this.name = name;
-		out = new IDDBufferedOutputStream( new FileOutputStream(name), buffersize);
-
-	}
-
-	public void write(byte[] data) throws IOException
-	{
-		out.write(data);
-	}
-
-	public void close() throws IOException
-	{ 
-		out.flush();
-		out.close();
-
-		if (new File(name).length() < 10) 
-			new File(name).delete();
-
-		else 
-			Msg(Resource.getString("msg.newfile") + " " + name);
-	} 
-}
-
-
-/**************************
- * remember found TS PIDs *
- **************************/
-class TSPID {
-	boolean pidstart=false, pidscram=false, need=true;
-	int ID=-1, PID=-1, demux=-1, counter=-1;
-	ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
-	public void setStarted(boolean pidstart1) {
-		pidstart=pidstart1;
-	}
-	public boolean isStarted() {
-		return pidstart;
-	}
-	public void setScram(boolean pidscram1) { 
-		pidscram=pidscram1;
-	}
-	public boolean getScram() { 
-		return pidscram; 
-	}
-	public void setID(int ID1) { 
-
-
-		ID=ID1;
-	}
-	public int getID() { 
-		return ID;
-	}
-	public void setCounter(int count1) {
-		counter=count1;
-	}
-	public int getCounter() {
-		return counter;
-	}
-	public void count() {
-		counter += (counter<15) ? 1 : -15 ;
-	}
-	public void countPVA() {
-		counter += (counter<255) ? 1 : -255 ;
-	}
-	public void setPID(int PID1) {
-		PID=PID1;
-	}
-	public int getPID() {
-		return PID;
-	}
-	public void setDemux(int demux1) {
-		demux=demux1;
-	}
-	public int getDemux() {
-		return demux;
-	}
-	public void setneeded(boolean need1) {
-		need=need1;
-	}
-	public boolean isneeded() {
-		return need;
-	}
-	public void writeData(byte[] data, int off, int len) {
-		buffer.write(data,off,len);
-	}
-	public ByteArrayOutputStream getData() {
-		return buffer;
-	}
-	public int getDataSize() {
-		return buffer.size();
-	}
-	public void reset() {
-		buffer.reset();
-	}
-}
-
-
-/**********************
- * demux Video/Audio/TTX PIDs *
- **********************/
+/**
+ * demuxes all packetized data
+ */
 class PIDdemux {
 
-	long addoffset=0, target=0, ptsoffset=0; 
-	boolean ptsover=false, writedata=true, isttx=false, misshead=false;
-	int pack=-1, ID=0, newID=0, PID=0, format=0, subid=0x1FF, ismpg=0,
-		lfn=-1, buffersize=1024, sourcetype=0;
+	private boolean ptsover = false;
+	private boolean writedata = true;
+	private boolean isttx = false;
+	private boolean misshead = false;
+	private boolean first = true;
+	private boolean overlap = false;
+	private boolean seqhead = false;
+	private boolean isPTSwritten = false;
+	private boolean debug = false;
 
-	IDDBufferedOutputStream out;
-	DataOutputStream log;
-	String name="", parentname="";
-	String[] type = { "ac","tt","mp","mv","pc","sp" }; //DM22022004 081.6 int18 changed
-	String[] source = { ".e",".v",".r",".p" };
-	String[] videoext = { ".mpv",".mpv",".m1v",".m2v" };
+	private long addoffset = 0;
+	private long target = 0;
+	private long ptsoffset = 0; 
+	private long pts = -1;
+	private long lastPTS = -1;
 
-	boolean first=true, overlap=false, seqhead=false;
-	ByteArrayOutputStream vidbuf, vptsbytes, packet;
-	DataOutputStream vpts;
-	long pts=-1, lastPTS=-1; //DM18022004 081.6 int17 changed
-	boolean isPTSwritten=false; //DM09112003 081.5++
-	byte[] subpic_header = { 0x53, 0x50, 0, 0, 0, 0, 0, 0, 0, 0 }; //DM24022004 081.6 int18 new
-	byte[] pcm_header = { 0x50, 0x43, 0x4D, 0, 0, 0, 0, 0, 0, 0 }; //'PCM'+5b(pts)+2b(size) //DM24022004 081.6 int18 new
+	private int pack = -1;
+	private int ID = 0;
+	private int newID = 0;
+	private int PID = 0;
+	private int format = 0;
+	private int subid = 0x1FF;
+	private int ismpg = 0;
+	private int lfn = -1;
+	private int buffersize = 1024;
+	private int sourcetype = 0;
+
+	private String name = "";
+	private String parentname = "";
+	private String[] type = { "ac", "tt", "mp", "mv", "pc", "sp", "vp" };
+	private String[] source = { ".e", ".v", ".r", ".p" };
+	private String[] videoext = { ".mpv", ".mpv", ".m1v", ".m2v" };
+
+	private IDDBufferedOutputStream out;
+	private DataOutputStream log;
+	private ByteArrayOutputStream vidbuf;
+	private ByteArrayOutputStream vptsbytes;
+	private ByteArrayOutputStream packet;
+	private DataOutputStream vpts;
+
+	private byte[] subpic_header = { 0x53, 0x50, 0, 0, 0, 0, 0, 0, 0, 0 }; //DM24022004 081.6 int18 new
+	private byte[] pcm_header = { 0x50, 0x43, 0x4D, 0, 0, 0, 0, 0, 0, 0 }; //'PCM'+5b(pts)+2b(size) //DM24022004 081.6 int18 new
 
 
 	public PIDdemux()
@@ -16579,7 +16659,9 @@ class PIDdemux {
 		ptsoffset = val;
 	}
 
-	//DM14072004 081.7 int06 add, stream type preselector
+	/**
+	 * stream type preselector
+	 */
 	public boolean StreamEnabled()
 	{
 		switch(newID>>>4)
@@ -16610,206 +16692,314 @@ class PIDdemux {
 	}
 
 
-	public void init(String name1, long[] options, int buffersize1, int lfn1, int sourcetype1) {
-		parentname=name1;
-		lfn=lfn1;
-		buffersize=buffersize1;
+	/**
+	 * init 
+	 */
+	public void init(String _name, long[] _options, int _buffersize, int _lfn, int _sourcetype)
+	{
+		parentname = _name;
+		lfn = _lfn;
+		buffersize = _buffersize;
+		sourcetype = _sourcetype;
 
-		sourcetype=sourcetype1;
-		name=name1+source[sourcetype]+lfn;
-		addoffset = options[28];                           // time offset for data
+		name = parentname + source[sourcetype] + lfn;
+		addoffset = _options[28];    // time offset for data
 		writedata = cBox[7].isSelected() ? true : false;  // do write?
-		try 
-		{
-		out = new IDDBufferedOutputStream(new FileOutputStream(name),buffersize);
-		log = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(name+".pts"),65535));
-		} 
-		catch (IOException e) { 
+		debug = _options[30] == 1 ? true : false;
+
+		try {
+
+			out = new IDDBufferedOutputStream(new FileOutputStream(name), buffersize);
+			log = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(name + ".pts"), 65535));
+
+		} catch (IOException e) { 
 			Msg(Resource.getString("demux.error.audio.io") + "1 " + e); 
 		}
 	}
 
-	public void init2(String name1, long[] options) {
-		parentname=name1;
-		name=name1+source[sourcetype]+lfn;
-		addoffset = options[28];                           // time offset for data
-		target=0;
+	/**
+	 * re-init 
+	 */
+	public void init2(String _name, long[] _options)
+	{
+		parentname = _name;
+		name = parentname + source[sourcetype] + lfn;
+
+		target = 0;
+		addoffset = _options[28];  // time offset for data
 		writedata = cBox[7].isSelected() ? true : false;  // do write?
-		try 
-		{
-		out = new IDDBufferedOutputStream(new FileOutputStream(name),buffersize);
-		log = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(name+".pts"),65535));
-		} 
-		catch (IOException e) { 
+		debug = _options[30] == 1 ? true : false;
+
+		try {
+
+			out = new IDDBufferedOutputStream(new FileOutputStream(name), buffersize);
+			log = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(name + ".pts"), 65535));
+
+		} catch (IOException e) { 
 			Msg(Resource.getString("demux.error.audio.io") + "2 " + e); 
 		}
 	}
 
-	public int getNum() { 
+	/**
+	 * Object intialized yet?
+	 */
+	public int getNum()
+	{ 
 		return lfn; 
-	}            // Object intialized yet?
+	}
 
-	public int getPID() { 
+	/**
+	 * get PID for later selection
+	 */
+	public int getPID()
+	{ 
 		return PID; 
-	}            // get PID for later selection
+	}
 
-	public int getID() { 
+	/**
+	 * returns PES ID for later selection
+	 */
+	public int getID()
+	{ 
 		return ID; 
-	}              // get PES ID for later selection
+	}
 
-	public void setPID(int PID1) { 
-		PID=PID1; 
-	}     // set PID for later selection
+	/**
+	 * set PID for later selection
+	 */
+	public void setPID(int val)
+	{ 
+		PID = val; 
+	}
 
-	public void setID(int ID1) { 
-		ID=ID1; 
-	}         // set ID for later selection
+	/**
+	 * set ID for later selection
+	 */
+	public void setID(int val)
+	{ 
+		ID = val; 
+	}
 
-	public void setnewID(int ID1) { 
-		newID=ID1; 
-	}   // set newID for later selection /or subid
+	/**
+	 * set newID for later selection /or subid
+	 */
+	public void setnewID(int val)
+	{ 
+		newID = val; 
+	} 
 
-	public int getnewID() { 
+	/**
+	 * returns newID for later selection /or subid
+	 */
+	public int getnewID()
+	{ 
 		return newID; 
-	}        // get newID for later selection /or subid
+	}
 
-	public int getPackCount() { 
+	/**
+	 * returns packet counter
+	 */
+	public int getPackCount()
+	{ 
 		return pack; 
-	}     // get pack count
+	}
 
-	public int getType() { 
+	/**
+	 * returns format
+	 */
+	public int getType()
+	{ 
 		return format; 
-	}        // what is it
+	}
 
-	public void setStreamType(int ismpg1) { 
-		ismpg=ismpg1; 
-	}        // vdr/es/mpeg1/2...
+	/**
+	 * sets stream tpye, vdr/es/mpeg1/2...
+	 */
+	public void setStreamType(int val)
+	{ 
+		ismpg = val; 
+	}
 
-	public int getStreamType() { 
+	/**
+	 * returns stream tpye, vdr/es/mpeg1/2...
+	 */
+	public int getStreamType()
+	{ 
 		return ismpg; 
-	}        // vdr/es/mpeg1/2...
+	}
 
-	public void setType(int type1) { 
-		format=type1; 
-	}        // video
+	/**
+	 * sets type
+	 */
+	public void setType(int val)
+	{ 
+		format = val; 
+	}
 
-	public void setsubID(int subid1) { 
-		subid=subid1; 
-	}      // subid
+	/**
+	 * sets subid
+	 */
+	public void setsubID(int val)
+	{ 
+		subid = val; 
+	}
 
-	public int subID() { 
+	/**
+	 * returns subid 
+	 */
+	public int subID()
+	{ 
 		return subid; 
-	}           // AC-3 subid needed
+	}
 
-	public boolean isTTX() { 
+	/**
+	 * is it TTX?
+	 */
+	public boolean isTTX()
+	{ 
 		return isttx; 
-	}       // is it ttx
+	}
 
-	public void setTTX(boolean ttx1) { 
-		isttx=ttx1; 
+	/**
+	 * set ttx
+	 */
+	public void setTTX(boolean b)
+	{ 
+		isttx = b; 
+
 		if (isttx) 
-			format=1; 
-	}      // set ttx
+			format = 1; 
+	}
 
-	public long getPTS() { 
+	/** 
+	 * last PTS
+	 */
+	public long getPTS()
+	{ 
 		return pts; 
-	}                // last PTS
+	}
 
-	public void PTSOffset(long ptsoffset1) { 
-		ptsoffset=ptsoffset1; 
-	}   // PTS offset if needed
+	/**
+	 * PTS offset if needed
+	 */
+	public void PTSOffset(long val)
+	{ 
+		ptsoffset = val; 
+	}
 
-	public void resetVideo() {     // clean Up for next foreign inputfile in case of multiple
+     /**
+	 * clean Up for next foreign inputfile in case of multiple
+	 */
+	public void resetVideo()
+	{
 		vidbuf.reset(); 
 		packet.reset(); 
 		vptsbytes.reset(); 
-		first=true;
+		first = true;
 	}
 
-	//DM30122003 081.6 int10 changed
-	public void write(byte[] data, boolean header) {    // data = 1 pespacket from demux
-		pack++;
-		int datalength=0, ptslength=0, ttx=0, shift=0;
-		boolean isAligned = false;
+	/**
+	 * process nonvideo data = 1 pespacket from demux
+	 */
+	public void write(byte[] _data, boolean _header)
+	{
+		int __datalength = 0;
+		int __pes_ext_length = 0;
+		int __ttx = 0;
+		int __shift = 0;
+		boolean __isAligned = false;
 
-		if (!header)
-			datalength=data.length;
+		pack++;
+
+		if (!_header)
+			__datalength = _data.length;
+
 		else
 		{
-			//DM12072004 081.7 int06 add
-			if (data[0] != 0 || data[1] != 0 || data[2] != 1)
+			if (_data[0] != 0 || _data[1] != 0 || _data[2] != 1)
 			{
 				Msg(Resource.getString("demux.error.audio.startcode") + " " + pack + " (" + Integer.toHexString(PID) + "/" + Integer.toHexString(ID) + "/" + Integer.toHexString(newID) + "/" + format + ")");
 				return;
 			}
 
-			ID = 0xFF&data[3];
-			datalength = ((0xFF&data[4])<<8 | (0xFF&data[5]));    // av pack length bytes to follow
-			isAligned = (4 & data[6]) != 0 ? true : false;
+			ID = 0xFF & _data[3];
+			__datalength = ((0xFF & _data[4])<<8 | (0xFF & _data[5]));    // av pack length bytes to follow
+			__isAligned = ismpg != 1 && (4 & _data[6]) != 0 ? true : false;
 
-			if (ismpg==1)
+			if (ismpg == 1)
 			{
 				skiploop:
 				while(true)
 				{
-					switch (0xC0&data[shift+6])	
+					switch (0xC0 & _data[__shift + 6])	
 					{
 					case 0x40:
-						shift+=2; 
+						__shift += 2; 
 						continue skiploop;
+
 					case 0x80:
-						shift+=3; 
+						__shift += 3; 
 						continue skiploop; 
+
 					case 0xC0:
-						shift++;  
+						__shift++;  
 						continue skiploop; 
+
 					case 0:
 						break;
 					}
 
-					switch (0x30&data[shift+6])
+					switch (0x30 & _data[__shift + 6])
 					{
 					case 0x20:
-						ptslength=5;  
+						__pes_ext_length = 5;  
 						break skiploop; 
+
 					case 0x30:
-						ptslength=10; 
+						__pes_ext_length = 10; 
 						break skiploop; 
+
 					case 0x10:
-						shift+=5; 
+						__shift += 5; 
 						break skiploop; 
+
 					case 0:
-						shift++; 
+						__shift++; 
 						break skiploop; 
 					}
 				}
 			}
+
 			else
 			{
-				ptslength = (0xFF&data[8]);           // read byte pts-length
-				shift=3;
-				ttx = (ID==0xBD && ptslength==0x24 && (0xFF&data[9+(0xFF&data[8])])>>>4==1) ? 1: 0;
-				if ((0x80&data[7])==0)
-				{ //no PTS in PES_header_ext
-					shift += ptslength;
-					ptslength=0;
+				__pes_ext_length = (0xFF & _data[8]);
+				__shift = 3;
+				__ttx = (ID == 0xBD && __pes_ext_length == 0x24 && (0xFF & _data[9 + __pes_ext_length])>>>4 == 1) ? 1 : 0;
+
+				/** 
+				 * no PTS in PES_header_ext
+				 */
+				if ((0x80 & _data[7]) == 0)
+				{
+					__shift += __pes_ext_length;
+					__pes_ext_length = 0;
 				}
 			}
 
-			format = (ID==0xBD) ? ttx : 2;
-			isttx = (format==1) ? true : false;
-			subid = (format<2 && (ismpg!=0 || isttx)) ? (0xFF&data[9+(0xFF&data[8])]) :0 ;
+			format = (ID == 0xBD) ? __ttx : 2;
+			isttx = (format == 1) ? true : false;
+			//subid = (format < 2 && (ismpg != 0 || isttx)) ? (0xFF & _data[9 + (0xFF & _data[8])]) : 0;
+			subid = (format < 2 && (ismpg != 0 || isttx || __isAligned)) ? (0xFF & _data[9 + (0xFF & _data[8])]) : 0;
 
 			switch (subid>>>4)
 			{
-			//DM22022004 081.6 int18 add
 			case 0xA: //LPCM from MPG-PS
-				format=4;
+				format = 4;
 				break;
 
 			case 2:   //SubPic 0-31 from MPG-PS
 			case 3:   //SubPic 32-63 from MPG-PS
-				format=5;
+				format = 5;
 				break;
 
 			case 8:   //AC3-DTS from MPG-PS
@@ -16818,9 +17008,16 @@ class PIDdemux {
 				break;
 
 			case 9:   //VBI from TS,MPG2
-				if (isAligned)
+				if (__isAligned)
 				{
-					format=6;
+					//format = 6;
+
+					if (ismpg < 2)
+						subid = 0;
+
+					if (cBox[81].isSelected())
+						VBI.parsePES(_data);
+
 					return;
 				}
 				break;
@@ -16829,591 +17026,655 @@ class PIDdemux {
 				return;
 			}
 
-			datalength -= (shift+ptslength);
-			shift+=6;
+			__datalength -= (__shift + __pes_ext_length);
+			__shift += 6;
 		}
 
 		if (!writedata) 
 			return;
 
 
-		try 
-		{
+		try {
 
-		//DM20072004 081.7 int07 add
-		//if (isttx && ptslength == 0 && pts == -1 && fakedPTS != lastPTS)
-		if (isttx && cBox[62].isSelected())
-		{
-			//do nothing even if PTS is available for TTX, because user wont it
-
-			//lastPTS nutzt die geborgte AudioPTS, pts schaltet die funktion aus, falls ttx doch eigene PTS hat und nur zufällig mal keine zum anfang
-			if (fakedPTS != lastPTS)
+			/**
+			 * re-build PTS
+			 */
+			if (isttx && cBox[62].isSelected())
 			{
-				lastPTS = fakedPTS;
+				if (fakedPTS != lastPTS)
+				{
+					lastPTS = fakedPTS;
 
-				if (options[30]==1) //DM131003 081.5++
-					System.out.print(" stolen ttx PTS: "+ lastPTS + "/ " + addoffset + "/ " + target);
+					if (debug)
+						System.out.print(" stolen ttx PTS: " + lastPTS + "/ " + addoffset + "/ " + target);
 
-				log.writeLong(lastPTS);
-				log.writeLong(target);
+					log.writeLong(lastPTS);
+					log.writeLong(target);
+				}
+			}
+
+			/**
+			 * read out source PTS
+			 */
+			else if ( __pes_ext_length > 0 && _data.length >= __pes_ext_length)
+			{
+				pts = Video.getPTSfromBytes(_data, __shift); //returns 32bit
+
+				pts -= options[27];
+				pts &= 0xFFFFFFFFL;
+
+				if ( (pts & 0xFF000000L) == 0xFF000000L ) 
+					ptsover = true;      // bit 33 was set
+
+				if (ptsover && pts < 0xF0000000L) 
+					pts |= 0x100000000L;
+
+				pts += ptsoffset;
+				pts += addoffset;
+
+				if (lastPTS != pts)
+				{
+					log.writeLong(pts);
+					log.writeLong(target);
+				}
+
+				if (debug)
+					System.out.println(" pda PTS: " + pts + "/ " + addoffset + "/ " + target);
+
+				lastPTS = pts;
+			} 
+
+			/**
+			 * save re-build PTS
+			 */
+			if (newID == 0xC0 && fakedPTS != lastPTS)
+				fakedPTS = lastPTS;
+
+
+			switch(subid>>>4)
+			{
+			case 0xA: //LPCM
+				__shift += 1; //7
+				__datalength -= 1; //7
+				break;
+
+			case 8: //AC3-DTS
+				__shift += 4; 
+				__datalength -= 4; 
+				break;
+
+			case 2: //subpic  0.31
+			case 3: //subpic 32.63
+			case 1: //TTX
+				__shift += 1; 
+				__datalength -= 1; 
+			}
+
+			//if (__datalength > 0)
+			if (__datalength > 0 && out != null)
+			{
+				if (__pes_ext_length > 0)
+				{
+					switch(format)
+					{
+					case 5:
+						LSB(subpic_header, pts, 2, 8);
+
+						out.write(subpic_header);
+
+						target += subpic_header.length;
+
+						/**
+						 * DVB subs adaption
+						 */
+						if (Common.nextBits(_data, (__shift + __pes_ext_length) * 8, 16) == 0xF)
+						{
+							out.write(((__datalength + 3) >>> 8) & 0xFF);
+							out.write((__datalength + 3) & 0xFF);
+
+							out.write(0); //padding
+							target += 3;
+						}
+
+						break;
+
+					case 4:
+						LSB(pcm_header, pts, 3, 5);
+						pcm_header[8] = (byte)(0xFF & __datalength>>>8);
+						pcm_header[9] = (byte)(0xFF & __datalength);
+
+						out.write(pcm_header);
+
+						target += pcm_header.length;
+						break;
+					}
+				}
+
+				/**
+				 * DVB subs adaption, prevent lost packets
+				 */
+				else if (format == 5 && Common.nextBits(_data, (__shift + __pes_ext_length) * 8, 16) == 0xF)
+				{
+					LSB(subpic_header, 0, 2, 8);
+
+					out.write(subpic_header);
+
+					target += subpic_header.length;
+
+					out.write(((__datalength + 3) >>> 8) & 0xFF);
+					out.write((__datalength + 3) & 0xFF);
+					out.write(0); //padding
+
+					target += 3;
+				}
+
+				target += __datalength;
+				out.write(_data, __shift + __pes_ext_length, __datalength);
+			}
+
+		} catch (IOException e) { 
+			Msg(Resource.getString("demux.error.audio.io") + "3 " + e); 
+		}
+	}
+
+	/**
+	 *
+	 */
+	private void LSB(byte _data[], long _value, int _off, int _len)
+	{
+		for (int a = 0; a < _len; a++)
+			_data[_off + a] = (byte)(0xFFL & _value>>>(a * 8));
+	}
+
+	/**
+	 *
+	 */
+	public String[] close(String _vptslog)
+	{ 
+		String __pts_name = name + ".pts";
+		String __parameters[] = { name, __pts_name, type[format], parentname  };
+
+		try {
+
+			if (out == null)
+			{
+				__parameters[0] = "";
+				return __parameters;
+			}
+
+			out.flush(); 
+			out.close();
+
+			log.flush(); 
+			log.close(); 
+
+			if (new File(__pts_name).length() < 10) 
+				logAlias(_vptslog, __pts_name); // logAlias
+
+			if (new File(name).length() < 10)
+			{
+				new File(name).delete();
+				new File(__pts_name).delete();
+				__parameters[0] = "";
+			}
+
+		} catch (IOException e) { 
+			Msg(Resource.getString("demux.error.audio.io") + "4 " + e); 
+		}
+
+		return __parameters;
+	} 
+
+	/**
+	 *
+	 */
+	public void initVideo(String _name, long[] _options, int _buffersize, int _lfn, int _sourcetype)
+	{
+		parentname = _name;
+		lfn = _lfn;
+		buffersize = _buffersize;
+		sourcetype = _sourcetype;
+
+		name = parentname + source[sourcetype] + lfn;
+		format = 3;
+		MPGVideotype = 0;
+		writedata = cBox[6].isSelected() ? true : false;  // do write?
+
+		try {
+			out = new IDDBufferedOutputStream(new FileOutputStream(name), buffersize);
+
+			if (cBox[34].isSelected())
+				out.InitIdd(name, 1);
+		
+			log = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(name + ".pts"), 65535));
+			packet = new ByteArrayOutputStream();
+			vidbuf = new ByteArrayOutputStream();
+			vptsbytes = new ByteArrayOutputStream();
+			vpts = new DataOutputStream(vptsbytes);
+
+		} catch (IOException e) { 
+			Msg(Resource.getString("demux.error.video.io") + "1 " + e); 
+		}
+	}
+
+	public void initVideo2(String _name, long[] _options)
+	{
+		parentname = _name;
+
+		name = parentname + source[sourcetype] + lfn;
+		writedata = cBox[6].isSelected() ? true : false;  // do write?
+		first = true;
+		MPGVideotype = 0;
+
+		try {
+			out = new IDDBufferedOutputStream(new FileOutputStream(name), buffersize);
+
+			if (cBox[34].isSelected())
+				out.InitIdd(name, 1);
+		
+			log = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(name + ".pts"), 65535));
+
+			packet.reset();
+	 		vidbuf.reset();
+			vptsbytes.reset();
+
+		} catch (IOException e) { 
+			Msg(Resource.getString("demux.error.video.io") + "2 " + e); 
+		}
+	}
+
+	public String closeVideo()
+	{ 
+		String logfile = "-1";
+
+		try {
+
+			if (options[32] == 1 && options[7] > 0)
+			{
+				out.write(Video.getSequenceEndCode());
+				options[39] += 4;
+				options[41] += 4;
+			}
+
+			packet.close();
+			vidbuf.flush(); 
+			vidbuf.close();
+			out.flush();
+			out.close();
+			log.flush(); 
+			log.close();
+			vpts.flush(); 
+			vpts.close();
+			vptsbytes.flush(); 
+			vptsbytes.close();
+
+			String videofile = "";
+
+			if (new File(name).length() < 10)
+			{
+				new File(name).delete();
+
+				if (!writedata && new File(name+".pts").length() > 16) 
+					logfile = name + ".pts";
+
+				else 
+					new File(name + ".pts").delete();
+			}
+
+			else
+			{ 
+				int ot = (cBox[32].isSelected() || cBox[29].isSelected() || cBox[30].isSelected()) ? 0 : 2;
+
+				videofile = parentname + videoext[MPGVideotype + ot];
+				File newfile = new File(videofile);
+
+				if (newfile.exists()) 
+					newfile.delete();
+
+				Common.renameTo(new File(name), newfile);
+
+				logfile = name + ".pts";
+				setvideoheader(videofile, logfile);
+        
+				/**
+				 * celltimes.txt 
+				 */
+				if (cBox[26].isSelected())
+				{
+					BufferedWriter cellout = new BufferedWriter(new FileWriter(workouts + "CellTimes.txt"));
+
+					for (int a = 0; a < cell.size(); a++)
+					{
+						cellout.write(cell.get(a).toString());
+						cellout.newLine();
+					}
+
+					cellout.close();
+
+					Msg(Resource.getString("demux.msg.celltimes", workouts));
+
+					long fl = new File(workouts + "CellTimes.txt").length();
+					options[39] += fl;
+					options[41] += fl;
+				}
+
+				cell.clear();
+			}
+
+			if (cBox[34].isSelected())
+			{
+				if (new File(videofile).exists())
+					out.renameVideoIddTo(parentname);
+
+				else
+					out.deleteIdd();
+			}
+
+		} catch (IOException e) { 
+			Msg(Resource.getString("demux.error.video.io") + "3 " + e); 
+		}
+
+		return logfile;
+	} 
+
+	/****** write video ******/
+	// data = 1 pespacket from demux
+	public long[] writeVideo(byte[] _origdata, long[] _options, boolean _isPVA)
+	{
+		int __datalength = 0;
+		int __ptslength = 0;
+		int __ttx = 0;
+		int __shift = 0;
+
+		pack++;
+
+		if (_isPVA)
+		{
+			__datalength = _origdata.length;
+
+			if (options[55] != -1)
+			{
+				__shift = -4; 
+				__ptslength = 4; 
 			}
 		}
 
-		//DM20072004 081.7 int07 changed
-		//if ( ptslength>0 && data.length>=ptslength)
-		else if ( ptslength > 0 && data.length >= ptslength)
-		{    // read pts, if available
-			pts = 0xFFFFFFFFL & ( (6&data[shift])<<29 | (255&data[shift+1])<<22 | (254&data[shift+2])<<14 |
-				(255&data[shift+3])<<7 | (254&data[shift+4])>>>1 );
+		else
+		{
+			if (_origdata[0] != 0 || _origdata[1] != 0 || _origdata[2] != 1)
+			{
+				Msg(Resource.getString("demux.error.video.startcode") + " " + pack + " (" + Integer.toHexString(PID) + "/" + Integer.toHexString(ID) + "/" + Integer.toHexString(newID) + "/" + format + ")");
+				return _options;
+			}
 
-			pts -= options[27];
+			ID = 0xFF & _origdata[3];
+			__datalength = ((0xFF & _origdata[4])<<8 | (0xFF & _origdata[5]));    // av pack length bytes to follow
+
+			if (ismpg == 1)
+			{
+				skiploop:
+				while(true)
+				{
+					switch (0xC0 & _origdata[__shift + 6])
+					{
+					case 0x40: 
+						__shift += 2; 
+						continue skiploop; 
+
+					case 0x80:
+						__shift += 3; 
+						continue skiploop; 
+
+					case 0xC0:  
+						__shift++;  
+						continue skiploop; 
+
+					case 0:
+						break;
+					}
+
+					switch (0x30 & _origdata[__shift + 6])
+					{
+					case 0x20:
+						__ptslength = 5;  
+						break skiploop; 
+
+					case 0x30:
+						__ptslength = 10; 
+						break skiploop; 
+
+					case 0x10:
+						__shift += 5; 
+						break skiploop; 
+
+					case 0:
+						__shift++; 
+						break skiploop; 
+					}
+				}
+			}
+
+			else
+			{
+				__ptslength = (0xFF & _origdata[8]);           // read byte pts-length
+				__shift = 3;
+
+				if ((0x80 & _origdata[7]) == 0)
+				{ 
+					__shift += __ptslength;
+					__ptslength = 0;
+				}
+			}
+
+			__datalength -= (__shift + __ptslength);
+			__shift += 6;
+		}
+
+		/**
+		 * read pts
+		 */
+		if ( __ptslength > 0  && _origdata.length >= __datalength )
+		{
+			pts = (_isPVA) ? _options[55] : Video.getPTSfromBytes(_origdata, __shift); //returns 32bit
+
+			pts -= _options[27];
 			pts &= 0xFFFFFFFFL;
 
 			if ( (pts & 0xFF000000L) == 0xFF000000L ) 
 				ptsover = true;      // bit 33 was set
 
 			if (ptsover && pts < 0xF0000000L) 
+
 				pts |= 0x100000000L;
 
 			pts += ptsoffset;
-			pts += addoffset;
 
-			//DM22122003 081.6 int09 change
-			//DM15072004 081.7 int06 changed
-			if (lastPTS != pts)
-			{
-				//log.writeLong(pts+addoffset);
-				log.writeLong(pts);
-				log.writeLong(target);
-			}
+			if (debug)
+				System.out.print(" pdv PTS: " + pts);
 
-			if (options[30]==1) //DM131003 081.5++
-				System.out.println(" pda PTS: "+pts+"/ "+addoffset+"/ "+target);
-
-			lastPTS=pts; //DM22122003 081.6 int09 new
+			isPTSwritten = false;
 		} 
 
-		//DM20072004 081.7 int07 add
-		//test, speichert die pts des erstgefundenen mpg-audio stroms, also multiaudio bringt nix durcheinander
-		if (newID == 0xC0 && fakedPTS != lastPTS)
-			fakedPTS = lastPTS;
+		try {
 
+			if (_origdata.length < __shift + __ptslength + __datalength)
+				Msg(Resource.getString("demux.error.video.payload") + " (" + _origdata.length + "/" + __shift + "/" + __ptslength + "/" + __datalength + ")");
 
-		switch(subid>>>4){
-		//DM22022004 081.6 int18 add
-		case 0xA: //LPCM
-			shift+=1; //7
-			datalength-=1; //7
-			break;
-		case 8: //AC3-DTS
-			shift+=4; 
-			datalength-=4; 
-			break;
-		//DM22022004 081.6 int18 add
-		case 2: //subpic  0.31
-		case 3: //subpic 32.63
-		case 1: //TTX
-			shift+=1; 
-			datalength-=1; 
-		}
-
-		if (datalength>0) {
-			if (ptslength>0) //DM24022004 081.6 int18 add
-			{
-				switch(format)
-				{
-				case 5:
-					LSB(subpic_header,pts,2,8);
-					out.write(subpic_header);
-					target += subpic_header.length;
-
-					//DM20022004 081.7 int02 add, DVB subs adaption
-					if (Common.nextBits(data, (shift+ptslength)*8, 16) == 0xF)
-					{
-						out.write(((datalength + 3) >>> 8) & 0xFF);
-						out.write((datalength + 3) & 0xFF);
-						out.write(0); //padding
-						target += 3;
-					}
-
-					break;
-
-				case 4:
-					LSB(pcm_header,pts,3,5);
-					pcm_header[8] = (byte)(0xFF & datalength>>>8);
-					pcm_header[9] = (byte)(0xFF & datalength);
-					out.write(pcm_header);
-					target += pcm_header.length;
-					break;
-				}
-			}
-
-			//DM28042004 081.7 int02 add, prevent lost packets
-			else if (format == 5 && Common.nextBits(data, (shift+ptslength)*8, 16) == 0xF)
-			{
-				LSB(subpic_header, 0, 2, 8);
-				out.write(subpic_header);
-				target += subpic_header.length;
-
-				out.write(((datalength + 3) >>> 8) & 0xFF);
-				out.write((datalength + 3) & 0xFF);
-				out.write(0); //padding
-				target += 3;
-			}
-
-			target += datalength;
-			out.write(data, shift+ptslength, datalength);
-		}
-		} 
-		catch (IOException e) { 
-			Msg(Resource.getString("demux.error.audio.io") + "3 " + e); 
-		}
-	}
-
-	//DM24022004 081.6 int18 add
-	private void LSB(byte data[], long value, int off, int len)
-	{
-		for (int a=0; a<len; a++)
-			data[off+a] = (byte)(0xFFL & value>>>(a*8));
-	}
-
-	//DM10052004 081.7 int02 changed, fix
-	public String[] close(String vptslog)
-	{ 
-		String pts_name = name + ".pts";
-		String parameters[] = { name, pts_name, type[format], parentname  };
-
-		try 
-		{
-
-		if (out == null)
-		{
-			parameters[0] = "";
-			return parameters;
-		}
-
-		out.flush(); 
-		out.close();
-
-		log.flush(); 
-		log.close(); 
-
-		if (new File(pts_name).length() < 10) 
-			logAlias(vptslog, pts_name); // logAlias
-
-		if (new File(name).length() < 10)
-		{
-			new File(name).delete();
-			new File(pts_name).delete();
-			parameters[0] = "";
-		}
-
-		} 
-		catch (IOException e)
-		{ 
-			Msg(Resource.getString("demux.error.audio.io") + "4 " + e); 
-		}
-
-		return parameters;
-	} 
-
-	public void initVideo(String name1, long[] options, int buffersize1, int lfn1, int sourcetype1) {
-		parentname=name1;
-		lfn=lfn1;
-		buffersize=buffersize1;
-		sourcetype=sourcetype1;
-		name=name1+source[sourcetype]+lfn;
-		format=3;
-		MPGVideotype=0;
-		writedata = cBox[6].isSelected() ? true : false;  // do write?
-		try 
-		{
-		out = new IDDBufferedOutputStream(new FileOutputStream(name),buffersize);
-		if (cBox[34].isSelected()) //DM24112003 081.5++ mpeg2schnitt
-			out.InitIdd(name,1);
-		
-		log = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(name+".pts"),65535));
-		packet = new ByteArrayOutputStream();
-		vidbuf = new ByteArrayOutputStream();
-		vptsbytes = new ByteArrayOutputStream();
-		vpts = new DataOutputStream(vptsbytes);
-		} 
-		catch (IOException e) { 
-			Msg(Resource.getString("demux.error.video.io") + "1 " + e); 
-		}
-	}
-
-	public void initVideo2(String name1, long[] options) {
-		parentname=name1;
-		name=name1+source[sourcetype]+lfn;
-		writedata = cBox[6].isSelected() ? true : false;  // do write?
-		first=true;
-		MPGVideotype=0;
-		try 
-		{
-		out = new IDDBufferedOutputStream(new FileOutputStream(name),buffersize);
-		if (cBox[34].isSelected()) //DM24112003 081.5++ mpeg2schnitt
-			out.InitIdd(name,1);
-		
-		log = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(name+".pts"),65535));
-		packet.reset();
-	 	vidbuf.reset();
-		vptsbytes.reset();
-		} 
-		catch (IOException e) { 
-			Msg(Resource.getString("demux.error.video.io") + "2 " + e); 
-		}
-	}
-
-	public String closeVideo() { 
-		String logfile = "-1";
-		try 
-		{
-		if (options[32]==1 && options[7]>0) {
-			out.write(Video.getSequenceEndCode());
-			options[39]+=4;
-			options[41]+=4;
-		}
-		packet.close();
-		vidbuf.flush(); 
-		vidbuf.close();
-		out.flush();
-		out.close();
-		log.flush(); 
-		log.close();
-		vpts.flush(); 
-		vpts.close();
-		vptsbytes.flush(); 
-		vptsbytes.close();
-
-		String videofile="";
-		if (new File(name).length()<10) {
-			new File(name).delete();
-			if (!writedata && new File(name+".pts").length()>16) 
-				logfile = name+".pts";
-			else 
-				new File(name+".pts").delete();
-		} else { 
-			int ot = (cBox[32].isSelected() || cBox[29].isSelected() || cBox[30].isSelected()) ? 0 : 2;
-			videofile=parentname+videoext[MPGVideotype+ot];
-			File newfile = new File(videofile);
-
-			if (newfile.exists()) 
-				newfile.delete();
-
-			Common.renameTo(new File(name), newfile); //DM13042004 081.7 int01 changed
-			//new File(name).renameTo(newfile);
-
-			logfile = name + ".pts";
-			setvideoheader(videofile,logfile);
-        
-			/** celltimes.txt 062b***/
-			if (cBox[26].isSelected()) {
-				BufferedWriter cellout = new BufferedWriter(new FileWriter(workouts+"CellTimes.txt"));
-				for (int a=0;a<cell.size();a++) {
-					cellout.write(cell.get(a).toString());
-					cellout.newLine();
-				}
-				cellout.close();
-				Msg(Resource.getString("demux.msg.celltimes", workouts));
-				long fl = new File(workouts+"CellTimes.txt").length();
-				options[39]+=fl;
-				options[41]+=fl;
-			}
-			cell.clear();
-		}
-
-		if (cBox[34].isSelected()) { //DM24112003 081.5++
-			if (new File(videofile).exists())
-				out.renameVideoIddTo(parentname);
 			else
-				out.deleteIdd();
-		}
+				packet.write(_origdata, __shift + __ptslength, __datalength);
 
-		}
-		catch (IOException e) { 
-			Msg(Resource.getString("demux.error.video.io") + "3 " + e); 
-		}
-		return logfile;
-	} 
+			packet.flush();
+			byte[] data = packet.toByteArray();
+			packet.reset();
 
-	/****** write video ******/
-	public long[] writeVideo(byte[] origdata, long[] options, boolean isPVA) {    // data = 1 pespacket from demux
-		int datalength=0, ptslength=0, ttx=0, shift=0;
-		pack++;
+			int s = 0;
+			int t = 0;
+			boolean gop = false;
+			boolean packetfirstframe = true;
 
-		if (isPVA)
-		{
-			datalength=origdata.length;
-
-			if (options[55]!=-1)
+			packloop:
+			for (s = 0, t = 0; s < data.length - 3; s++)
 			{
-				shift=-4; 
-				ptslength=4; 
-			}
-		}
-		else
-		{
-			//DM12072004 081.7 int06 add
-			if (origdata[0] != 0 || origdata[1] != 0 || origdata[2] != 1)
-			{
-				Msg(Resource.getString("demux.error.video.startcode") + " " + pack + " (" + Integer.toHexString(PID) + "/" + Integer.toHexString(ID) + "/" + Integer.toHexString(newID) + "/" + format + ")");
-				return options;
-			}
+				if ( data[s] != 0 || data[s + 1] != 0 || data[s + 2] != 1 ) 
+					continue packloop;
 
-			ID = 0xFF&origdata[3];
-			datalength = ((0xFF&origdata[4])<<8 | (0xFF&origdata[5]));    // av pack length bytes to follow
-
-			if (ismpg==1) {
-				skiploop:
-				while(true) {
-					switch (0xC0&origdata[shift+6]) {
-					case 0x40: { 
-						shift+=2; 
-						continue skiploop; 
-					}
-					case 0x80: { 
-						shift+=3; 
-						continue skiploop; 
-					}
-					case 0xC0: { 
-						shift++;  
-						continue skiploop; 
-					}
-					case 0: { break; }
-					}
-
-					switch (0x30&origdata[shift+6]) {
-					case 0x20: { 
-						ptslength=5;  
-						break skiploop; 
-					}
-					case 0x30: { 
-						ptslength=10; 
-						break skiploop; 
-					}
-					case 0x10: { 
-						shift+=5; 
-						break skiploop; 
-					}
-					case 0:    { 
-						shift++; 
-						break skiploop; 
-					}
-					}
-				}
-			} else {
-				ptslength = (0xFF&origdata[8]);           // read byte pts-length
-				shift=3;
-
-
-
-
-
-
-				if ((0x80&origdata[7])==0) { 
-					shift += ptslength;
-					ptslength=0;
-				}
-			}
-			datalength -= (shift+ptslength);
-			shift+=6;
-		}
-
-		if ( ptslength>0  && origdata.length>=datalength ) {    // read pts, if available
-			pts = (isPVA) ? options[55] :
-				(0xFFFFFFFFL & ( (6&origdata[shift])<<29 |
-				(255&origdata[shift+1])<<22 | (254&origdata[shift+2])<<14 |
-				(255&origdata[shift+3])<<7 | (254&origdata[shift+4])>>>1 )) ;
-
-			pts -= options[27];
-			pts &= 0xFFFFFFFFL;
-
-			if ( (pts & 0xFF000000L)==0xFF000000L ) 
-				ptsover=true;      // bit 33 was set
-
-			if (ptsover && pts<0xF0000000L) 
-
-				pts |= 0x100000000L;
-
-			pts += ptsoffset;
-
-			if (options[30]==1) //DM131003 081.5++
-				System.out.print(" pdv PTS: "+pts);
-
-			isPTSwritten=false; //DM09112003 081.5++
-		} 
-
-		try 
-		{
-
-		//DM04022004 081.6 int14 fix?
-		if (origdata.length < shift+ptslength+datalength)
-			Msg(Resource.getString("demux.error.video.payload") + " ("+origdata.length+"/"+shift+"/"+ptslength+"/"+datalength+")");
-		else
-			packet.write(origdata,shift+ptslength,datalength);
-
-		packet.flush();
-		byte[] data = packet.toByteArray();
-		packet.reset();
-
-		int s=0, t=0;  //DM20032004 081.6 int18 changed
-		boolean gop=false, packetfirstframe=true;
-
-		packloop:
-		for (s=0, t=0; s<data.length-3; s++) //DM20032004 081.6 int18 changed
-		{
-
-			if ( data[s]!=0 || data[s+1]!=0 || data[s+2]!=1 ) 
-				continue packloop;
-
-			/**** 0x 00 00 01 00  new frame at first ****/
-			//if (ptslength>0 && packetfirstframe && data[s+3]==0 ) {
-			if (!isPTSwritten && packetfirstframe && data[s+3]==0 ) {  //DM09112003 081.5++
-				if (misshead && s<3) { 
-					misshead=false; 
-					continue packloop; 
-				}
-
-				if (pts!=-1) //DM18022004 081.6 int17 changed
+				/**
+				 * 0x 00 00 01 00  new frame at first 
+				 */
+				if (!isPTSwritten && packetfirstframe && data[s + 3] == 0 )
 				{
-					vpts.writeLong(pts);
-					vpts.writeLong((long)vidbuf.size());
-					vpts.flush();
-				}
-
-				isPTSwritten=true;  //DM09112003 081.5++
-				packetfirstframe=false;
-				s += 8; //DM14122003 081.6 int06
-			}
-
-			/**** 0x 00 00 01 b3 / b7 sequence start/end ****/
-			/**** 0x 00 00 01 b8  gop start ****/
-			else if (data[s+3]==(byte)0xb3 || data[s+3]==(byte)0xb7 || data[s+3]==(byte)0xb8 ) {
-
-				if (data[s+3]==(byte)0xb3) 
-					seqhead=true;
-				if (data[s+3]==(byte)0xb8 && seqhead && vidbuf.size()<400) { 
-					seqhead=false; 
-					continue packloop; 
-				}
-
-				vidbuf.write(data,t,s);  //DM20032004 081.6 int18 changed
-
-			/***
-				//DM26052004 081.7 int03 add++
-				byte vidbuf_array[] = vidbuf.toByteArray();
-				byte vptsbytes_array[] = vptsbytes.toByteArray();
-
-				vptsbytes.reset();
-				vidbuf.reset(); 
-
-				if (!first) 
-					goptest( out, vidbuf.toByteArray(), vptsbytes.toByteArray(), log, parentname);
-					//goptest( out, vidbuf_array, vptsbytes_array, log, parentname);
-				//DM26052004 081.7 int03 changed--
-			***/
-
-				if (!first) 
-					goptest( out, vidbuf.toByteArray(), vptsbytes.toByteArray(), log, parentname);
-
-				vptsbytes.reset();
-				vidbuf.reset(); 
-
-				/****** split size reached *****/
-				if ( options[18]>0 && options[18]<options[41] ) 
-					return options;
-
-				/****** d2v split reached *****/
-				if ( cBox[30].isSelected() && options[50] > options[51] ) {
-					int part = d2v.getPart()+1;
-					String newpart = parentname+"["+part+"].mpv";
-
-					/*** sequence end code ***/
-					if ( cBox[6].isSelected() && options[32]==1 && options[7]>0 ) {
-						out.write(Video.getSequenceEndCode());
-						options[39]+=4;
-						options[41]+=4;
+					if (misshead && s < 3)
+					{ 
+						misshead = false; 
+						continue packloop; 
 					}
-					out.flush();
-					out.close();
-					System.gc();
 
-					out = new IDDBufferedOutputStream( new FileOutputStream(newpart), bs-1000000);
-					if (cBox[34].isSelected()) //DM24112003 081.5++ mpeg2schnitt
-						out.InitIdd(newpart,1);
-
-					d2v.setFile(newpart);
-					options[50]=0;
-				}
-
-				//if (ptslength>0 && packetfirstframe) {
-				if (!isPTSwritten && packetfirstframe) { //DM09112003 081.5++
-					if (pts!=-1) //DM18022004 081.6 int17 changed
+					if (pts != -1)
 					{
 						vpts.writeLong(pts);
-						vpts.writeLong(vidbuf.size());
+						vpts.writeLong((long)vidbuf.size());
 						vpts.flush();
 					}
-					isPTSwritten=true; //DM09112003 081.5++
+
+					isPTSwritten = true;
+					packetfirstframe = false;
+					s += 8;
 				}
 
-
-				//DM04112003 081.5++ change 
-				//DM06022004 081.6 int15 add msg
-				//DM13082004 081.7 int09 changed
-				if (data[s+3] == (byte)0xb7)
+				/**** 0x 00 00 01 b3 / b7 sequence start/end ****/
+				/**** 0x 00 00 01 b8  gop start ****/
+				else if (data[s + 3] == (byte)0xB3 || data[s + 3] == (byte)0xB7 || data[s + 3] == (byte)0xB8 )
 				{
-					Msg(Resource.getString("demux.msg.skip.sec") + " " + clv[6]);
+					if (data[s + 3] == (byte)0xB3) 
+						seqhead = true;
 
-					first = true;
-					options[13] = 0;
-					//vidbuf.write(data, s + 4, data.length - s - 4);
+					if (data[s + 3] == (byte)0xB8 && seqhead && vidbuf.size() < 400)
+					{ 
+						seqhead = false; 
+						continue packloop; 
+					}
 
-					s += 3;
-					continue packloop;
+					vidbuf.write(data, t, s);
+
+					if (!first) 
+						goptest( out, vidbuf.toByteArray(), vptsbytes.toByteArray(), log, parentname);
+
+					vptsbytes.reset();
+					vidbuf.reset(); 
+
+					/**
+					 * split size reached 
+					 */
+					if ( _options[18] > 0 && _options[18] < _options[41] ) 
+						return _options;
+
+					/**
+					 * d2v split reached 
+					 */
+					if ( cBox[30].isSelected() && _options[50] > _options[51] )
+					{
+						int part = d2v.getPart() + 1;
+						String newpart = parentname + "[" + part + "].mpv";
+
+						/*** sequence end code ***/
+						if ( cBox[6].isSelected() && _options[32] == 1 && _options[7] > 0 )
+						{
+							out.write(Video.getSequenceEndCode());
+							options[39] += 4;
+							options[41] += 4;
+						}
+
+						out.flush();
+						out.close();
+						System.gc();
+	
+						out = new IDDBufferedOutputStream( new FileOutputStream(newpart), bs - 1000000);
+
+						/**
+						 * M2S idd
+						 */
+						if (cBox[34].isSelected())
+							out.InitIdd(newpart, 1);
+
+						d2v.setFile(newpart);
+						_options[50] = 0;
+					}
+
+					if (!isPTSwritten && packetfirstframe)
+					{
+						if (pts != -1)
+						{
+							vpts.writeLong(pts);
+							vpts.writeLong(vidbuf.size());
+							vpts.flush();
+						}
+
+						isPTSwritten = true;
+					}
+
+
+					if (data[s + 3] == (byte)0xB7)
+					{
+						Msg(Resource.getString("demux.msg.skip.sec") + " " + clv[6]);
+
+						first = true;
+						_options[13] = 0;
+
+						s += 3;
+						continue packloop;
+					}
+					else 
+						vidbuf.write(data, s, data.length - s);
+
+
+					if (data[s + 3] == (byte)0xB8)
+					{
+						_options[13] = 0;
+
+						if (_options[19] > 0) 
+							first = false;
+					}
+					else if (data[s + 3] == (byte)0xB3)
+					{ 
+						_options[13] = 1;
+						first = false;
+					}
+
+					gop = true;
+					misshead = false;
+					break packloop;
+				}
+			} // end packloop
+
+			if (!gop)
+			{ 
+				if (data.length > 2)
+				{
+					vidbuf.write(data, 0, data.length - 3);
+					packet.write(data, data.length - 3, 3);
+					misshead = true;
 				}
 				else 
-					vidbuf.write(data, s, data.length - s);
-
-				if (data[s+3]==(byte)0xb8) {
-					options[13]=0;
-					if (options[19]>0) 
-						first=false;
-				} else if (data[s+3]==(byte)0xb3){ 
-					options[13]=1;
-					first=false;
-				}
-				gop=true;
-				misshead=false;
-				break packloop;
+					vidbuf.write(data);
 			}
-		} // end packloop
 
-		if (!gop) { 
-			if (data.length>2) {
-				vidbuf.write(data,0,data.length-3);
-				packet.write(data,data.length-3,3);
-				misshead=true;
-			} else 
-				vidbuf.write(data);
-		}
-
-		}
-		catch (IOException e) { 
+		} catch (IOException e) { 
 			Msg(Resource.getString("demux.error.video.io") + "4 " + e); 
 		}
 
-		if (vidbuf.size()>6144000){ //DM111003 081.5++
+		if (vidbuf.size() > 6144000)
+		{
 			vptsbytes.reset();
 			vidbuf.reset(); 
 			packet.reset();
+
 			Msg(Resource.getString("demux.error.gop.toobig"));
-			misshead=false;
-			first=true;
+
+			misshead = false;
+			first = true;
 		}
 
-		return options;
+		return _options;
 	}
 }
 
@@ -17594,7 +17855,7 @@ class makeVDR
 				if (newID!=0xE0 && !video && cBox[23].isSelected()) 
 					return options; // must start with video  
 
-				data = searchHeader(data,type,overhead);
+				data = CommonParsing.searchHeader(data,type,overhead);
 
 				if (data.length==0) 
 					return options;
@@ -18043,11 +18304,7 @@ class makeVDR
 					if (newID!=0xE0 && !video && cBox[23].isSelected()) 
 						return options; // must start with video  
 					if (type!=1){
-						data = searchHeader(data,type,overhead);
-
-
-
-
+						data = CommonParsing.searchHeader(data, type, overhead);
 						datalength=data.length-overhead;  //DM16112003 081.5++ fix
 					}
 					if (data.length==0) 
@@ -18334,34 +18591,62 @@ class makeVDR
 	} 
 }
 
-//DM12122003 081.6 int05
-class X_JFileChooser extends JFileChooser
-{
-	public X_JFileChooser()
+
+	/**
+	 * Returns the TTX forced language pairs
+	 * 
+	 * @return int
+	 */
+	public static int getForcedTTXLanguage()
 	{
-		super();
-		setApproveButtonText(Resource.getString("select.file"));
-		setDialogTitle(Resource.getString("select.title"));
+		return (comBox[18].getSelectedIndex() - 1);
 	}
-	public void rescanCurrentDirectory()
+
+	/**
+	 * sets the JButton Selection status
+	 */
+	public static void setButton(int button, boolean selected)
 	{
-		String current_directory = d2vfield[8].getText();
-
-		if (current_directory.startsWith("?"))
-			chooser.setCurrentDirectory(new File(current_directory.substring(1)));
-
-		else if (!current_directory.equals("") && chooser.getCurrentDirectory().toString().equals(System.getProperty("user.home")))
-			chooser.setCurrentDirectory(new File(current_directory));
-
-		super.rescanCurrentDirectory();
+		RButton[button].setSelected(selected);
 	}
-}
 
-//DM09082004 081.7 int08 add
-public static int getForcedTTXLanguage()
-{
-	return (comBox[18].getSelectedIndex() - 1);
-}
+	/**
+	 * Returns the JButton Selection status
+	 * 
+	 * @return bool
+	 */
+	public static boolean isButtonSelected(int index)
+	{
+		return RButton[index].isSelected();
+	}
+
+	/**
+	 * sets the JCheckBox Selection status
+	 */
+	public static void setBox(int box, boolean selected)
+	{
+		cBox[box].setSelected(selected);
+	}
+
+	/**
+	 * Returns the JCheckBox Selection status
+	 * 
+	 * @return bool
+	 */
+	public static boolean isBoxSelected(int index)
+	{
+		return cBox[index].isSelected();
+	}
+
+	/**
+	 * Returns JTextfield Item
+	 * 
+	 * @return String
+	 */
+	public static String getStringOfTextfield(int index)
+	{
+		return d2vfield[index].getText();
+	}
 
 
 }  /**** end class X ****/
