@@ -17,3 +17,6 @@ dvbmatt klärung 02.11. - JDK1.2.2 adaption, Calendar.getTimeInMillis() ist prote
 dvbmatt erl. - 5.11. - TS.java , TS-Erzeugung: zusätzl. ATSC konformer AC3 Eintrag in PMT
 pstorch erl - 6.11. - commons-net-1.1.0 ersetzt durch commons-net-1.2.2 + jakarta-oro, als Source archiv + .jar (fertige .jar basierend auf JDK122 (funktion mit div. JDK's prüfen))
 dvbmatt erl 6.11. - Hexviewer, keine Daten bei Erstaufruf, scrollen (slider) arbeitet nicht wie vorgesehen (Sprungweite)
+pstorch erl 11.11. - skip() überschrieben in xinputstream, es sind ztw. zuwenig bytes geskippt worden das dies abgefangen wurde
+pstorch erl 11.11. - update URL verbindung zur sf.net project homepage (update.txt)
+dvbmatt erl 11.11. - bei ungültigem ausgabepfad werden die daten auf dem projectx-pfad ausgegeben.
