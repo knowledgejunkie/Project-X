@@ -60,8 +60,8 @@ public class X extends JPanel
 {
 
 static String version[] = { 
-	"ProjectX 0.81.7_int07",
-	"06.08.2004",
+	"ProjectX 0.81.7_int09",
+	"18.08.2004",
 	"TEST PROJECT ONLY",
 	", User: " + System.getProperty("user.name")
 };
@@ -200,9 +200,8 @@ public X()	//DM20032004 081.6 int18 changed
 	RButton[1] = new JRadioButton();
 
 	/*** unused ***/
-	//DM09072004 081.7 int06 moved
-	comBox[18] = new JComboBox();
-	comBox[20] = new JComboBox();
+	//DM09082004 081.7 int08 moved
+	cBox[35] = new JCheckBox();
 
 
 	chooser = new X_JFileChooser(); //DM12122003 081.6 int05
@@ -1306,11 +1305,20 @@ protected JPanel buildidPanel()
 	cBox[42].setMaximumSize(new Dimension(250,20));
 	idPanel3.add(cBox[42]);
 
+	/**
 	cBox[35] = new JCheckBox("add Topfield TF4000 header to TS"); //DM10032004 081.6 int18 changed
 	cBox[35].setSelected(false);
 	cBox[35].setPreferredSize(new Dimension(250,20));
 	cBox[35].setMaximumSize(new Dimension(250,20));
-	idPanel3.add(cBox[35]);
+	//idPanel3.add(cBox[35]);
+	**/
+
+	//DM09082004 081.7 int08 add
+	Object ts_headers[] = { "no additional TS header", "add TF4000 header to TS", "add TF5000 header to TS" };
+	comBox[20] = new JComboBox(ts_headers);
+	comBox[20].setPreferredSize(new Dimension(250,22));
+	comBox[20].setMaximumSize(new Dimension(250,22));
+	idPanel3.add(comBox[20]);
 
 	cBox[37] = new JCheckBox("TF-header: set AC3 as main AudioTrack");
 	cBox[37].setSelected(false);
@@ -2091,20 +2099,46 @@ protected JPanel buildsubtitlePanel()
 	tt0.add(RButton[13]);
 
 	JLabel page_decode = new JLabel("teletext pages to decode: (fields editable, set to 'null' to ignore a field)");
-	page_decode.setToolTipText("autodetection of special characters based on LATIN 1 codepage & Unicode (ATM for czech & polish)");
+	page_decode.setToolTipText("autodetection of special characters based on Teletext Level 1.5 codepages in unicode");
 	tt0.add(page_decode);
 
-	Object[] pagenumber = {"null","149","150","777","779","784","785","786","881","882","884","885","886","887","888","889"};
+	Object[] pagenumber = {"null","149","150","691","692","693","694","777","779","784","785","786","881","882","884","885","886","887","888","889"};
 
 	JPanel tt1 = new JPanel();
 	tt1.setLayout(new BoxLayout(tt1, BoxLayout.X_AXIS));
 
 	for (int p=0;p<6;p++) {
 		comBox[28+p] = new JComboBox(pagenumber);
-		comBox[28+p].setPreferredSize(new Dimension(80,25));
+		comBox[28+p].setPreferredSize(new Dimension(60,25));
 		comBox[28+p].setEditable(true);
 		tt1.add(comBox[28+p]);
 	}
+
+	//DM09082004 081.7 int08 add++
+	JLabel lang_decode = new JLabel("  language: ");
+	lang_decode.setToolTipText("fix to a language pair, if an automatic switch is not supported by the broadcaster");
+	tt1.add(lang_decode);
+
+	Object lang_pairs[] = { 
+		"auto", 
+		"basic LATIN", 
+		"force polish", 
+		"force turkish", 
+		"force cro,rom", 
+		"force est,rus",
+		"res.",
+		"force greek", 
+		"res.", 
+		"force arabic", 
+		"res.", 
+		"force hebrew"
+	};
+
+	comBox[18] = new JComboBox(lang_pairs);
+	comBox[18].setPreferredSize(new Dimension(120,25));
+	tt1.add(comBox[18]);
+	//DM09082004 081.7 int08 add--
+
 	tt0.add(tt1);
 
 	JPanel ttPanel = new JPanel();
@@ -8062,14 +8096,16 @@ public long nextFilePTS(int type, int ismpg, long lastpts, int file_number) {
 	java.text.DateFormat sms = new java.text.SimpleDateFormat("HH:mm:ss.SSS");
 	sms.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
 
-	if (combvideo.size() > file_number) {
+	if (combvideo.size() > file_number)
+	{
 		try 
 		{
-		int filesize = (int)(0xFFFFFFFFL & new File(combvideo.get(file_number).toString()).length());
-		int buffersize = Integer.parseInt(comBox[37].getSelectedItem().toString()); //DM19122003 081.6_int07 new
+		//DM13082004 081.7 int09 changed
+		long filesize = new File(combvideo.get(file_number).toString()).length();
+		long buffersize = Long.parseLong(comBox[37].getSelectedItem().toString());
 
-		if (filesize>buffersize) //DM19122003 081.6_int07 changed
-			filesize=buffersize;
+		if (filesize > buffersize) //DM19122003 081.6_int07 changed
+			filesize = buffersize;
 
 		PushbackInputStream in = new PushbackInputStream(new FileInputStream(combvideo.get(file_number).toString()),6500);
 
@@ -8087,7 +8123,7 @@ public long nextFilePTS(int type, int ismpg, long lastpts, int file_number) {
 				int ptsflag = 255&push25[5];   // read byte pts-flag & pre/postbytes
 				int packlength = (255&push25[6])<<8 | (255&push25[7]);    // av pack length bytes to follow
 				boolean cpts = ( (16 & ptsflag) !=0 ) ? true : false;
- 
+
  				if (stype==1) {
 					if (cpts) {
 						pts = 0xFFFFFFFFL & ((255&push25[8])<<24 | (255&push25[9])<<16 | (255&push25[10])<<8 | (255&push25[11]));        // read pts 32bit +convert to long
@@ -8761,6 +8797,9 @@ public String pvaparse(String pvafile,int ismpg,int ToVDR, String vptslog) {
 				/****** split size reached *****/
 				if ( options[18]>0 && options[18]<options[41] ) 
 					break pvaloop;
+
+
+
 
 				continue pvaloop;
 			}
@@ -9813,6 +9852,8 @@ public boolean processAudio(String[] args) {
 
 					if (!vptsdata || (vptsdata && awrite)) {
 						audbuf.writeTo(audiooutL);
+
+
 
 						/*********** RIFF *****/
 						if (cBox[12].isSelected()) 
@@ -11091,7 +11132,6 @@ public String FramesToTime(int framenumber, double framelength)
 }
 
 
-
 /****************************
  * decoding teletext stream *
  ****************************/
@@ -11957,14 +11997,12 @@ public void processTeletext(String[] args)
 					str = Teletext.makestring(packet, 6, 40, row, character_set, 0, true);
 					break;
 
+				//DM09082004 081.7 int08 changed
+				case 2:
+				case 7:
 				case 3:
 				case 4:
 					str = Teletext.makestring(packet, 6, 40, row, character_set, 0, true).trim();
-					break;
-
-				case 2:
-				case 7:
-					str = Teletext.makestring(packet, 6, 40, row, character_set + 8, 0, true).trim();
 					break;
 
 				case 5:
@@ -15269,13 +15307,24 @@ class PIDdemux {
 					}
 					isPTSwritten=true; //DM09112003 081.5++
 				}
-				if (data[s+3]==(byte)0xb7) {  //DM04112003 081.5++ change //DM06022004 081.6 int15 add msg
-					Msg("-> skip sequence_end_code following GOP#"+clv[6]);
-					vidbuf.write(data,s+4,data.length-s-4);
-					first=true;
-					options[13]=0;
-				}else 
-					vidbuf.write(data,s,data.length-s);
+
+
+				//DM04112003 081.5++ change 
+				//DM06022004 081.6 int15 add msg
+				//DM13082004 081.7 int09 changed
+				if (data[s+3] == (byte)0xb7)
+				{
+					Msg("-> skip sequence_end_code following GOP#" + clv[6]);
+
+					first = true;
+					options[13] = 0;
+					//vidbuf.write(data, s + 4, data.length - s - 4);
+
+					s += 3;
+					continue packloop;
+				}
+				else 
+					vidbuf.write(data, s, data.length - s);
 
 				if (data[s+3]==(byte)0xb8) {
 					options[13]=0;
@@ -15422,6 +15471,7 @@ class makeVDR {
 			int i=0;
 			for (;i<IDs.size();i++) {          // new ID arrived, align data
 				if (newID==(0xFF&Integer.parseInt(IDs.get(i).toString()))) 
+
 
 
 
@@ -15895,11 +15945,11 @@ class makeVDR {
 			if (type==3) 
 				data[4]=data[5]=0;
 
-			/*** tf special ****/
-			if (first) {
-				tf.init(name,cBox[37].isSelected(),cBox[42].isSelected());
-				if (cBox[35].isSelected()) 
-					buf.write(tf.getHead1());
+			//add TS header
+			//DM09082004 081.7 int08 changed
+			if (first)
+			{
+				buf.write( tf.init( name, cBox[37].isSelected(), cBox[42].isSelected(), comBox[20].getSelectedIndex()));
 				first=false; 
 			}
 
@@ -16128,52 +16178,10 @@ class makeVDR {
 		if (toTS && qinfo && cBox[41].isSelected()) 
 			tf.setPmtPids(IDs);
 
-		if (toTS && cBox[35].isSelected())
-		{
-			String name1 = name.substring(0,name.length()-3);
+		//DM09082004 081.7 int08 outsourced
+		if (toTS)
+			name = TS.updateAdditionalHeader(name, time, comBox[20].getSelectedIndex());
 
-			if (new File(name1).exists()) 
-				new File(name1).delete();
-
-			Common.renameTo(name, name1); //DM13042004 081.7 int01 changed
-			//new File(name).(new File(name1));
-			name = name1;
-
-			/*** times ***/
-			long[] event = new long[4];
-			long millis = (time[1]-time[0])/90L;
-			event[0] = System.currentTimeMillis();
-			event[1] = event[0]-millis;
-			short minutes = (short)(0xFFFF&(Math.round(millis/60000f)));
-			event[2] = (event[0]/86400000L) +40587;
-			event[3] = (event[1]/86400000L) +40587;
-
-			java.util.Calendar datum = java.util.Calendar.getInstance();
-			datum.setTime(new java.util.Date(event[0]));
-
-			RandomAccessFile ts = new RandomAccessFile(name,"rw");
-			ts.seek(0);
-
-			ts.writeShort((short)event[2]);
-			ts.writeByte((byte)datum.get(11));
-			ts.writeByte((byte)datum.get(12));
-			ts.writeShort((short)event[2]);
-			ts.writeByte((byte)datum.get(11));
-			ts.writeByte((byte)datum.get(12));
-			ts.writeShort(minutes);
-			ts.seek(0x44);
-			ts.writeShort((short)event[2]);
-			ts.writeByte((byte)datum.get(11));
-			ts.writeByte((byte)datum.get(12));
-			ts.writeShort(minutes);
-
-			datum.setTime(new java.util.Date(event[1]));
-			ts.seek(0x40);
-			ts.writeShort((short)event[3]);
-			ts.writeByte((byte)datum.get(11));
-			ts.writeByte((byte)datum.get(12));
-			ts.close();
-		}
 
 		//DM18022004 081.6 int17 new
 		if (toVdr==1 && cBox[54].isSelected() && new File(name).length()<150)
@@ -16219,6 +16227,13 @@ class X_JFileChooser extends JFileChooser
 		super.rescanCurrentDirectory();
 	}
 }
+
+//DM09082004 081.7 int08 add
+public static int getForcedTTXLanguage()
+{
+	return (comBox[18].getSelectedIndex() - 1);
+}
+
 
 }  /**** end class X ****/
 

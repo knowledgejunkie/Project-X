@@ -2298,48 +2298,50 @@ public void Add_Block(int comp, int bx, int by, int dct_type[], boolean addflag)
 	iincr += 8;
 
 	//DM02092003+
-	int val,luma,pPos, r,g,b;
-	if (cc==0){   //lumi
-		for (int y=0; y<8; y++){
-			for (int x=0; x<8; x++){
-				pPos = rfp+x+(y*iincr);
-				val = Block_Ptr[x+(y*8)]+((picture_coding_type==I_TYPE)?128:0);
-				val = val<0 ? 0 : (val>255 ? 255 : val);
-				pixels[pPos] += val<<16 | val<<8 | val;
+	int val, luma, pPos, r, g, b;
+
+	//DM20082004 081.7 int10 changed
+	if (cc == 0) //lumi
+	{   
+		for (int y = 0; y < 8; y++)
+		{
+			for (int x = 0; x < 8; x++)
+			{
+				pPos = rfp + x + (y * iincr);
+				val = Block_Ptr[x + (y * 8)] + ((picture_coding_type == I_TYPE) ? 128 : 0);
+				val = val < 0 ? 0 : (val > 255 ? 255 : val);
+
+				pixels[pPos] |= val<<16; //Y
 			}
 		}
 	}
-
 	else
 	{    //chroma cc1 = Cb, cc2=Cr
-		if (chroma_format!=CHROMA444){
-			rfp<<=1;
-			iincr<<=1;
+		if (chroma_format != CHROMA444)
+		{
+			rfp <<= 1;
+			iincr <<= 1;
 		}
 
-		for (int y=0; y<16; y++){
-			for (int x=0; x<16; x++){
-				val = Block_Ptr[(x>>1) + (8*(chroma_format!=CHROMA420?(y>>1):((y&1)==0?((y>>1)&~dct_type[0]):((y>>1)|dct_type[0]))))];
-				pPos = rfp+(x>>(chroma_format==CHROMA444?1:0))+((y>>(chroma_format!=CHROMA420?1:0)) *iincr);
-				luma = pixels[pPos];
-				if (cc==1){
-					r = (0xFF&luma>>>16);
-					g = (int)((float)(0xFF&luma>>>8) -0.34414f*val);
-					b = (int)((float)(0xFF&luma) +1.722f*val);
-					g = g<0 ? 0 : (g>255 ? 255 : g);
-					b = b<0 ? 0 : (b>255 ? 255 : b);
-				}else{
-					r = (int)((float)(0xFF&luma>>>16) +1.402f*val);
-					g = (int)((float)(0xFF&luma>>>8) -0.71414f*val);
-					b = (0xFF&luma);
-					r = r<0 ? 0 : (r>255 ? 255 : r);
-					g = g<0 ? 0 : (g>255 ? 255 : g);
-				}
-				pixels[pPos] = r<<16|g<<8|b;
-				if (chroma_format==CHROMA444)
+		for (int y = 0; y < 16; y++)
+		{
+			for (int x = 0; x < 16; x++)
+			{
+				pPos = rfp + (x >>(chroma_format == CHROMA444 ? 1 : 0)) + ((y >>(chroma_format != CHROMA420 ? 1 : 0)) * iincr);
+				val = 128 + Block_Ptr[(x >>1) + (8 * (chroma_format != CHROMA420 ? (y >>1) : ((y & 1) == 0 ? ((y >>1) & ~dct_type[0]) : ((y >>1) | dct_type[0]))))];
+				val = val < 0 ? 0 : (val > 255 ? 255 : val);
+
+				if (cc == 1) //U
+					pixels[pPos] |= val<<8;
+
+				else  //V
+					pixels[pPos] |= val;
+
+				if (chroma_format == CHROMA444)
 					x++;
 			}
-			if (chroma_format!=CHROMA420)
+
+			if (chroma_format != CHROMA420)
 				y++;
 		}
 	}
@@ -2512,8 +2514,33 @@ public int Get_dmvector(){
 		return 0;
 }
 
+
+
+	//DM20082004 081.7 int10 add
+	private int YUVtoRGB(int YUV)
+	{
+		int T  = 0xFF;
+		int Y  = 0xFF & YUV>>>16;
+		int Cb = 0xFF & YUV>>>8;
+		int Cr = 0xFF & YUV;
+
+		if (Y == 0)
+			return 0;
+
+		int R = (int)((float)Y +1.402f * (Cr-128));
+		int G = (int)((float)Y -0.34414 * (Cb-128) -0.71414 * (Cr-128));
+		int B = (int)((float)Y +1.722 * (Cb-128));
+		R = R < 0 ? 0 : (R > 0xFF ? 0xFF : R);
+		G = G < 0 ? 0 : (G > 0xFF ? 0xFF : G);
+		B = B < 0 ? 0 : (B > 0xFF ? 0xFF : B);
+
+		return (T<<24 | R<<16 | G<<8 | B);
+	}
+
+
 //DM08022004 081.6 int16 changed, 
 //DM24042004 081.7 int02 changed
+//DM20082004 081.7 int10 changed
 private void scale_Picture()
 {
 	java.util.Arrays.fill(pixels2,0xFF505050);
@@ -2528,7 +2555,8 @@ private void scale_Picture()
 
 	for (int y = 0; Y < vertical_size && y < ny; Y += Ydecimate, y++, X=0)
 		for (int x = x_offset; X < horizontal_size && x < nx; X += Xdecimate, x++)
-			pixels2[x + (y * scanline)] = 0xFF000000 | pixels[(int)X + ((int)Y * horizontal_size)];
+			pixels2[x + (y * scanline)] = YUVtoRGB(pixels[(int)X + ((int)Y * horizontal_size)]);
+
 
 	source.newPixels();
 
@@ -2834,15 +2862,23 @@ public void saveBMP(boolean auto_save, boolean noGUI) {  //DM30112003 081.5++ ch
 	littleEndian(bmpHead,22,vertical_size);
 	littleEndian(bmpHead,34,(size*3));
 
-	try{
+	try
+	{
 	BufferedOutputStream BMPfile = new BufferedOutputStream(new FileOutputStream(newfile),2048000);
 	BMPfile.write(bmpHead);
-	for (int a=vertical_size-1; a>=0; a--)
-		for (int b=0; b<horizontal_size; b++){
-			for (int c=0; c<3; c++)
-				bmp24[c] = (byte)(pixels[b+a*horizontal_size]>>(c*8) &0xFF);
+
+	//DM20082004 081.7 int10 changed
+	for (int a = vertical_size - 1; a >= 0; a--)
+		for (int b = 0, pixel = 0; b < horizontal_size; b++)
+		{
+			pixel = YUVtoRGB(pixels[b + a * horizontal_size]);
+
+			for (int c = 0; c < 3; c++)
+				bmp24[c] = (byte)(pixel >>(c * 8) & 0xFF);
+
 			BMPfile.write(bmp24);
 		}
+
 	BMPfile.flush();
 	BMPfile.close();
 	bmpCount++;

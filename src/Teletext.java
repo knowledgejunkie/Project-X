@@ -299,6 +299,7 @@ public final class Teletext
 	 ******************************/
 	//DM30122003 081.6 int10 changed
 	//DM24072004 081.7 int07 changed
+	//DM09082004 081.7 int08 changed
 	public static int[] makepic(byte[] packet, int offset, int len, int row, int character_set, boolean checkParity)
 	{
 		//  return int char<<8 | 0xF0 & active_color backgrnd | 0xF & active_color foregrnd
@@ -306,8 +307,12 @@ public final class Teletext
 		boolean ascii = true, toggle = false;
 		int chars[] = new int[len];
 		int active_color = 7;  // init with white ascii color per line + black background
-		int primary_set_mapping = 0, primary_national_set_mapping = character_set;
-		int secondary_set_mapping = 0, secondary_national_set_mapping = character_set;
+
+		int primary_set_mapping = X.getForcedTTXLanguage() < 0 ? 0 : X.getForcedTTXLanguage();
+		int primary_national_set_mapping = character_set;
+
+		int secondary_set_mapping = primary_set_mapping;
+		int secondary_national_set_mapping = primary_national_set_mapping;
 
 		if (page_modifications.containsKey("primary_set"))
 			secondary_set_mapping = primary_set_mapping = Integer.parseInt(page_modifications.get("primary_set").toString());
@@ -404,52 +409,55 @@ public final class Teletext
 				continue; 
 			}
 
-			// all chars 0x20..7F    special characters
-			switch (char_value)
-			{ 
-			case 0x23: 
-				chars[i] = active_color | active_national_set[0]<<8;  
-				continue; 
-			case 0x24: 
-				chars[i] = active_color | active_national_set[1]<<8;  
-				continue; 
-			case 0x40:
-				chars[i] = active_color | active_national_set[2]<<8;  
-				continue; 
-			case 0x5b:
-				chars[i] = active_color | active_national_set[3]<<8;  
-				continue; 
-			case 0x5c: 
-				chars[i] = active_color | active_national_set[4]<<8;  
-				continue; 
-			case 0x5d: 
-				chars[i] = active_color | active_national_set[5]<<8;  
-				continue; 
-			case 0x5e: 
-				chars[i] = active_color | active_national_set[6]<<8;  
-				continue; 
-			case 0x5f: 
-				chars[i] = active_color | active_national_set[7]<<8;  
-				continue; 
-			case 0x60: 
-				chars[i] = active_color | active_national_set[8]<<8;  
-				continue; 
-			case 0x7b: 
-				chars[i] = active_color | active_national_set[9]<<8;  
-				continue; 
-			case 0x7c:
-				chars[i] = active_color | active_national_set[10]<<8; 
-				continue; 
-			case 0x7d:
-				chars[i] = active_color | active_national_set[11]<<8; 
-				continue; 
-			case 0x7e:
-				chars[i] = active_color | active_national_set[12]<<8; 
-				continue; 
-			default: 
-				chars[i] = active_color | active_set[char_value]<<8; 
-				continue; 
+			if (active_national_set != null)
+			{
+				// all chars 0x20..7F    special characters
+				switch (char_value)
+				{ 
+				case 0x23: 
+					chars[i] = active_color | active_national_set[0]<<8;  
+					continue; 
+				case 0x24: 
+					chars[i] = active_color | active_national_set[1]<<8;  
+					continue; 
+				case 0x40:
+					chars[i] = active_color | active_national_set[2]<<8;  
+					continue; 
+				case 0x5b:
+					chars[i] = active_color | active_national_set[3]<<8;  
+					continue; 
+				case 0x5c: 
+					chars[i] = active_color | active_national_set[4]<<8;  
+					continue; 
+				case 0x5d: 
+					chars[i] = active_color | active_national_set[5]<<8;  
+					continue; 
+				case 0x5e: 
+					chars[i] = active_color | active_national_set[6]<<8;  
+					continue; 
+				case 0x5f: 
+					chars[i] = active_color | active_national_set[7]<<8;  
+					continue; 
+				case 0x60: 
+					chars[i] = active_color | active_national_set[8]<<8;  
+					continue; 
+				case 0x7b: 
+					chars[i] = active_color | active_national_set[9]<<8;  
+					continue; 
+				case 0x7c:
+					chars[i] = active_color | active_national_set[10]<<8; 
+					continue; 
+				case 0x7d:
+					chars[i] = active_color | active_national_set[11]<<8; 
+					continue; 
+				case 0x7e:
+					chars[i] = active_color | active_national_set[12]<<8; 
+					continue; 
+				}
 			}
+
+			chars[i] = active_color | active_set[char_value]<<8; 
+			continue; 
 		}
 
 		String test = "";
@@ -468,12 +476,17 @@ public final class Teletext
 	 * make strings from teletext *
 	 ******************************/
 	//DM24072004 081.7 int07 changed
+	//DM09082004 081.7 int08 changed
 	public static String makestring(byte[] packet, int offset, int len, int row, int character_set, int color, boolean checkParity)
 	{
 		boolean ascii = true, toggle = false;
 		String text = "";
-		int primary_set_mapping = 0, primary_national_set_mapping = character_set;
-		int secondary_set_mapping = 0, secondary_national_set_mapping = character_set;
+
+		int primary_set_mapping = X.getForcedTTXLanguage() < 0 ? 0 : X.getForcedTTXLanguage();
+		int primary_national_set_mapping = character_set;
+
+		int secondary_set_mapping = primary_set_mapping;
+		int secondary_national_set_mapping = primary_national_set_mapping;
 
 		if (page_modifications.containsKey("primary_set"))
 			secondary_set_mapping = primary_set_mapping = Integer.parseInt(page_modifications.get("primary_set").toString());
@@ -560,53 +573,56 @@ public final class Teletext
 				continue; 
 			}
 
-			// all chars 0x20..7F
 
-			switch (char_value)  // special national characters
+			if (active_national_set != null)
 			{
-			case 0x23:
-				text += (char)active_national_set[0]; 
-				continue loopi; 
-			case 0x24:
-				text += (char)active_national_set[1]; 
-				continue loopi; 
-			case 0x40:
-				text += (char)active_national_set[2]; 
-				continue loopi; 
-			case 0x5b:
-				text += (char)active_national_set[3]; 
-				continue loopi; 
-			case 0x5c:
-				text += (char)active_national_set[4]; 
-				continue loopi; 
-			case 0x5d:
-				text += (char)active_national_set[5]; 
-				continue loopi; 
-			case 0x5e:
-				text += (char)active_national_set[6]; 
-				continue loopi; 
-			case 0x5f:
-				text += (char)active_national_set[7]; 
-				continue loopi; 
-			case 0x60:
-				text += (char)active_national_set[8]; 
-				continue loopi; 
-			case 0x7b:
-				text += (char)active_national_set[9]; 
-				continue loopi; 
-			case 0x7c:
-				text += (char)active_national_set[10]; 
-				continue loopi; 
-			case 0x7d:
-				text += (char)active_national_set[11]; 
-				continue loopi; 
-			case 0x7e:
-				text += (char)active_national_set[12]; 
-				continue loopi; 
-			default:
-				text += (char)active_set[char_value]; 
-				continue loopi; 
+				// all chars 0x20..7F
+				switch (char_value)  // special national characters
+				{
+				case 0x23:
+					text += (char)active_national_set[0]; 
+					continue loopi; 
+				case 0x24:
+					text += (char)active_national_set[1]; 
+					continue loopi; 
+				case 0x40:
+					text += (char)active_national_set[2]; 
+					continue loopi; 
+				case 0x5b:
+					text += (char)active_national_set[3]; 
+					continue loopi; 
+				case 0x5c:
+					text += (char)active_national_set[4]; 
+					continue loopi; 
+				case 0x5d:
+					text += (char)active_national_set[5]; 
+					continue loopi; 
+				case 0x5e:
+					text += (char)active_national_set[6]; 
+					continue loopi; 
+				case 0x5f:
+					text += (char)active_national_set[7]; 
+					continue loopi; 
+				case 0x60:
+					text += (char)active_national_set[8]; 
+					continue loopi; 
+				case 0x7b:
+					text += (char)active_national_set[9]; 
+					continue loopi; 
+				case 0x7c:
+					text += (char)active_national_set[10]; 
+					continue loopi; 
+				case 0x7d:
+					text += (char)active_national_set[11]; 
+					continue loopi; 
+				case 0x7e:
+					text += (char)active_national_set[12]; 
+					continue loopi; 
+				}
 			}
+
+			text += (char)active_set[char_value]; 
+			continue loopi; 
 		}
 
 		if (color==1) 
@@ -730,6 +746,8 @@ public final class Teletext
 				position = display_row<<16 | display_column;
 
 				page_modifications.put("" + position, str);
+
+				//X.Msg("replaced char " + str + " /m " + mode);
 			}
 		}
 	}
