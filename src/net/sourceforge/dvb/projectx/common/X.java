@@ -172,7 +172,7 @@ public class X extends JPanel
 
 /* main version index */
 static String version_name = "ProjectX 0.81.10 dev";
-static String version_date = "14.11.2004 18:13";
+static String version_date = "20.11.2004 13:00";
 
 public static boolean CLI_mode = false;
 
@@ -356,6 +356,8 @@ protected void buildPopupMenu()
 	menuitem_1.setActionCommand("openCut");
 	popup.addSeparator();
 
+	JMenuItem menuitem_8 = popup.add(Resource.getString("popup.url"));
+	menuitem_8.setActionCommand("url");
 	JMenuItem menuitem_2 = popup.add(Resource.getString("popup.add"));
 	menuitem_2.setActionCommand("add");
 	JMenuItem menuitem_3 = popup.add(Resource.getString("popup.remove"));
@@ -385,6 +387,7 @@ protected void buildPopupMenu()
 	menuitem_5.addActionListener(menulistener);
 	menuitem_6.addActionListener(menulistener);	
 	menuitem_7.addActionListener(menulistener);
+	menuitem_8.addActionListener(menulistener);
 }
 
 //DM20032004 081.6 int18 add
@@ -419,6 +422,10 @@ protected JMenu buildFileMenu()
 	JMenu file = new JMenu();
 	Resource.localize(file, "file.menu");
 
+	JMenuItem url = new JMenuItem();
+	Resource.localize(url, "file.url");
+	url.setActionCommand("url");
+
 	JMenuItem add = new JMenuItem();
 	Resource.localize(add, "file.add");
 	add.setActionCommand("add");
@@ -435,6 +442,7 @@ protected JMenu buildFileMenu()
 	Resource.localize(exit, "file.exit");
 	exit.setActionCommand("exit");
 
+	file.add(url);
 	file.add(add);
 	file.add(remove);
 	file.addSeparator();
@@ -442,6 +450,7 @@ protected JMenu buildFileMenu()
 	file.addSeparator();
 	file.add(exit);
 
+	url.addActionListener(menulistener);
 	add.addActionListener(menulistener);
 	remove.addActionListener(menulistener);
 	rename.addActionListener(menulistener);
@@ -1030,6 +1039,7 @@ protected void buildAutoloadPanel()
 					comBox[0].addItem("" + ix);
 					speciallist.add(new ArrayList());
 					cutlist.add(new ArrayList());
+
 					comchange = false;
 
 					comBox[0].setSelectedIndex(ix);
@@ -2674,27 +2684,8 @@ class MenuListener implements ActionListener
 		}
 		else if (actName.equals("add"))
 		{
-			if (!add_files.isEnabled())
-			{
-				int ix = comBox[0].getItemCount();
-				ArrayList[] cf = collfiles;
-				collfiles = new ArrayList[ix+1];
-				collfiles[ix] = new ArrayList();
-				System.arraycopy(cf,0,collfiles,0,cf.length);
+			activateCollectionMenu();
 
-				if (comBox[13].getItemCount()>0) 
-					collout.add(comBox[13].getSelectedItem());
-				else 
-					collout.add(outalias);
-
-				comchange=true;
-				comBox[0].addItem(""+ix);
-				speciallist.add(new ArrayList());
-				cutlist.add(new ArrayList());
-				comchange=false;
-				comBox[0].setSelectedIndex(ix);
-			}
- 
 			chooser.rescanCurrentDirectory();
 			chooser.setDialogType(JFileChooser.OPEN_DIALOG);
 			chooser.setMultiSelectionEnabled(true);
@@ -2805,8 +2796,102 @@ class MenuListener implements ActionListener
 			inisave();
 			System.exit(0); 
 		}
+
+		/**
+		 * should support manual loading of supported URLs
+		 */
+		else if (actName.equals("url"))
+		{
+			String value = null;
+			XInputFile inputValue = null;
+			java.net.URL url = null;
+
+			while (true)
+			{
+				value = JOptionPane.showInputDialog(Resource.getString("dialog.input.url"));
+
+				if (value == null)
+					return;
+
+				try
+				{
+					url = new java.net.URL(value);
+
+					String protocol = url.getProtocol();
+
+					if (protocol.equals("ftp"))
+					{
+						inputValue = new XInputFile(url.toString());
+						break;
+					}
+
+					else if (protocol.equals("file"))
+					{
+						inputValue = new XInputFile(url.toString());
+						break;
+					}
+
+					else
+						Msg("!> Protocol not yet supported: " + protocol);
+
+					return;
+				}
+				catch (Exception u1)
+				{
+					Msg("!> URL Exc: " + u1, true);
+				}
+			}
+
+			if (inputValue == null)
+				return;
+
+			activateCollectionMenu();
+
+			int icf = comBox[0].getSelectedIndex();
+			collfiles[icf].add(inputValue);
+
+			list3.setListData(collfiles[icf].toArray());
+
+			return;
+		}
+	}
+
+
+	/**
+	 * if no collection exists, create one
+	 */
+	private void activateCollectionMenu()
+	{
+		int ix = comBox[0].getItemCount();
+
+		if (ix > 0)
+			return;
+
+		ArrayList[] cf = collfiles;
+
+		collfiles = new ArrayList[ix + 1];
+		collfiles[ix] = new ArrayList();
+
+		System.arraycopy(cf, 0, collfiles, 0, cf.length);
+
+		if (comBox[13].getItemCount() > 0) 
+			collout.add(comBox[13].getSelectedItem());
+
+		else 
+			collout.add(outalias);
+
+		comchange = true;
+
+		comBox[0].addItem("" + ix);
+		speciallist.add(new ArrayList());
+		cutlist.add(new ArrayList());
+
+		comchange = false;
+
+		comBox[0].setSelectedIndex(ix);
 	}
 }
+
 
 /*******************************
  * An ActionListener for files *
@@ -5553,26 +5638,36 @@ public static String[] getVersion()
 /************
  * messages *
  ************/
-public static void Msg(String msg)
+public static void Msg(String msg, boolean tofront)
 {
 	//DM25072004 081.7 int07 add
 	if (msg == null) 
 		return;
 
-	if (options[30]==1) 
+	if (options[30] == 1) 
 		System.out.println(msg); 
 
 	if (running) 
-		System.out.println("\r"+msg); 
+		System.out.println("\r" + msg); 
 
 	else
 	{
-		TextArea.append("\r\n"+msg);
+		TextArea.append("\r\n" + msg);
 		viewport.setViewPosition(new Point(0,TextArea.getHeight()));
-		//viewport.repaint();
+
+		//ensure Logmsg is visible
+		if (tofront)
+			logtab.setSelectedIndex(0);
 	}
-	messagelog += "\r\n"+msg;
+
+	messagelog += "\r\n" + msg;
 }
+
+public static void Msg(String msg)
+{
+	Msg(msg, false);
+}
+
 
 /**********************
  * show output MB *
@@ -11155,6 +11250,7 @@ public boolean processAudio(String[] args)
 
 			miss=false;
 
+
 			/********* check for change in frametype ********/
 			if ( (compare = audio.MPA_compareHeader()) > 0 ) {
 				newformat=true;
@@ -13136,6 +13232,7 @@ public void processTeletext(String[] args)
 					case 2:  // SC
 						print_buffer.print( Teletext.SMPTE(timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), (long)videoframerate) + "&");
 						print_buffer.print( Teletext.SMPTE( timeformat_1.format( new java.util.Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), (long)videoframerate) + "#");
+
 						break;
 
 					case 3:  // SUB
@@ -16692,6 +16789,7 @@ class makeVDR
 			if (first)
 			{
 				out.write(packBA); 
+
 				options[39]+= 14; 
 				options[41]+= 14;         // write first pack
 				out.write(new byte[130]); 

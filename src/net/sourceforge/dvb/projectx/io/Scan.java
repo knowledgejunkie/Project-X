@@ -183,6 +183,9 @@ public class Scan
 	//DM18062004 081.7 int05 changed
 	public boolean isEditable()
 	{
+		if (origFile == null)
+			return false;
+
 		return (origFile.exists() && hasVideo);
 	}
 
