@@ -82,6 +82,7 @@ import javax.swing.JPanel;
 
 
 import net.sourceforge.dvb.projectx.video.IDCTRefNative;
+import net.sourceforge.dvb.projectx.video.IDCTSseNative;
 
 
 
@@ -110,13 +111,11 @@ public class Picture extends JPanel implements Runnable {
 
 //
 private IDCTRefNative idct;
+private IDCTSseNative idctsse;
 //
 
 private JFileChooser chooser;  //DM02092003
 private int bmpCount=0; //DM02092003
-
-//DM08022004 081.6 int16 changed and new
-//private int pixels2[] = new int[300*300];
 private int pixels2[] = new int[512 * 288]; //DM02092004 081.7 int02 changed
 private Image image;
 private MemoryImageSource source;
@@ -147,6 +146,7 @@ public Picture(){
 
 //
 	idct = new IDCTRefNative();
+	idctsse = new IDCTSseNative();
 
 	if (idct.isLibraryLoaded())
 		idct.init();
@@ -2238,23 +2238,17 @@ public void motion_compensation(int MBA[], int macroblock_type[], int motion_typ
 	for (comp=0; comp<block_count; comp++)	{
 		/* ISO/IEC 13818-2 section Annex A: inverse DCT */
 
-		if ( !idct.isLibraryLoaded() )
-			IDCT_reference(block[comp], FAST ? 1 : 8);
+//
+		if (idctsse.isLibraryLoaded())
+			idctsse.referenceIDCT(block[comp]);
+
+		else if (idct.isLibraryLoaded())
+			idct.referenceIDCT(block[comp]);
 
 		else
-		{
+			IDCT_reference(block[comp], FAST ? 1 : 8);
 //
-			short[][] newblock = new short[8][8];
 
-			for (int i = 0; i < 8; i++)
-				System.arraycopy(block[comp], i*8, newblock[i], 0, 8);
-
-			newblock = idct.referenceIDCT(newblock);
-
-			for (int i = 0; i < 8; i++)
-				System.arraycopy(newblock[i], 0, block[comp], i*8, 8);
-		}
-//
 
 		/* ISO/IEC 13818-2 section 7.6.8: Adding prediction and coefficient data */
 		Add_Block(comp, bx, by, dct_type, (macroblock_type[0] & MACROBLOCK_INTRA)==0);
