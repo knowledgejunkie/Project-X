@@ -290,6 +290,7 @@ public class XInputFileImpl implements XInputFileIF {
 		long skipped = 0;
 		long remaining = 0;
 
+		/** TODO reset eliminieren */
 		inputStream.reset();
 		remaining = aPosition;
 		do {

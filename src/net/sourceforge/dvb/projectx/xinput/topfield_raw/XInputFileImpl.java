@@ -4,6 +4,7 @@ import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PushbackInputStream;
 import java.net.MalformedURLException;
 
 import net.sourceforge.dvb.projectx.xinput.FileType;
@@ -19,11 +20,11 @@ public class XInputFileImpl implements XInputFileIF {
 
 	private boolean isopen = false;
 
-	private InputStream inputStream = null;
+	private PushbackInputStream pbis = null;
 
 	private long randomAccessCurrentPosition = 0;
 
-	private int randomAccessPushBack = -1;
+	private byte[] buffer = new byte[8];
 
 	// Members used for type FileType.TFRAW
 	private RawInterface rawInterface = null;
@@ -54,7 +55,7 @@ public class XInputFileImpl implements XInputFileIF {
 			fileName = aFileName;
 			fileType = FileType.TFRAW;
 			rawInterface = new RawInterface(aFileName);
-			rawInterface.getStream(1024).close();
+			rawInterface.getStream().close();
 		} catch (IOException e) {
 			throw new IllegalArgumentException("File is not of type FileType.TFRAW");
 		}
@@ -122,7 +123,7 @@ public class XInputFileImpl implements XInputFileIF {
 		boolean b = false;
 
 		try {
-			rawInterface.getStream(1024).close();
+			rawInterface.getStream().close();
 			b = true;
 		} catch (IOException e) {
 			b = false;
@@ -155,7 +156,7 @@ public class XInputFileImpl implements XInputFileIF {
 	 * @return Input stream from the file
 	 */
 	public InputStream getInputStream() throws FileNotFoundException, MalformedURLException, IOException {
-		return new XInputStream(rawInterface.getStream(3 * 1024 * 1024));
+		return new XInputStream(rawInterface.getStream());
 	}
 
 	/**
@@ -170,11 +171,9 @@ public class XInputFileImpl implements XInputFileIF {
 		if (isopen) { throw new IllegalStateException("XInputFile is already open!"); }
 
 		if (mode.compareTo("r") != 0) { throw new IllegalStateException("Illegal access mode for FileType.TFRAW"); }
-		inputStream = getInputStream();
-		inputStream.mark(10 * 1024 * 1024);
+		pbis = new PushbackInputStream(getInputStream());
 
 		randomAccessCurrentPosition = 0;
-		randomAccessPushBack = -1;
 		isopen = true;
 	}
 
@@ -185,18 +184,17 @@ public class XInputFileImpl implements XInputFileIF {
 
 		if (!isopen) { throw new IllegalStateException("XInputFile is already closed!"); }
 
-		if (inputStream != null) {
+		if (pbis != null) {
 			try {
-				inputStream.close();
+				pbis.close();
 			} catch (IOException e) {
 				if (debug) System.out.println(e.getLocalizedMessage());
 				if (debug) e.printStackTrace();
 			}
-			inputStream = null;
+			pbis = null;
 		}
 
 		randomAccessCurrentPosition = 0;
-		randomAccessPushBack = -1;
 		isopen = false;
 	}
 
@@ -211,10 +209,12 @@ public class XInputFileImpl implements XInputFileIF {
 		long skipped = 0;
 		long remaining = 0;
 
-		inputStream.reset();
+		randomAccessClose();
+		randomAccessOpen("r");
+
 		remaining = aPosition;
 		do {
-			skipped = inputStream.skip(remaining);
+			skipped = pbis.skip(remaining);
 			if (skipped > 0) {
 				remaining -= skipped;
 			}
@@ -236,7 +236,6 @@ public class XInputFileImpl implements XInputFileIF {
 	 *         IOException
 	 */
 	public int randomAccessRead() throws IOException {
-		byte[] buffer = new byte[1];
 		buffer[0] = -1;
 		randomAccessRead(buffer, 0, 1);
 		return (int) buffer[0];
@@ -265,19 +264,9 @@ public class XInputFileImpl implements XInputFileIF {
 	public int randomAccessRead(byte[] aBuffer, int aOffset, int aLength) throws IOException {
 		int result = 0;
 
-		if (randomAccessPushBack != -1) {
-			aBuffer[aOffset] = (byte) randomAccessPushBack;
-			randomAccessPushBack = -1;
-			randomAccessCurrentPosition += 1;
-			result = 1;
-			if (aLength > 1) {
-				result += randomAccessRead(aBuffer, aOffset + 1, aLength - 1);
-			}
-		} else {
-			result = inputStream.read(aBuffer, aOffset, aLength);
-			if (result != -1) {
-				randomAccessCurrentPosition += result;
-			}
+		result = pbis.read(aBuffer, aOffset, aLength);
+		if (result != -1) {
+			randomAccessCurrentPosition += result;
 		}
 		return result;
 	}
@@ -298,7 +287,7 @@ public class XInputFileImpl implements XInputFileIF {
 		if (ch == '\r') {
 			ch = randomAccessRead();
 			if (ch != '\n' && (ch != -1)) {
-				randomAccessPushBack = ch;
+				pbis.unread(ch);
 				randomAccessCurrentPosition -= 1;
 			}
 		}
@@ -341,7 +330,6 @@ public class XInputFileImpl implements XInputFileIF {
 
 		long l = 0;
 
-		byte[] buffer = new byte[8];
 		int bytesRead = 0;
 
 		bytesRead = randomAccessRead(buffer);

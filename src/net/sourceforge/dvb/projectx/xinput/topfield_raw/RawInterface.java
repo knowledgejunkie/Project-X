@@ -27,6 +27,7 @@ package net.sourceforge.dvb.projectx.xinput.topfield_raw;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -52,11 +53,11 @@ public class RawInterface {
 		}
 	}
 
-	public void add_native_files(ArrayList arraylist) {
+	public final void add_native_files(ArrayList arraylist) {
 		rawRead.add_native_files(arraylist);
 	}
 
-	public String GetLoadStatus() {
+	public final String GetLoadStatus() {
 		if (rawRead.AccessEnabled())
 			return rawRead.GetLoadStatus();
 		else
@@ -67,23 +68,26 @@ public class RawInterface {
 	 * true bei tf raw file public boolean isAccessibleDisk(String sourcefile) {
 	 * return rawRead.isAccessibleDisk(sourcefile); }
 	 */
-	public long getFileSize() {
+	public final long getFileSize() {
 		return rawRead.getFileSize(sourcefile);
 	}
 
-	public String getFileDate() {
+	public final String getFileDate() {
 		long datetime = rawRead.lastModified(sourcefile.substring(1));
 		return DateFormat.getDateInstance(DateFormat.LONG).format(new Date(datetime)) + "  "
 				+ DateFormat.getTimeInstance(DateFormat.LONG).format(new Date(datetime));
 	}
 
+	/*
 	public boolean getScanData(byte data[]) throws IOException {
 		RawFileInputStream rawin = new RawFileInputStream(rawRead, sourcefile);
 		rawin.read(data, 0, data.length);
 		rawin.close();
 		return true;
 	}
+	*/
 
+	/*
 	public boolean getData(byte data[], long skip_size, int read_offset, int size) throws IOException {
 		RawFileInputStream rawin = new RawFileInputStream(rawRead, sourcefile);
 		rawin.skip(skip_size);
@@ -91,16 +95,15 @@ public class RawInterface {
 		rawin.close();
 		return true;
 	}
+	*/
 
-	public BufferedInputStream getStream(int buffersize) throws IOException {
-		BufferedInputStream stream = null;
+	public final RawFileInputStream getStream() throws IOException {
 		RawFileInputStream rawin = new RawFileInputStream(rawRead, sourcefile);
-		stream = new BufferedInputStream(rawin, buffersize);
 		stream_size = rawin.streamSize();
-		return stream;
+		return rawin;
 	}
 
-	public long getStreamSize() {
+	public final long getStreamSize() {
 		return stream_size;
 	}
 }
