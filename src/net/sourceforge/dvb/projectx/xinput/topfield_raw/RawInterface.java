@@ -25,9 +25,7 @@
  */
 package net.sourceforge.dvb.projectx.xinput.topfield_raw;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
