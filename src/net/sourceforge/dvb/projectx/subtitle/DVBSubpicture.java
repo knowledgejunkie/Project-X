@@ -179,7 +179,7 @@ public class DVBSubpicture
 
 	private void alignToByte()
 	{
-		alignToByte(2);
+		alignToByte(1);
 	}
 
 	private void alignToByte(int N)
@@ -190,7 +190,7 @@ public class DVBSubpicture
 
 	private void alignToWord()
 	{
-		if ((1 & BytePosition) != 0)
+		if ((1 & BytePosition) != 0 && nextBits(8) != 0x0F)
 			flushBits(8);
 	}
 
@@ -221,9 +221,25 @@ public class DVBSubpicture
 		int sync_byte = 0;
 
 		//DM30072004 081.7 int07 changed
-		while ( nextBits(8) == 0x0F )
+		//while ( nextBits(8) == 0x0F )
+		for (int ret; BytePosition < data.length - 4; )
 		{
+			ret = nextBits(8);
+
+			addBigMessage("ret " + Integer.toHexString(ret) + " /bi " + BitPosition + " /by " + BytePosition);
+
+			if (ret == 0xFF)
+				break;
+
+			if (ret != 0x0F)
+			{
+				flushBits(8);
+				continue;
+			}
+
 			segment_type = Subtitle_Segment();
+
+			alignToByte();
 
 			if (global_error && region != null)
 				region.setError(4);
@@ -585,7 +601,7 @@ public class DVBSubpicture
 			while (BytePosition < bottom_field_data_block_end) //if 0-length, copy top field line
 				pixel_block();
 
-			alignToWord(); // flush 8 bits if not aligned
+			//alignToWord(); // flush 8 bits if not aligned
 		}
 
 		if (object_coding_method == 1) //text chars
