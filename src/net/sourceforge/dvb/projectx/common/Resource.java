@@ -28,8 +28,12 @@ package net.sourceforge.dvb.projectx.common;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -61,9 +65,6 @@ import javax.swing.JRadioButtonMenuItem;
  */
 public class Resource {
 	
-	/** parameter name for language settings */
-	private static final String LANGUAGE_PARAM = "language";
-
 	/** the prefix of all pjx resource files */
 	private static final String PJX_RESOURCE_PREFIX = "pjxresources";
 
@@ -147,18 +148,54 @@ public class Resource {
 	 * 
 	 * @param filename Name of the inifile.
 	 */
-	public static void init()
+	public static void loadLang(String inifile)
 	{
-		String language = X.getSettings().getProperty(LANGUAGE_PARAM);
-		if (language != null){
-			locale=new Locale(language, "");
+		try 
+		{
+			if (new File(inifile).exists())
+			{
+				BufferedReader inis = new BufferedReader(new FileReader(inifile));
+				String line=null; 
+			
+				while ((line = inis.readLine()) != null)
+				{
+					// look for the line with the language information
+					if (line.startsWith("lang="))
+					{
+						String lang = line.substring(5);
+						locale=new Locale(lang, "");
 			try {
 				resource = loadResourceBundle(locale);
 			} catch (MissingResourceException e) {
-				System.out.println(resource.getString("msg.loadlang.error") + " " + e);
 				// our fallback is english
 				resource = defaultResource;
 			}
+						
+						// we have found what we need, stop reading this file
+						break;
+					}
+				}
+				inis.close();
+			}
+		}
+		catch (IOException e1)
+		{
+			//DM25072004 081.7 int07 add
+			System.out.println(resource.getString("msg.loadlang.error") + " " + e1);
+		}
+	}
+		
+	/**
+	 * Saves the language information.
+	 * 
+	 * @param pw
+	 */
+	public static void saveLang(PrintWriter pw)
+	{
+		if (locale != null)
+		{
+			pw.println("// language");
+			pw.println("lang="+locale);
 		}
 	}
 		
@@ -383,7 +420,6 @@ public class Resource {
 				locale = new Locale(action, "", "");
 			}
 			JOptionPane.showMessageDialog(null, Resource.getString("msg.new.language"), Resource.getString("msg.infomessage"), JOptionPane.INFORMATION_MESSAGE);
-			X.getSettings().setProperty(LANGUAGE_PARAM, locale);
 		}
 		
 	}

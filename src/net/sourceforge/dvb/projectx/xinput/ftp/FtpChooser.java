@@ -12,7 +12,6 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import net.sourceforge.dvb.projectx.common.Resource;
-import net.sourceforge.dvb.projectx.common.X;
 import net.sourceforge.dvb.projectx.xinput.XInputDirectory;
 import java.awt.*;
 
@@ -118,21 +117,21 @@ public class FtpChooser extends JDialog {
     tfServer.setNextFocusableComponent(tfUser);
 		tfServer.setPreferredSize(new Dimension(80, 21));
 		tfServer.setToolTipText(Resource.getString("ftpchooser.server.tip"));
-		tfServer.setText(X.getSettings().getProperty("ftpchooser.server.entry", ""));
+		tfServer.setText(Resource.getString("ftpchooser.server.entry"));
 		tfServer.addFocusListener(new FtpChooser_tfServer_focusAdapter(this));
 		tfUser.setNextFocusableComponent(tfPassword);
     tfUser.setToolTipText(Resource.getString("ftpchooser.user.tip"));
-		tfUser.setText(X.getSettings().getProperty("ftpchooser.user.entry", ""));
+		tfUser.setText(Resource.getString("ftpchooser.user.entry"));
 		tfUser.addFocusListener(new FtpChooser_tfUser_focusAdapter(this));
 		tfPassword.setNextFocusableComponent(tfDirectory);
     tfPassword.setToolTipText(Resource.getString("ftpchooser.password.tip"));
-		tfPassword.setText(X.getSettings().getProperty("ftpchooser.password.entry", ""));
+		tfPassword.setText(Resource.getString("ftpchooser.password.entry"));
 		tfPassword.addFocusListener(new FtpChooser_tfPassword_focusAdapter(this));
 		tfDirectory.setMinimumSize(new Dimension(153, 21));
     tfDirectory.setNextFocusableComponent(testButton);
 		tfDirectory.setPreferredSize(new Dimension(153, 21));
 		tfDirectory.setToolTipText(Resource.getString("ftpchooser.directory.tip"));
-		tfDirectory.setText(X.getSettings().getProperty("ftpchooser.directory.entry", ""));
+		tfDirectory.setText(Resource.getString("ftpchooser.directory.entry"));
 		tfDirectory.addFocusListener(new FtpChooser_tfDirectory_focusAdapter(this));
 		testButton.setNextFocusableComponent(okButton);
     testButton.setText(Resource.getString("ftpchooser.test"));
@@ -210,18 +209,6 @@ public class FtpChooser extends JDialog {
 		}
 	}
 	
-	public void setVisible(boolean visible)
-	{
-		if (!visible)
-		{
-			X.getSettings().setProperty("ftpchooser.server.entry", tfServer.getText());
-			X.getSettings().setProperty("ftpchooser.user.entry", tfUser.getText());
-			X.getSettings().setProperty("ftpchooser.password.entry", tfPassword.getText());
-			X.getSettings().setProperty("ftpchooser.directory.entry", tfDirectory.getText());
-		}
-		super.setVisible(visible);
-	}
-
 	void okButton_actionPerformed(ActionEvent e) {
 		setVisible(false);
 	}
