@@ -98,7 +98,7 @@ class RawFileInputStream extends InputStream {
     String file;
     int handle;
     long currentpos;
-	RawRead Rawread;
+	RAWREAD Rawread;
     int readbufsize=256*1024;
     byte[] readbuf = new byte[readbufsize];
     int datainbuf;
@@ -162,7 +162,7 @@ class RawFileInputStream extends InputStream {
         return Rawread.getFileSize(file);
     }
 
-    RawFileInputStream(RawRead Rawread,String file) throws FileNotFoundException {
+    RawFileInputStream(RAWREAD Rawread,String file) throws FileNotFoundException {
         this.Rawread=Rawread;
         this.file=file;
         this.handle=Rawread.openFile(this.file);

@@ -819,6 +819,9 @@ public class Picture extends JPanel implements Runnable
 		//DM28042004 081.7 int02 changed
 		if (Show_Bits(data, BPos, 24) == 0xF) // DVB subpicture: 8bit padding 0x00 + 8bit subtitle_stream_id 0x00 + start of subtitle segment 0x0F
 		{
+			//DM15072004 081.7 int06 add
+			big.setFont(font_std);
+
 			int ret = dvb.decodeDVBSubpicture(data, BPos, big, bimg, pts, save, visible);
 
 			if (ret > -2)

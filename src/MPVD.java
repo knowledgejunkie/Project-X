@@ -1010,17 +1010,32 @@ public void sequence_header(){
 	vbv_buffer_size             = Get_Bits(10);
 	constrained_parameters_flag = Get_Bits(1);
 
-	if ((load_intra_quantizer_matrix = Get_Bits(1))>0){
+	//DM05072004 081.7 int06 changed
+	info_4 = " ";
+
+	if ((load_intra_quantizer_matrix = Get_Bits(1))>0)
+	{
 		for (i=0; i<64; i++)
 			intra_quantizer_matrix[scan[ZIG_ZAG][i]] = Get_Bits(8);
-	}else{
+
+		//DM05072004 081.7 int06 add
+		info_4 += ",iqm";
+	}
+	else
+	{
 		System.arraycopy(default_intra_quantizer_matrix,0,intra_quantizer_matrix,0,64);
 	}
 
-	if ((load_non_intra_quantizer_matrix = Get_Bits(1))>0){
+	if ((load_non_intra_quantizer_matrix = Get_Bits(1))>0)
+	{
 		for (i=0; i<64; i++)
 			non_intra_quantizer_matrix[scan[ZIG_ZAG][i]] = Get_Bits(8);
-	}else{
+
+		//DM05072004 081.7 int06 add
+		info_4 += ",niqm";
+	}
+	else
+	{
 		java.util.Arrays.fill(non_intra_quantizer_matrix,16);
 	}
 
@@ -1030,8 +1045,6 @@ public void sequence_header(){
 
 	frame_rate = (float)frame_rate_Table[frame_rate_code]; //DM06022004 081.6 int15 add
 
-	//DM06052004 081.7 int02 add
-	info_4 = "";
 
 	extension_and_user_data();
 
@@ -2258,6 +2271,8 @@ public void Add_Block(int comp, int bx, int by, int dct_type[], boolean addflag)
 		}
 	}
 	iincr += 8;
+
+//System.out.println("" + cc + " / " + rfp + " / " + iincr + " / " + dct_type[0] + " / " + picture_structure + " / " + Integer.toHexString(0xFF & Block_Ptr[0]));
 
 	//DM02092003+
 	int val,luma,pPos, r,g,b;

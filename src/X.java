@@ -60,8 +60,8 @@ public class X extends JPanel
 {
 
 static String version[] = { 
-	"ProjectX 0.81.7_int05",
-	"27.06.2004",
+	"ProjectX 0.81.7_int06",
+	"16.07.2004",
 	"TEST PROJECT ONLY",
 	", User: " + System.getProperty("user.name")
 };
@@ -135,7 +135,10 @@ static String messagelog="";
 static JButton doitButton, breakButton, scanButton, pauseButton, extract, exeButton, picButton;
 static JRadioButton[] RButton = new JRadioButton[25];
 static JComboBox[] comBox = new JComboBox[38];
-static JCheckBox[] cBox = new JCheckBox[55];
+
+//DM14072004 081.7 int06 changed
+static JCheckBox[] cBox = new JCheckBox[62];
+
 static JList list1, list3, list4;
 static X_JFileChooser chooser; //DM12122003 081.6 int05
 
@@ -193,6 +196,10 @@ public X()	//DM20032004 081.6 int18 changed
 	RButton[1] = new JRadioButton();
 
 	/*** unused ***/
+	//DM09072004 081.7 int06 moved
+	comBox[18] = new JComboBox();
+	comBox[20] = new JComboBox();
+
 
 	chooser = new X_JFileChooser(); //DM12122003 081.6 int05
 
@@ -1241,9 +1248,6 @@ protected JPanel buildidPanel()
 	idPanel3.add(spec5);
 	//DM14052004 081.7 int02 moved--
 
-	//DM14052004 081.7 int02 add
-	idPanel3.add(new JLabel("only PVA related:"));
-
 	//DM14052004 081.7 int02 moved
 	cBox[48] = new JCheckBox("check for overlapping PVAs on read");
 	cBox[48].setPreferredSize(new Dimension(250,20));
@@ -1262,17 +1266,24 @@ protected JPanel buildidPanel()
 	//DM14052004 081.7 int02 add
 	idPanel3.add(new JLabel("only TS related:"));
 
-	cBox[38] = new JCheckBox("ignore scrambled packets in TS");
+	cBox[38] = new JCheckBox("ignore scrambled packets");
 	cBox[38].setToolTipText("disable, if you think the packets are not, but marked as scrambled");
 	cBox[38].setPreferredSize(new Dimension(250,20));
 	cBox[38].setMaximumSize(new Dimension(250,20));
 	cBox[38].setSelected(true);
 	idPanel3.add(cBox[38]);
 
+	//DM15072004 081.7 int06 add
+	cBox[61] = new JCheckBox("enhanced search for open packets");
+	cBox[61].setToolTipText("enable, if the PID detection stops the search at unknown payload");
+	cBox[61].setPreferredSize(new Dimension(250,20));
+	cBox[61].setMaximumSize(new Dimension(250,20));
+	idPanel3.add(cBox[61]);
+
 	//Ghost23012004 081.6 int11 add
 	//DM14052004 081.7 int02 moved
 	cBox[53] = new JCheckBox("join TS file segments (of Dreambox)");
-	cBox[53].setToolTipText("join incomplete TS packets on boundaries of multiple file segments");
+	cBox[53].setToolTipText("enable to join incomplete TS packets on boundaries of multiple file segments");
 	cBox[53].setPreferredSize(new Dimension(250,20));
 	cBox[53].setMaximumSize(new Dimension(250,20));
 	idPanel3.add(cBox[53]);
@@ -1311,7 +1322,8 @@ protected JPanel buildidPanel()
 	idPanel2.setBorder( BorderFactory.createTitledBorder("specials 2") );
 
 	//DM14052004 081.7 int02 moved
-	cBox[33] = new JCheckBox("get only enclosed PES packets");
+	//DM15072004 081.7 int06 changed
+	cBox[33] = new JCheckBox("get only enclosed PES/TS packets");
 	cBox[33].setToolTipText("disable, if no packets were found (on packet end, the next mpeg-startcode is missing, e.g. on Images)");
 	cBox[33].setSelected(true);
 	cBox[33].setPreferredSize(new Dimension(250,20));
@@ -1448,40 +1460,44 @@ protected JPanel buildsplitPanel()
 	comBox[2].addActionListener(mytabListener);
 	cBox[5].addActionListener(mytabListener);
 
-	Object[] c18 = { "auto","0xe0","0xe1","0xe2","0xe3","0xe4","0xe5","0xe6","0xe7","0xe8","0xe9","0xea","0xeb","0xec","0xed","0xee","0xef" };
-	Object[] c19 = { "auto","0xc0","0xc1","0xc2","0xc3","0xc4","0xc5","0xc6","0xc7","0xc8","0xc9","0xca","0xcb","0xcc","0xcd","0xce","0xcf" };
-	Object[] c22 = { "auto","0x80","0x81","0x82","0x83","0x84","0x85","0x86","0x87","0x88","0x89","0x8a","0x8b","0x8c","0x8d","0x8e","0x8f" };
-	String[] tx = { " MPEG Video"," MPEG Audio A"," MPEG Audio B"," MPEG Audio C"," AC-3 Audio (sub ID, if available)" };
 
+	// main id panel disabled with 081.7 int06 
+ 	// is now replaced by a global stream type 'enabler'
 	JPanel idPanel = new JPanel();
-	idPanel.setBorder(BorderFactory.createTitledBorder("settings for main IDs"));
-	idPanel.setLayout ( new ColumnLayout() );
+	idPanel.setBorder(BorderFactory.createTitledBorder("stream types to process"));
+	idPanel.setLayout(new BoxLayout(idPanel, BoxLayout.X_AXIS));
+	idPanel.setToolTipText("de-/select stream types you want to process (does not applies to ES as input)");
 
-	comBox[18] = new JComboBox(c18);
-	comBox[18].setMaximumRowCount(6);
-	comBox[18].setPreferredSize(new Dimension(70,25));
-	comBox[18].setSelectedItem("auto");
+	cBox[55] = new JCheckBox("Mpg Video");
+	cBox[55].setSelected(true);
+	cBox[56] = new JCheckBox("Mpg Audio");
+	cBox[56].setSelected(true);
+	cBox[57] = new JCheckBox("AC3/DTS Audio");
+	cBox[57].setSelected(true);
+	cBox[58] = new JCheckBox("LPCM Audio");
+	cBox[58].setSelected(true);
+	cBox[59] = new JCheckBox("Teletext");
+	cBox[59].setSelected(true);
+	cBox[60] = new JCheckBox("Subpicture");
+	cBox[60].setSelected(true);
 
-	JPanel[] id1 = new JPanel[5];
-	id1[0] = new JPanel();
-	id1[0].setLayout(new BoxLayout(id1[0], BoxLayout.X_AXIS));
-	id1[0].add(comBox[18]);
-	id1[0].add(new JLabel(tx[0]));
-	idPanel.add(id1[0]);
-	idPanel.setToolTipText("if more than one stream in source, specify the main ID (auto means: take what comes at first)");
+	JPanel panel_1 = new JPanel();
+	panel_1.setLayout ( new ColumnLayout() );
+	panel_1.add(cBox[55]);
+	panel_1.add(cBox[56]);
+	panel_1.add(cBox[57]);
 
-	comBox[20] = new JComboBox(c22);
-	comBox[20].setMaximumRowCount(6);
-	comBox[20].setPreferredSize(new Dimension(70,25));
-	comBox[20].setSelectedItem("auto");
+	JPanel panel_2 = new JPanel();
+	panel_2.setLayout ( new ColumnLayout() );
+	panel_2.add(cBox[58]);
+	panel_2.add(cBox[59]);
+	panel_2.add(cBox[60]);
 
-	id1[1] = new JPanel();
-	id1[1].setLayout(new BoxLayout(id1[1], BoxLayout.X_AXIS));
-	id1[1].add(comBox[20]);
-	id1[1].add(new JLabel(tx[4]));
-	idPanel.add(id1[1]);
+	idPanel.add(panel_1);
+	idPanel.add(panel_2);
 
 	splits.add(idPanel);
+
 
 
 	JPanel op4 = new JPanel();
@@ -2293,10 +2309,11 @@ protected JPanel buildoptionPanel() {
 	op2.add(comBox[36]);
 
 	//DM04122003 081.6_int02
-	Object[] scan = { "1024000","1536000","2048000","2560000","3072000" };
+	//DM04072004 081.7 int06 changed
+	Object[] scan = { "384000","512000","1024000","1536000","2048000","2560000","3072000" };
 	comBox[37]=new JComboBox(scan);
-	comBox[37].setSelectedIndex(0);
-	//comBox[37].setEditable(true);
+	comBox[37].setSelectedItem("1024000");
+	comBox[37].setEditable(true);
 	comBox[37].setPreferredSize(new Dimension(100,25));
 	comBox[37].setMaximumSize(new Dimension(100,25));
 	JLabel scanL = new JLabel("pre-Scan Buffersize in bytes");
@@ -4126,6 +4143,10 @@ class DNDListener implements DropTargetListener
 		Msg("DnD " + eee); 
 		e.dropComplete(false); 
 	}
+
+	//DM09072004 081.7 int06 add
+	list3.setBackground(Color.white);
+
 	}
 
 	public void dragEnter(DropTargetDragEvent e)
@@ -5225,6 +5246,7 @@ public void run() {
 
 
 
+
 	TextArea.setBackground(Color.white); //DM26032004 081.6 int18 changed
 
 	int a=0,b=0,d=0;
@@ -5258,12 +5280,6 @@ public void run() {
 		}
 
 		Msg("\r\n=== session infos ===");
-		if (options[18]>0) 
-			Msg("-> split output @ appr. "+(options[18]/1048576)+" MB");
-		if (cBox[8].isSelected()) {
-			Msg("-> add time offset to audio/ttx :");
-			Msg("\t"+(options[28]/90)+" ms (if it follows on a video)");
-		}
 
 		for ( ; a<b ; a++,d++) {
 			workinglist.clear();
@@ -5285,6 +5301,20 @@ public void run() {
 				workouts = collout.get(a).toString();
 				String firstfile = workinglist.get(0).toString();
 
+				//DM15072004 081.7 int06 moved and add++
+				if (options[18]>0) 
+					Msg("-> split output @ appr. "+(options[18]/1048576)+" MB");
+
+				if (cBox[8].isSelected())
+					Msg("-> add time offset to audio/ttx/pics :  " + (options[28] / 90) + " ms (if it follows on a video)");
+
+				for (int i = 55; i < 61; i++)
+					if (!cBox[i].isSelected())
+						Msg("-> PES stream type disabled: " + cBox[i].getText());
+
+				Msg(" ");
+				//DM15072004 081.7 int06 moved and add--
+
 				if (workouts.equals(outalias))
 					workouts = new File(firstfile).getParent();
 
@@ -5299,6 +5329,18 @@ public void run() {
 					workouts += "("+a+")"+filesep;
 					new File(workouts).mkdirs();
 				}
+
+				//DM12072004 081.7 int06 add
+				if (cBox[54].isSelected() && comBox[19].getSelectedIndex() == 1)
+				{
+					workouts += new File(firstfile).getName()
+						+ filesep
+						+ new java.text.SimpleDateFormat("yyyy-MM-dd.HH.mm.ss.SS").format(new Date()) + ".rec"
+						+ filesep;
+
+					new File(workouts).mkdirs();
+				}
+
 				Msg("-> write output files to :");
 				Msg("\t"+workouts);
 
@@ -5315,8 +5357,16 @@ public void run() {
 					options[30]=1;
 					new LOG().start();
 				} 
-				if (cBox[21].isSelected()) 
-					loggin2 = workouts+fchilds+"_X.log";
+
+				//DM09072004 081.7 int06 changed
+				if (cBox[21].isSelected())
+				{
+					if (cBox[54].isSelected() && comBox[19].getSelectedIndex() == 1)
+						loggin2 = workouts + "summary.vdr";
+
+					else
+						loggin2 = workouts + fchilds + "_X.log";
+				}
 
 				/** quick pre-run for TS autoPMT **/ 
 				if (!qinfo && comBox[19].getSelectedIndex()==4 && cBox[41].isSelected()) {
@@ -5452,7 +5502,6 @@ public void working() {
 	options[37]=10000000;
 	options[39]=0;
 	options[40]=0;
-	//options[43]=0;
 	options[44]=0;
 	options[48]=0;
 	options[42]=0;
@@ -5466,7 +5515,9 @@ public void working() {
 
 	firstVideoPTS=-1; //DM17012004 081.6 int11 new
 
-	options[43] = (comBox[18].getSelectedIndex()>0) ? (0L+(Integer.parseInt(comBox[18].getSelectedItem().toString().substring(2,4),16))) : 0;
+	//DM09072004 081.7 int06 changed
+	//options[43] = (comBox[18].getSelectedIndex()>0) ? (0L+(Integer.parseInt(comBox[18].getSelectedItem().toString().substring(2,4),16))) : 0;
+	options[43] = 0; 
 
 	boolean vdr=true, pva=true, mpg2=true, mpg1=true, mpgts=true, raw=true;
 
@@ -5838,6 +5889,54 @@ public void splitreset(String vptslog) {
 	}
 }
 
+//DM15072004 081.7 int06 new
+private int checkPTSMatch(long video_pts_values[], long data_pts_values[])
+{
+	if (data_pts_values[0] < video_pts_values[0])
+	{
+		if (data_pts_values[data_pts_values.length - 2] < video_pts_values[0])
+		{
+			//maybe does match later, jump just to end
+			Msg("!> 1st video PTS starts later than the last PTS of this stream");
+			return (data_pts_values.length - 2);
+		}
+		else
+		{
+			//maybe does match later, jump just to this position
+			int end = data_pts_values.length - 1;
+
+			for (int i = 0; i < end; i++)
+			{
+				if (data_pts_values[i + 1] > video_pts_values[0])
+					return i;
+			}
+
+			return 0;
+		}
+	}
+	else
+	{
+		if (data_pts_values[0] >= video_pts_values[video_pts_values.length - 1])
+		{
+			Msg("!> last video PTS ends before the start PTS of this stream");
+			return -1;
+		}
+		//does match anywhere, no pre-jump
+		else
+			return 0;
+	}
+}
+
+//DM15072004 081.7 int06 new
+private String infoPTSMatch(String args[], boolean video_pts, boolean data_pts)
+{
+	if ( !args[3].equals("-1") && !args[1].equals("-1") && !video_pts && data_pts)
+		return "? ";
+
+	else
+		return "";
+}
+
 
 
 /**************
@@ -6096,6 +6195,13 @@ public void pesparse(String file, String vptslog, int ismpg) {
 				}
 				}
 				Msg("-> found PES-ID 0x"+Integer.toHexString(pesID).toUpperCase()+" "+IDtype+" @ "+(count-6-packlength)); //DM02022004 081.6 int14 changed
+			}
+
+
+			//DM14072004 081.7 int06 add
+			if (!demux.StreamEnabled())
+			{
+				continue pvaloop;
 			}
 
 			if (demux.getType()==3) 
@@ -6636,8 +6742,10 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 					if (pesID0==0 || pesID0==pesID) { 
 						if (ToVDR==0) 
 							demux.initVideo(fparent,options,bs,VDRdemuxlist.size(),1);
-						if (ToVDR>1) 
-							IDtype+=" mapped to 0x"+Integer.toHexString(newID[0]-1).toUpperCase();
+
+						//DM09072004 081.7 int06 changed
+						if (ToVDR > 0) 
+							IDtype += " mapped to 0x" + Integer.toHexString(newID[0] - 1).toUpperCase();
 
 						pesID0=pesID;
 					} else 
@@ -6656,8 +6764,11 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 					VDRdemuxlist.add(demux);
 					if (ToVDR==0) 
 						demux.init(fparent,options,bs/VDRdemuxlist.size(),VDRdemuxlist.size(),1);
-					if (ToVDR>1) 
-						IDtype+=" mapped to 0x"+Integer.toHexString(newID[1]-1).toUpperCase();
+
+					//DM09072004 081.7 int06 changed
+					if (ToVDR > 0) 
+						IDtype += " mapped to 0x" + Integer.toHexString(newID[1] - 1).toUpperCase();
+
 					break; 
 				}
 				}
@@ -6704,7 +6815,9 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 						else 
 							IDtype+=" -> ignored";
 					}
-					if (ToVDR>1)
+
+					//DM09072004 081.7 int06 changed
+					if (ToVDR > 0)
 					{
 						if (ismpg==0) 
 							IDtype+=" mapped to 0x"+Integer.toHexString(demux.getnewID()).toUpperCase();
@@ -6729,6 +6842,13 @@ public String vdrparse(String file, int ismpg, int ToVDR) {
 				}
 				Msg("-> found PES-ID 0x"+Integer.toHexString(pesID).toUpperCase()+" "+IDtype+" @ "+options[20]); //DM02022004 081.6 int14 changed
 
+			}
+
+
+			//DM14072004 081.7 int06 add
+			if (!demux.StreamEnabled())
+			{
+				continue pvaloop;
 			}
 
 			//DM04122003 081.6_int02
@@ -7243,7 +7363,13 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 			if (!dontread || !cBox[53].isSelected())
 			{
 				rd = in.read(push189,0,189);
-				if ( rd < 189 && cBox[53].isSelected() )
+
+				//DM09072004 081.7 int06 add, fix
+				if (rd == 188 && size - count == rd)
+					push189[188] = 0x47;
+
+				else if ( rd < 189 && cBox[53].isSelected())
+				//if ( rd < 189 && cBox[53].isSelected())
 				{
 					Msg("!> incomplete ts packet at EOF detected @ "+count);
 					count += rd;
@@ -7252,7 +7378,8 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 			}
 
  			/*** check 0x47 sync  ***/
- 			if ( push189[0]!=0x47 || push189[188]!=0x47 )
+			//DM15072004 081.7 int06 changed
+ 			if ( push189[0] != 0x47 || (cBox[33].isSelected() && push189[188] != 0x47) )
 			{
 				//in.unread(push189,1,188);
 				//ghost 23012004 081.6 int11 changed
@@ -7439,8 +7566,11 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 								TSPid.setneeded(false); //DM25012004 081.6 int11 fix add
 							}
 						}
-						if (ToVDR>1) 
-							type+=" mapped to 0x"+Integer.toHexString(newID[0]-1).toUpperCase();
+
+						//DM09072004 081.7 int06 changed
+						if (ToVDR > 0) 
+							type += " mapped to 0x" + Integer.toHexString(newID[0] - 1).toUpperCase();
+
 						break;
 					case 0x1c0:
 					case 0x1d0:
@@ -7456,8 +7586,11 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 						TSdemuxlist.add(demux);
 						if (ToVDR==0) 
 							demux.init(fparent,options,bs/TSdemuxlist.size(),TSdemuxlist.size(),2);
-						if (ToVDR>1) 
+
+						//DM09072004 081.7 int06 changed
+						if (ToVDR > 0) 
 							type+=" mapped to 0x"+Integer.toHexString(newID[1]-1).toUpperCase();
+
 						break;
 					}
 					switch (pesID)
@@ -7496,7 +7629,8 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 
 						}
 
-						if (ToVDR > 1 && !ttx) 
+						//DM09072004 081.7 int06 changed
+						if (ToVDR > 0 && !ttx) 
 							type += " mapped to 0x" + Integer.toHexString(newID[2]-1).toUpperCase();
 
 						break;
@@ -7512,6 +7646,7 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 					{
 						switch (psiID)
 						{
+
 						case 0:
 							type="(PAT)"; 
 							break;
@@ -7550,6 +7685,10 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 						case 0x84: 
 							type="(ECM)"; 
 							break;
+						//DM15072004 081.7 int06 add
+						case 0xC1: 
+							type = "(unknown 0x" + Integer.toHexString(psiID).toUpperCase() + ")"; 
+							break;
 						default:
 							type+="(payload: ";
 							for (int f=0;f<8;f++) {
@@ -7571,10 +7710,13 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 						}
 						type+=" (0x"+Long.toHexString(count-188).toUpperCase()+" #"+packet+") ";  // pos + packno
 						Msg("--> PID 0x"+Integer.toHexString(pid).toUpperCase()+" "+type+" -> ignored");
-						if (abc.size()==0 || type.indexOf("pay")==-1)  // matt16082003 fix 081.1
+
+						//if (abc.size()==0 || type.indexOf("pay")==-1)  // matt16082003 fix 081.1
+						if (!cBox[61].isSelected() || type.indexOf("pay") == -1)
 							TSPid.setneeded(false);
 						else
 							TSPid.setID(-1);
+
 						continue pvaloop;
 					} else {
 						type+=" (0x"+Long.toHexString(count-188).toUpperCase()+" #"+packet+") ";  // pos + packno
@@ -7588,7 +7730,11 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 
 				demux = (PIDdemux)TSdemuxlist.get(TSPid.getDemux());
 
-				if (TSPid.getDataSize()<7) {
+				//DM14072004 081.7 int06 add
+				if (!demux.StreamEnabled())
+				{}
+
+				else if (TSPid.getDataSize()<7) {
 					if (demux.getPackCount()!=-1) 
 						Msg("--> PID 0x"+Integer.toHexString(pid).toUpperCase()+" lack of PES Data -> packet skipped");
 				} else {
@@ -7615,6 +7761,7 @@ public String rawparse(String file, int[] pids, int ToVDR) {
 							System.arraycopy(sethead, 0, set, 0, 9);
 
 						setcount += packet_maximum;
+
 						pesoff = 9;
 						int setlength = set.length - 6; 
 						set[4] = (byte)(setlength>>>8);
@@ -8499,6 +8646,13 @@ public String pvaparse(String pvafile,int ismpg,int ToVDR, String vptslog) {
 				Msg("-> ID 0x"+Integer.toHexString(pid).toUpperCase()+" "+IDtype);
 			}
 
+
+			//DM14072004 081.7 int06 add
+			if (!demux.StreamEnabled())
+			{
+				continue pvaloop;
+			}
+
 			if (ToVDR==0) {
 				if (demux.getType()==3) 
 					demux.writeVideo(data,options,true);
@@ -8641,6 +8795,7 @@ public String pvaparse(String pvafile,int ismpg,int ToVDR, String vptslog) {
 					continue;
 
 				/*** d2v project ***/
+
 				if ((cBox[29].isSelected() || cBox[30].isSelected()) ) 
 					d2v.write(options[50],options[7]);
 
@@ -8720,6 +8875,7 @@ public String pvaparse(String pvafile,int ismpg,int ToVDR, String vptslog) {
 	yield();
 
 	return vptslog;
+
 
 }  /** end methode pva parse **/
 
@@ -9020,7 +9176,22 @@ public boolean processAudio(String[] args) {
 		audiooutR.InitIdd(newnameR,2);
 	}
 
-	if (vptsdata && ptsdata) {
+	//DM150702004 081.7 int06 changed, fix
+	if (vptsdata && ptsdata)
+	{
+		int jump = checkPTSMatch(vptsval, ptsval);
+
+		if (jump < 0)
+		{
+			Msg("-> !! video & audio PTS doesn't match at any time!");  
+			vptsdata = false; 
+			x = 0; 
+		}
+
+		else
+			x = jump;
+
+		/**
 		pvacut:
 		while ( ptsval.length>2 && Math.abs(ptsval[x] - vptsval[0]) > 20000000 ) { //DM21022004 081.6 int18 changed
 			x++;
@@ -9032,10 +9203,12 @@ public boolean processAudio(String[] args) {
 			}
 			continue pvacut;
 		}
+		**/
 	}
 
 	if (vptsdata) 
 		Msg("-> adjusting audio at video-timeline");
+
 	if (ptsdata && !vptsdata && options[11]==0) 
 		Msg("-> adjusting audio at its own timeline");
 
@@ -10635,7 +10808,8 @@ public boolean processAudio(String[] args) {
 
 	else
 		//DM12042004 081.7 int01 changed, //DM27042004 081.7 int02 changed
-		comparedata = "Audio " + (NoOfAudio++) + " " + audio_type[layertype] + ":\t"+frame_counter+" Frames\t"+tc+"\t"+cb+"/"+ce+"/"+cc+"/"+cd;
+		//DM15072004 081.7 int06 changed
+		comparedata = "Audio " + (NoOfAudio++) + " " + audio_type[layertype] + ":\t" + frame_counter + " Frames\t" + tc + "\t" + infoPTSMatch(args, vptsdata, ptsdata) + cb + "/" + ce + "/" + cc + "/" + cd;
 
 	switch (layertype) { 
 	case 0: { 
@@ -10724,6 +10898,7 @@ public boolean processAudio(String[] args) {
 		break;
 	}
 	case 3: { 
+
 
 		if ( mp1name.exists() ) 
 			mp1name.delete();
@@ -11091,8 +11266,22 @@ public void processTeletext(String[] args)
 				byte_buffer.reset();
 			} 
 
+			//DM150702004 081.7 int06 changed, fix
 			if (vptsdata && ptsdata)
 			{
+				int jump = checkPTSMatch(video_pts_value, pts_value);
+
+				if (jump < 0)
+				{
+					Msg("-> !! video & teletext PTS doesn't match at any time!");  
+					vptsdata = false; 
+					x = 0; 
+				}
+
+				else
+					x = jump;
+
+				/**
 				timebase:
 				while ( pts_value.length>2 && Math.abs(pts_value[x] - video_pts_value[0]) > 20000000 )
 				{
@@ -11105,6 +11294,7 @@ public void processTeletext(String[] args)
 						break timebase; 
 					}
 				}
+				**/
 			}
 
 
@@ -11806,7 +11996,10 @@ public void processTeletext(String[] args)
 					Ifo.createIfo(ttxfile, subpicture.picture.getUserColorTableArray());
 
 				options[39] += ttxfile1.length();
-				InfoAtEnd.add("Teletext "+(NoOfPictures++)+":\t"+seiten+" pages of No. "+page+"\t\t "+ttxfile1); //DM04032004 081.6 int18 changed
+
+				//DM04032004 081.6 int18 changed
+				//DM15072004 081.7 int06 changed
+				InfoAtEnd.add("Teletext " + (NoOfPictures++) + ":\t" + seiten + " pages of No. " + page + "\t" + infoPTSMatch(args, vptsdata, ptsdata) + " \t " + ttxfile1);
 			}
 
 			}  // end try
@@ -11920,6 +12113,10 @@ public void processSubpicture(String[] args)
 
 	long[] ptsval = {0}, ptspos = {0}, vptsval = {0};
 
+	//DM15072004 081.7 int06 add
+	long pts_offset = options[28];
+
+
 	System.gc();
 
 	if ( !args[3].equals("-1") )
@@ -12011,8 +12208,24 @@ public void processSubpicture(String[] args)
 	ptsdata = true;
 	System.gc();
 
+
+	//DM150702004 081.7 int06 changed, fix
 	if (vptsdata && ptsdata)
 	{
+		int jump = checkPTSMatch(vptsval, ptsval);
+
+		if (jump < 0)
+		{
+			Msg("-> !! video & subpicture PTS doesn't match at any time!");  
+			vptsdata = false; 
+			x = 0; 
+		}
+
+		else
+			x = jump;
+
+
+		/**
 		timebase:
 		while ( ptsval.length>2 && Math.abs(ptsval[x] - vptsval[0]) > 20000000 )
 		{
@@ -12025,6 +12238,7 @@ public void processSubpicture(String[] args)
 				break timebase; 
 			}
 		}
+		**/
 	}
 
 	if (vptsdata && ptsdata)
@@ -12098,10 +12312,15 @@ public void processSubpicture(String[] args)
 		for (int a=0; a<5; a++) // 5bytes for pts, maybe wrong
 			source_pts |= (0xFFL & packet[2+a])<<(a*8);
 
+		//DM15072004 081.7 int06 add, use add. time offset if not applied by class piddemux (e.g. ES)
+		if (args[1].equals("-1"))
+			source_pts += pts_offset;
+
 		if (first_pts == -1)
 			first_pts = source_pts;
 
-		if (source_pts == 0)
+		//DM15072004 081.7 int06 changed
+		if (source_pts == pts_offset)
 			source_pts = last_pts;
 		else
 			last_pts = source_pts;
@@ -12284,7 +12503,9 @@ public void processSubpicture(String[] args)
 
 		Msg("===> new File " + subfile);
 		options[39] += subfile1.length();
-		InfoAtEnd.add("SubPicture " + (NoOfPictures++) + ":\t" + pics + " subpictures\t\t " + subfile1);
+
+		//DM15072004 081.7 int06 changed
+		InfoAtEnd.add("SubPicture " + (NoOfPictures++) + ":\t" + pics + " subpictures\t" + infoPTSMatch(args, vptsdata, ptsdata) + "\t " + subfile1);
 	}
 
 	progress.setValue(100);
@@ -12464,8 +12685,25 @@ public void processLPCM(String[] args)
 	ptsdata = true;
 	System.gc();
 
+	//DM150702004 081.7 int06 changed, fix
 	if (vptsdata && ptsdata)
 	{
+		//int jump = checkPTSMatch(vptsval, ptsval);
+		//temp. check disabled
+		int jump = 0;
+
+		if (jump < 0)
+		{
+			Msg("-> !! video & LPCM PTS doesn't match at any time!");  
+			vptsdata = false; 
+			x = 0; 
+		}
+
+		else
+			x = jump;
+
+
+		/**
 		timebase:
 		while ( ptsval.length>2 && Math.abs(ptsval[x] - vptsval[0]) > 20000000 )
 		{
@@ -12478,6 +12716,7 @@ public void processLPCM(String[] args)
 				break timebase; 
 			}
 		}
+		**/
 	}
 
 	if (vptsdata && ptsdata)
@@ -12651,7 +12890,9 @@ public void processLPCM(String[] args)
 		Audio.fillRiffHeader(pcmfile); //update riffheader
 		Msg("===> new File " + pcmfile);
 		options[39] += pcmfile1.length();
-		InfoAtEnd.add("LPCM " + (NoOfPictures++) + ":\t" + samples + " packs\t\t " + pcmfile1);
+
+		//DM15072004 081.7 int06 changed
+		InfoAtEnd.add("LPCM " + (NoOfPictures++) + ":\t" + samples + " packs\t" + infoPTSMatch(args, vptsdata, ptsdata) + "\t " + pcmfile1);
 	}
 
 	yield();
@@ -13006,6 +13247,8 @@ public String rawvideo(String args) {
 		System.out.println(" EOD ");
 
 	File newfile = new File(fparent+".s1");
+
+
 
 	String videofile="";
 	if ( newfile.length()<20 ) 
@@ -13951,6 +14194,7 @@ public static int[] getVideoBasics()
 
 /**********************
  * raw file from pva *
+
  **********************/
 class RAWFILE
 {
@@ -14082,6 +14326,44 @@ class PIDdemux {
 	byte[] subpic_header = { 0x53, 0x50, 0, 0, 0, 0, 0, 0, 0, 0 }; //DM24022004 081.6 int18 new
 	byte[] pcm_header = { 0x50, 0x43, 0x4D, 0, 0, 0, 0, 0, 0, 0 }; //'PCM'+5b(pts)+2b(size) //DM24022004 081.6 int18 new
 
+	//DM14072004 081.7 int06 add, stream type preselector
+	public boolean StreamEnabled()
+	{
+		switch(newID>>>4)
+		{
+		case 0xE:
+			if (cBox[55].isSelected())
+				return true;
+			break;
+		case 0xC:
+		case 0xD:
+			if (cBox[56].isSelected())
+				return true;
+			break;
+		case 0x8:
+			if (cBox[57].isSelected())
+				return true;
+			break;
+		case 0xA:
+			if (cBox[58].isSelected())
+				return true;
+			break;
+		case 0x9:
+			if (cBox[59].isSelected())
+				return true;
+			break;
+		case 0x2:
+			if (cBox[60].isSelected())
+				return true;
+			break;
+		default:
+			return true;
+		}
+
+		return false;
+	}
+
+
 	public void init(String name1, long[] options, int buffersize1, int lfn1, int sourcetype1) {
 		parentname=name1;
 		lfn=lfn1;
@@ -14207,6 +14489,13 @@ class PIDdemux {
 			datalength=data.length;
 		else
 		{
+			//DM12072004 081.7 int06 add
+			if (data[0] != 0 || data[1] != 0 || data[2] != 1)
+			{
+				Msg("!> invalid startcode, refuse PES packet " + pack + " (" + Integer.toHexString(PID) + "/" + Integer.toHexString(ID) + "/" + Integer.toHexString(newID) + "/" + format + ")");
+				return;
+			}
+
 			ID = 0xFF&data[3];
 			datalength = ((0xFF&data[4])<<8 | (0xFF&data[5]));    // av pack length bytes to follow
 
@@ -14303,8 +14592,15 @@ class PIDdemux {
 				pts |= 0x100000000L;
 			pts += ptsoffset;
 
-			if (lastPTS != pts){ //DM22122003 081.6 int09 change
-				log.writeLong(pts+addoffset);
+			//DM15072004 081.7 int06 add
+			pts += addoffset;
+
+			//DM22122003 081.6 int09 change
+			//DM15072004 081.7 int06 changed
+			if (lastPTS != pts)
+			{
+				//log.writeLong(pts+addoffset);
+				log.writeLong(pts);
 				log.writeLong(target);
 			}
 
@@ -14557,13 +14853,25 @@ class PIDdemux {
 		int datalength=0, ptslength=0, ttx=0, shift=0;
 		pack++;
 
-		if (isPVA) {
+		if (isPVA)
+		{
 			datalength=origdata.length;
-			if (options[55]!=-1) { 
+
+			if (options[55]!=-1)
+			{
 				shift=-4; 
 				ptslength=4; 
 			}
-		} else {
+		}
+		else
+		{
+			//DM12072004 081.7 int06 add
+			if (origdata[0] != 0 || origdata[1] != 0 || origdata[2] != 1)
+			{
+				Msg("!> invalid startcode, refuse video PES packet " + pack + " (" + Integer.toHexString(PID) + "/" + Integer.toHexString(ID) + "/" + Integer.toHexString(newID) + "/" + format + ")");
+				return options;
+			}
+
 			ID = 0xFF&origdata[3];
 			datalength = ((0xFF&origdata[4])<<8 | (0xFF&origdata[5]));    // av pack length bytes to follow
 
@@ -14835,7 +15143,10 @@ class makeVDR {
 	byte[] fills = new byte[2324];
 	ArrayList stuff = new ArrayList(), IDs = new ArrayList();
 	boolean video=false;
-	int ac3ID = (comBox[20].getSelectedIndex()>0) ? Integer.parseInt(comBox[20].getSelectedItem().toString().substring(2,4),16) : 0x80;
+
+	//DM09072004 081.7 int06 disabled
+	//int ac3ID = (comBox[20].getSelectedIndex()>0) ? Integer.parseInt(comBox[20].getSelectedItem().toString().substring(2,4),16) : 0x80;
+
 	ByteArrayOutputStream buf = new ByteArrayOutputStream();
 	long scr=0, pmtcount=0;
 	int toVdr=0; //DM18022004 081.6 int17 new
@@ -15042,54 +15353,81 @@ class makeVDR {
 
 
 	/******* write VDR ******/
-	public long[] writeVDR(byte[] data, long[] options, PIDdemux demux, int overhead) {    // data = 1 pespacket from demux
+	//DM09072004 081.7 int06 changed
+	public long[] writeVDR(byte[] data, long[] options, PIDdemux demux, int overhead)
+	{
+		// data = 1 pespacket from demux
+
 		try 
 		{
-		int type = demux.getType(), stream = demux.getStreamType();
-		int newID = demux.getnewID();       // read new mapped ID
-		//   if (type==0 && newID>0x80) return options;   // return, nor more subIDs accept
-		if (type==0 && newID!=ac3ID) 
-			return options;   // return, wrong ac3 subIDs not accept
-		if (type==1 && newID>0x9F) //DM30122003 081.6 int10 changed
-			return options;   // return, nor more ttx  accept
-		if (type>3) //DM23022004 081.6 int18 changed
-			return options;   // return, lpcm not accept
+			int type = demux.getType();
+			int stream = demux.getStreamType();
+			int newID = demux.getnewID();       // read new mapped ID
 
-		if (data.length>overhead) { 
-			if (!writedata[0] && type==3 ) 
-				return options;   // video disabled
-			else if (!writedata[1] && type<3 ) 
-				return options;   // nonvideo disabled
-			int len = data.length-overhead;
-			if ((0x80&data[7])!=0) 
-				data[9] &= ~8;
-			if ((0x40&data[7])!=0) 
-				data[14] &= ~8;
+			//DM09072004 081.7 int06 changed
+			//if (type == 0 && newID != ac3ID) 
+			if (type == 0 && newID != 0x80)
+				return options;   // return, additional ac3 subIDs not accept
 
-			if (type==1) {  // remap TTX SubID //DM30122003 081.6 int10 add
-				data[9+(0xFF&data[8])] = (byte)(0x1F&newID);
+			if (type == 1 && newID > 0x9F) //DM30122003 081.6 int10 changed
+				return options;   // return, nor more ttx  accept
+
+			if (type > 3) //DM23022004 081.6 int18 changed
+				return options;   // return, lpcm,subpics not accept
+
+			if (data.length > overhead)
+			{ 
+				if (!writedata[0] && type == 3 ) 
+					return options;   // video disabled
+
+				else if (!writedata[1] && type < 3 ) 
+					return options;   // nonvideo disabled
+
+				int len = data.length - overhead;
+
+				if ((0x80 & data[7]) != 0) //remove bit33 PTS
+					data[9] &= ~8;
+
+				if ((0x40 & data[7]) != 0) //remove bit33 DTS
+					data[14] &= ~8;
+
+				if (type == 1) // remap TTX SubID //DM30122003 081.6 int10 add
+					data[9 + (0xFF & data[8])] = (byte)(0x1F & newID);
+
+				if (type == 0 && stream == 2)
+				{
+					// skip Ac-3 sub-id and only write one stream
+					len -= 4;
+					int size = len - 6;
+					int head = 9 + (0xFF & data[8]);
+
+					data[4] = (byte)(size>>>8);    // correct length info
+					data[5] = (byte)(0xFF & size);   //   --"--
+
+					out.write(data, 0, head);        // write leading hader
+					out.write(data, head + 4, len - head); 
+
+					options[39] += len; 
+					options[41] += len;    // write the rest
+
+					return options;
+				}
+
+				//DM09072004 081.7 int06 fix, earlier function is now done by 'PIDfilter'
+				data[3] = data[3] != (byte)0xBD ? (byte)newID : data[3];
+
+				out.write(data, 0, len); 
+
+				options[39] += len; 
+				options[41] += len;
 			}
-
-			if (type==0 && stream==2) {  // skip Ac-3 sub-id and only write one stream
-				len-=4;
-				int size = len-6;
-				int head = 9+(0xFF&data[8]);
-				data[4] = (byte)(size>>>8);    // correct length info
-				data[5] = (byte)(0xFF&size);   //   --"--
-				out.write(data,0,head);        // write leading hader
-				out.write(data,head+4,len-head); 
-				options[39]+=len; 
-				options[41]+=len;    // write the rest
-				return options;
-			}
-			out.write(data,0,len); 
-			options[39]+=len; 
-			options[41]+=len;
-		}
 		} 
-		catch (IOException e) { 
-			Msg("writeVDR error3"+e); 
+
+		catch (IOException e)
+		{ 
+			Msg("writeVDR error3" + e); 
 		}
+
 		return options;
 	}
 
