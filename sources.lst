@@ -7,6 +7,7 @@ src/net/sourceforge/dvb/projectx/audio/RIFFHeader.java
 src/net/sourceforge/dvb/projectx/common/Common.java
 src/net/sourceforge/dvb/projectx/common/Resource.java
 src/net/sourceforge/dvb/projectx/common/X.java
+src/net/sourceforge/dvb/projectx/common/Settings.java
 src/net/sourceforge/dvb/projectx/gui/UISwitchListener.java
 src/net/sourceforge/dvb/projectx/gui/LogArea.java
 src/net/sourceforge/dvb/projectx/gui/HexViewer.java

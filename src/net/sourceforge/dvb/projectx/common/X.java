@@ -99,6 +99,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -190,7 +191,7 @@ static Audio audio = new Audio();
 static D2V d2v = new D2V();
 static TS tf = new TS();
 
-static String inifile = "";
+public static Settings settings = null;
 static String inidir = System.getProperty("user.dir");
 static String filesep = System.getProperty("file.separator");
 static String frametitle = "";
@@ -542,6 +543,7 @@ private void setLookAndFeel(String lnfName)
 			
 			System.err.println("Could not load LookAndFeel: " + lnfName);
 		}
+		settings.setProperty("lookAndFeel", comBox[16].getSelectedItem());
 	}
 
 }
@@ -2805,7 +2807,7 @@ class MenuListener implements ActionListener
 
 		else if (actName.equals("exit"))
 		{
-			inisave();
+			saveSettings();
 			System.exit(0); 
 		}
 
@@ -4873,226 +4875,169 @@ public void ScanInfo(XInputFile aXInputFile)
 	FileInfoTextArea.setText(values);
 }
 
-/****************
- * load inifile * 
- ****************/
-//DM26032004 081.6 int18 changed
-//DM13062004 081.7 int04 changed
-public void iniload()
+/**
+ * Initializes X from Settings 
+ */
+public void init()
 {
 	try 
 	{
-
-	//DM13062004 081.7 int04 add
-	Object table_indices[] = Common.checkUserColourTable();
-	if (table_indices != null)
-	{
-		for (int i = 0; i < table_indices.length; i++)
-			comBox[11].addItem(table_indices[i]);
-	}
-
-
-	if (new File(inifile).exists())
-	{
-
-	BufferedReader inis = new BufferedReader(new FileReader(inifile));
-	String path="", ck=""; 
-	boolean val = false;
-
-	iniread:
-	while (true)
-	{
-		path = inis.readLine();
-
-		if (path==null) 
-			break iniread;
-
-		if (path.startsWith("d"))
-		{ 
-			if (path.length()>2 && !path.substring(1,2).equals("*"))
-				d2vfield[Integer.parseInt(path.substring(1,2))].setText(path.substring(2,path.length()));
-		}
-		else if (path.startsWith("e"))
-		{ 
-			if (path.length()>2 && !path.substring(1,2).equals("*"))
-				exefield[Integer.parseInt(path.substring(1,2))].setText(path.substring(2,path.length()));
-		}
-		else if (path.startsWith("f*"))
-		{ 
-			if (path.substring(2, path.length()) != null)
-			{
-				File f = new File(path.substring(2, path.length()));
-
-				if (f.exists())
-					chooser.setCurrentDirectory(f);
-			}
-		}
-		else if (path.startsWith("i*"))
-		{ 
-			try {
-				XInputDirectory xInputDirectory = new XInputDirectory(path.substring(2,path.length()));
-				if (path.substring(2,path.length())!=null && xInputDirectory.test())
-					comBox[12].addItem(xInputDirectory);
-			} catch (RuntimeException e) {
-				// If there are problems with the directory simply ignore it and do nothing
-			}
-		}
-		else if (path.startsWith("o*"))
+		//DM13062004 081.7 int04 add
+		Object table_indices[] = Common.checkUserColourTable();
+		if (table_indices != null)
 		{
-			outchange=true;
-			if (path.substring(2,path.length())!=null && new File(path.substring(2,path.length())).exists())
-				comBox[13].addItem(path.substring(2,path.length()));
-			outchange=false;
+			for (int i = 0; i < table_indices.length; i++)
+				comBox[11].addItem(table_indices[i]);
 		}
-		else if (path.startsWith("r"))
-		{
-			ck = path.substring(path.indexOf("*")+1,path.length());
-			if (ck.equals("true")) 
-				val=true; 
-			else 
-				val=false;
-			RButton[Integer.parseInt(path.substring(1,path.indexOf("*")))].setSelected(val);
-		}
-		else if (path.startsWith("c"))
-		{
-			ck = path.substring(path.indexOf("*")+1,path.length());
-			if (ck.equals("true")) 
-				val=true; 
-			else 
-				val=false;
-			int lfn = Integer.parseInt(path.substring(1,path.indexOf("*")));
-			if (lfn < cBox.length) 
-				cBox[lfn].setSelected(val);
-		}
-		else if (path.startsWith("p"))
-		{
-			outchange=true;
-			ck = path.substring(path.indexOf("*") + 1, path.length());
-			int lfn = Integer.parseInt(path.substring( 1, path.indexOf("*")));
-
-			//DM19092004 081.8.02 changed, lang
-			if (lfn < comBox.length)
-			{
-				if (ck.startsWith("("))
-					comBox[lfn].setSelectedIndex(Integer.parseInt(ck.substring(1, 2)));
-
-				else
-					comBox[lfn].setSelectedItem(ck);
-			}
-
-			outchange=false;
-		}
-		else if (path.startsWith("wx")) 
-			framelocation[0]=Integer.parseInt(path.substring(2,path.length()));
-		else if (path.startsWith("wy")) 
-			framelocation[1]=Integer.parseInt(path.substring(2,path.length()));
-		else if (path.startsWith("ww")) 
-			framelocation[2]=Integer.parseInt(path.substring(2,path.length()));
-		else if (path.startsWith("wh")) 
-			framelocation[3]=Integer.parseInt(path.substring(2,path.length()));
-		else if (path.startsWith("lf"))
-		{
-			String lf = path.substring(3);
-			setLookAndFeel(lf);
-		}
-		}
-		
-
-		inis.close();
-		inputlist();
-
-	}
 	} 
 	catch (IOException e1)
 	{
 		//DM25072004 081.7 int07 add
-		Msg(Resource.getString("msg.loadini.error") + " " + e1);
+		Msg(Resource.getString("msg.init.error") + " " + e1);
 	}
+
+	String value = null;
+	
+	for (int i = 0; i < d2vfield.length; i++)
+	{
+		value = settings.getProperty("d2v."+i);
+		if (value != null)
+		{ 
+			d2vfield[i].setText(value);
+		}
+	}
+	
+	for (int i = 0; i < exefield.length; i++)
+	{
+		value = settings.getProperty("exe."+i);
+		if (value != null)
+		{ 
+			exefield[i].setText(value);
+		}
+	}
+	
+	if ((value = settings.getProperty("lastDirectory")) != null)
+	{ 
+		File f = new File(value);
+
+		if (f.exists())
+			chooser.setCurrentDirectory(f);
+	}
+	
+	List list = settings.getListProperty("input.");
+	for (Iterator iter = list.iterator(); iter.hasNext();) {
+		value = (String) iter.next();
+		try {
+			XInputDirectory xInputDirectory = new XInputDirectory(value);
+			if (xInputDirectory.test())
+				comBox[12].addItem(xInputDirectory);
+		} catch (RuntimeException e) {
+			// If there are problems with the directory simply ignore it and do nothing
+		}
+	}
+	
+	list = settings.getListProperty("output.");
+	for (Iterator iter = list.iterator(); iter.hasNext();) {
+		value = (String) iter.next();
+		outchange=true;
+		if (new File(value).exists())
+			comBox[13].addItem(value);
+		outchange=false;
+	}
+	
+	for (int i = 0; i < RButton.length; i++)
+	{
+		Boolean bool = settings.getBooleanProperty("radioButton."+i);
+		if (bool != null)
+		{ 
+			RButton[i].setSelected(bool.booleanValue());
+		}
+	}
+		
+	for (int i = 0; i < cBox.length; i++)
+	{
+		Boolean bool = settings.getBooleanProperty("checkBox."+i);
+		if (bool != null)
+		{ 
+			cBox[i].setSelected(bool.booleanValue());
+		}
+	}
+	
+	for (int i = 0; i < comBox.length; i++)
+	{
+		value = settings.getProperty("comboBox."+i);
+		if (value != null)
+		{ 
+			outchange=true;
+
+			//DM19092004 081.8.02 changed, lang
+			if (value.startsWith("("))
+				comBox[i].setSelectedIndex(Integer.parseInt(value.substring(1, 2)));
+
+			else
+				comBox[i].setSelectedItem(value);
+
+			outchange=false;
+		}
+	}
+	
+	framelocation[0]=settings.getIntProperty("window.x", framelocation[0]);
+	framelocation[1]=settings.getIntProperty("window.y", framelocation[1]);
+	framelocation[2]=settings.getIntProperty("window.width", framelocation[2]);
+	framelocation[3]=settings.getIntProperty("window.height", framelocation[3]);
+
+	value = settings.getProperty("lookAndFeel");
+	setLookAndFeel(value);
+	
+	inputlist();
 }   
 
 
-/****************
- * save inifile *
- ****************/
-public static void inisave() //DM26012004 081.6 int12 changed, //DM26032004 081.6 int18 changed
+/**
+ * Saves the X settings.
+ */
+public static void saveSettings()
 {
-	try 
-	{
-	PrintWriter inis = new PrintWriter(new FileWriter(inifile));
-
-	Resource.saveLang(inis);
-
-	inis.println("// editable fields");
-	for (int a=0; a<d2vfield.length; a++)
-	{
-		inis.print("d"+a); 
-		inis.println(d2vfield[a].getText());
+	for (int a=0; a<d2vfield.length; a++){
+		settings.setProperty("d2v."+a, d2vfield[a].getText()); 
 	}
 
-	inis.println("// editable post command fields");
-	for (int a=0; a<exefield.length; a++)
-	{
-		inis.print("e"+a); 
-		inis.println(exefield[a].getText());
+	for (int a=0; a<exefield.length; a++){
+		settings.setProperty("exe."+a, exefield[a].getText()); 
 	}
 
-	inis.println("// last opened directory");
-	inis.println("f*" + chooser.getCurrentDirectory().toString()); 
+	settings.setProperty("lastDirectory", chooser.getCurrentDirectory().toString()); 
 
-	inis.println("// autoload directories");
-	for (int a=0; a<comBox[12].getItemCount(); a++)
-	{
-		inis.print("i*"); 
-		inis.println(comBox[12].getItemAt(a));
+	List list = new ArrayList();
+	for (int a=0; a<comBox[12].getItemCount(); a++){
+		list.add(comBox[12].getItemAt(a));
+	}
+	settings.setListProperty("input.", list); 
+
+	list = new ArrayList();
+	for (int a=0; a<comBox[13].getItemCount(); a++){
+		list.add(comBox[13].getItemAt(a));
+	}
+	settings.setListProperty("output.", list); 
+
+	for (int a=0; a<RButton.length; a++){
+		settings.setBooleanProperty("radioButton."+a, RButton[a].isSelected()); 
 	}
 
-	inis.println("// output directories");
-	for (int a=0; a<comBox[13].getItemCount(); a++)
-	{
-		inis.print("o*"); 
-		inis.println(comBox[13].getItemAt(a));
+	for (int a=0; a<cBox.length; a++){
+		settings.setBooleanProperty("checkBox."+a, cBox[a].isSelected()); 
 	}
 
-	inis.println("// all radio buttons");
-	for (int a=0; a<RButton.length; a++)
-	{
-		inis.print("r"+a+"*"); 
-		inis.println(RButton[a].isSelected());
+	for (int a=0; a<comBox.length; a++){
+		settings.setProperty("comboBox."+a, comBox[a].getSelectedItem()); 
 	}
 
-	inis.println("// all checkboxes");
-	for (int a=0; a<cBox.length; a++)
-	{
-		inis.print("c"+a+"*"); 
-		inis.println(cBox[a].isSelected());
-	}
-
-	inis.println("// all JComboboxes");
-	for (int a=0; a<comBox.length; a++)
-	{
-		inis.print("p"+a+"*"); 
-		inis.println(comBox[a].getSelectedItem());
-	}
-
-	inis.println("// last position of main frame");
-	inis.println("wx"+frame.getX());
-	inis.println("wy"+frame.getY());
-	inis.println("ww"+frame.getWidth());
-	inis.println("wh"+frame.getHeight());
+	settings.setIntProperty("window.x", frame.getX());
+	settings.setIntProperty("window.y", frame.getY());
+	settings.setIntProperty("window.width", frame.getWidth());
+	settings.setIntProperty("window.height", frame.getHeight());
 	
-	if (comBox[16].getSelectedItem() != null)
-	{
-		inis.println("// look and feel");
-		inis.println("lf="+comBox[16].getSelectedItem());
-	}
-
-	inis.close();
-	} 
-	catch (IOException e1)
-	{
-		//DM25072004 081.7 int07 add
-		Msg(Resource.getString("msg.saveini.error") + " " + e1);
-	}
+	settings.save();
 }
 
 
@@ -5243,7 +5188,7 @@ public void javaEV()
 	TextArea.append("\n" + Resource.getString("javaev.java.user.name") + "\t" + System.getProperty("user.name"));
 	TextArea.append("\n" + Resource.getString("javaev.java.user.home") + "\t" + System.getProperty("user.home"));
 	TextArea.append("\n" + Resource.getString("javaev.java.user.lang") + "\t" + System.getProperty("user.language"));
-	TextArea.append("\n" + Resource.getString("javaev.java.ini.file") + "\t" + inifile);
+	TextArea.append("\n" + Resource.getString("javaev.java.ini.file") + "\t" + settings.getInifile());
 
 	//DM18062004 081.7 int05 add
 	/** TODO Direkte Benutzung von RawInterface noch ändern */
@@ -5328,13 +5273,6 @@ public static void main(String[] args)
 {
 	StartUp startup = null; 
 
-	boolean iniSet = false;
-
-	if ( !inidir.endsWith(filesep) ) 
-		inidir += filesep;
-
-	inifile = inidir + standard_ini;
-
 	try
 	{
 		// first check and load ini file
@@ -5352,17 +5290,9 @@ public static void main(String[] args)
 					System.exit(0);
 				}
 	
-				inifile = args[1];
-	
-				if ( !(new File(inifile).exists()) )
-				{
-					System.out.println("stopped, config file " + inifile + " not found ...");
-					System.exit(0);
-				} 
-	
-				System.out.println("use config file " + inifile + " ...");
+				settings = new Settings(args[1]);
+				System.out.println("use config file " + settings.getInifile() + " ...");
 				aaa1 = 2;
-				iniSet = true;
 			}
 	
 			CLI_mode = true;
@@ -5376,17 +5306,16 @@ public static void main(String[] args)
 				}
 		}
 		
-		if (!iniSet)
+		if (settings == null)
 		{
 			System.out.println("use last config or standard ...");
+			settings = new Settings();
 		}
+		// initialize language
+		Resource.init();
 	
 		//load main stuff
 		X panel = new X();
-	
-
-		// initialize language
-		Resource.loadLang(inifile);
 	
 		String[] version = getVersion();
 		System.out.println(version[0]+"/"+version[1]+" "+version[2]+" "+version[3]);
@@ -5426,7 +5355,7 @@ public static void main(String[] args)
 	
 		comchange=false;
 	
-		panel.iniload();
+		panel.init();
 	
 		frametitle = version[0]+"/"+version[1]+" "+version[2]+" "+version[3];
 		frame.setTitle(frametitle); //DM20032004 081.6 int18 changed
@@ -5564,7 +5493,7 @@ public static void main(String[] args)
 			}else{
 				frame.addWindowListener (new WindowAdapter() { 
 					public void windowClosing(WindowEvent e) { 
-						X.inisave();
+						X.saveSettings();
 						System.exit(0); 
 					}
 				});
