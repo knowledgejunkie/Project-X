@@ -133,6 +133,9 @@ public class XInputFileImpl implements XInputFileIF {
 		s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getDirectory() + "/"
 				+ ftpFile.getName() + ";type=b";
 
+	//	s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getDirectory() + "/"
+	//			+ ftpFile.getName();
+
 		return s;
 	}
 
