@@ -155,7 +155,7 @@ public class XInputFileImpl implements XInputFileIF {
 	 * @return Input stream from the file
 	 */
 	public InputStream getInputStream() throws FileNotFoundException, MalformedURLException, IOException {
-		return new XInputStream(rawInterface.getStream(1024));
+		return new XInputStream(rawInterface.getStream(10 * 1024 * 1024));
 	}
 
 	/**

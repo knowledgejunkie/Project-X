@@ -25,8 +25,8 @@
  */
 package net.sourceforge.dvb.projectx.xinput.topfield_raw;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.PushbackInputStream;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -92,10 +92,10 @@ public class RawInterface {
 		return true;
 	}
 
-	public PushbackInputStream getStream(int buffersize) throws IOException {
-		PushbackInputStream stream = null;
+	public BufferedInputStream getStream(int buffersize) throws IOException {
+		BufferedInputStream stream = null;
 		RawFileInputStream rawin = new RawFileInputStream(rawRead, sourcefile);
-		stream = new PushbackInputStream(rawin, buffersize);
+		stream = new BufferedInputStream(rawin, buffersize);
 		stream_size = rawin.streamSize();
 		return stream;
 	}

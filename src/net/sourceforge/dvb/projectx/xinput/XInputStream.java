@@ -1,6 +1,5 @@
 package net.sourceforge.dvb.projectx.xinput;
 
-import java.io.FileWriter;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,8 +7,6 @@ import java.io.InputStream;
 public class XInputStream extends FilterInputStream {
 
 	boolean debug = false;
-
-	FileWriter fw = null;
 
 	/**
 	 * Create stream, which is able to handle special needs of the xinput package.
@@ -20,14 +17,6 @@ public class XInputStream extends FilterInputStream {
 	 */
 	public XInputStream(InputStream aIs) {
 		super(aIs);
-
-		if (debug) {
-			try {
-				fw = new FileWriter("XInputStream.log", true);
-				fw.write("InputStream opened!\n");
-			} catch (IOException e) {
-			}
-		}
 	}
 
 	/**
@@ -68,16 +57,19 @@ public class XInputStream extends FilterInputStream {
 	 * @see java.io.InputStream#read(byte[], int, int)
 	 */
 	public int read(byte[] aBuffer, int off, int len) throws IOException {
+
+		if (debug) System.out.println("Enter read(aBuffer,off,len)");
+
 		int result = 0;
 		long read = 0;
 		long readBytes = 0;
-		long remaining = 0;
+		long remaining = len;
 		byte[] streamBuffer = new byte[len];
 
 		try {
-			remaining = len;
 			do {
 				read = super.read(streamBuffer, 0, (int) remaining);
+				if (debug) System.out.println("    Bytes read in this cycle: " + read);
 				if (read > 0) {
 					readBytes += read;
 					System.arraycopy(streamBuffer, 0, aBuffer, (int) (len - remaining + off), (int) read);
@@ -87,18 +79,16 @@ public class XInputStream extends FilterInputStream {
 			result = (int) (len - remaining);
 
 			if ((read == -1) && (result == 0)) {
+				if (debug) System.out.println("Leave read(aBuffer,off,len) returning -1");
 				return -1;
 			} else {
+				if (debug) System.out.println("Leave read(aBuffer,off,len) returning " + result);
 				return result;
 			}
 		} finally {
-			if (debug) {
-				if (readBytes != len) {
-					fw.write("Wanted: " + len + ", Read: " + readBytes + ", Difference: " + (len - readBytes) + "\n");
-				} else {
-					fw.write("Wanted: " + len + ", Read: " + readBytes + "\n");
-				}
-			}
+			if (debug && (readBytes != len))
+					System.out.println("net.sourceforge.dvb.projectx.xinput.XInputStream.read(aBuffer,off,len): Bytes to read: "
+							+ len + ", Read: " + readBytes + ", Difference: " + (len - readBytes) + "\n");
 		}
 	}
 
@@ -107,24 +97,41 @@ public class XInputStream extends FilterInputStream {
 	 */
 	public void close() throws IOException {
 		super.close();
-		if (debug) {
-			fw.write("InputStream closed!\n");
-			fw.close();
-		}
+		if (debug) System.out.println("InputStream closed!\n");
 	}
 
 	/**
 	 * @see java.io.InputStream#skip(long)
 	 */
 	public long skip(long n) throws IOException {
-		long skipped = super.skip(n);
 
-		if (skipped < n) {
-			// TODO: maybe we should check this long to int casting
-			byte[] streamBuffer = new byte[(int) (n - skipped)];
-			return read(streamBuffer);
+		boolean debug = true;
+
+		if (debug) System.out.println("Enter skip(" + n + ")");
+
+		long retryCount = 0;
+		long skiped = 0;
+		long skipedBytes = 0;
+		long remaining = n;
+
+		try {
+			do {
+				skiped = super.skip(remaining);
+				if (debug) System.out.println("    Bytes skiped in this cycle: " + skiped);
+				skipedBytes += skiped;
+				remaining -= skiped;
+				if (skiped == 0) {
+					retryCount++;
+				} else {
+					retryCount = 0;
+				}
+			} while ((remaining > 0) && (retryCount <= 10));
+			if (debug) System.out.println("Leave skip(" + n + ") returning " + skipedBytes);
+			return skipedBytes;
+		} finally {
+			if (debug && (skipedBytes != n))
+					System.out.println("net.sourceforge.dvb.projectx.xinput.XInputStream.skip(n):\n  Bytes to skip: " + n
+							+ ", Skiped: " + skipedBytes + ", Difference: " + (n - skipedBytes) + "\n");
 		}
-
-		return skipped;
 	}
 }
