@@ -1,12 +1,36 @@
+/*
+ * @(#)XInputDirectoryImpl.java - implementation for ftp access
+ *
+ * Copyright (c) 2004-2005 by roehrist, All Rights Reserved. 
+ * 
+ * This file is part of X, a free Java based demux utility.
+ * X is intended for educational purposes only, as a non-commercial test project.
+ * It may not be used otherwise. Most parts are only experimental.
+ * 
+ *
+ * This program is free software; you can redistribute it free of charge
+ * and/or modify it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
 package net.sourceforge.dvb.projectx.xinput.ftp;
 
 import net.sourceforge.dvb.projectx.xinput.DirType;
 import net.sourceforge.dvb.projectx.xinput.XInputDirectoryIF;
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
 
-//+
 import java.net.URL;
-//-
 
 public class XInputDirectoryImpl implements XInputDirectoryIF {
 
@@ -84,7 +108,6 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 		}
 	}
 
-//+
 	/**
 	 * Create a XInputDirectory of type DirType.FILE_DIR.
 	 * 
@@ -147,7 +170,6 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 			throw new IllegalArgumentException(url + " is not a correct ftp URL!");
 		}
 	}
-//-
 
 	/**
 	 * Get String representation of the object.
@@ -158,7 +180,6 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 
 		String s = null;
 
-	//	s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getDirectory();
 		s = "ftp://" + ftpVO.getUser() + ":" + ftpVO.getPassword() + "@" + ftpVO.getServer() + ftpVO.getPort(":") + ftpVO.getDirectory();
 
 		return s;

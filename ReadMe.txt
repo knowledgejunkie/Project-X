@@ -39,9 +39,14 @@
 
 /==============================================================================/
 
+ This program includes software developed by the
+ Apache Software Foundation (http://www.apache.org/).
+
+/==============================================================================/
+
  This program is provided in sourcecode form only,
  because it is meant for educational purposes.
- Binaries of this project itself will not be included.
+ Binaries of this project itself will not be included (may not apply to external libraries)
 
  If you need an executable, you have to compile the package by yourself,
  or you ask someone to do so for you.
@@ -57,7 +62,7 @@
 
    sample of a compilation (may differ on your system) :
 
-   (A) open "build.bat" with an editor an check/correct the entry/path of JAVA_HOME 
+   (A) open "build.bat" with an editor and check/correct the entry/path of JAVA_HOME 
        of your installed JDK 
 
    (B) execute the "build.bat" on its place.
@@ -65,13 +70,27 @@
        build the .jar file and
        copies the resource files from the resource folder into the new .jar,
 
-       Note: now, we made a package for the sources
-             the file source.lst points to any required sourcefile and its location
+       Notes:
+       [i]   now, we made a package for the sources,
+             the file sources.lst points to every required sourcefile and its location
+       [ii]  the following libraries are required from the V 0.82.0:
+             - lib/commons-net-1.2.2.jar  (compiled with JDK 1.2.2) *)
+             - lib/jakarta-oro-2.0.8.jar  (compiled with JDK 1.2.2) *)
+       [iii] the following libraries are optional from the V 0.82.0 :
+             - lib/idct*.dll  (win32 optimized lib's for a faster preview)
+             copy one of them to the systems folder or where the compiled .jar is located
+
+       *)
+       newer versions you'll find at:
+       'jakarta.apache.org/site/binindex.cgi', look for 'Commons Net' and  'ORO'
+       - using newer lib's requires an update of the 'build.bat' and 'MANIFEST.MF' !
+
 
    (C) additional received resource files (e.g. other language files) can be added 
        to the .jar file, later, 
        or you put them into the same folder where the compiled .jar is executed.
 
+       
 
    the compiling process doesn't take more than about 30 seconds.
 
