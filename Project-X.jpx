@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--JBuilder XML Project-->
 <project>
+  <property category="debug.0" name="SmartStepRedefineClasses" value="0"/>
+  <property category="debug.0" name="SmartStepSkipStaticInitializers" value="0"/>
+  <property category="debug.0" name="SmartStepSkipSynthetics" value="0"/>
   <property category="generalFormatting" name="tabSize" value="2"/>
   <property category="generalFormatting" name="useTabChar" value="1"/>
   <property category="javaFormatting" name="packageThreshold" value="0"/>
@@ -38,6 +41,4 @@
   <property category="sys" name="VersionLabel" value="@version"/>
   <property category="sys" name="WorkingDirectory" value="."/>
   <property category="sys" name="uidesign.size.ftp.FtpChooser" value="463,272"/>
-  <file path="src/ftp/FtpChooser.java"/>
-  <file path="src/ftp/StringCommandListener.java"/>
 </project>

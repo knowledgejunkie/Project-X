@@ -9,6 +9,7 @@ dvbmatt erl 31.10. - Hänger bei XInput mit FTP -> xinputdirectory wurde vor mess
 dvbmatt erl - 31.10. - FTPChooser: Internationalisierung,
 31.10. - FTPChooser: Speichern der Einstellungen
 31.10. - Leer- und Sonderzeichen in FTP Pfaden (
+         Was ist damit? Hat bei mir auf Dreambox noch nie ein Problem gemacht. (roehrist)
 roehrist in Arbeit 31.10. - XInput und RawInterface
 31.10. - Source Kommentare und Codeconventions -> Festlegung / Entscheidung
 dvbmatt erl 02.11. - JDK1.2.2 adaption, String.replaceAll() umgehen mit SringBuffer
@@ -24,3 +25,12 @@ dvbmatt erl 12.11. - nullpointer, wenn versucht wird, nicht initialisierten stre
 dvbmatt erl 12.11. - pre-scan anpassung für MPG=>sPES Sondertypen
 dvbmatt erl 12.11. - spez. batchfile lesen bei CLI-ausführung (patch gepostet bei forum.doom9.org), mit anpassung für RE122
 12.11. - ";type=b" Anhängsel bei ftp-URLs ? wird bei RE1.2.2 nicht abgeschnitten. Zweck?
+         Konflikt: Fehlende Auswertung ist Fehler in JDK 1.2.2, behoben in JDK 1.4
+                   Wird benötigt, um FTP-Verbindung in Binär-Modus zu schalten.
+                   Weglassen wäre kein Problem für Dreambox, da sie anscheinend entgegen RFC immer binär arbeitet.
+                   Es würde aber jeder RFC-konforme FTP Server auf die Nase fallen, da Text-Modus gemäß RFC Default ist.
+         Auflösung des Konfliktes unklar
+roehrist erl 14.11 - skip() gefixt in XInputStream, es fehlten Retries, bis alle Bytes vollständig gefixt sind.
+14.11. - Unterstützung von rename() in XInput
+roehrist erl 14.11. - Focusreihenfolge in FTPChooser korrigiert und TextArea ist nicht mehr editierbar
+roehrist in Arbeit 14.11. - Interface evt. durch abstrakte Basisklasse ersetzen.

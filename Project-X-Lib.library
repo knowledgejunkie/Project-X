@@ -3,10 +3,10 @@
   <!--JBuilder Library Definition File-->
   <fullname>Project-X-Lib</fullname>
   <class>
-    <path>[lib/commons-net-1.1.0/commons-net-1.1.0.jar]</path>
+    <path>[lib/commons-net-1.2.2.jar]</path>
   </class>
   <documentation>
     <path>lib/commons-net-1.1.0/docs/apidocs</path>
   </documentation>
-  <lastmodsaved>1086006359710</lastmodsaved>
+  <lastmodsaved>1100451465365</lastmodsaved>
 </library>
