@@ -2766,7 +2766,7 @@ class MenuListener implements ActionListener
 
 		else if (actName.equals("viewAsHex"))
 		{
-			if (scan.getFile().exists())
+			if (scan.getFile() != null && scan.getFile().exists())
 				new HexViewer().view(scan.getFile());
 		}
 
