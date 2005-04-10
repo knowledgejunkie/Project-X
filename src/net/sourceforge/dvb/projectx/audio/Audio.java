@@ -173,20 +173,23 @@ public class Audio
 		Time_length = time_index[Layer]/Sampling_frequency;
 	
 		if (ID==1 && Layer==2) {	// MPEG-1, L2 restrictions
-			if(Bitrate/Channel < 32000) 
+			if(Bitrate / Channel < 32000) 
 				return -5; /* unsupported bitrate */
-			if(Bitrate/Channel > 192000) 
+
+			if(Bitrate / Channel > 192000) 
 				return -6; /* unsupported bitrate */
 	
-			if (Bitrate < 56000)
+			if (Bitrate / Channel < 56000)
 			{
 				if(Sampling_frequency == 32000) 
 					Sblimit = 12;
 				else 
 					Sblimit = 8;
 			}
-			else if (Bitrate < 96000) 
+
+			else if (Bitrate / Channel < 96000) 
 				Sblimit = 27;
+
 			else
 			{
 				if (Sampling_frequency == 48000) 

@@ -193,8 +193,8 @@ public class X extends JPanel
 {
 
 /* main version index */
-static String version_name = "ProjectX 0.82.1";
-static String version_date = "31.03.2005";
+static String version_name = "ProjectX 0.82.1.01";
+static String version_date = "10.04.2005";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -3910,16 +3910,16 @@ class COLLECTION extends JFrame
 		CL1.setLayout(new BoxLayout(CL1, BoxLayout.X_AXIS));
 
 		framecutfield = new JTextField("");
-		framecutfield.setPreferredSize(new Dimension(150,22));
-		framecutfield.setMaximumSize(new Dimension(150,22));
+		framecutfield.setPreferredSize(new Dimension(130,22));
+		framecutfield.setMaximumSize(new Dimension(130,22));
 		framecutfield.setToolTipText(Resource.getString("collection.cutpanel_tip4")); //DM18022004 081.6 int17 changed
 		framecutfield.setActionCommand("cutnumber");
 		CL1.add(framecutfield);
 
 		cutadd = new JButton(Resource.getString("collection.addpoint"));
 		cutadd.setActionCommand("addpoint");
-		cutadd.setPreferredSize(new Dimension(100,22));
-		cutadd.setMaximumSize(new Dimension(100,22));
+		cutadd.setPreferredSize(new Dimension(120,22));
+		cutadd.setMaximumSize(new Dimension(120,22));
 		CL1.add(cutadd);
 
 		jump3Panel.add(CL1);
@@ -3929,15 +3929,15 @@ class COLLECTION extends JFrame
 
 		comBox[14] = new JComboBox();
 		comBox[14].setMaximumRowCount(8);
-		comBox[14].setPreferredSize(new Dimension(150,22));
-		comBox[14].setMaximumSize(new Dimension(150,22));
+		comBox[14].setPreferredSize(new Dimension(130,22));
+		comBox[14].setMaximumSize(new Dimension(130,22));
 		comBox[14].setActionCommand("cutbox");
 		CL5.add(comBox[14]);
 
 		cutdel = new JButton(Resource.getString("collection.delpoint"));
 		cutdel.setActionCommand("delpoint");
-		cutdel.setPreferredSize(new Dimension(100,22));
-		cutdel.setMaximumSize(new Dimension(100,22));
+		cutdel.setPreferredSize(new Dimension(120,22));
+		cutdel.setMaximumSize(new Dimension(120,22));
 		cutdel.setEnabled(false);
 		CL5.add(cutdel);
 
@@ -17114,10 +17114,16 @@ class PIDdemux {
 
 			switch (subid>>>4)
 			{
+			case 8:
+				if (ismpg < 2)
+				{
+					subid = 0;
+					break;
+				}
+
 			case 1:
 			case 2:
 			case 3:
-			case 8:
 			case 9:
 			case 0xA:
 				break;
