@@ -17012,9 +17012,15 @@ class PIDdemux {
 	 */
 	public void resetVideo()
 	{
-		vidbuf.reset(); 
-		packet.reset(); 
-		vptsbytes.reset(); 
+		if (vidbuf != null)
+			vidbuf.reset(); 
+
+		if (packet != null)
+			packet.reset(); 
+
+		if (vptsbytes != null)
+			vptsbytes.reset(); 
+
 		first = true;
 	}
 
