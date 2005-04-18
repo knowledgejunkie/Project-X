@@ -118,7 +118,7 @@ public class Video {
 	{
 		int[] size = getHVSize( str, videobasics);
 
-		offs += (1 & b[4]) != 0 ? 8 : 5;
+		offs += (1 & b[offs + 4]) != 0 ? 8 : 5;
 
 		b[offs] = (byte) (0xFF & size[0]>>>6);
 		b[offs + 1] = (byte) (0xFC & size[0]<<2);
