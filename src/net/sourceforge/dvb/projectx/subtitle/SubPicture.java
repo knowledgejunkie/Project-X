@@ -44,6 +44,7 @@ import java.awt.geom.Rectangle2D;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.StringTokenizer;
 
 import javax.swing.JFrame;
@@ -103,7 +104,7 @@ public class Picture extends JPanel implements Runnable
 
 	private BufferedImage bimg;
 	private Graphics2D big;
-	private Font font, font_alt, font_std; //DM30122003 081.6 int10 add, //DM01032004 081.6 int18 add
+	private Font font, font_std; //DM30122003 081.6 int10 add, //DM01032004 081.6 int18 add
 	private FontRenderContext frc;
 
 	//DM26052004 081.7 int03 changed
@@ -232,10 +233,10 @@ public class Picture extends JPanel implements Runnable
 	private byte newline[] = { 0,0 };
 	private int Rect[] = new int[4];
 	private int pos[] = new int[4];
-	private int option[] = new int[10]; //DM26052004 081.7 int03 changed
+	private int option[] = new int[11];
 
 	//DM26052004 081.7 int03 changed
-	private int standard_values[] = { 26, 10, 32, 80, 560, 720, 576, -1, 4 };
+	private int standard_values[] = { 26, 10, 32, 80, 560, 720, 576, -1, 4, 3, 1 };
 
 	private ArrayList user_color_table = new ArrayList();
 	private Bitmap bitmap;
@@ -345,12 +346,12 @@ public class Picture extends JPanel implements Runnable
 
 				//source modified foreground color
 				int paint_color = color_table[offset + (7 & chars[b])];
-				String str = Integer.toString(paint_color);
+				String nstr = Integer.toString(paint_color);
 				String sign = new Character((char)(chars[b]>>>8)).toString();
 
 				//remember new color
-				if (list.indexOf(str) < 0 && !sign.equals(" "))
-					list.add(str);
+				if (list.indexOf(nstr) < 0 && !sign.equals(" "))
+					list.add(nstr);
 			}
 		}
 
@@ -378,20 +379,27 @@ public class Picture extends JPanel implements Runnable
 		for (int a = 0; antialiasing && a < str.length; a++)
 		{
 			int[] chars = (int[])str[a];
-			String str = "";
+			String nstr = "";
 
 			big.setColor(new Color(color_table[64])); // black
 
 			/**
-			 * concatenate string, no special colors required
+			 * concatenate string, no special colors required here
 			 */
 			for (int i = 0; i < chars.length; i++)
-				str += new Character((char)(chars[i]>>>8)).toString();
+				nstr += new Character((char)(chars[i]>>>8)).toString();
 
 			x = option[3];
-			//int y = Rect[1] + (option[0] * (1 + a));
 			int y = Rect[1] + (line_offset * (1 + a));
-			int[] offs = { 2, 3, 3, 3, 3, 3, 2 };
+
+			int[] offs = new int[(option[9] * 2) + 1];
+
+			/**
+			 * overhead around a pixel: x pix WEST, 1 pix MID, x pix EAST
+			 * pix > 4 not recommended, option[9] = outline_pixels
+			 */
+			offs[0] = offs[offs.length - 1] = option[9] - 1;
+			Arrays.fill(offs, 1, offs.length - 1, option[9]);
 
 			for (int i = 0; i < offs.length; i++) // horiz. lines
 			{
@@ -399,7 +407,7 @@ public class Picture extends JPanel implements Runnable
 				int _y = y - (offs.length / 2) + i;
 
 				for (int j = -offs[i]; j < offs[i] + 1; j++)
-					big.drawString(str, _x + j, _y);
+					big.drawString(nstr, _x + j, _y);
 			}
 		}
 
@@ -760,6 +768,7 @@ public class Picture extends JPanel implements Runnable
 		resetUserColorTable();
 
 		System.arraycopy(standard_values, 0, option, 0, standard_values.length);
+
 		StringTokenizer st = new StringTokenizer(values, ";");
 		int a=0;
 
@@ -771,9 +780,9 @@ public class Picture extends JPanel implements Runnable
 
 		line_offset = option[0] + 2;
 		default_alpha = 0xF & option[1];
-		font = new Font(nm, Font.BOLD, option[0]);
-		font_alt = new Font(nm, Font.BOLD | Font.ITALIC, option[0]); //DM30122003 081.6 int10 add
+		font = new Font(nm, option[10] == 0 ? Font.PLAIN : Font.BOLD, option[0]);
 		font_std = new Font("Tahoma", Font.PLAIN, 14); //DM01032004 081.6 int18 add
+
 		return option[7];
 	}
 

@@ -193,8 +193,8 @@ public class X extends JPanel
 {
 
 /* main version index */
-static String version_name = "ProjectX 0.82.1.01";
-static String version_date = "10.04.2005";
+static String version_name = "ProjectX 0.82.1.02";
+static String version_date = "07.05.2005";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -2580,7 +2580,7 @@ protected JPanel buildsubtitlePanel()
 	//tt0.add(new JLabel(Resource.getString("tab.subtitle.sup.special")));
 
 	picButton = new JButton(Resource.getString("tab.subtitle.preview"));
-	picButton.setPreferredSize(new Dimension(180,24));
+	picButton.setPreferredSize(new Dimension(170,24));
 	picButton.setActionCommand("picview");
 	picButton.addActionListener(my0Listener);
 
@@ -2594,11 +2594,11 @@ protected JPanel buildsubtitlePanel()
 	}
 	comBox[26] = new JComboBox(fonts);
 	comBox[26].setSelectedItem("Tahoma");
-	comBox[26].setPreferredSize(new Dimension(150,24));
+	comBox[26].setPreferredSize(new Dimension(140,24));
 
-	d2vfield[6] = new JTextField("26;10;32;80;560;720;576;-1;4"); //DM26052004 081.7 int03 changed
+	d2vfield[6] = new JTextField("26;10;32;80;560;720;576;-1;4;3;1"); //DM26052004 081.7 int03 changed
 	d2vfield[6].setEditable(true);
-	d2vfield[6].setPreferredSize(new Dimension(170,24));
+	d2vfield[6].setPreferredSize(new Dimension(190,24));
 	d2vfield[6].setToolTipText(Resource.getString("tab.subtitle.sup.values.tip"));
 
 	JPanel picPanel = new JPanel();
@@ -2888,6 +2888,7 @@ class MenuListener implements ActionListener
 					inputlist();
 			} catch (IOException ioe) {}
 		}
+
 
 		else if (actName.equals("viewAsHex"))
 		{
@@ -10992,8 +10993,7 @@ public void mpt(String[] args) {
  ********************************/
 public boolean processAudio(String[] args)
 {
-
-	String fchild = (newOutName.equals("")) ? (new File(args[0]).getName()).toString() : newOutName;
+	String fchild = new File(args[0]).getName();
 	String fparent = ( fchild.lastIndexOf(".") != -1 ) ? workouts+fchild.substring(0,fchild.lastIndexOf(".")) : workouts+fchild;
 
 	msoff.setText(Resource.getString("mainpanel.avoffset"));
@@ -12201,6 +12201,14 @@ public boolean processAudio(String[] args)
 			/****** delete CRC ****/
 			if (audio.Layer>1 && options[9]==1) 
 				frame = audio.MPA_deleteCRC(frame);
+
+
+			/**
+			 * rds test
+			 */
+			if (audio.Layer == 2 && cBox[81].isSelected())
+				audio.testRDS(frame);
+
 
 			/****** copy frame header ****/
 			System.arraycopy(frame,0,header_copy,0,4);

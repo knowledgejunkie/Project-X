@@ -953,4 +953,143 @@ public class Audio
 	} 
 	//DM3003004 081.6 int18 add-
 
+
+
+
+
+
+
+	/**
+	 * RDS-Test, cant find any similars to RDS, I-RDS, RBDS i.e. group/block coding
+	 * PI-Code is missing, WDR2 shall have Dx92
+	 *
+	 * activated, when crc-removing selected
+	 */
+	java.util.ArrayList _list = new java.util.ArrayList();
+	ByteArrayOutputStream bo = new ByteArrayOutputStream();
+
+	public void testRDS(byte[] frame)
+	{
+		int neg_offs = frame.length - 1;
+
+		if (frame[neg_offs] != (byte)0xFD)
+		{
+			neg_offs -= 2;
+
+			if (frame[neg_offs] != (byte)0xFD || frame[neg_offs + 1] != 0 || frame[neg_offs + 2] != 0)
+				return;
+		}
+
+		int len = frame[neg_offs - 1];
+
+		for (int i = neg_offs - 2, val; i > neg_offs - 2 - len; i--)
+		{
+			val = 0xFF & frame[i];
+			_list.add("" + val);
+		}
+
+		decodeChunk(_list);
+	}
+
+	/**
+	 * 
+	 */
+	private void decodeChunk(java.util.ArrayList list)
+	{
+		if (list.isEmpty())
+			return;
+
+		int index = list.indexOf("254"); //0xfe, start
+
+		if (index < 0)
+		{
+			list.clear();
+			return;
+		}
+
+		while (index > 0)
+		{
+			list.remove(0);
+			index--;
+		}
+
+		int eom_index = list.indexOf("255"); //0xff, end
+
+		if (eom_index < 0)
+		{
+			return;
+		}
+
+		int chunklen = 0;
+
+		for (int i = 0; i < 4; i++)
+			chunklen |= Integer.parseInt(list.get(1 + i).toString())<<(8 * (3 - i));
+
+		chunklen ++;   //start_marker
+		chunklen += 4; //len field itself
+		chunklen += 2; //crc
+
+		if (eom_index < chunklen)
+		{
+			list.remove(0);
+			return;
+		}
+
+
+		int type = -1;
+
+		for (int i = 0; i <= eom_index; i++, list.remove(0))
+		{
+			if (i < 5 || i > eom_index - 3)
+				continue;
+
+			int value = Integer.parseInt(list.get(0).toString());
+
+			if (i == 5)
+			{
+				type = value;
+				continue;
+			}
+
+			bo.write(value);
+		}
+
+		switch (type)
+		{
+		case 0xA: //RT
+			printRadioText(bo.toByteArray());
+			break;
+
+		case 0x42: //? 
+		case 0x46: //?
+			break;
+		}
+
+		bo.reset();
+	}
+
+	/**
+	 * 
+	 */
+	private void printRadioText(byte[] array)
+	{
+		int index = 0;
+
+		int offs = (0xFF & array[index])<<8 | (0xFF & array[index + 1]);
+
+		index += 2;
+
+		int len = 0xFF & array[index];
+
+		index++;
+
+		int change = 0xFF & array[index];
+
+		index++;
+
+		String str = new String(array, index, len - 1);
+
+		net.sourceforge.dvb.projectx.common.X.Msg("-> RT (" + change + "): '" + str.trim() + "'");
+	}
+
 }
