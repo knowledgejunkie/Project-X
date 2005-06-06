@@ -145,6 +145,7 @@ public class Preview
 		positionList.clear();
 		int mark = 0, offset = 0, ID = -1;
 		boolean save = false;
+		byte[] hav_chunk = { 0x5B, 0x48, 0x4F, 0x4A, 0x49, 0x4E, 0x20, 0x41 }; //'[HOJIN A'
 
 		ArrayList abc = (ArrayList)speciallist.get(active_collection);
 		int[] include = new int[abc.size()];
@@ -200,8 +201,55 @@ public class Preview
 			//if (filetype == 11 && a < data.length-188 && data[a] == 0x47 && data[a+188] == 0x47)
 			if (filetype == 11 && a < data.length-188 && data[a] == 0x47)
 			{
+				int chunk_offset = 0;
+
 				if (data[a + 188] != 0x47 && data[a + 188] != 0x7F)
-					continue;
+				{
+					int i = a + 188;
+					int j;
+					int k = a + 189;
+					int l = hav_chunk.length;
+
+					while (i > a)
+					{
+						j = 0;
+
+						while (i > a && data[i] != hav_chunk[j])
+							i--;
+
+						for ( ; i > a && j < l && i + j < k; j++)
+							if (data[i + j] != hav_chunk[j])
+								break;
+
+						/**
+						 * found at least one byte of chunk
+						 */
+						if (j > 0)
+						{
+							/** ident of chunk doesnt match completely */
+							if (j < l && i + j < k)
+							{
+								i--;
+								continue;
+							}
+
+							/** 
+							 * re-sorts packet in array 
+							 */
+							if (i + 0x200 + (k - i) < data.length)
+							{
+								chunk_offset = 0x200;
+								System.arraycopy(data, i + chunk_offset, data, i, k - i - 1);
+								System.arraycopy(data, a, data, a + chunk_offset, i - a);
+							}
+
+							break;
+						}
+					}
+
+					if (chunk_offset == 0)
+						continue;
+				}
 
 				if (save && mark <= a)
 					array.write(data,mark,a-mark);
@@ -239,6 +287,8 @@ public class Preview
 					save=false;
 
 				a += 187;
+				a += chunk_offset;
+				mark += chunk_offset;
 			}
 
 			//mpg2-ps

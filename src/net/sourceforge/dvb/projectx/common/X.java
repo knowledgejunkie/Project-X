@@ -193,8 +193,8 @@ public class X extends JPanel
 {
 
 /* main version index */
-static String version_name = "ProjectX 0.82.1.02";
-static String version_date = "07.05.2005";
+static String version_name = "ProjectX 0.82.1.02_b2";
+static String version_date = "06.06.2005";
 static String standard_ini = "X.ini";
 
 public static boolean CLI_mode = false;
@@ -252,7 +252,7 @@ static JButton doitButton, breakButton, scanButton, pauseButton, extract, exeBut
 
 public static JRadioButton[] RButton = new JRadioButton[25];
 public static JComboBox[] comBox = new JComboBox[39];
-public static JCheckBox[] cBox = new JCheckBox[82];
+public static JCheckBox[] cBox = new JCheckBox[83];
 
 /**
  * radio buttons for look and feels in general menu
@@ -1445,13 +1445,6 @@ protected JPanel buildidPanel()
 	cBox[28].setSelected(true);
 	idPanel3.add(cBox[28]);
 
-	cBox[76] = new JCheckBox(Resource.getString("tab.specials.vob.resetpts"));
-	cBox[76].setToolTipText(Resource.getString("tab.specials.vob.resetpts.tip"));
-	cBox[76].setPreferredSize(new Dimension(270,20));
-	cBox[76].setMaximumSize(new Dimension(270,20));
-	cBox[76].setSelected(true);
-	idPanel3.add(cBox[76]);
-
 	cBox[38] = new JCheckBox(Resource.getString("tab.specials.ts.scramble"));
 	cBox[38].setToolTipText(Resource.getString("tab.specials.ts.scramble.tip"));
 	cBox[38].setPreferredSize(new Dimension(270,20));
@@ -1481,6 +1474,12 @@ protected JPanel buildidPanel()
 	cBox[70].setPreferredSize(new Dimension(270,20));
 	cBox[70].setMaximumSize(new Dimension(270,20));
 	idPanel3.add(cBox[70]);
+
+	cBox[82] = new JCheckBox("TS: Finepass adaption");
+	cBox[82].setToolTipText("");
+	cBox[82].setPreferredSize(new Dimension(270,20));
+	cBox[82].setMaximumSize(new Dimension(270,20));
+	idPanel3.add(cBox[82]);
 
 	cBox[41] = new JCheckBox(Resource.getString("tab.specials.ts.pmt"));
 	cBox[41].setToolTipText(Resource.getString("tab.specials.ts.pmt.tip"));
@@ -1519,6 +1518,13 @@ protected JPanel buildidPanel()
 	JPanel idPanel2 = new JPanel();
 	idPanel2.setLayout ( new ColumnLayout() );
 	idPanel2.setBorder( BorderFactory.createTitledBorder(Resource.getString("tab.specials.title2")) );
+
+	cBox[76] = new JCheckBox(Resource.getString("tab.specials.vob.resetpts"));
+	cBox[76].setToolTipText(Resource.getString("tab.specials.vob.resetpts.tip"));
+	cBox[76].setPreferredSize(new Dimension(270,20));
+	cBox[76].setMaximumSize(new Dimension(270,20));
+	cBox[76].setSelected(true);
+	idPanel2.add(cBox[76]);
 
 	//DM14052004 081.7 int02 moved++
 	JLabel gpts = new JLabel(Resource.getString("tab.specials.ptsshift") + " ");
@@ -1584,7 +1590,7 @@ protected JPanel buildidPanel()
 	idPanel2.add(cBox[73]);
 
 	//DM14052004 081.7 int02 add
-	idPanel2.add(new JLabel(Resource.getString("tab.specials.conv")));
+	//idPanel2.add(new JLabel(Resource.getString("tab.specials.conv")));
 
 	cBox[23] = new JCheckBox(Resource.getString("tab.specials.conv.videostart"));
 	cBox[23].setToolTipText(Resource.getString("tab.specials.conv.videostart.tip"));
@@ -8860,6 +8866,7 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 	byte[] push189 = new byte[189];
 	long packet=0;
 	boolean pack=false;
+	byte[] hav_chunk = { 0x5B, 0x48, 0x4F, 0x4A, 0x49, 0x4E, 0x20, 0x41 }; //'[HOJIN A'
 
 	options[5]=262143;
 	options[6]=0;
@@ -9073,6 +9080,49 @@ public String rawparse(XInputFile xInputFile, int[] pids, int ToVDR)
 				in.skip(995);
 				count += 1184;
 				continue pvaloop;
+			}
+
+			/**
+			 * finepass .hav workaround, chunks fileposition index (hdd sectors) unused, because a file can be hard-cut anywhere
+			 */
+			if (cBox[82].isSelected() && push189[0] == 0x47 && push189[188] != 0x47)
+			{
+				int i = 188;
+				int j;
+				int k = push189.length;
+				int l = hav_chunk.length;
+
+				while (i > 0)
+				{
+					j = 0;
+
+					while (i > 0 && push189[i] != hav_chunk[j])
+						i--;
+
+					for ( ; i > 0 && j < l && i + j < k; j++)
+						if (push189[i + j] != hav_chunk[j])
+							break;
+
+					/**
+					 * found at least one byte of chunk
+					 */
+					if (j > 0)
+					{
+						/** ident of chunk doesnt match completely */
+						if (j < l && i + j < k)
+						{
+							i--;
+							continue;
+						}
+
+						in.skip(0x200 - (k - i));
+						in.read(push189, i, k - i);
+
+						count += 0x200;
+
+						break;
+					}
+				}
 			}
 
 
@@ -14708,16 +14758,17 @@ public void rawsub(XInputFile aXInputStream,String vptslog)
 	options[11]=0;
 }
 
+private byte temp_byte;
+
 //DM30032004 081.6 int18 add
 private void byteOrder(byte data[], int off, int len)
 {
-	byte value[] = new byte[len];
-	System.arraycopy(data, off, value, 0, len);
+	temp_byte = data[off + 1];
+	data[off + 1] = data[off];
+	data[off] = temp_byte;
 
-	for (int a=0; a<len; a++)
-		data[off+a] = value[len-1-a];
-
-	value = null;
+	if (len > 2)
+		Msg("byte swap > 2 not yet defined!!");
 }
 
 //30032004 081.6 int18 new

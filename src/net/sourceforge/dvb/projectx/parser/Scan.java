@@ -1071,24 +1071,33 @@ public class Scan
 			}
 
 			mpgcheck:
-			for (int a=0; a<bs2; a++)
+			for (int i = 0, j; i < bs2; i++)
 			{
-				if ( check[a]!=0 || check[a+1]!=0 || check[a+2]!=1 || check[a+3]!=(byte)0xba ) 
+				if ( check[i] != 0 || check[i + 1] != 0 || check[i + 2] != 1 || check[i + 3] != (byte)0xBA ) 
 					continue mpgcheck;
 
-				if ( (0xC0 & check[a+4])==0 )
+				if ( (0xC0 & check[i + 4]) == 0 )
 				{ 
+					j = i + 12;
+
+					if (check[j] != 0 || check[j + 1] != 0 || check[j + 2] != 1 || (0xFF & check[j + 3]) < 0xB3)
+						continue mpgcheck;
+
 					if (more) 
-						loadMPG2(check, a, false, true, bs1); 
+						loadMPG2(check, i, false, true, bs1); 
 
 					return Common.MPEG1PS_TYPE;
 				}
 
-				else if ( (0xC0 & check[a+4])==0x40 )
+				else if ( (0xC0 & check[i + 4]) == 0x40 )
 				{
+					j = i + 14 + (7 & check[i + 13]);
+
+					if (check[j] != 0 || check[j + 1] != 0 || check[j + 2] != 1 || (0xFF & check[j + 3]) < 0xB3)
+						continue mpgcheck;
+
 					if (more) 
-					//	loadMPG2(check, a, false, false, bs1); 
-						loadMPG2(check, a, X.cBox[14].isSelected(), false, bs1); 
+						loadMPG2(check, i, X.cBox[14].isSelected(), false, bs1); 
 
 					return Common.MPEG2PS_TYPE;
 				}
