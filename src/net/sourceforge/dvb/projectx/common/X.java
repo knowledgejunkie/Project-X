@@ -193,7 +193,7 @@ public class X extends JPanel
 {
 
 /* main version index */
-static String version_name = "ProjectX 0.82.1.02_b2";
+static String version_name = "ProjectX 0.82.1.02_b3";
 static String version_date = "06.06.2005";
 static String standard_ini = "X.ini";
 
@@ -4687,15 +4687,36 @@ class DNDListener implements DropTargetListener
 		DataFlavor[] df = tr.getTransferDataFlavors();
 
 		// Get list with one or more File objects
-		List li = (java.util.List)tr.getTransferData(df[0]);
-		{
-			// Replace dropped File objects by XInputFile objects
-			ArrayList tempLi = new ArrayList();
-			for (int i = 0; i < li.size(); i++) {
-				tempLi.add(new XInputFile((File)li.get(i)));
+		// List li = (java.util.List)tr.getTransferData(df[0]);
+		List li = null;
+
+		Object obj = tr.getTransferData(df[0]);
+
+		try {
+			li = (java.util.List) obj;
+
+		} catch (Exception ce1) {
+
+			// MacOsX returns one Url instead of a file list
+			try {
+				URL url = (URL)obj;
+				File f = new File(url.getHost() + url.getFile());
+				li = new ArrayList();
+				li.add(f);
+
+			} catch (Exception ce2) {
+
+				e.dropComplete(true);
+				return;
 			}
-			li = tempLi;
 		}
+
+		// Replace dropped File objects by XInputFile objects
+		ArrayList tempLi = new ArrayList();
+		for (int i = 0; i < li.size(); i++) {
+			tempLi.add(new XInputFile((File)li.get(i)));
+		}
+		li = tempLi;
 
 		if (da==1)        // copy = new coll each
 		{
