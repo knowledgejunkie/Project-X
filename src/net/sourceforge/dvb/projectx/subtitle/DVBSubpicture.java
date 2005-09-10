@@ -27,7 +27,7 @@
 /*
  * example of a basic implementation of a DVB subtitle decoder
  * 
- * it does not yet implement export of encoded string characters, only bitmapped pictures
+ * it does not yet implement export (only log it) of encoded string characters, only bitmapped pictures
  * 
  */
 
@@ -35,15 +35,17 @@ package net.sourceforge.dvb.projectx.subtitle;
 
 //DM24042004 081.7 int02 introduced
 
-import java.awt.*;
-import java.awt.image.*;
-import java.util.*;
+import java.awt.Graphics2D;
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.util.Hashtable;
+import java.util.Enumeration;
 
 import net.sourceforge.dvb.projectx.common.Resource;
-import net.sourceforge.dvb.projectx.common.X;
+import net.sourceforge.dvb.projectx.common.Common;
 
-public class DVBSubpicture
-{
+public class DVBSubpicture extends Object {
+
 	private byte data[];
 	private int BytePosition, BitPosition;
 	private Graphics2D big;
@@ -320,8 +322,8 @@ public class DVBSubpicture
 	private void prepare_output()
 	{
 		//DM26052004 081.7 int03 changed
-		//long new_time_out = (long)Math.round((pts - page.getTimeIn()) / 900.0);
-		long new_time_out = 1L + ((pts - page.getTimeIn()) / 1000);
+		//long new_time_out = (long)Math.round((pts - page.getTimeIn()) / 900.0); 1000
+		long new_time_out = 1L + ((pts - page.getTimeIn()) / 1024);
 
 		if (page.getTimeOut() > 0 && new_time_out > page.getTimeOut())
 			new_time_out = page.getTimeOut();
@@ -375,7 +377,7 @@ public class DVBSubpicture
 			//DM23062004 081.7 int05 add
 			if (region.getErrors() > 0)
 			{
-				X.Msg(Resource.getString("subpicture.msg.error.dvbdecoding", "" + region.getErrors(), "" + region.getId(), "" + page.getTimeIn()));
+				Common.setMessage(Resource.getString("subpicture.msg.error.dvbdecoding", "" + region.getErrors(), "" + region.getId(), "" + page.getTimeIn()));
 				//region.setActive(false);
 			}
 
@@ -1399,7 +1401,7 @@ public class DVBSubpicture
 
 		private void setFillFlag(int val)  // fill background with color of region_pixel_code_xbit index
 		{
-			fill_flag = val != 0 ? true : false;
+			fill_flag = val != 0;
 		}
 
 		private boolean getFillFlag()
@@ -1766,12 +1768,12 @@ public class DVBSubpicture
 
 		private void setNonModify(int val) // pixel with CLUT color entry 1 = dont overwrite it
 		{
-			non_modifying_color_flag = val != 0 ? true : false;
+			non_modifying_color_flag = val != 0;
 		}
 
 		private void setCopyTopFieldFlag(int val) // bottomfield isn't transmitted, so copy topfield
 		{
-			copy_top_field_flag = val == 0 ? true : false;
+			copy_top_field_flag = val == 0;
 		}
 
 		private boolean getCopyTopFieldFlag()

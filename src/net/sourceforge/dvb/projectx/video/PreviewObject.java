@@ -31,21 +31,21 @@ import net.sourceforge.dvb.projectx.xinput.XInputFile;
 
 //DM24062004 081.7 int05 introduced
 
-public class PreviewObject
-{
+public class PreviewObject extends Object {
+
 	private long start, end;
 	private int file_type;
 	private XInputFile xInputFile;
 
-	public PreviewObject()
+	private PreviewObject()
 	{}
 
-	public PreviewObject(long start, long end, int file_type, XInputFile aXInputFile)
+	public PreviewObject(long _start, long _end, int _file_type, XInputFile _xInputFile)
 	{
-		this.start = start;
-		this.end = end;
-		this.file_type = file_type;
-		this.xInputFile = aXInputFile;
+		start = _start;
+		end = _end;
+		file_type = _file_type;
+		xInputFile = _xInputFile;
 	}
 
 	public long getStart()

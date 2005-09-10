@@ -51,7 +51,7 @@ public class FileType {
 	/**
 	 * File on a harddisk of a topfield receiver in raw format
 	 */
-	public final static FileType TFRAW = new FileType(2, "TFRAW",
+	public final static FileType RAW = new FileType(2, "RAW",
 			net.sourceforge.dvb.projectx.xinput.topfield_raw.XInputFileImpl.class);
 
 	/**

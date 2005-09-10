@@ -1,5 +1,5 @@
 /*
- * @(#)VIDEO.java - some video constants
+ * @(#)Video.java - some video constants
  *
  * Copyright (c) 2003-2005 by dvb.matt, All Rights Reserved. 
  * 
@@ -28,18 +28,39 @@ package net.sourceforge.dvb.projectx.video;
 
 import java.util.StringTokenizer;
 
-public class Video {
+public class Video extends Object {
 
-	final static String[] aspratio = { 
+	private final static String[] aspectratio_table_strings = { 
 		"res." , "1:1" , "4:3" , "16:9" , "2.21:1" , "0.8055" , "0.8437" , "0.9375" , 
 		"0.9815" , "1.0255" , "1.0695" , "1.1250" , "1.1575" , "1.2015" , "res." , "res." 
 	};
-	final static String[] fps_tabl1 = { 
-		"forbidden fps" , "23.976fps" , "24fps" , "25fps" , "29.97fps" , "30fps" , "50fps" , 
-		"59.94fps" , "60fps" , "n.def." , "n.def." ,	"n.def." , "n.def." , "n.def." , "n.def." , "n.def."
-	};
-	// for info only: int[] fps_tabl2 = {0,3753,3750,3600,3003,3000,1800,1501,1500,0,0,0,0,0,0,0};
 
+	private final static String[] framerate_table_strings = { 
+		"forbidden fps" , "23.976fps" , "24fps" , "25fps" , "29.97fps" , "30fps" , "50fps" , 
+		"59.94fps" , "60fps" , "n.def." , "n.def." , "n.def." , "n.def." , "n.def." , "n.def." , "n.def."
+	};
+
+	private final static int[] framerate_table = { -1, 23976, 24000, 25000, 29970, 30000, 50000, 59940, 60000, -1, -1, -1, -1, -1, -1, -1 };
+
+	/**
+	 * returns aspectratio as string
+	 *
+	 * @return
+	 */
+	public static String getAspectRatio(int index)
+	{
+		return aspectratio_table_strings[index];
+	}
+
+	/**
+	 * returns framerate as string
+	 *
+	 * @return
+	 */
+	public static int getFrameRate(int index)
+	{
+		return framerate_table[index];
+	}
 
 	/**
 	 * returns formatted display from sequence header
@@ -47,41 +68,16 @@ public class Video {
 	 * @param1 - source array
 	 * @return - string
 	 */
-	public static String videoformatByte(byte[] gop)
+	public static String getVideoformatfromBytes(byte[] gop)
 	{
-		return "" + ((0xFF & gop[4])<<4 | (240 & gop[5])>>>4) + "*" + ((15 & gop[5])<<8 | (0xFF & gop[6])) + ", " + fps_tabl1[15 & gop[7]] + ", " + aspratio[(0xFF & gop[7])>>>4] + ", " + ( ((0xFF & gop[8])<<10 | (0xFF & gop[9])<<2 | (192 & gop[10])>>>6) * 400  ) + "bps, vbv " + ( (31 & gop[10])<<5 | (248 & gop[11])>>>3 );
+		return "" + ((0xFF & gop[4])<<4 | (0xF0 & gop[5])>>>4) + 
+			"*" + ((0xF & gop[5])<<8 | (0xFF & gop[6])) + 
+			", " + framerate_table_strings[0xF & gop[7]] + 
+			", " + aspectratio_table_strings[(0xFF & gop[7])>>>4] + 
+			", " + ( ((0xFF & gop[8])<<10 | (0xFF & gop[9])<<2 | (0xC0 & gop[10])>>>6) * 400  ) + 
+			"bps, vbv " + ( (0x1F & gop[10])<<5 | (0xF8 & gop[11])>>>3 );
 	}
 
-	/**
-	 * returns pts value from pes_extension
-	 *
-	 * @param1 - source array
-	 * @param2 - array offset
-	 * @return - pts
-	 */
-	public static long getPTSfromBytes(byte[] array, int offset)
-	{
-		return getPTSfromBytes(array, offset, true);
-	}
-
-	/**
-	 * returns pts value from pes_extension
-	 *
-	 * @param1 - source array
-	 * @param2 - array offset
-	 * @param3 - trim to positive 32bit value
-	 * @return - pts
-	 */
-	public static long getPTSfromBytes(byte[] array, int offset, boolean trim)
-	{
-		long pts = (6 & array[offset])<<29 | (0xFF & array[offset + 1])<<22 | (0xFE & array[offset + 2])<<14 |
-				(0xFF & array[offset + 3])<<7 | (0xFE & array[offset + 4])>>>1;
-
-		if (trim)
-			pts &= 0xFFFFFFFFL;
-
-		return pts;
-	}
 
 	/**
 	 * returns Sequence End Code as array
@@ -91,6 +87,18 @@ public class Video {
 	public static byte[] getSequenceEndCode()
 	{
 		byte[] b = { 0, 0, 1, (byte)0xB7 };
+
+		return b;
+	}
+
+	/**
+	 * returns Sequence End Code as array
+	 *
+	 * @return
+	 */
+	public static byte[] getSequenceStartCode()
+	{
+		byte[] b = { 0, 0, 1, (byte)0xB3 };
 
 		return b;
 	}

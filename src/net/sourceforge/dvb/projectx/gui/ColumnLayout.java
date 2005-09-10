@@ -1,7 +1,7 @@
 /*
  * @(#)ColumnLayout.java - 
  *
- * Copyright (c) 2005 by .., All Rights Reserved. 
+ * Copyright (c) 2005 by ?, All Rights Reserved. 
  * 
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.

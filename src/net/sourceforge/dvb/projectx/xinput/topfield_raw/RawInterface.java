@@ -59,7 +59,7 @@ public class RawInterface {
 		if (rawRead.AccessEnabled())
 			return rawRead.GetLoadStatus();
 		else
-			return Resource.getString("rawread.msg1");
+			return null;
 	}
 
 	/*

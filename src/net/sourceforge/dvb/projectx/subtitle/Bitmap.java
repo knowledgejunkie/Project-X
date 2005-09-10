@@ -28,10 +28,10 @@ package net.sourceforge.dvb.projectx.subtitle;
 
 //DM24042004 081.7 int02 introduced
 
-import java.util.*;
+import java.util.ArrayList;
 
-public class Bitmap
-{
+public class Bitmap extends Object {
+
 	private int width = 0;
 	private int height = 0;
 	private int depth = 0;
@@ -93,6 +93,16 @@ public class Bitmap
 	public int getHeight()
 	{
 		return height;
+	}
+
+	public void setWidth(int val)
+	{
+		width = val;
+	}
+
+	public void setHeight(int val)
+	{
+		height = val;
 	}
 
 	public void setPixel(int[] p)

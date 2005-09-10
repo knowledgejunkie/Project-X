@@ -1,5 +1,5 @@
 /*
- * @(#)StartUp.java - about box of Project-X, with terms of condition and credits
+ * @(#)AboutBox.java - about box of Project-X, with terms of condition and credits
  *
  * Copyright (c) 2004-2005 by pstorch, All Rights Reserved. 
  * 
@@ -46,7 +46,9 @@ import javax.swing.JTextArea;
 import javax.swing.JViewport;
 
 import net.sourceforge.dvb.projectx.common.Resource;
-import net.sourceforge.dvb.projectx.common.X;
+import net.sourceforge.dvb.projectx.common.Common;
+
+import net.sourceforge.dvb.projectx.gui.CommonGui;
 
 
 /**
@@ -54,10 +56,10 @@ import net.sourceforge.dvb.projectx.common.X;
  * 
  * @author Peter Storch
  */
-public class AboutBox extends JDialog
-{
+public class AboutBox extends JDialog {
+
 	/** Background Color */
-	private static final Color BACKGROUND_COLOR = new Color(224,224,224,224);
+	private static final Color BACKGROUND_COLOR = new Color(224,224,224);
 	
 	/**
 	 * Constructor of AboutBox.
@@ -74,13 +76,13 @@ public class AboutBox extends JDialog
 		container.setBorder( BorderFactory.createEmptyBorder(10,10,10,10));
 		container.setBackground(BACKGROUND_COLOR);
 		
-		JLabel logo = new JLabel(Resource.loadIcon("px.gif"));
+		JLabel logo = new JLabel(CommonGui.loadIcon("px.gif"));
 		logo.setOpaque(true);
 		logo.setBackground(BACKGROUND_COLOR);
 
 		container.add(new JLabel(Resource.getString("about.credits.label")));
 
-		String credits = "\n"+Resource.getString("credits")+"\n";
+		String credits = "\n" + Resource.getString("credits") + "\n";
 		JTextArea list = new JTextArea(credits, 5, 10);
 		list.setEnabled(false);
 		list.setDisabledTextColor(Color.black);
@@ -119,12 +121,10 @@ public class AboutBox extends JDialog
 		container2.add(ok, BorderLayout.SOUTH);
 
 		getContentPane().add(container2);
-		
-		if (!X.CLI_mode)
-			pack();
+		pack();
 
 		setLocation(200,200);
-		setResizable(false); //DM17042004 081.7 int02 add
+		setResizable(false); 
 
 		addWindowListener (new WindowAdapter() { 
 			public void windowClosing(WindowEvent e) { 

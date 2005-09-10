@@ -32,6 +32,10 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.util.Iterator;
 
+import net.sourceforge.dvb.projectx.xinput.StreamInfo;
+import net.sourceforge.dvb.projectx.common.Common;
+
+
 public class XInputFile implements XInputFileIF {
 
 	// Implementation class
@@ -71,6 +75,13 @@ public class XInputFile implements XInputFileIF {
 			constructorParameter = impl.getConstructorParameter();
 
 		XInputFile xif = new XInputFile(constructorParameter);
+//
+		/**
+		 * copy already parsed streaminfo
+		 */
+		if (impl.getStreamInfo() != null)
+			xif.setStreamInfo(impl.getStreamInfo().getNewInstance());
+
 		if (debug) System.out.println("Leave XInputFile.getNewInstance() returning " + xif);
 		return xif;
 	}
@@ -83,26 +94,39 @@ public class XInputFile implements XInputFileIF {
 
 		FileType fileType = null;
 
-		for (Iterator fileTypes = FileType.getFileTypes().iterator(); fileTypes.hasNext();) {
+		for (Iterator fileTypes = FileType.getFileTypes().iterator(); fileTypes.hasNext(); )
+		{
 			fileType = (FileType) fileTypes.next();
 
-			if (fileType.equals(FileType.DEFAULT)) {
+			if (fileType.equals(FileType.DEFAULT))
 				continue;
-			}
 
 			try {
-				if (debug) System.out.println("Try FileType '" + fileType.getName() + "'");
-				impl = (XInputFileIF) fileType.getImplementation().getConstructor(parameterTypes).newInstance(parameterValues);
-				if (debug) System.out.println("Use FileType '" + fileType.getName() + "' for file '" + impl.toString() + "'");
 				if (debug)
-						System.out
-								.println("Leave XInputFile.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
+					System.out.println("Try FileType '" + fileType.getName() + "'");
+
+				impl = (XInputFileIF) fileType.getImplementation().getConstructor(parameterTypes).newInstance(parameterValues);
+
+				/**
+				 * simply disable access, if commons-net is missing
+				 */
+/**				if (fileType.getName().equals("FTP") && !Common.canAccessFtp())
+					impl = null;
+**/
+				if (debug)
+					System.out.println("Use FileType '" + fileType.getName() + "' for file '" + impl.toString() + "'");
+
+				if (debug)
+					System.out.println("Leave XInputFile.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues");
+
 				return;
+
 			} catch (Exception e) {
 				// Failed, try next type
 				impl = null;
 			}
 		}
+
 		try {
 			fileType = FileType.DEFAULT;
 			if (debug) System.out.println("Try default FileType '" + fileType.getName() + "'");
@@ -110,16 +134,14 @@ public class XInputFile implements XInputFileIF {
 			if (debug)
 					System.out.println("Use default FileType '" + fileType.getName() + "' for file '" + impl.toString() + "'");
 			if (debug)
-					System.out
-							.println("Leave XInputFile.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
+					System.out.println("Leave XInputFile.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
 			return;
 		} catch (Exception e) {
 			// Failed, no type left, so this is final failure
 			impl = null;
 			if (debug) System.out.println("No matching FileType found or file doesn't exist");
 			if (debug)
-					System.out
-							.println("Leave XInputFile.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
+					System.out.println("Leave XInputFile.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
 			throw new IllegalArgumentException("No matching FileType found or file doesn't exist");
 		}
 	}
@@ -164,6 +186,30 @@ public class XInputFile implements XInputFileIF {
 			throw e;
 		}
 		if (debug) System.out.println("Leave XInputFile.getInputStream() returning " + is);
+		return is;
+	}
+
+	/**
+	 * @return @throws
+	 *         FileNotFoundException
+	 * @throws MalformedURLException
+	 * @throws IOException
+	 */
+	public InputStream getInputStream(long start_position) throws FileNotFoundException, MalformedURLException, IOException {
+		if (debug) System.out.println("Enter XInputFile.getInputStream(long start_position)");
+
+		InputStream is = null;
+
+		try {
+			is = impl.getInputStream(start_position);
+		} catch (IOException e) {
+			if (debug) System.out.println(e.getLocalizedMessage());
+			if (debug) e.printStackTrace();
+			throw e;
+		}
+
+		if (debug) System.out.println("Leave XInputFile.getInputStream(long start_position) returning " + is);
+
 		return is;
 	}
 
@@ -217,6 +263,16 @@ public class XInputFile implements XInputFileIF {
 		long l = impl.lastModified();
 		if (debug) System.out.println("Leave XInputFile.lastModified() returning " + l);
 		return l;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean setLastModified() {
+		if (debug) System.out.println("Enter XInputFile.setLastModified()");
+		boolean b = impl.setLastModified();
+		if (debug) System.out.println("Leave XInputFile.setLastModified() returning " + b);
+		return b;
 	}
 
 	/**
@@ -480,4 +536,21 @@ public class XInputFile implements XInputFileIF {
 		if (debug) System.out.println("Leave XInputFile.toString() returning " + s);
 		return s;
 	}
+
+	/**
+	 *
+	 */
+	public void setStreamInfo(StreamInfo _streamInfo)
+	{
+		impl.setStreamInfo(_streamInfo);
+	}
+
+	/**
+	 *
+	 */
+	public StreamInfo getStreamInfo()
+	{
+		return impl.getStreamInfo();
+	}
+
 }

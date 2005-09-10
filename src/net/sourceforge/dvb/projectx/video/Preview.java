@@ -1,5 +1,5 @@
 /*
- * @(#)PREVIEW.java - prepare files for previewing
+ * @(#)Preview.java - prepare files for previewing
  *
  * Copyright (c) 2004-2005 by dvb.matt, All Rights Reserved.
  * 
@@ -30,22 +30,31 @@ package net.sourceforge.dvb.projectx.video;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
+import net.sourceforge.dvb.projectx.common.Common;
+import net.sourceforge.dvb.projectx.parser.CommonParsing;
 
-public class Preview
-{
+public class Preview extends Object {
+
 	private byte preview_data[];
-	private int loadSizeForward, active_collection, processed_PID;
+
+	private int loadSizeForward;
+	private int active_collection;
+	private int processed_PID;
+	private int position[];
+
 	private String processed_file;
 
-	private ArrayList positionList, speciallist;
-	private int position[];
+	private List positionList;
 	private PreviewObject preview_object;
+	private Object[] predefined_Pids;
 
-	public Preview(int loadSizeForward)
+	public Preview(int _loadSizeForward)
 	{
-		this.loadSizeForward = loadSizeForward;
+		loadSizeForward = _loadSizeForward;
 
 		position = new int[2];
 		positionList = new ArrayList();
@@ -63,38 +72,39 @@ public class Preview
 		return (Integer.toHexString(processed_PID).toUpperCase());
 	}
 
-	public long load(long startposition, int size, ArrayList previewList, boolean direction, boolean all_gops, boolean fast_decode, ArrayList speciallist, int active_collection) throws IOException
+	public long load(long startposition, int size, List previewList, boolean direction, boolean all_gops, boolean fast_decode, Object[] _predefined_Pids, int _active_collection) throws IOException
 	{
-		this.speciallist = speciallist;
-		this.active_collection = active_collection;
+		predefined_Pids = _predefined_Pids;
+		active_collection = _active_collection;
+
+		preview_data = new byte[size];
 
 		int filetype = 0;
-		preview_data = new byte[size];
 		int read_offset = 0;
 
-		for (int a=0; a < previewList.size(); a++)
+		for (int i = 0; i < previewList.size(); i++)
 		{
-			preview_object = (PreviewObject)previewList.get(a);
+			preview_object = (PreviewObject) previewList.get(i);
 			filetype = preview_object.getType();
 
 			if (startposition < preview_object.getEnd())
 			{
-				XInputFile lXInputFile = (XInputFile)preview_object.getFile();
+				XInputFile lXInputFile = (XInputFile) preview_object.getFile();
 				lXInputFile.randomAccessOpen("r");
 				lXInputFile.randomAccessSeek(startposition - preview_object.getStart());
 				lXInputFile.randomAccessRead(preview_data, read_offset, size);
 				lXInputFile.randomAccessClose();
 
-				if (preview_object.getEnd() - startposition < size && a < previewList.size() - 1)
+				if (preview_object.getEnd() - startposition < size && i < previewList.size() - 1)
 				{
-					a++;
+					i++;
 
 					int diff = (int)(preview_object.getEnd() - startposition);
 					byte data2[] = new byte[size];
 
-					preview_object = (PreviewObject)previewList.get(a);
+					preview_object = (PreviewObject) previewList.get(i);
 
-					lXInputFile = (XInputFile)preview_object.getFile();
+					lXInputFile = (XInputFile) preview_object.getFile();
 					lXInputFile.randomAccessSingleRead(data2, 0);
 
 					System.arraycopy(data2, 0, preview_data, diff, size - diff);
@@ -107,34 +117,34 @@ public class Preview
 
 		preview_data = search(preview_data, startposition, filetype);
 
-		long newposition = MPVD.picture.decodeArray(preview_data, direction, all_gops, fast_decode);
+		long newposition = Common.getMpvDecoderClass().decodeArray(preview_data, direction, all_gops, fast_decode);
 
-		for (int a = positionList.size() - 1; a > -1; a--)
+		for (int i = positionList.size() - 1; i >= 0; i--)
 		{
-			position = (int[])positionList.get(a);
+			position = (int[]) positionList.get(i);
 			if (position[1] <= newposition)
 			{
 				startposition += position[0];
-				a = 0;
+				i = 0;
 			}
 		}
 
 		if (positionList.size() == 0) 
 			startposition += newposition;
 
-		for (int a=0; a < previewList.size(); a++)
+		for (int i = 0; i < previewList.size(); i++)
 		{
-			preview_object = (PreviewObject)previewList.get(a);
+			preview_object = (PreviewObject)previewList.get(i);
 
 			if (startposition < preview_object.getEnd())
 			{
-				processed_file = "" + (a + 1) + "/" + previewList.size() + " " + preview_object.getFile().getName();
+				processed_file = "" + (i + 1) + "/" + previewList.size() + " - " + preview_object.getFile().getName();
 				break;
 			}
 		}
 
 		preview_data = null;
-		System.gc();
+		//System.gc();
 
 		return startposition;
 	}
@@ -142,50 +152,54 @@ public class Preview
 	private byte[] search(byte data[], long startposition, int filetype)
 	{
 		ByteArrayOutputStream array = new ByteArrayOutputStream();
+
 		positionList.clear();
-		int mark = 0, offset = 0, ID = -1;
-		boolean save = false;
+
 		byte[] hav_chunk = { 0x5B, 0x48, 0x4F, 0x4A, 0x49, 0x4E, 0x20, 0x41 }; //'[HOJIN A'
 
-		ArrayList abc = (ArrayList)speciallist.get(active_collection);
-		int[] include = new int[abc.size()];
+		int mark = 0;
+		int offset = 0;
+		int ID = -1;
+		int[] include = new int[predefined_Pids.length];
 
-		for (int a=0; a < include.length; a++) 
-			include[a] = Integer.parseInt(abc.get(a).toString().substring(2),16);
+		boolean save = false;
 
-		java.util.Arrays.sort(include);
 
-		for (int a=0; a < data.length-9; a++)
+		for (int i = 0; i < include.length; i++) 
+			include[i] = Integer.parseInt(predefined_Pids[i].toString().substring(2), 16);
+
+		Arrays.sort(include);
+
+		for (int a = 0; a < data.length - 9; a++)
 		{
 			//mpg es:
-			if (filetype==9)
+			if (filetype == CommonParsing.ES_MPV_TYPE)
 				return data;
 
 			//pva:
-			if (filetype == 1 && (0xFF & data[a]) == 0x41 && (0xFF & data[a + 1]) == 0x56 && (0xFF & data[a + 4]) == 0x55)
+			if (filetype == CommonParsing.PVA_TYPE && (0xFF & data[a]) == 0x41 && (0xFF & data[a + 1]) == 0x56 && (0xFF & data[a + 4]) == 0x55)
 			{
 				if (save)
 					array.write(data, mark, a - mark);
 
 				mark = a;
 
-				if (data[a+2]==1)
+				if (data[a + 2] == 1)
 				{
-					ID=1;
-					mark = ((0x10 & data[a + 5]) != 0) ? a+12 : a+8;
+					ID = 1;
+					mark = ((0x10 & data[a + 5]) != 0) ? a + 12 : a + 8;
 					int currentposition[] = { a,array.size() };
 					positionList.add(currentposition);
-					save=true;
+					save = true;
 				}
 				else
-					save=false;
+					save = false;
 
-				a += 7 + ((0xFF & data[a+6])<<8 | (0xFF & data[a+7]));
+				a += 7 + ((0xFF & data[a + 6])<<8 | (0xFF & data[a + 7]));
 			}
 
-
 			//humax .vid workaround, skip special data chunk
-			if (filetype == 11 && data[a] == 0x7F && data[a + 1] == 0x41 && data[a + 2] == 4 && data[a + 3] == (byte)0xFD)
+			if (filetype == CommonParsing.TS_TYPE && data[a] == 0x7F && data[a + 1] == 0x41 && data[a + 2] == 4 && data[a + 3] == (byte)0xFD)
 			{
 				if (save && mark <= a)
 					array.write(data, mark, a - mark);
@@ -198,8 +212,7 @@ public class Preview
 			}
 
 			//ts:
-			//if (filetype == 11 && a < data.length-188 && data[a] == 0x47 && data[a+188] == 0x47)
-			if (filetype == 11 && a < data.length-188 && data[a] == 0x47)
+			if (filetype == CommonParsing.TS_TYPE && a < data.length - 188 && data[a] == 0x47)
 			{
 				int chunk_offset = 0;
 
@@ -252,39 +265,39 @@ public class Preview
 				}
 
 				if (save && mark <= a)
-					array.write(data,mark,a-mark);
+					array.write(data, mark, a - mark);
 
 				mark = a;
-				int PID = (0x1F & data[a+1])<<8 | (0xFF & data[a+2]);
+				int PID = (0x1F & data[a + 1])<<8 | (0xFF & data[a + 2]);
 
-				if (include.length > 0 && java.util.Arrays.binarySearch(include,PID)<0)
+				if (include.length > 0 && Arrays.binarySearch(include, PID) < 0)
 					save = false;
 
-				else if ((ID==PID || ID==-1) && (0xD & data[a+3]>>>4)==1)
+				else if ((ID == PID || ID == -1) && (0xD & data[a + 3]>>>4) == 1)
 				{  
-					if ((0x20 & data[a+3])!=0)       //payload start position, adaption field
-						mark = a + 5 + (0xFF&data[a+4]);
+					if ((0x20 & data[a + 3]) != 0)       //payload start position, adaption field
+						mark = a + 5 + (0xFF & data[a + 4]);
 					else
 						mark = a + 4;
 
-					if ((0x40 & data[a+1]) != 0)    //start indicator
+					if ((0x40 & data[a + 1]) != 0)    //start indicator
 					{
-						if (data[mark]==0 && data[mark+1]==0 && data[mark+2]==1 && (0xF0&data[mark+3])==0xE0) //DM06032004 081.6 int18 fix
+						if (data[mark] == 0 && data[mark + 1] == 0 && data[mark + 2] == 1 && (0xF0 & data[mark + 3]) == 0xE0) //DM06032004 081.6 int18 fix
 						{
-							ID=PID;
-							mark = mark + 9 + (0xFF&data[mark+8]);
-							int currentposition[] = { a, array.size() };
+							ID = PID;
+							mark = mark + 9 + (0xFF & data[mark + 8]);
+							int[] currentposition = { a, array.size() };
 							positionList.add(currentposition);
 						}
 						else
-							save=false;
+							save = false;
 					}
 
-					if (ID==PID)
-						save=true;
+					if (ID == PID)
+						save = true;
 				}
 				else
-					save=false;
+					save = false;
 
 				a += 187;
 				a += chunk_offset;
@@ -292,7 +305,7 @@ public class Preview
 			}
 
 			//mpg2-ps
-			if ((filetype==3 || filetype==4) && data[a]==0 && data[a+1]==0 && data[a+2]==1)
+			if ((filetype == CommonParsing.MPEG2PS_TYPE || filetype == CommonParsing.PES_AV_TYPE) && data[a] == 0 && data[a + 1] == 0 && data[a + 2] == 1)
 			{
 				int PID = 0xFF&data[a+3];
 
@@ -304,7 +317,7 @@ public class Preview
 
 				mark = a;
 
-				if (include.length>0 && java.util.Arrays.binarySearch(include,PID)<0)
+				if (include.length>0 && Arrays.binarySearch(include,PID)<0)
 					save=false;
 
 				else if ((ID==PID || ID==-1) && (0xF0&PID)==0xE0)
@@ -323,7 +336,7 @@ public class Preview
 			}
 
 			//mpg1-ps
-			if (filetype==2 && data[a]==0 && data[a+1]==0 && data[a+2]==1)
+			if (filetype == CommonParsing.MPEG1PS_TYPE && data[a]==0 && data[a+1]==0 && data[a+2]==1)
 			{
 				int PID = 0xFF&data[a+3];
 
@@ -335,7 +348,7 @@ public class Preview
 
 				mark = a;
 
-				if (include.length>0 && java.util.Arrays.binarySearch(include,PID)<0)
+				if (include.length>0 && Arrays.binarySearch(include,PID)<0)
 					save=false;
 
 				else if ((ID==PID || ID==-1) && (0xF0&PID)==0xE0){
@@ -372,10 +385,10 @@ public class Preview
 					save=true;
 				}
 				else
-					save=false;
+					save = false;
 
-				offset=(0xFF&data[a+3])<0xBB?11:0;
-				a += (offset==0) ? (5+((0xFF&data[a+4])<<8 | (0xFF&data[a+5]))) : offset;
+				offset = (0xFF & data[a + 3]) < 0xBB ? 11 : 0;
+				a += (offset == 0) ? (5 + ((0xFF & data[a + 4])<<8 | (0xFF & data[a + 5]))) : offset;
 			}
 		}
 

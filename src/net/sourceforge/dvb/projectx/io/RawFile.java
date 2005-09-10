@@ -31,29 +31,37 @@ import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import net.sourceforge.dvb.projectx.common.X;
+import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.common.Resource;
+
 import net.sourceforge.dvb.projectx.io.IDDBufferedOutputStream;
 
 
 /**
  * raw file from pva
  */
-public class RawFile {
+public class RawFile extends Object {
 
 	IDDBufferedOutputStream out;
-	String name = "";
+	String name;
 
-	public void init(String name, int buffersize) throws IOException
+	private RawFile()
+	{}
+
+	public RawFile(String new_name, int PidToExtract, int buffersize) throws IOException
 	{
-		this.name = name;
+		name = new_name + "_0x" + Integer.toHexString(PidToExtract).toUpperCase() + ".raw";
 		out = new IDDBufferedOutputStream( new FileOutputStream(name), buffersize);
-
 	}
 
 	public void write(byte[] data) throws IOException
 	{
 		out.write(data);
+	}
+
+	public void write(byte[] data, int offset, int len) throws IOException
+	{
+		out.write(data, offset, len);
 	}
 
 	public void close() throws IOException
@@ -65,6 +73,6 @@ public class RawFile {
 			new File(name).delete();
 
 		else 
-			X.Msg(Resource.getString("msg.newfile") + " " + name);
+			Common.setMessage(Resource.getString("msg.newfile") + " " + name);
 	} 
 }

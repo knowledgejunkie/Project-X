@@ -42,10 +42,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.StringTokenizer;
 
-import net.sourceforge.dvb.projectx.common.X;
-import net.sourceforge.dvb.projectx.gui.Dialogs;
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Common;
+import net.sourceforge.dvb.projectx.common.Keys;
 
 import net.sourceforge.dvb.projectx.xinput.FileType;
 import net.sourceforge.dvb.projectx.xinput.XInputFileIF;
@@ -56,6 +55,8 @@ import org.apache.commons.net.ftp.FTPFile;
 import java.io.DataInputStream;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTP;
+
+import net.sourceforge.dvb.projectx.xinput.StreamInfo;
 
 public class XInputFileImpl implements XInputFileIF {
 
@@ -83,6 +84,10 @@ public class XInputFileImpl implements XInputFileIF {
 	public XInputStream xIs = null;
 
 	private Object constructorParameter = null;
+
+	private StreamInfo streamInfo = null;
+
+	private boolean supportsResume = true;
 
 	/**
 	 * Private Constructor, don't use!
@@ -219,6 +224,16 @@ public class XInputFileImpl implements XInputFileIF {
 	}
 
 	/**
+	 * sets Time in milliseconds from the epoch.
+	 * 
+	 * @return success
+	 */
+	public boolean setLastModified() {
+
+		return true; //later
+	}
+
+	/**
 	 * Checks if file exists
 	 * 
 	 * @return Result of check
@@ -293,13 +308,31 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public InputStream getInputStream() throws FileNotFoundException, MalformedURLException, IOException {
 
+		return getInputStream(0L);
+	}
+
+	/**
+	 * Get input stream from the file. close() on stream closes XInputFile, too.
+	 * 
+	 * @return Input stream from the file
+	 */
+	public InputStream getInputStream(long start_position) throws FileNotFoundException, MalformedURLException, IOException {
+
+		supportsResume = Common.getSettings().getBooleanProperty(Keys.KEY_useFtpServerResume);
+
 		randomAccessOpen("r");
+
+		if (supportsResume)
+			client.setRestartOffset(start_position);  //void
 
 		if (debug) System.out.println("gIS name " + getName());
 
 		xIs = new XInputStream(client.retrieveFileStream(getName()));
 
 		if (debug) System.out.println("gIS retriveStream " + client.getReplyString());
+
+		if (!supportsResume)
+			xIs.skip(start_position);
 
 		xIs.setFtpFile(this);
 		return xIs;
@@ -322,7 +355,7 @@ public class XInputFileImpl implements XInputFileIF {
 		String newName = null;
 		boolean ret = false;
 
-		newName = Dialogs.getUserInput( name, Resource.getString("autoload.dialog.rename") + " " + getUrl());
+		newName = Common.getGuiInterface().getUserInputDialog(name, Resource.getString("autoload.dialog.rename") + " " + getUrl());
 
 		if (newName != null && !newName.equals(""))
 			ret = client.rename(name, newName);
@@ -395,7 +428,7 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public String[] getUserFTPCommand() {
 
-		StringTokenizer st = new StringTokenizer(Common.getFTP_Command(), "|");
+		StringTokenizer st = new StringTokenizer(Common.getSettings().getProperty(Keys.KEY_FtpServer_Commands), "|");
 		String[] tokens = new String[st.countTokens()];
 
 		for (int i = 0; st.hasMoreTokens(); i++)
@@ -447,7 +480,7 @@ public class XInputFileImpl implements XInputFileIF {
 		 * alternative kills the client instance, some server won't abort an incomplete data transfer
 		 * (current box-idx 80)
 		 */
-		if (X.isBoxSelected(80))
+		if (Common.getSettings().getBooleanProperty(Keys.KEY_killFtpClient))
 		{
 			if (debug) System.out.println("rAC kill ");
 		}
@@ -601,5 +634,22 @@ public class XInputFileImpl implements XInputFileIF {
 	public long randomAccessReadLong() throws IOException {
 
 		return in.readLong();
+	}
+
+//
+	/**
+	 *
+	 */
+	public void setStreamInfo(StreamInfo _streamInfo)
+	{
+		streamInfo = _streamInfo;
+	}
+
+	/**
+	 *
+	 */
+	public StreamInfo getStreamInfo()
+	{
+		return streamInfo;
 	}
 }

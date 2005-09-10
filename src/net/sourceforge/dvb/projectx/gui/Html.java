@@ -39,7 +39,7 @@ import javax.swing.event.*;
 import edu.stanford.ejalbert.BrowserLauncher;
 
 import net.sourceforge.dvb.projectx.common.Resource;
-import net.sourceforge.dvb.projectx.common.X;
+import net.sourceforge.dvb.projectx.common.Common;
 
 
 /**
@@ -47,8 +47,8 @@ import net.sourceforge.dvb.projectx.common.X;
  * 
  * @since DM20032004 081.6 int18
  */
-public class Html extends JFrame
-{
+public class Html extends JFrame {
+
 	/**
 	 * Constructor of Html.
 	 */
@@ -103,11 +103,11 @@ class HtmlPane extends JScrollPane implements HyperlinkListener
 		}
 		catch (MalformedURLException e)
 		{
-			X.Msg("Malformed URL: " + e);
+			Common.setMessage("Malformed URL: " + e);
 		}
 		catch (IOException e)
 		{
-			X.Msg("IOException: " + e);
+			Common.setMessage("IOException: " + e);
 		}	
 	}
 
@@ -141,7 +141,7 @@ class HtmlPane extends JScrollPane implements HyperlinkListener
 			} 
 			catch (IOException e) 
 			{
-				X.Msg(Resource.getString("msg.browser.launcher.error") + " " + e);
+				Common.setMessage(Resource.getString("msg.browser.launcher.error") + " " + e);
 			}
 		}
 		else

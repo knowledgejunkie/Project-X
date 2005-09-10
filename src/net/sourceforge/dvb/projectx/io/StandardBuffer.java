@@ -28,8 +28,8 @@ package net.sourceforge.dvb.projectx.io;
 
 import java.io.*;
 
-public class StandardBuffer
-{
+public class StandardBuffer extends Object {
+
 	private ByteArrayOutputStream buf = null;
 	private int id;
 	private int type;

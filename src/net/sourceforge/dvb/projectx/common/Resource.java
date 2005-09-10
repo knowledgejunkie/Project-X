@@ -51,19 +51,18 @@ import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import javax.swing.AbstractButton;
-import javax.swing.ButtonGroup;
-import javax.swing.ImageIcon;
-import javax.swing.JMenu;
-import javax.swing.JOptionPane;
-import javax.swing.JRadioButtonMenuItem;
+import java.awt.Image;
+import java.awt.Toolkit;
+
+import net.sourceforge.dvb.projectx.common.Keys;
+
 
 /**
  * Project-X resource and localization handling.
  * 
  * @author Peter Storch
  */
-public class Resource {
+public class Resource extends Object {
 	
 	/** the prefix of all pjx resource files */
 	private static final String PJX_RESOURCE_PREFIX = "pjxresources";
@@ -82,7 +81,7 @@ public class Resource {
 
 	/** the resource bundle for the current users locale or language setting */
 	private static ResourceBundle resource = null;
-	
+
 	/**
 	 * Loads a resource bundle for the given locale.
 	 * 
@@ -148,56 +147,44 @@ public class Resource {
 	 * 
 	 * @param filename Name of the inifile.
 	 */
-	public static void loadLang(String inifile)
+	public static void loadLang(String lang)
 	{
-		try 
-		{
-			if (new File(inifile).exists())
-			{
-				BufferedReader inis = new BufferedReader(new FileReader(inifile));
-				String line=null; 
-			
-				while ((line = inis.readLine()) != null)
-				{
-					// look for the line with the language information
-					if (line.startsWith("lang="))
-					{
-						String lang = line.substring(5);
-						locale=new Locale(lang, "");
-			try {
-				resource = loadResourceBundle(locale);
-			} catch (MissingResourceException e) {
-				// our fallback is english
-				resource = defaultResource;
-			}
-						
-						// we have found what we need, stop reading this file
-						break;
-					}
-				}
-				inis.close();
-			}
+		locale = new Locale(lang, "");
+
+		try {
+			resource = loadResourceBundle(locale);
+		} catch (MissingResourceException e) {
+			// our fallback is english
+			resource = defaultResource;
 		}
-		catch (IOException e1)
-		{
-			//DM25072004 081.7 int07 add
-			System.out.println(resource.getString("msg.loadlang.error") + " " + e1);
-		}
+
+		// initialize languages dependent keys
+		new Keys();
 	}
 		
 	/**
-	 * Saves the language information.
-	 * 
-	 * @param pw
+	 *
 	 */
-	public static void saveLang(PrintWriter pw)
+	public static String getChosenLanguage()
 	{
-		if (locale != null)
-		{
-			pw.println("// language");
-			pw.println("lang="+locale);
-		}
+		if (locale == null)
+			return null;
+
+		return locale.getLanguage();
 	}
+
+	/**
+	 *
+	 */
+	public static void setChosenLanguage(String str)
+	{
+		if (str == null)
+			locale = null;
+
+		else
+			locale = new Locale(str, "", "");
+	}
+
 		
 	/**
 	 * Gets a String from the Resource file. If the key is not found, the key
@@ -209,6 +196,7 @@ public class Resource {
 	public static String getString(String key)
 	{
 		String text = null;
+
 		try 
 		{
 			text = resource.getString(key);
@@ -334,102 +322,13 @@ public class Resource {
 		return MessageFormat.format(getString(key), new Object[]{arg1, arg2, arg3, arg4, arg5});
 	}
 
-	/**
-	 * Sets a button's text and mnemonic values using the specified resource
-	 * key. The button text is scanned for &. If found the character after it is
-	 * used as menmonic.
-	 * 
-	 * @param button
-	 *            the button (e.g. a menu or menu item) to localize
-	 * @param key
-	 *            the resource string to find
-	 */
-	public static final void localize(AbstractButton button, String key) {
-		String text = getString(key);
-		
-		int pos = text.indexOf('&');
-		if (pos != -1)
-		{
-			char mnemonic = text.charAt(pos+1);
-			button.setMnemonic(mnemonic);
-			text = text.substring(0, pos) + text.substring(pos+1);
-		}
-		button.setText(text);
-	}
-
-	/**
-	 * Builds the Language Menu.
-	 * 
-	 * @return JMenu
-	 */
-	public static JMenu buildLanguageMenu()
-	{
-		ActionListener listener = new LangListener();
-		
-		JMenu langMenu = new JMenu();
-		localize(langMenu, "language.menu");
-		
-		ButtonGroup group = new ButtonGroup();
-
-		JRadioButtonMenuItem item_sys = new JRadioButtonMenuItem();
-		localize(item_sys, "language.system");
-		item_sys.addActionListener(listener);
-		item_sys.setSelected(locale == null);
-		item_sys.setActionCommand("system");
-		langMenu.add(item_sys);
-		group.add(item_sys);
-
-		langMenu.addSeparator();
-
-		Locale[] locales = getAvailableLocales();
-		for (int i = 0; i < locales.length; i++) {
-			Locale item = locales[i];
-			JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem(item.getLanguage());
-			menuItem.addActionListener(listener);
-			if (locale != null)
-			{
-				menuItem.setSelected(item.getLanguage().equals(locale.getLanguage()));
-			}
-			menuItem.setActionCommand(item.getLanguage());
-			langMenu.add(menuItem);
-			group.add(menuItem);
-		}
-
-		return langMenu;
-	}
 	
-	/**
-	 * Inner class LangListener. Handles the actions from the Language Menu.
-	 */
-	private static class LangListener implements ActionListener
-	{
-
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
-		 */
-		public void actionPerformed(ActionEvent event) {
-			String action = event.getActionCommand();
-			if (action.equals("system"))
-			{
-				locale = null;
-			}
-			else
-			{
-				locale = new Locale(action, "", "");
-			}
-			JOptionPane.showMessageDialog(null, Resource.getString("msg.new.language"), Resource.getString("msg.infomessage"), JOptionPane.INFORMATION_MESSAGE);
-		}
-		
-	}
-
 	/**
 	 * Returns the available Locales for pjxresources.
 	 * 
 	 * @return Locale[]
 	 */
-	private static Locale[] getAvailableLocales() {
+	public static Locale[] getAvailableLocales() {
 		Set locales = new HashSet();
 		String defLang = Locale.getDefault().getLanguage();
 
@@ -599,14 +498,16 @@ public class Resource {
 	}
 
 	/**
-	 * Loads an image as ImageIcon.
 	 * 
-	 * @param iconName
-	 * @return ImageIcon
 	 */
-	public static ImageIcon loadIcon(String iconName)
+	public static Image loadImage(String imageName)
 	{
-		return new ImageIcon(getResourceURL(iconName));
+		try {
+			return Toolkit.getDefaultToolkit().createImage(getResourceURL(imageName));
+
+		} catch (Exception e) {
+			return null;
+		}
 	}
 	
 }

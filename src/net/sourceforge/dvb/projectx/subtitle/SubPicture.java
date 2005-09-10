@@ -31,6 +31,9 @@
 
 package net.sourceforge.dvb.projectx.subtitle;
 
+//
+import java.awt.Image;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -47,67 +50,26 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.StringTokenizer;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-
 import net.sourceforge.dvb.projectx.common.Resource;
-import net.sourceforge.dvb.projectx.common.X;
+import net.sourceforge.dvb.projectx.common.Keys;
+import net.sourceforge.dvb.projectx.common.Common;
 
 
+public class Subpicture extends Object {
 
-public class SubPicture extends JFrame
-{
-
-public Picture picture;
-
-String title = Resource.getString("subpicture.title");
-
-public SubPicture()
-{
-	addWindowListener(new WindowAdapter()
-	{
-		public void windowClosing(WindowEvent e)
-		{
-			close();
-		}
-	});
-
-	picture = new Picture();
-	picture.run(); //DM18052004 081.7 int02 add
-
-	getContentPane().add("Center", picture);
-
-	setTitle(title);
-	setSize(new Dimension(726,601)); //DM24012004 081.6 int11 changed, //DM20042004 081.7 int02 changed
-	setLocation(100,100);
-	setResizable(false); //DM17042004 081.7 int02 add
-	//setVisible(false);
-}
-
-public void newTitle(String newtitle)
-{
-	setTitle(title+" "+newtitle); 
-}
-
-public void close()
-{ 
-	dispose(); //DM18052004 081.7 int02 changed
-}
-
-
-public class Picture extends JPanel implements Runnable
-{
-	public java.text.DateFormat sms = new java.text.SimpleDateFormat("HH:mm:ss.SSS");
-	public Thread thread;
-	private int w=720, h=576, x=20, nibble=0, val=0, default_alpha=10; //DM24012004 081.6 int11 changed, //DM20042004 081.7 int02 changed
+	private int w = 720;
+	private int h = 576;
+	private int x = 20;
+	private int nibble = 0;
+	private int val = 0;
+	private int default_alpha = 10;
 	private int modified_alpha = 0;
 
 	private BufferedImage bimg;
 	private Graphics2D big;
-	private Font font, font_std; //DM30122003 081.6 int10 add, //DM01032004 081.6 int18 add
+	private Font font, font_std;
 	private FontRenderContext frc;
 
-	//DM26052004 081.7 int03 changed
 	private final int default_teletext_colors[] = {
 		//bg = 0 = black
 		0xFF606060, //Y 40%
@@ -214,6 +176,7 @@ public class Picture extends JPanel implements Runnable
 	};
 
 	private Object[] str = new Object[0];
+
 	private byte[] RLEheader = { 0x53,0x50,0,0,0,0,0,0,0,0,0,0,0,0 }; // startcode + later reverse 5PTS, DTS=0
 	private byte[] sections = {
 		0, 0,           // next contr sequ.
@@ -230,57 +193,90 @@ public class Picture extends JPanel implements Runnable
 	};
 
 	private ByteArrayOutputStream out = new ByteArrayOutputStream();
+
 	private byte newline[] = { 0,0 };
+
 	private int Rect[] = new int[4];
 	private int pos[] = new int[4];
 	private int option[] = new int[11];
-
-	//DM26052004 081.7 int03 changed
 	private int standard_values[] = { 26, 10, 32, 80, 560, 720, 576, -1, 4, 3, 1 };
+	private int isforced_status = 0;
+	private int line_offset = 28;
 
 	private ArrayList user_color_table = new ArrayList();
 	private Bitmap bitmap;
+
 	private boolean read_from_Image = false;
-	private int isforced_status = 0;
 	private boolean global_error = false;
 
-	private int line_offset = 28;
+	public DVBSubpicture dvb = new DVBSubpicture();
 
-	public DVBSubpicture dvb = new DVBSubpicture(); //DM24042004 081.7 int02 new
-
-	public Picture()
+	/**
+	 *
+	 */
+	public Subpicture()
 	{ 
 		bimg = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 		big = bimg.createGraphics();
 
-		set("Tahoma", ("" + "26;10;32;80;560;720;576;-1;4"));
+		set("Tahoma", ("26;10;32;80;560;720;576;-1;4;3;1"));
 		frc = big.getFontRenderContext();
 
 		//   big.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-
-		setBackground(Color.gray);
-		sms.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0:00"));
 	}
 
-	public void paint(Graphics g)
+	/**
+	 *
+	 */
+	public void repaint()
 	{
 		if (big == null) 
 			return;
 
-		g.drawImage(bimg, 0, 0, this);
+		Common.getGuiInterface().repaintSubpicture();
 	}
 
-	/*** paint pic from ttx **/
-	public void showPicTTX(Object[] str)
+	/**
+	 * 
+	 */
+	public Image getImage()
 	{
-		this.str = str;
-		buildImgTTX();
+		return bimg;
+	}
+
+	/**
+	 * 
+	 */
+	public Image getScaledImage()
+	{
+		return bimg.getScaledInstance(384, 288, Image.SCALE_FAST);
+	}
+
+	/**
+	 * paint any picture, for export it should only have 2bit depth
+	 */
+	public void paintPicture(byte[] array, int _width, int _height, int _scansize, int _x, int _y)
+	{
+		big.setColor(Color.gray);
+		big.fillRect(0, 0, 720, 576); 
+	//	bimg.setRGB(_x, _y, _width, _height, array, 0, _scansize);
+          
 		repaint();
 	}
 
-	// set display time
-	//DM22032004 081.6 int18 changed
-	//DM26052004 081.7 int03 changed
+	/**
+	 * paint pic from ttx 
+	 */
+	public void showPicTTX(Object[] _str, Object obj)
+	{
+		str = _str;
+		buildImgTTX(obj);
+		repaint();
+	}
+
+	/**
+	 * set display time
+	 */
 	public byte[] setTime(byte tmp[], long out_time)
 	{
 		long in_time = 0;
@@ -288,26 +284,26 @@ public class Picture extends JPanel implements Runnable
 		for (int a=0; a<4; a++) // in_pts
 			in_time |= (0xFF & tmp[a+2])<<(a*8);
 
-		//long difference = (long)Math.round((out_time - in_time) / 1100.0); // 900.0
-		long difference = 1L + ((out_time - in_time) / 1000);
+		//long difference = (long)Math.round((out_time - in_time) / 1100.0); // 900.0, should be 1024, not 1000
+		long difference = 1L + ((out_time - in_time) / 1024);
 
 		int tp = (0xFF & tmp[12])<<8 | (0xFF & tmp[13]);
 		tmp[34+tp] = (byte)(0xFF & difference>>>8);
 		tmp[35+tp] = (byte)(0xFF & difference);
 
-		newTitle(" / " + Resource.getString("subpicture.in_time") + ": " + sms.format(new java.util.Date(in_time / 90)) + " " + Resource.getString("subpicture.duration") + ": " + sms.format(new java.util.Date((out_time - in_time) / 90)) );
+		Common.getGuiInterface().setSubpictureTitle(" / " + Resource.getString("subpicture.in_time") + ": " + Common.formatTime_1(in_time / 90) + " " + Resource.getString("subpicture.duration") + ": " + Common.formatTime_1((out_time - in_time) / 90) );
 
 		return tmp;
 	}
 
-	/*** build Image from text **/
-	//DM30122003 081.6 int10 changed
-	//DM05052004 081.7 int02 changed
-	public void buildImgTTX()
+	/**
+	 * build Image from text 
+	 */
+	private void buildImgTTX(Object obj)
 	{
 		int space = 6;
+
 		Rect[0] = option[3];
-		//Rect[3] = (2 * space) + (option[0] * str.length);
 		Rect[3] = (2 * space) + (line_offset * str.length);
 		Rect[1] = option[6] - option[2] - Rect[3];
 		Rect[2] = option[4];
@@ -317,8 +313,7 @@ public class Picture extends JPanel implements Runnable
 		pos[2] = Rect[0] + Rect[2] - 1;
 		pos[3] = Rect[1] + Rect[3] - 1;
 
-		//DM08032004 081.6 int18 add
-		paintVideoSize();
+		paintVideoSize(obj);
 
 		big.setColor(Color.white);
 		big.drawRect(Rect[0] - 1, Rect[1] - 1, Rect[2] + 1, Rect[3] + 1);
@@ -358,7 +353,7 @@ public class Picture extends JPanel implements Runnable
 		/**
 		 * define background; if less than 3 front-colors, use 'simple' antialiasing with full transparency
 		 */
-		if (list.size() < 3 && X.cBox[79].isSelected())
+		if (list.size() < 3 && Common.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_useTextOutline))
 		{
 			big.setColor(new Color(color_table[65])); // deep blue, full transp
 			modified_alpha = 0;
@@ -384,7 +379,7 @@ public class Picture extends JPanel implements Runnable
 			big.setColor(new Color(color_table[64])); // black
 
 			/**
-			 * concatenate string, no special colors required here
+			 * concatenate string, no special colors required
 			 */
 			for (int i = 0; i < chars.length; i++)
 				nstr += new Character((char)(chars[i]>>>8)).toString();
@@ -418,7 +413,6 @@ public class Picture extends JPanel implements Runnable
 			int[] chars = (int[])str[a];
 			x = option[3];
 
-			//DM26052004 081.7 int03 changed
 			for (int b=0; b < chars.length; b++)
 			{
 				//source background color
@@ -426,7 +420,6 @@ public class Picture extends JPanel implements Runnable
 
 				//source foreground color
 				big.setColor(new Color(color_table[offset + (7 & chars[b])]));
-				//big.drawString("" + (char)(chars[b]>>>8), x, Rect[1] + (option[0] * (1 + a)));
 				big.drawString("" + (char)(chars[b]>>>8), x, Rect[1] + (line_offset * (1 + a)));
 
 				x += font.getStringBounds("" + (char)(chars[b]>>>8), frc).getWidth();
@@ -490,7 +483,6 @@ public class Picture extends JPanel implements Runnable
 		return value;
 	}
 
-	//DM26052004 081.7 int03 changed
 	public byte[] writeRLE(long start_time, int onscreen_time) throws IOException
 	{
 		read_from_Image = true; // use user defined alpha value for color index 0
@@ -599,10 +591,9 @@ public class Picture extends JPanel implements Runnable
 		picture_packet[onscreen_time_pos] = (byte)(0xFF & bitmap.getPlayTime()>>>8);
 		picture_packet[onscreen_time_pos + 1] = (byte)(0xFF & bitmap.getPlayTime());
 
-		} 
-		catch (IOException e)
-		{ 
-			X.Msg(Resource.getString("subpicture.msg1")); 
+		} catch (IOException e) { 
+
+			Common.setExceptionMessage(e);
 		}
 
 		read_from_Image = false;
@@ -756,7 +747,6 @@ public class Picture extends JPanel implements Runnable
 		option[2] = option[7];
 	}
 
-	//DM26052004 081.7 int03 add
 	public int getMaximumLines()
 	{ 
 		return option[8];
@@ -770,7 +760,7 @@ public class Picture extends JPanel implements Runnable
 		System.arraycopy(standard_values, 0, option, 0, standard_values.length);
 
 		StringTokenizer st = new StringTokenizer(values, ";");
-		int a=0;
+		int a = 0;
 
 		while (st.hasMoreTokens() && a < option.length)
 		{
@@ -780,12 +770,16 @@ public class Picture extends JPanel implements Runnable
 
 		line_offset = option[0] + 2;
 		default_alpha = 0xF & option[1];
+
 		font = new Font(nm, option[10] == 0 ? Font.PLAIN : Font.BOLD, option[0]);
 		font_std = new Font("Tahoma", Font.PLAIN, 14); //DM01032004 081.6 int18 add
 
 		return option[7];
 	}
 
+	/**
+	 *
+	 */
 	private int[] getColorTable(int flag)
 	{
 		//define alternative color_table here
@@ -796,7 +790,9 @@ public class Picture extends JPanel implements Runnable
 			return default_teletext_colors;
 	}
 
-	//DM05052004 081.7 int02 new
+	/**
+	 *
+	 */
 	private void setArea()
 	{
 		Rect[0] = bitmap.getX();
@@ -810,7 +806,9 @@ public class Picture extends JPanel implements Runnable
 		pos[3] = bitmap.getMaxY();
 	}
 
-	//DM05052004 081.7 int02 new
+	/**
+	 *
+	 */
 	public String getArea()
 	{
 		String string = "";
@@ -827,17 +825,20 @@ public class Picture extends JPanel implements Runnable
 		return string;
 	}
 
-	public void run()
-	{}
-
-	//DM08032004 081.6 int18 new
-	private int paintVideoSize()
+	/**
+	 *
+	 */
+	private int paintVideoSize(Object obj)
 	{
-		int[] video_basics = X.getVideoBasics();
-		if (video_basics[0]==0)  // H
-			video_basics[0] = 720;
-		if (video_basics[1]==0)  // V
-			video_basics[1] = 576;
+		String[] str = (String[]) obj;
+		int video_horizontal = 720;
+		int video_vertical = 576;
+
+		// H
+		video_horizontal = str[0] == null ? 720 : Integer.parseInt(str[0]);
+
+		// V
+		video_vertical = str[1] == null ? 576 : Integer.parseInt(str[1]);
 
 		//deep red background to verify picture rectangle with given video resolution
 		big.setColor(new Color(0xFF550000));
@@ -845,12 +846,14 @@ public class Picture extends JPanel implements Runnable
 
 		//picture area which the subpicture must not exceed, have to adjust to the hor. middle of it
 		big.setColor(Color.gray);
-		big.fillRect(0, 0, video_basics[0], video_basics[1]); //DM20042004 081.7 int02 changed
+		big.fillRect(0, 0, video_horizontal, video_vertical); 
 
-		return video_basics[1];
+		return video_vertical;
 	}
 
-	//DM28022004 081.6 int18 new
+	/**
+	 *
+	 */
 	private int Get_Bits(byte buf[], int BPos[], int N)
 	{
 		int Pos, Val;
@@ -878,7 +881,9 @@ public class Picture extends JPanel implements Runnable
 		return Val;
 	}
 
-	//DM28022004 081.6 int18 new
+	/**
+	 *
+	 */
 	private int Show_Bits(byte buf[], int BPos[], int N)
 	{
 		int Pos, Val;
@@ -901,21 +906,27 @@ public class Picture extends JPanel implements Runnable
 		return Val;
 	}
 
-	//DM28022004 081.6 int18 new
+	/**
+	 *
+	 */
 	private void Flush_Bits(int BPos[], int N)
 	{
 		BPos[1] += N;
 		BPos[0] = BPos[1]>>>3;
 	}
 
-	//DM28022004 081.6 int18 new
+	/**
+	 *
+	 */
 	private void align_Bits(int BPos[])
 	{
 		if ((1 & BPos[1]>>>2) != 0)
 			Flush_Bits( BPos, 4);
 	}
 
-	//DM25072004 081.7 int07 add
+	/**
+	 *
+	 */
 	public String isForced_Msg()
 	{
 		String str = null;
@@ -935,21 +946,26 @@ public class Picture extends JPanel implements Runnable
 		return str;
 	}
 
-	//DM25072004 081.7 int07 add
+	/**
+	 *
+	 */
 	public void reset()
 	{
 		isforced_status = 0;
 	}
 
-	//DM14052004 081.7 int02 add
-	public int decode_picture(byte packet[], int off, boolean decode)
+	/**
+	 *
+	 */
+	public int decode_picture(byte packet[], int off, boolean decode, Object obj)
 	{
-		return decode_picture(packet, off, decode, 0, false, true);
+		return decode_picture(packet, off, decode, obj, 0, false, true);
 	}
 
-	//DM28022004 081.6 int18 new
-	//DM05052004 081.7 int02 changed
-	public int decode_picture(byte packet[], int off, boolean decode, long pts, boolean save, boolean visible)
+	/**
+	 *
+	 */
+	public int decode_picture(byte packet[], int off, boolean decode, Object obj, long pts, boolean save, boolean visible)
 	{
 		read_from_Image = false;
 		global_error = false;
@@ -969,11 +985,8 @@ public class Picture extends JPanel implements Runnable
 
 		int packetlength = Get_Bits(data, BPos, 16); // required pack length
 
-		//DM13042004 081.7 int01 add
-		//DM28042004 081.7 int02 changed
 		if (Show_Bits(data, BPos, 24) == 0xF) // DVB subpicture: 8bit padding 0x00 + 8bit subtitle_stream_id 0x00 + start of subtitle segment 0x0F
 		{
-			//DM15072004 081.7 int06 add
 			big.setFont(font_std);
 
 			int ret = dvb.decodeDVBSubpicture(data, BPos, big, bimg, pts, save, visible);
@@ -996,25 +1009,22 @@ public class Picture extends JPanel implements Runnable
 		{
 			playtime_pos = packetlength;
 			simple_picture = true;
-			X.Msg(Resource.getString("subpicture.msg2"));
+			Common.setMessage(Resource.getString("subpicture.msg2"));
 		}
 		else
 			start_pos[2] += off+2;
 
 		int color_table[] = getColorTable(0);
 
-		//DM26052004 081.7 int03 changed
 		while (BPos[0] < off + playtime_pos)  // read sections chunk
 		{
 			int cmd_switch = Get_Bits(data, BPos, 8);
 			switch(cmd_switch)
 			{
 			case 0: // force display
-				//DM25072004 081.7 int07 changed
 				isforced_status = (isforced_status & 5) != 5 ? 4 : 5;
 				break;
 			case 1: // start display
-				//DM25072004 081.7 int07 changed
 				isforced_status = (isforced_status & 3) != 3 ? 2 : 3;
 				break;
 			case 2: // stop display
@@ -1037,7 +1047,7 @@ public class Picture extends JPanel implements Runnable
 					start_pos[b] = Get_Bits(data, BPos, 16);
 				break;
 			default:
-				X.Msg(Resource.getString("subpicture.msg3") + ": " + cmd_switch);
+				Common.setMessage(Resource.getString("subpicture.msg3") + ": " + cmd_switch);
 			}
 		}
 
@@ -1045,6 +1055,7 @@ public class Picture extends JPanel implements Runnable
 			return -6;
 
 		int playtime = 0;
+
 		if (!simple_picture)
 		{
 			playtime = Get_Bits(data, BPos, 16);
@@ -1064,13 +1075,13 @@ public class Picture extends JPanel implements Runnable
 			return -3;
 
 		if (!decode)
-			return (playtime * 1000); //DM26052004 081.7 int03 changed , 900
+			return (playtime * 1024); //DM26052004 081.7 int03 changed , 900, 1000
 
 
 		for (int b=0; b<2; b++)
 			start_pos[b] += off;
 
-		paintVideoSize();
+		paintVideoSize(obj);
 
 		int y0 = position[2];
 
@@ -1133,9 +1144,6 @@ public class Picture extends JPanel implements Runnable
 		if (global_error)
 			return -3;
 
-		return (playtime * 1000); //DM26052004 081.7 int03 changed, 900
+		return (playtime * 1024); //DM26052004 081.7 int03 changed, 900, 1000
 	}
-
-
-} // end inner class
-} // end class
+}

@@ -28,31 +28,63 @@ package net.sourceforge.dvb.projectx.gui;
 
 import java.awt.*;
 import java.awt.event.*;
-import javax.swing.*;
 import javax.swing.event.*;
 
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JScrollPane;
+import javax.swing.JViewport;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JSlider;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.UIManager;
+import javax.swing.KeyStroke;
+import javax.swing.BoxLayout;
+
 import net.sourceforge.dvb.projectx.common.Resource;
+import net.sourceforge.dvb.projectx.common.Common;
+
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
 
-import java.io.*;
+import net.sourceforge.dvb.projectx.gui.CommonGui;
 
-public class HexViewer extends JFrame
-{
-	private XInputFile xinputFile = null;
-	private LogArea HexArea;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.File;
+
+public class HexViewer extends JFrame {
+
+	private XInputFile xinputFile;
+	private JTextArea HexArea;
 	private JTextField Field, Field1, from, fsize;
 	private JScrollPane scroll;
 	private JViewport viewport;
 	private JLabel flen, hexn;
 	private JSlider slider;
 	private JFileChooser chooser;
-	private JCheckBox textonly;
 
+	private boolean textonly = false;
+
+	/**
+	 *
+	 */
 	public HexViewer()
 	{
 		init();
 	}
 
+	/**
+	 *
+	 */
 	protected void init()
 	{
 		addWindowListener (new WindowAdapter()
@@ -62,19 +94,25 @@ public class HexViewer extends JFrame
 				close(); 
 			}
 		});
+
+		buildMenu();
+
 		setTitle(Resource.getString("hexviewer.title"));
 
 		chooser = new JFileChooser();
 		scroll = new JScrollPane();
-		HexArea = new LogArea();
+		HexArea = new JTextArea();
 		HexArea.setFont(new Font("Courier New", Font.PLAIN, 12));
+		HexArea.setEditable(true);
+		HexArea.setRows(24);
+		HexArea.setTabSize(12);
+
 		scroll.setViewportView(HexArea);
 		viewport = scroll.getViewport();
 
 		slider = new JSlider(JSlider.VERTICAL, 0, 15, 0);
 		slider.setInverted(true);
-		slider.addChangeListener(new ChangeListener()
-		{
+		slider.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e)
 			{
 				readfile((16L * slider.getValue()));
@@ -190,22 +228,6 @@ public class HexViewer extends JFrame
 		menu2.add(new JLabel(Resource.getString("hexviewer.to") + ": (hex.)"));
 		menu2.add(fsize);
 
-		JButton close = new JButton(Resource.getString("hexviewer.close"));
-		close.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				close();
-			}
-		});
-
-		getRootPane().setDefaultButton(close);
-		menu2.add(close);
-
-		textonly = new JCheckBox(Resource.getString("hexviewer.textmode"));
-		textonly.setSelected(false);
-		menu2.add(textonly);
-
 		JPanel menu3 = new JPanel();
 		menu3.setLayout( new GridLayout(2,1));
 		menu3.add(menu);
@@ -217,10 +239,76 @@ public class HexViewer extends JFrame
 
 		getContentPane().add(container);
 		centerDialog();
-		UIManager.addPropertyChangeListener(new UISwitchListener(container));
+
+		UIManager.addPropertyChangeListener(new UISwitchListener(getRootPane()));
 	}
 
-	//DM06092003+  changed
+	/**
+	 *
+	 */
+	protected void buildMenu()
+	{
+		JMenuBar menuBar = new JMenuBar();
+
+		menuBar.add(buildFileMenu());
+		menuBar.add(buildOptionMenu());
+
+		setJMenuBar(menuBar);
+	}
+
+	/**
+	 *
+	 */
+	protected JMenu buildFileMenu()
+	{
+		JMenu fileMenu = new JMenu();
+		CommonGui.localize(fileMenu, "Common.File");
+
+		JMenuItem save = new JMenuItem();
+		CommonGui.localize(save, "Common.SaveAs");
+
+		fileMenu.add(save);
+		fileMenu.addSeparator();
+
+		JMenuItem close = new JMenuItem();
+		CommonGui.localize(close, "Common.Close");
+		close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, ActionEvent.ALT_MASK));
+		close.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				close();
+			}
+		});
+
+		fileMenu.add(close);
+
+		return fileMenu;
+	}
+
+	/**
+	 *
+	 */
+	protected JMenu buildOptionMenu()
+	{
+		JMenu optionMenu = new JMenu();
+		CommonGui.localize(optionMenu, "Common.Options");
+
+		JCheckBoxMenuItem text_mode = new JCheckBoxMenuItem(Resource.getString("hexviewer.textmode"));
+		text_mode.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				textonly = ((JCheckBoxMenuItem) e.getSource()).getState();
+			}
+		});
+
+		optionMenu.add(text_mode);
+
+		return optionMenu;
+	}
+
+	/**
+	 *
+	 */
 	private void savefile(long startPos, long size)
 	{
 		long len = xinputFile.length();
@@ -246,7 +334,7 @@ public class HexViewer extends JFrame
 		else 
 			return;
 
-		setTitle(Resource.getString("hexviewer.save") + ": " + newfile); //DM30122003 081.6 int10 add
+		setTitle(Resource.getString("hexviewer.save") + ": " + newfile); 
 
 		try 
 		{
@@ -281,10 +369,12 @@ public class HexViewer extends JFrame
 			HexArea.setText(Resource.getString("hexviewer.error") + ": " + xinputFile); 
 		}
 
-		setTitle(Resource.getString("hexviewer.file") + ": " + xinputFile); //DM30122003 081.6 int10 add
+		setTitle(Resource.getString("hexviewer.file") + ": " + xinputFile);
 	}
-	//DM06092003-
 
+	/**
+	 *
+	 */
 	private void readfile(long position)
 	{
 		try 
@@ -295,7 +385,7 @@ public class HexViewer extends JFrame
 
 			if (position < len)
 			{
-				if (textonly.isSelected())
+				if (textonly)
 				{
 					xinputFile.randomAccessSeek(position);
 
@@ -329,12 +419,15 @@ public class HexViewer extends JFrame
 		}
 	}
 
+	/**
+	 *
+	 */
 	private void print(byte[] data, long position)
 	{
 		String fill = "0000000000";
 		String text = "";
 
-		for (int a=0; a < data.length; a += 16)
+		for (int a = 0; a < data.length; a += 16)
 		{
 			String ascii = " : ";
 			String stuff = "   ";
@@ -346,7 +439,7 @@ public class HexViewer extends JFrame
 			{ 
 				String val = Integer.toHexString((0xFF & data[a + b])).toUpperCase();
 				text += fill.substring(0, 2 - val.length()) + val + ((b == 7) ? "-" : " ");
-				ascii += ((0xFF & data[a + b]) > 31 && (0xFF & data[a + b]) < 127) ? "" + ((char)data[a + b]) : ".";
+				ascii += ((0xFF & data[a + b]) > 0x1F && (0xFF & data[a + b]) < 0x7F) ? "" + ((char)data[a + b]) : ".";
 			}
 
 			for (; b < 16; b++) 
@@ -358,6 +451,9 @@ public class HexViewer extends JFrame
 		HexArea.setText(text);
 	}
 
+	/**
+	 *
+	 */
 	public void view(XInputFile aXInputFile)
 	{
 		long filelen = aXInputFile.length();
@@ -379,19 +475,24 @@ public class HexViewer extends JFrame
 		setTitle(Resource.getString("hexviewer.file") + ": " + xinputFile);
 		flen.setText(Resource.getString("hexviewer.filesize") + ": " + filelen + " b.");
 
-		this.show();
+		show();
 	}
 
+	/**
+	 *
+	 */
 	protected void centerDialog()
 	{
-		this.setLocation(200, 200);
-		this.setSize(600, 435);
+		setLocation(200, 200);
+		setSize(620, 460);
 	}
 
+	/**
+	 *
+	 */
 	private void close()
 	{
 		dispose();
-		System.gc();
 	}
 
 

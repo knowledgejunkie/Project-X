@@ -1,5 +1,5 @@
 /*
- * @(#)AUDIO.java - parse Audioheaders
+ * @(#)Audio.java - parse Audioheaders
  *
  * Copyright (c) 2003-2005 by dvb.matt, All Rights Reserved.
  * 
@@ -29,10 +29,16 @@
 
 package net.sourceforge.dvb.projectx.audio;
 
-import java.io.*; //DM24012004 081.6 int11 add
+import java.util.Arrays;
+import java.util.ArrayList;
 
-public class Audio
-{
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.io.ByteArrayOutputStream;
+
+import net.sourceforge.dvb.projectx.common.Common;
+
+public class Audio extends Object {
 		
 	int ID=0;
 	public int Layer=0;
@@ -138,45 +144,47 @@ public class Audio
 	{
 		int sblimit = 32;
 	
-		if ( (0xFF&frame[pos])!=0xFF || (0xF0&frame[pos+1])!=0xF0 ) 
+		if ( (0xFF & frame[pos]) != 0xFF || (0xF0 & frame[pos + 1]) != 0xF0 ) 
 			return -1;
 	
-		ID = 1&frame[pos+1]>>>3;
-	        Emphasis = 3&frame[pos+3];
+		ID = 1 & frame[pos + 1]>>>3;
+	        Emphasis = 3 & frame[pos + 3];
 	
-		if (ID==1 && Emphasis==2)
+		if (ID == 1 && Emphasis == 2)
 			ID = 2;
 	
-		if ( (Layer = 3&frame[pos+1]>>>1) < 1) 
+		if ( (Layer = 3 & frame[pos + 1]>>>1) < 1) 
 			return -2;
 	
-		Protection_bit = (1&frame[pos+1]) ^ 1;
+		Protection_bit = (1 & frame[pos + 1]) ^ 1;
 	
-		if ( (Bitrate = bitrate_index[ID][Layer-1][0xF&frame[pos+2]>>>4]) < 1) 
+		if ( (Bitrate = bitrate_index[ID][Layer - 1][0xF & frame[pos + 2]>>>4]) < 1) 
 			return -3;
 	
-		if ( (Sampling_frequency = frequency_index[ID][3&frame[pos+2]>>>2]) == 0) 
+		if ( (Sampling_frequency = frequency_index[ID][3 & frame[pos + 2]>>>2]) == 0) 
 			return -4;
 	
-		Padding_bit = 1&frame[pos+2]>>>1;
-		Private_bit = 1&frame[pos+2];
+		Padding_bit = 1 & frame[pos + 2]>>>1;
+		Private_bit = 1 & frame[pos + 2];
 	
-		Mode = 3&frame[pos+3]>>>6;
-		Mode_extension = 3&frame[pos+3]>>>4;
-		if (Mode==0) 
-			Mode_extension=0;
+		Mode = 3 & frame[pos + 3]>>>6;
+		Mode_extension = 3 & frame[pos + 3]>>>4;
+
+		if (Mode == 0) 
+			Mode_extension = 0;
 	
-		Bound = Mode==1 ? ((Mode_extension + 1) << 2) : sblimit;
-		Channel = Mode==3 ? 1: 2;
-		Copyright = 1&frame[pos+3]>>>3;
-		Original = 1&frame[pos+3]>>>2;
-		Time_length = time_index[Layer]/Sampling_frequency;
+		Bound = Mode == 1 ? ((Mode_extension + 1) << 2) : sblimit;
+		Channel = Mode == 3 ? 1 : 2;
+		Copyright = 1 & frame[pos + 3]>>>3;
+		Original = 1 & frame[pos + 3]>>>2;
+		Time_length = time_index[Layer] / Sampling_frequency;
 	
-		if (ID==1 && Layer==2) {	// MPEG-1, L2 restrictions
-			if(Bitrate / Channel < 32000) 
+		if (ID == 1 && Layer == 2)   // MPEG-1, L2 restrictions
+		{
+			if (Bitrate / Channel < 32000) 
 				return -5; /* unsupported bitrate */
 
-			if(Bitrate / Channel > 192000) 
+			if (Bitrate / Channel > 192000) 
 				return -6; /* unsupported bitrate */
 	
 			if (Bitrate / Channel < 56000)
@@ -197,22 +205,30 @@ public class Audio
 				else 
 					Sblimit = 30;
 			}
+
 			if (Bound > Sblimit) 
 				Bound = Sblimit;
 		}
-		else if (Layer==2)  // MPEG-2
+
+		else if (Layer == 2)  // MPEG-2
 		{
 			Sblimit = 30;
 		}
-	
-		if (Layer<3) {
+
+		if (Layer < 3)
+		{
 			if (Bound > Sblimit) 
 				Bound = Sblimit;
-			Size = (Size_base = 144*Bitrate/Sampling_frequency) + Padding_bit;
+
+			Size = (Size_base = 144 * Bitrate / Sampling_frequency) + Padding_bit;
+
 			return 1;
-		} else {
+		}
+		else
+		{
 			Sblimit = 32;
-			Size = (Size_base = (12*Bitrate/Sampling_frequency)*4) + (4*Padding_bit);
+			Size = (Size_base = (12 * Bitrate / Sampling_frequency) * 4) + (4 * Padding_bit);
+
 			return 2;
 		}
 	}
@@ -324,30 +340,28 @@ public class Audio
 	/**
 	 * remove CRC from mpa 
 	 **/
-	public byte[] MPA_deleteCRC(byte[] frame)
+	public void MPA_deleteCRC(byte[] frame)
 	{
 		MPA_removePrivateBit(frame);
 
-		if ( (frame[1] & 1) == 1) 
-			return frame;
+		if ((frame[1] & 1) == 1) 
+			return;
 
-		byte[] newframe = new byte[frame.length];
+		System.arraycopy(frame, 6, frame, 4, frame.length - 6);
+		Arrays.fill(frame, frame.length - 2, frame.length, (byte) 0);
 
-		System.arraycopy(frame, 0, newframe, 0, 4);
-		System.arraycopy(frame, 6, newframe, 4, frame.length - 6);
-
-		newframe[1] |= 1;
+		frame[1] |= 1;
 
 		Protection_bit = 1;
-
-		return newframe;
 	}
-
+	
 	/**
 	 * remove private Bit from mpa 
 	 **/
-	private void MPA_removePrivateBit(byte[] frame)
+	public void MPA_removePrivateBit(byte[] frame)
 	{
+		//MPA_deleteCRC(frame);
+
 		if ( (frame[2] & 1) == 0) 
 			return;
 
@@ -377,10 +391,10 @@ public class Audio
 		", CM" , ", ME" , ", K:VI" , ", K:HI" , ", K:D" , ", K:C" , ", K:E" , ", K:VO"
 	};
 	String cmixlev[] = {
-		"", ", cm-3.0dB", ", cm-4.5dB", ", cm-6.0dB", ", cm-4.5dB"
+		"", ", cm -3.0dB", ", cm -4.5dB", ", cm -6.0dB", ", cm -4.5dB"
 	};
 	String surmixlev[] = {
-		"", ", sm-3dB", ", sm-6dB", ", sm 0dB", ", sm-6dB"
+		"", ", sm -3dB", ", sm -6dB", ", sm 0dB", ", sm -6dB"
 	};
 	String dsurmod[] = {
 		"" , ", notDS" , ", DS" , ""
@@ -443,25 +457,15 @@ public class Audio
 		        Mode_extension |= 6 & mode>>>(10 - (2 * skip));  //DS
 			skip++;
 		}
-	
-		switch (skip)
-		{  //lfe
-		case 0:
-		        Mode_extension |= 1 & mode>>>12;
-			break;
-		case 1:
-		        Mode_extension |= 1 & mode>>>10;
-			break;
-		case 2:
-		        Mode_extension |= 1 & mode>>>8;
-			break;
-		case 3:
-		        Mode_extension |= 1 & mode>>>6;
+
+		if (skip < 4)
+		{
+		        Mode_extension |= 1 & mode>>>(12 - (2 * skip)); //lfe
+			Original = 0x1F & mode>>>(7 - (2 * skip)); //dialnorm
 		}
 	
 		Channel = ac3_channels[Mode] + (1 & Mode_extension);
 		Copyright = 0;
-		Original = 0;
 		Time_length = 138240000.0 / Sampling_frequency;
 		Size = (Size_base = ac3_size_table[3 & frame[pos+4]>>>6][0x1F & frame[pos+4]>>>1]) + Padding_bit * 2;
 
@@ -511,25 +515,15 @@ public class Audio
 		        nMode_extension |= 6 & mode>>>(10 - (2 * skip));  //DS
 			skip++;
 		}
-	
-		switch (skip)
-		{  //lfe
-		case 0:
-		        nMode_extension |= 1 & mode>>>12;
-			break;
-		case 1:
-		        nMode_extension |= 1 & mode>>>10;
-			break;
-		case 2:
-		        nMode_extension |= 1 & mode>>>8;
-			break;
-		case 3:
-		        nMode_extension |= 1 & mode>>>6;
+
+		if (skip < 4)
+		{
+		        nMode_extension |= 1 & mode>>>(12 - (2 * skip)); //lfe
+			nOriginal = 0x1F & mode>>>(7 - (2 * skip)); //dialnorm
 		}
 	
 		nChannel = ac3_channels[Mode] + (1 & nMode_extension);
 		nCopyright = 0;
-		nOriginal = 0;
 		nTime_length = 138240000.0 / nSampling_frequency;
 		nSize = (nSize_base = ac3_size_table[3 & frame[pos+4]>>>6][5 & frame[pos+4]>>>1]) + nPadding_bit * 2;
 
@@ -569,6 +563,7 @@ public class Audio
 			ac3_channels[lMode] + 
 			lfe[0][1 & lMode_extension] + 
 			")" + 
+			", dn -" + lOriginal + "dB" +
 			dsurmod[lMode_extension>>>1] + 
 			cmixlev[lEmphasis] + 
 			surmixlev[lPrivate_bit] + 
@@ -850,7 +845,9 @@ public class Audio
 	}
 	//DM30122003 081.6 int10 add-
 	
-	//DM24012004 081.6 int11 add+
+	/**
+	 * returns RIFF
+	 */
 	public byte[] getRiffHeader()
 	{
 		byte RIFF[] = {
@@ -860,32 +857,44 @@ public class Audio
 			0, 0, 0, 0, (byte)0x64, (byte)0x61, (byte)0x74, (byte)0x61, 
 			0, 0, 0, 0
 		};
+
 		return RIFF;
 	}
-	
-	public void fillRiffHeader(String file) throws IOException
+
+	/**
+	 * updates RIFF
+	 * returns playtime as int
+	 */
+	public long fillRiffHeader(String file) throws IOException
 	{
-		RandomAccessFile riff = new RandomAccessFile(file,"rw");
-		int len = (int)riff.length()-8;
+		RandomAccessFile riff = new RandomAccessFile(file, "rw");
+
+		int len = (int)riff.length() - 8;
+
 		riff.seek(3);
+
 		if (!INTEL)
 			riff.write((byte)'X');
+
 		riff.seek(4);
-		riff.writeInt(littleEndian(len,4));  //data+chunksize
+		riff.writeInt(littleEndian(len, 4));  //data+chunksize
+
 		riff.seek(16);
-		riff.writeInt(littleEndian(0x10,4));  //chunk length
-		riff.writeShort(littleEndian(1,2));   //pcm
-		riff.writeShort((short)littleEndian(lChannel,2)); //channels
-		riff.writeInt(littleEndian(lSampling_frequency,4));  //sample_freq
-		riff.writeInt(littleEndian(lBitrate / 8,4)); //byterate
-		riff.writeShort((short)littleEndian(lMode,2)); //blockalign
-		riff.writeShort((short)littleEndian(lSize,2)); //bits_per_sample
+		riff.writeInt(littleEndian(0x10, 4));  //chunk length
+		riff.writeShort(littleEndian(1, 2));   //pcm
+		riff.writeShort((short)littleEndian(lChannel, 2)); //channels
+		riff.writeInt(littleEndian(lSampling_frequency, 4));  //sample_freq
+		riff.writeInt(littleEndian(lBitrate / 8, 4)); //byterate
+		riff.writeShort((short)littleEndian(lMode, 2)); //blockalign
+		riff.writeShort((short)littleEndian(lSize, 2)); //bits_per_sample
+
 		riff.seek(40);
-		riff.writeInt(littleEndian(len-36,4));  //data-size //DM13092003 fix
+		riff.writeInt(littleEndian(len - 36, 4));  //data-size
 	
 		riff.close();
+
+		return ((8000L * (len - 36)) / lBitrate);
 	}
-	//DM24012004 081.6 int11 add-
 	
 	
 	//DM3003004 081.6 int18 add+
@@ -957,26 +966,34 @@ public class Audio
 
 
 
-
-
 	/**
 	 * RDS-Test, cant find any similars to RDS, I-RDS, RBDS i.e. group/block coding
 	 * PI-Code is missing, WDR2 shall have Dx92
 	 *
-	 * activated, when crc-removing selected
 	 */
-	java.util.ArrayList _list = new java.util.ArrayList();
+	ArrayList _list = new ArrayList();
 	ByteArrayOutputStream bo = new ByteArrayOutputStream();
+	private boolean DecodeRDS = false;
+	private boolean Debug = false;
+
+	public void initRDSDecoding(boolean b, boolean b1)
+	{
+		DecodeRDS = b;
+		Debug = b1;
+	}
 
 	public void testRDS(byte[] frame)
 	{
+		if (!DecodeRDS)
+			return;
+
 		int neg_offs = frame.length - 1;
 
 		if (frame[neg_offs] != (byte)0xFD)
 		{
 			neg_offs -= 2;
 
-			if (frame[neg_offs] != (byte)0xFD || frame[neg_offs + 1] != 0 || frame[neg_offs + 2] != 0)
+			if (frame[neg_offs] != (byte)0xFD)
 				return;
 		}
 
@@ -996,9 +1013,6 @@ public class Audio
 	 */
 	private void decodeChunk(java.util.ArrayList list)
 	{
-		if (list.isEmpty())
-			return;
-
 		int index = list.indexOf("254"); //0xfe, start
 
 		if (index < 0)
@@ -1016,9 +1030,7 @@ public class Audio
 		int eom_index = list.indexOf("255"); //0xff, end
 
 		if (eom_index < 0)
-		{
 			return;
-		}
 
 		int chunklen = 0;
 
@@ -1035,6 +1047,19 @@ public class Audio
 			return;
 		}
 
+		if (Debug)
+		{
+			String str = "";
+			String str_1 = "";
+
+			for (int i = 0; i <= eom_index; i++)
+			{
+				str_1 = Integer.toHexString(Integer.parseInt(list.get(i).toString())).toUpperCase();
+				str += " " + (str_1.length() < 2 ? "0" + str_1 : str_1);
+			}
+
+			System.out.println("RDS:" + str);
+		}
 
 		int type = -1;
 
@@ -1056,10 +1081,17 @@ public class Audio
 
 		switch (type)
 		{
-		case 0xA: //RT
-			printRadioText(bo.toByteArray());
+		case 0x0A: //RT
+			printRT(bo.toByteArray());
 			break;
 
+		case 0x02: //PS program service name 
+			printPS(bo.toByteArray());
+			break;
+
+		case 0x0D: //? 
+		case 0x30: //? 
+		case 0x40: //CT calendar
 		case 0x42: //? 
 		case 0x46: //?
 			break;
@@ -1071,7 +1103,7 @@ public class Audio
 	/**
 	 * 
 	 */
-	private void printRadioText(byte[] array)
+	private void printRT(byte[] array)
 	{
 		int index = 0;
 
@@ -1087,9 +1119,192 @@ public class Audio
 
 		index++;
 
+		replaceChars(array, index, len);
+
 		String str = new String(array, index, len - 1);
 
-		net.sourceforge.dvb.projectx.common.X.Msg("-> RT (" + change + "): '" + str.trim() + "'");
+		Common.setMessage("-> RT (" + change + "): '" + str.trim() + "'");
 	}
 
+	/**
+	 * 
+	 */
+	private void printPS(byte[] array)
+	{
+		int index = 0;
+
+		int offs = (0xFF & array[index])<<8 | (0xFF & array[index + 1]);
+
+		index += 2;
+
+		int len = array.length >= index + 8 ? 8 : array.length - index;
+
+		replaceChars(array, index, len);
+
+		String str = new String(array, index, len - 1);
+
+		Common.setMessage("-> PS : '" + str.trim() + "'");
+	}
+
+	/**
+	 * 
+	 */
+	private void replaceChars(byte[] array, int offset, int length)
+	{
+		for (int i = offset; i < length; i++)
+		{
+			switch (0xFF & array[i])
+			{
+			case 0x91:
+				array[i] = (byte)0xE4; //ä
+				break;
+			case 0x92:
+			case 0x93:
+			case 0x94:
+			case 0x95:
+			case 0x96:
+				break;
+			case 0x97:
+				array[i] = (byte)0xF6; //ö
+				break;
+			case 0x98:
+				break;
+			case 0x99:
+				array[i] = (byte)0xFC; //ü
+				break;
+			case 0x9A:
+			case 0x9B:
+			case 0x9C:
+			case 0x9D:
+			case 0x9E:
+			case 0x9F:
+				break;
+
+			case 0x81:
+			case 0x82:
+			case 0x83:
+			case 0x84:
+			case 0x85:
+			case 0x86:
+			case 0x87:
+			case 0x88:
+			case 0x89:
+			case 0x8A:
+			case 0x8B:
+			case 0x8C:
+			case 0x8D:
+			case 0x8E:
+			case 0x8F:
+				break;
+			}
+		}
+	}
+
+
+
+	/**
+	 * ac3 riff header stuff
+	 */
+	// 1536s / 44.1 -> 34.8299ms -> 3134.691
+	// 1536s / 48 -> 32ms -> 2880
+	// 1536s / 32 -> 48ms -> 4320
+
+	private final int[] armode = { 0, 1, 2, 3, 3, 4, 4, 5 };
+	private final int[] arsample = { 48000, 44100, 32000, 0 };
+	private final int[] arbitrate =  { 
+		0, 40000, 48000, 56000, 64000, 80000, 96000, 112000, 128000, 160000, 192000, 
+		224000, 256000, 320000, 384000, 448000, 512000, 576000, 640000, 0, 0
+	};
+
+	/**
+	 * ac3 bitrate constants
+	 */
+	/* 96k,112k,128k,160k,192k,224k,256k,320k,384k,448k,512k,576k,640k
+	 *   0=48khz,1=44.1khz,2=32khz  32ms,36ms,48ms      44.1khz padding +2 bytes
+	 */
+	private final int[][] ac3const = {
+          { 288000000,160,192,224,256,320,384,448,512,640,768,896,1024,1280,1536,1792,2080,2304,2560 },
+          { 313469388,174,208,242,278,348,416,486,556,696,834,974,1114,1392,1670,1950,2228,2506,2786 },
+          { 432000000,240,288,336,384,480,576,672,768,960,1152,1344,1536,1920,2304,2688,3120,3456,3840 }
+	};
+
+	/**
+	 * riffdata from ac3 audio
+	 * awaiting a frame byte array, only the header is used
+	 */
+	public int[] AC3RiffFormat(byte[] frame)
+	{
+		int[] riffdata = new int[10];
+
+		// nSamplesPerSec
+		riffdata[2] = arsample[(0xC0 & frame[4])>>>6];
+		// nChannels
+		riffdata[4] = armode[(0xE0 & frame[6])>>>5];
+		// dwHeadBitrate
+		riffdata[6] = arbitrate[(0x3F & frame[4])>>>1];
+		// nBlockAlign
+		riffdata[8] = ac3const[(0xC0 & frame[4])>>>6][(0x3E & frame[4])>>>1] + (((1 & frame[4])!=0) ? 2 : 0);
+
+		return riffdata;
+	}
+
+
+	/**
+	 * mpa riff header stuff
+	 */
+	private final int[] rpadding = { 0, 1, 1, 4 };
+	private final int[] rlayer = { 0, 4, 2, 1 };
+	private final int[][] rsample = { 
+		{ 22050, 24000, 16000, 0 }, 
+		{ 44100, 48000, 32000, 0 } 
+	};
+	private final int[] rmode = { 1, 2, 4, 8 };
+	private final int[] rchnl = { 2, 2, 2, 1 };
+	private final int[] rmext = { 1, 2, 4, 8 };
+	private final int[] remph = { 1, 2, 3, 4 };
+	private final int[][][] rbitrate = {
+		{ {  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
+		{  0,8000,16000,24000,32000,40000,48000,56000,64000,80000,96000,112000,128000,144000,160000,0  },
+		{  0,8000,16000,24000,32000,40000,48000,56000,64000,80000,96000,112000,128000,144000,160000,0  },
+		{  0,32000,48000,56000,64000,80000,96000,112000,128000,144000,160000,176000,192000,224000,256000,0 } },
+		{ {  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
+		{  0,32000,40000,48000,56000,64000,80000,96000,112000,128000,160000,192000,224000,256000,320000,0  },
+		{  0,32000,48000,56000,64000,80000,96000,112000,128000,160000,192000,224000,256000,320000,384000,0  },
+		{  0,32000,64000,96000,128000,160000,192000,224000,256000,288000,320000,352000,384000,416000,448000,0 } }
+	};
+
+
+	/**
+	 * riffdata from mpeg audio
+	 * awaiting a frame byte array, only the header is used
+	 */
+	public int[] RiffFormat(byte[] rh)
+	{
+		int[] riffdata = new int[10];
+
+		// fwHeadFlags
+		riffdata[0] = (8 & rh[1])<<1 | (1 & rh[1])<<3 | (4 & rh[3]) | (8 & rh[3])>>>2 | (1 & rh[2]);
+		// fwHeadLayer
+		riffdata[1] = rlayer[(6 & rh[1])>>>1];
+		// nSamplesPerSec
+		riffdata[2] = rsample[(8 & rh[1])>>>3][(0xC & rh[2])>>>2];
+		// fwHeadMode
+		riffdata[3] = rmode[(0xC0 & rh[3])>>>6];
+		// nChannels
+		riffdata[4] = rchnl[(0xC0 & rh[3])>>>6];
+		// fwHeadModeExt
+		riffdata[5] = rmext[(0x30 & rh[3])>>>4];
+		// dwHeadBitrate
+		riffdata[6] = rbitrate[(8 & rh[1])>>>3][(6 & rh[1])>>>1][(0xF0 & rh[2])>>>4];
+		// wHeadEmphasis
+		riffdata[7] = remph[(3 & rh[3])];
+		// nBlockAlign
+		riffdata[8] = riffdata[1] == 1 ? 4 * (12 * riffdata[6] / riffdata[2]) :  144 * riffdata[6] / riffdata[2];
+		riffdata[8] /= ( (8 & rh[1]) == 0 && (6 & rh[1]) == 1 ) ? 2 : 1 ;
+
+		if ((2 & rh[2]) != 0) 
+			riffdata[8] += rpadding[(6 & rh[1])>>>1];
+
+		return riffdata;
+	}
 }

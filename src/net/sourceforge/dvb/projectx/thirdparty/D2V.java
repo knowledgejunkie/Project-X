@@ -27,18 +27,20 @@
 package net.sourceforge.dvb.projectx.thirdparty;
 
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+
+import java.util.ArrayList;
 
 import net.sourceforge.dvb.projectx.common.Resource;
-import net.sourceforge.dvb.projectx.common.X;
+import net.sourceforge.dvb.projectx.common.Common;
+import net.sourceforge.dvb.projectx.video.Video;
 
-public class D2V
-{
+public class D2V extends Object {
 
 	ArrayList d2v = new ArrayList();
 
-	int[]  fps_table = { 0,23976,24000,25000,29970,30000,50000,59940,60000,0,0,0,0,0,0,0 };
 	int entry=0, file=0, frame1=0, frame2=0;
 
 	String[] type = { " 2"," 9" };
@@ -52,6 +54,9 @@ public class D2V
 		"Picture_Size=0,0,0,0,0,0", 
 		"Field_Operation=0" 
 	};
+
+	public D2V()
+	{}
 
 	public void Init(String fparent)
 	{
@@ -97,7 +102,7 @@ public class D2V
 
 	public void FrameRate(byte framerate)
 	{
-		d2v.add("Frame_Rate=" + (fps_table[15&framerate]));
+		d2v.add("Frame_Rate=" + Video.getFrameRate(0xF & framerate));
 		d2v.add("");
 		entry += 2;
 	}
@@ -151,7 +156,7 @@ public class D2V
 		}
 		catch (IOException e)
 		{ 
-			X.Msg(Resource.getString("msg.log.error") + " (D2V) " + e); 
+			Common.setExceptionMessage(e); 
 		}
 
 		d2v.clear();

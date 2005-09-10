@@ -37,6 +37,8 @@ import net.sourceforge.dvb.projectx.xinput.FileType;
 import net.sourceforge.dvb.projectx.xinput.XInputFileIF;
 import net.sourceforge.dvb.projectx.xinput.XInputStream;
 
+import net.sourceforge.dvb.projectx.xinput.StreamInfo;
+
 public class XInputFileImpl implements XInputFileIF {
 
 	private boolean debug = false;
@@ -52,12 +54,14 @@ public class XInputFileImpl implements XInputFileIF {
 
 	private byte[] buffer = new byte[8];
 
-	// Members used for type FileType.TFRAW
+	// Members used for type FileType.RAW
 	private RawInterface rawInterface = null;
 
 	private String fileName = null;
 
 	private Object constructorParameter = null;
+
+	private StreamInfo streamInfo = null;
 
 	/**
 	 * Private Constructor, don't use!
@@ -68,7 +72,7 @@ public class XInputFileImpl implements XInputFileIF {
 	}
 
 	/**
-	 * Create a XInputFile of type FileType.TFRAW.
+	 * Create a XInputFile of type FileType.RAW.
 	 * 
 	 * @param aFtpVO
 	 *          Directory data to use
@@ -77,18 +81,19 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public XInputFileImpl(String aFileName) {
 
-		if (debug) System.out.println("Try to create XInputFile of Type TFRAW");
+		if (debug) System.out.println("Try to create XInputFile of Type RAW");
 
 		try {
 			fileName = aFileName;
-			fileType = FileType.TFRAW;
+			fileType = FileType.RAW;
 			rawInterface = new RawInterface(aFileName);
 			rawInterface.getStream().close();
+
 		} catch (IOException e) {
-			throw new IllegalArgumentException("File is not of type FileType.TFRAW");
+			throw new IllegalArgumentException("File is not of type FileType.RAW");
 		}
 
-		if (debug) System.out.println("Succeeded to create XInputFile of Type TFRAW");
+		if (debug) System.out.println("Succeeded to create XInputFile of Type RAW");
 	}
 
 	/**
@@ -126,7 +131,7 @@ public class XInputFileImpl implements XInputFileIF {
 
 		String s;
 
-		s = "tfraw://" + fileName;
+		s = "raw://" + fileName;
 
 		return s;
 	}
@@ -147,6 +152,16 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public long lastModified() {
 		return rawInterface.rawRead.lastModified(fileName);
+	}
+
+	/**
+	 * sets Time in milliseconds from the epoch.
+	 * 
+	 * @return success
+	 */
+	public boolean setLastModified() {
+
+		return true; //later
 	}
 
 	/**
@@ -192,7 +207,21 @@ public class XInputFileImpl implements XInputFileIF {
 	 * @return Input stream from the file
 	 */
 	public InputStream getInputStream() throws FileNotFoundException, MalformedURLException, IOException {
-		return new XInputStream(rawInterface.getStream());
+
+		return getInputStream(0L);
+	}
+
+	/**
+	 * Get input stream from the file. close() on stream closes XInputFile, too.
+	 * 
+	 * @return Input stream from the file
+	 */
+	public InputStream getInputStream(long start_position) throws FileNotFoundException, MalformedURLException, IOException {
+
+		XInputStream xIs = new XInputStream(rawInterface.getStream());
+		xIs.skip(start_position);
+
+		return xIs;
 	}
 
 	/**
@@ -214,7 +243,7 @@ public class XInputFileImpl implements XInputFileIF {
 
 		if (isopen) { throw new IllegalStateException("XInputFile is already open!"); }
 
-		if (mode.compareTo("r") != 0) { throw new IllegalStateException("Illegal access mode for FileType.TFRAW"); }
+		if (mode.compareTo("r") != 0) { throw new IllegalStateException("Illegal access mode for FileType.RAW"); }
 		pbis = new PushbackInputStream(getInputStream());
 
 		randomAccessCurrentPosition = 0;
@@ -338,7 +367,7 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public void randomAccessWrite(byte[] aBuffer) throws IOException {
 
-		throw new IllegalStateException("Illegal access for FileType.TFRAW");
+		throw new IllegalStateException("Illegal access for FileType.RAW");
 	}
 
 	/**
@@ -375,5 +404,21 @@ public class XInputFileImpl implements XInputFileIF {
 				+ ((long) buffer[5] << 24) + ((long) buffer[6] << 16) + ((long) buffer[7] << 8) + buffer[8];
 
 		return l;
+	}
+
+	/**
+	 *
+	 */
+	public void setStreamInfo(StreamInfo _streamInfo)
+	{
+		streamInfo = _streamInfo;
+	}
+
+	/**
+	 *
+	 */
+	public StreamInfo getStreamInfo()
+	{
+		return streamInfo;
 	}
 }

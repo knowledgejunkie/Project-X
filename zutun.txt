@@ -1,0 +1,172 @@
+--jede wesentliche box(checkbox + rbutton) mit actioncommand für ini speicherung
+--neu gopinfo-preview: coded size
+--progress gui update auslagern
+--commons-net 1.3.0 updaten, mit java 1.2.2 (2 cm-n sourcefiles mussten angepasst werden) .05
+--audio pitch rausgenommen, brauch keiner (abfrage in processaudio weiter drin)
+--d2vfield[0-4] d2v parameters weg
+--d2vfield[7] pitch frames weg
+--d2vfield[5] d2v splitsize 2048, options[51], geä als eigener value
+--d2vfield[6] sup parameters, geä als eigener value
+--d2vfield[8] startpath, geä als eigener value
+--d2vfield[9] subtitle page id, geä als eigener value
+--pesappend behoben, ging nicht mehr?
+--scan lücken erlauben behoben, ging nicht mehr?
+--d2v set options ist entfernt, daten jetzt fixiert
+--fehler von nichtauswertung CLI [-g] behoben, seit 0.82?
+--m2s version in gui entfernt, ändert sich wohl in nä. zeit nicht mehr
+--scrambled PES kennung auslesen, bei vdrparse
+--toggle log nicht mehr, parallel big + normal log
+--vps- label, nicht status name
+--untertitel toggle, alle andren switches müssen jeweils auf 0 gesetzt werden, jetzt über combobox
+--newoutname patch, in patch 05 realisiert -> übernhemen
+--private bit löschen optional  .05c
+--ac3 one subid, jedesmal neu gemeldet als mpg .05c
+--combobox umbauen
+--ttx zwangs termination .05d
+--pts shift bei TS ergänzt .05d
+--combox item bzw index speichern
+--class collection in collectionpanel umbenennen
+--byteorder geändert 2bytes ATM, 5mal schneller  082.1.01
+--inputlist objekte combobox17 über arraylist-prop händeln
+--toggle interlace
+--wechsle zu datei , größenangabe
+--normalize-message > 100%, setzen in gui auf 100
+--conditional h patch testen
+--cbox[4] + rbutton[14] riff + layer1+2  KEY_AudioPanel_Box10 , wo drin?
+--cbox[4] + rbutton[15] riff + layer3  KEY_AudioPanel_Box17
+--riff wave kopf toggle, extra aktiviern für layer 12 + l3
+--nullpointer , toM2P mit cutpoints und vob input und vob zeitlinie beachten 082.1.01
+--vdr ac3 subid anpassung 082.1.01
+--crc check mpa l2 geändert 082.1.01
+--jumpbutton preview mit gifs ergänzen, andre weiten hinzufügen
+--idd kaputt SCE? doch i.O.!
+--change vorhandene sde defekt 082.1.01
+--rds decode  082.1.02, RT , neu auch PS
+--synccheck v,w, als object
+--java memory load anzeigen, system.gc wird bei 'arbeitspause' alle 5fache zeit aufgerufen, in arbeitsroutinen entfernt
+--ttx header log war weg
+--datum uhrzeit live unten, passt bei 1.5 nich ?!
+--subtitle outline änderung übernehmen, option10, loop, values! 082.1.02
+--pfade export passen nocht nicht
+--änderung bei ac3crc bringt zzt. keine beschleunigung
+--pixelweite für SUP export vtx umrandung variabel machen 082.1.02
+--moni - bytes gelesen, geschrieben pro sek, graph in memory monitor (liest selbständig aus X aus je sample rate, prozess füllt den wert zur abholung, wertebereich mit anschrieb autom. skaliert)
+--combvideo prüfen, nur als index verwalten (ende combined, anfang secondär)
+--fileinfo gelb, wenn filesize 0 , scan aber möglich gewesen
+--out MB + kb/s + coll# , update alle sekunde, holt sihc die werte
+--durchsatzrate der bearb. anzeigen in mb/s
+--processlpcm optimiert
+--split multiple sekundäre streams, ging nur bei audio (mpa,ac) + ttx, nun incl. subpic + lpcm
+--.hav anpassung lesen  (082.1.02b1)
+--subpic + lpcm read bei pva ergänzt
+--WSS infos bit12+13 ergänzt
+--fps anzeigen bei audio, video evtl. nachtragen
+--ladevorgang gui bauen beim start zeigen
+--scanerkennung mpeg1/2-ps verbessern (082.1.02b2)
+--h.264 in scan-pmt ergänzt
+--vorschlag string für einfach dialogfelder ergänzt (->mrc42)
+--timestamp datei kontextmenü, update im fileobject, DB problem mit dateien wirren datums , zzt. nur für file
+--skip problem, alle inputdaten um besten über xinput realisieren. (auch pts) , video pts + andre pts lesen erledigt
+--streamconverter überarbeitet
+--streamdemultiplexer überarbeitet
+--pva parser überarbeitet
+--sekundärer pes parser überarbeitet, 
+--primärer pes parser überarbeitet
+--pes-prebuffer nicht mehr verwendet (i-puffer pesparse , byte data_2 nur einmal init, ca. 20% schenller)
+--pesparse etc. byte data einmal fix auf größe ~0xFFFF stellen, daten nur nach size verwenden, jetzt für alle routinen
+--alle fehler mit stacktrace melden im log
+--biglog (options[30]) über coll.debug steuern
+--main routine ausgelagert nach start
+<<!-unwichtig... textfieldlistener evtl. als changelistener
+<<!-rückgestellt: dateitypen in listview coll. + autoload farblich hinterlegen (weiß = ungeprüft, rot = unbekannt, andere mal sehen) , erfordert ne abfrage, spez. cellrenderer
+<<!-wieder rausgenommne,fortschrittsbalken mit farbänderung je Prozent (rot-gelb-grün), verbruacht ca. 5% zeit
+--file dragndrop für macosx tiger workaround
+!> unicode im resourcefile nicht möglich
+--biglog loggt noch nich alles, options[30] über coll.debug steuern, fast erl.
+--teletext textausgabe optional in unicode möglich
+--time constant für subpicture geändert von 1000 auf 1024
+--sde bei mpeg1 nicht anwenden
+--options - auslagerung
+--multiple streams ändern _0 zu [0].. o.ä.
+--elementary stream input zzt nur als file erlaubt, jetzt auch ftp etc
+--byte größenstring als gruppe formatiert 
+--transferiere pids, transferiere cuts prüfen
+--prüfen set logstream, unterordner erstellung export
+--zusätzl  class in collect., die die variablen hält (framerate, pts, clv, etc), wird vor dem process init. mit den aktuellen settings, nach ende entfernt wieder entfernt
+--neue collection klasse speichert alle extraeinstellungen, schnittpunkte + bilder evtl, outpfad etc
+--aktive coll. kann nun nicht entfernt werden
+<<!-rückgestellt, mpvd classe ergänzen s. forum
+--Los! + pausetaste zusammenfassen, evtl. Bildchen, größer
+--logfenster separat wie bei ifoedit, aufpoppen beim start und per knopp, falls geschlossen.
+--pidliste rechts doppelklick entfernt multiple auswahl
+--dateiinfo als osd mit Icons, kopie als tect in clipboard, bei SUP-Es auch Anzeige des ersten Bildes, skaliert
+<<-properties: links kategorie via tree, rechts panel <- tabs gehen erstmal auch noch gut
+--alle klassen 'extends object'
+--statusleiste hauptf. unten, links vorgang, von progressbar, rechts uhrzeit
+--common.renameto : system.gc ergänzt, da java 1.5 die systemressourcen zu geschlossenen datein nicht unmittelbar löst, vgl. auch ftp-connection problematik
+--dateityp optional zuweisen über kontext (im fileobjekt)
+<<-abfrage vor globalem schließen, falls nochn prozess läuft --> erster test: geht nicht, hauptframe schließt sich dennoch
+--extra ftp-panel
+--falsche PID nummer -> fehler in OSD melden
+--tf5k header neu, 3.option ergänzt
+--disk access prüfung/meldung mit statusanzeige
+--UIcomponentIF durchleitung
+<<!-filepanel separieren, später
+<<!-subtitle fenster, menü ergänzen, unten testeinstellungen ergänzen, zzt nur separat
+--palplus sign, falls WSS entsprechend
+--jre >= 1.4 liefert zusätzl. actionevent bei editierbaren comboboxen! workaround ergänzt
+--mehr cli switches
+--cli: dvx3 etc riff wave prüfen
+--bei globalem Fehler: vorschlagen forummitteilung
+<<-dateityp im fileobjekt speichern, neue analyse nur erlauben, wenn zeitstempel anders ist als bei zuordnung
+--preload bei fehlendem startcode erhöhen, bei missing startcode lange suchzeit, pushbackbuffer komplett laden, pva erl.
+--nextpts bei falschem typ bremst, geändert
+--ftp jump zu erster position einbauen, über getintpustream(long startpoint)
+--preview wird immer gleich geladen, und bei collectionändereungen angepasst, kein extra zugriff (dpkl) mehr
+--yield ist unnötig
+--typ-sortierscan auf coll-ebene, bei dateitransaktionen, move, del, add etc
+<<-2.ut exportformat durchlauf, gui vorbereitet
+<<-kapitelmarken in gui setzen, knöppe ergänzt
+<<-hexviewer, menü ergänzen, gui elemente sortieren, speicher unter, startcodes färben , jeditorpane
+<<-collection steuerun links, mit infofeld, aktiv, dateianzahl, (hauptbild?)
+<<-sprachdatein direkt nachladen können, online abfrage schonmal drin
+<<-gui neu ordnen, preview immer oben, im wechsel mit log/optionen, filemenü über tree drunter
+--bitraten änderungsfunktionen prüfen
+--toggle d2v
+--actioncommand idd: m2s, versionsnummer im log " V2/A3" cbox[34]
+--actioncommand d2v1: d2v ohne split
+--actioncommand d2v2: d2v mit split
+--pmt-pid autofilter option
+--filepanel als jtable mit name größe datum
+--abfrage von fixen optionen/settings bei eintritt in methode
+--settings nur einmal auslesen, falls in routine mehrfach benötigt (loops)
+--sPES->MPG, Gegensatz zu MPG->sPES
+--Erweiterung anhängen bei sek. PES ging nicht mehr
+--fehlenden Sequenzheader ergänzen bei 'ES video' brachte fehler
+
+!-extra einstellungen für coll übernehmen, wird nur gelesen bei mainprocessing, vorbereitet
+!!-returncodes definieren ( System.exit(x) )
+!!-auto split mpa, wenn dual detektiert
+!!-profile hd,mpg reseted,vob, etc ermöglichen?
+!!-MPAD überarbeiten, nicht mehr statisch; decode: arrays.fill statt new init ca. 20% schneller
+!!-dts-wav /ac3-wav für cd-pcm format ausgeben (1422kbps)
+!!-Bc(losed) nur vorwärtreferenzeirte B-Frames ?
+!!-audio.java umbauen als interface, bei ac3 vergleichskriterium dn, sm, cm erweitern
+!!-ac3 bitraten patch mit CRC neu berechnung
+!!-info .00 sek, :00 frame, ;00 dropframes (semikoloon)
+!!-h264 ?
+!!-finepass wrapper,humax wrapper,vcd-svcd-image wrapper etc evtl. übergeordnet?
+!!-avi(bmp)film zu .sup
+!!-fixes array für gops verwenden (max 6MB)
+!!-UTs - sup- Positionen ändern können
+!!-subtitle, set forced ut, clear forced ut, drop forced ut, drop nonforced ut, optionen bei export
+!!-id3tag infos anzeigen
+!-ftp,dll access als status , falls nicht verfügbar, apache libs optional machen, dann ohne ftp
+!!-dvb-subs,  besonderer hinweis: pagenumber definieren "http://www.cs.helsinki.fi/u/mikkila/son2srt/"
+!!-vbvbuffer bei mpeg1 nicht?
+!!-mono zu 3d-stereo
+
+//
+java.applet.AudioClip ac = java.applet.Applet.newAudioClip(Resource.getResourceURL("bsp.wav"));
+ac.play();
+//

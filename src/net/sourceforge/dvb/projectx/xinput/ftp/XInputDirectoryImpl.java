@@ -138,7 +138,6 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 			String port = null;
 
 			int i = _host.indexOf("@");
-
 			if (i != -1)
 			{
 				server = _host.substring(i + 1);

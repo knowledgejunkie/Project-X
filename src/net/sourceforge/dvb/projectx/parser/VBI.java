@@ -28,11 +28,12 @@ package net.sourceforge.dvb.projectx.parser;
 
 import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.common.Resource;
-import net.sourceforge.dvb.projectx.common.X;
+import net.sourceforge.dvb.projectx.common.Keys;
+
 import net.sourceforge.dvb.projectx.video.Video;
 
-public final class VBI
-{
+public final class VBI extends Object {
+
 	private static long source_pts = 0;
 
 	private static String vps_str = "";
@@ -61,19 +62,19 @@ public final class VBI
 	 * 
 	 */
 	// mpg2 pes expected
-	public static void parsePES(byte[] packet) throws ArrayIndexOutOfBoundsException
+	public static void parsePES(byte[] pes_packet, int pes_packetoffset) throws ArrayIndexOutOfBoundsException
 	{
-		if (packet[0] != 0 || packet[1] != 0 || packet[2] != 1)
+		if (pes_packet[pes_packetoffset] != 0 || pes_packet[1 + pes_packetoffset] != 0 || pes_packet[2 + pes_packetoffset] != 1)
 			return;
 
-		int pes_id = 0xFF & packet[3];
-		int pes_packetlength = (0xFF & packet[4])<<8 | (0xFF & packet[5]);
-		int pes_ext_length = 0xFF & packet[8];
-		boolean pts_flag = (0x80 & packet[7]) != 0 ? true : false;
+		int pes_id = 0xFF & pes_packet[3 + pes_packetoffset];
+		int pes_packetlength = (0xFF & pes_packet[4 + pes_packetoffset])<<8 | (0xFF & pes_packet[5 + pes_packetoffset]);
+		int pes_extensionlength = 0xFF & pes_packet[8 + pes_packetoffset];
+		boolean pts_flag = (0x80 & pes_packet[7 + pes_packetoffset]) != 0;
 
-		source_pts = pts_flag ? Video.getPTSfromBytes(packet, 9) : 0;
+		source_pts = pts_flag ? CommonParsing.getPTSfromBytes(pes_packet, 9 + pes_packetoffset) : 0;
 
-		decodeVBI(packet, 9 + pes_ext_length);
+		decodeVBI(pes_packet, 9 + pes_extensionlength + pes_packetoffset);
 	}
 
 	/**
@@ -106,7 +107,7 @@ public final class VBI
 				if (str != null && !str.equals(vps_str))
 				{
 					vps_str = str;
-					X.Msg(Resource.getString("teletext.msg.vps", str) + " " + Common.formatTime_1(source_pts / 90));
+					Common.setMessage(Resource.getString("teletext.msg.vps", str) + " " + Common.formatTime_1(source_pts / 90));
 				}
 			}
 
@@ -123,13 +124,13 @@ public final class VBI
 
 					if (str.length() > 0)
 					{
-						X.Msg("-> WSS Status - changed @ PTS " + Common.formatTime_1(source_pts / 90));
-						X.Msg(str);
+						Common.setMessage("-> WSS Status - changed @ PTS " + Common.formatTime_1(source_pts / 90));
+						Common.setMessage(str);
 					}
 
 					else if (wss[2] == 0)
 					{
-						X.Msg("-> WSS Status - no change @ PTS " + Common.formatTime_1(source_pts / 90));
+						Common.setMessage("-> WSS Status - no change @ PTS " + Common.formatTime_1(source_pts / 90));
 						wss[2] = -2;
 					}
 				}
@@ -145,7 +146,7 @@ public final class VBI
 		{
 			wss[2] = 0;
 
-			X.Msg("-> WSS Status - offline @ PTS " + Common.formatTime_1(source_pts / 90));
+			Common.setMessage("-> WSS Status - offline @ PTS " + Common.formatTime_1(source_pts / 90));
 		}
 	}
 
@@ -154,6 +155,9 @@ public final class VBI
 	 */
 	public static String decodeVPS(byte[] packet, int offs)
 	{
+		if (!Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg6))
+			return null;
+
 		String vps_status = "";
 
 		if (packet.length - 1 < offs + 12)
@@ -213,6 +217,9 @@ public final class VBI
 	 */
 	private static String decodeWSS(byte[] packet, int offs)
 	{
+		if (!Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg5))
+			return null;
+
 		if (packet.length - 1 < offs + 2)
 			return null;
 
@@ -222,6 +229,7 @@ public final class VBI
 		System.arraycopy(packet, offs + 1, wss, 0, 2);
 		wss[2] = -1;
 
+		// read PAL-625line WSS
 		String str = getGroup1(wss);
 		str += getGroup2(wss);
 		str += getGroup3(wss);
@@ -395,22 +403,26 @@ public final class VBI
 
 		str += ",";
 
-		switch (3 & packet[1]>>2)
+		switch (1 & packet[1]>>3)
 		{
-		case 0: // 00  Biphase 0101
-			str += "  " + Resource.getString("wss.group_4.1.00");
+		case 0:  // 0  Biphase 01
+			str += "  " + Resource.getString("wss.group_4.1.01");
 			break;
 
-		case 1: // 01  Biphase 0110
-			str += "  " + Resource.getString("wss.group_4.1.01"); 
-			break; 
+		case 1:  // 1  Biphase 10
+			str += "  " + Resource.getString("wss.group_4.1.10");
+		}       
 
-		case 2:  // 10  Biphase 1001
-			str += "  " + Resource.getString("wss.group_4.1.10"); 
+		str += ",";
+
+		switch (1 & packet[1]>>2)
+		{
+		case 0:  // 0  Biphase 01
+			str += "  " + Resource.getString("wss.group_4.2.01");
 			break;
 
-		case 3:  // 11  Biphase 1010
-			str += "  " + Resource.getString("wss.group_4.1.11"); 
+		case 1:  // 1  Biphase 10
+			str += "  " + Resource.getString("wss.group_4.2.10");
 		}       
 
 		return str;

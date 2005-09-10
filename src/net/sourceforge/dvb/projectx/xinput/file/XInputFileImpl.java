@@ -36,10 +36,13 @@ import java.net.MalformedURLException;
 
 import net.sourceforge.dvb.projectx.xinput.FileType;
 import net.sourceforge.dvb.projectx.xinput.XInputFileIF;
+import net.sourceforge.dvb.projectx.xinput.XInputStream;
 
 import net.sourceforge.dvb.projectx.common.Common;
-import net.sourceforge.dvb.projectx.gui.Dialogs;
 import net.sourceforge.dvb.projectx.common.Resource;
+
+import net.sourceforge.dvb.projectx.xinput.StreamInfo;
+
 
 public class XInputFileImpl implements XInputFileIF {
 
@@ -60,6 +63,8 @@ public class XInputFileImpl implements XInputFileIF {
 	private RandomAccessFile randomAccessFile = null;
 
 	private Object constructorParameter = null;
+
+	private StreamInfo streamInfo = null;
 
 	/**
 	 * Private Constructor, don't use!
@@ -140,6 +145,16 @@ public class XInputFileImpl implements XInputFileIF {
 	}
 
 	/**
+	 * sets Time in milliseconds from the epoch.
+	 * 
+	 * @return Time in milliseconds from the epoch
+	 */
+	public boolean setLastModified() {
+
+		return file.setLastModified(System.currentTimeMillis());
+	}
+
+	/**
 	 * Checks if file exists
 	 * 
 	 * @return Result of check
@@ -176,7 +191,20 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public InputStream getInputStream() throws FileNotFoundException, MalformedURLException, IOException {
 
-		return new FileInputStream(file);
+		return getInputStream(0L);
+	}
+
+	/**
+	 * Get input stream from the file. close() on stream closes XInputFile, too.
+	 * 
+	 * @return Input stream from the file
+	 */
+	public InputStream getInputStream(long start_position) throws FileNotFoundException, MalformedURLException, IOException {
+
+		XInputStream xIs = new XInputStream(new FileInputStream(file));
+		xIs.skip(start_position);
+
+		return xIs;
 	}
 
 	/**
@@ -197,13 +225,13 @@ public class XInputFileImpl implements XInputFileIF {
 		if ( !parent.endsWith(file_separator) )
 			parent += file_separator;
 
-		newName = Dialogs.getUserInput( name, Resource.getString("autoload.dialog.rename") + " " + parent + name);
+		newName = Common.getGuiInterface().getUserInputDialog(name, Resource.getString("autoload.dialog.rename") + " " + parent + name);
 
 		if (newName != null && !newName.equals(""))
 		{
 			if (new File(parent + newName).exists())
 			{
-				ret = Dialogs.getUserConfirmation(Resource.getString("autoload.dialog.fileexists"));
+				ret = Common.getGuiInterface().getUserConfirmationDialog(Resource.getString("autoload.dialog.fileexists"));
 
 				if (ret)
 				{
@@ -354,5 +382,21 @@ public class XInputFileImpl implements XInputFileIF {
 	 */
 	public FileType getFileType() {
 		return fileType;
+	}
+//
+	/**
+	 *
+	 */
+	public void setStreamInfo(StreamInfo _streamInfo)
+	{
+		streamInfo = _streamInfo;
+	}
+
+	/**
+	 *
+	 */
+	public StreamInfo getStreamInfo()
+	{
+		return streamInfo;
 	}
 }

@@ -80,8 +80,9 @@
        Notes:
        [i]   now, we made a package for the sources,
              the file sources.lst points to every required sourcefile and its location
-       [ii]  the following libraries are required on this place from the V 0.82.0:
-             - lib/commons-net-1.2.2.jar  (compiled with JDK 1.2.2) *)
+       [ii]  the following libraries are required on this place from the V 0.82.0,
+             related to the executed .jar:
+             - lib/commons-net-1.3.0.jar  (compiled with JDK 1.2.2) *)
              - lib/jakarta-oro-2.0.8.jar  (compiled with JDK 1.2.2) *)
        [iii] the following libraries are optional from the V 0.82.0 :
              - lib/idct*.dll  (win32 optimized lib's for a faster preview)
@@ -124,9 +125,10 @@
 	pstorch - i18n support
 	chrisg - Topfield disk access (AddOn)
 	jazzydane - danish translation
-        Kano / RoEn - Unix buils script
+	Kano / RoEn - Unix buils script
 	Eric Albert - BrowserLauncher
-        catapult - Topfield 5x00 export
+	catapult,Bonni - Topfield 5x00 export
+	MartinR - Gui-BaseOutputFileName
 	...and all other supporters...
 
 /===============================================================================/

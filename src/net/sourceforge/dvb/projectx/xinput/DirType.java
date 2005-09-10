@@ -51,7 +51,7 @@ public class DirType {
 	/**
 	 * Directory on a harddisk of a topfield receiver in raw format
 	 */
-	public final static DirType TFRAW_DIR = new DirType(2, "TFRAW_DIR",
+	public final static DirType RAW_DIR = new DirType(2, "RAW_DIR",
 			net.sourceforge.dvb.projectx.xinput.topfield_raw.XInputDirectoryImpl.class);
 
 	/**

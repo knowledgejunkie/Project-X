@@ -28,10 +28,11 @@ package net.sourceforge.dvb.projectx.subtitle;
 
 import java.util.Hashtable;
 
-import net.sourceforge.dvb.projectx.common.X;
+import net.sourceforge.dvb.projectx.common.Common;
+import net.sourceforge.dvb.projectx.common.Keys;
 
-public final class Teletext
-{
+public final class Teletext extends Object {
+
 	private Teletext()
 	{}
 
@@ -311,7 +312,9 @@ public final class Teletext
 		int chars[] = new int[len];
 		int active_color = 7;  // init with white ascii color per line + black background
 
-		int primary_set_mapping = X.getForcedTTXLanguage() < 0 ? 0 : X.getForcedTTXLanguage();
+		int language_code = Common.getSettings().getIntProperty(Keys.KEY_TtxLanguagePair) - 1;
+
+		int primary_set_mapping = language_code < 0 ? 0 : language_code;
 		int primary_national_set_mapping = character_set;
 
 		int secondary_set_mapping = primary_set_mapping;
@@ -485,7 +488,9 @@ public final class Teletext
 		boolean ascii = true, toggle = false;
 		String text = "";
 
-		int primary_set_mapping = X.getForcedTTXLanguage() < 0 ? 0 : X.getForcedTTXLanguage();
+		int language_code = Common.getSettings().getIntProperty(Keys.KEY_TtxLanguagePair) - 1;
+
+		int primary_set_mapping = language_code < 0 ? 0 : language_code;
 		int primary_national_set_mapping = character_set;
 
 		int secondary_set_mapping = primary_set_mapping;
@@ -663,7 +668,7 @@ public final class Teletext
 
 		designation = bytereverse((byte)((0xF & hamming_decode(packet[6]))<<4));
 
-		//X.Msg("row " + row + " /designation " + designation);
+		//Common.setMessage("row " + row + " /designation " + designation);
 
 		if ((row == 29 && designation == 0) || (row == 29 && designation == 4) || (row == 28 && designation == 4))
 		{
@@ -704,10 +709,10 @@ public final class Teletext
 			data = bytereverse( (byte)(0xFE & val<<1));
 
 		/**
-			X.Msg("triplet " + a + " / " + Integer.toBinaryString(val));
-			X.Msg("  address " + address );
-			X.Msg("  mode " + mode );
-			X.Msg("  data " + data );
+			Common.setMessage("triplet " + a + " / " + Integer.toBinaryString(val));
+			Common.setMessage("  address " + address );
+			Common.setMessage("  mode " + mode );
+			Common.setMessage("  data " + data );
 		**/
 
 			if (address >= 40)  //40..63 means row 24,1..23
@@ -750,7 +755,7 @@ public final class Teletext
 
 				page_modifications.put("" + position, str);
 
-				//X.Msg("replaced char " + str + " /m " + mode);
+				//Common.setMessage("replaced char " + str + " /m " + mode);
 			}
 		}
 	}

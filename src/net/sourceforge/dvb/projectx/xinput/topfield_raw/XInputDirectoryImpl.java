@@ -52,14 +52,14 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 	}
 
 	/**
-	 * Create a XInputDirectory of type DirType.TFRAW_DIR.
+	 * Create a XInputDirectory of type DirType.RAW_DIR.
 	 * 
 	 * @param aFtpVO
 	 *          Directory data to use
 	 */
 	public XInputDirectoryImpl(DirType aDirType) {
 
-		if (aDirType != DirType.TFRAW_DIR) { throw new IllegalArgumentException("aDirType is not DirType.TFRAW_DIR"); }
+		if (aDirType != DirType.RAW_DIR) { throw new IllegalArgumentException("aDirType is not DirType.RAW_DIR"); }
 
 		dirType = aDirType;
 		rawInterface = new RawInterface("");

@@ -35,6 +35,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 
+import net.sourceforge.dvb.projectx.xinput.StreamInfo;
+
 /**
  * @author Stefan
  *  
@@ -81,6 +83,13 @@ public interface XInputFileIF {
 	public long lastModified();
 
 	/**
+	 * set Time in milliseconds from the epoch.
+	 * 
+	 * @return success
+	 */
+	public boolean setLastModified();
+
+	/**
 	 * Checks if file exists
 	 * 
 	 * @return Result of check
@@ -107,6 +116,13 @@ public interface XInputFileIF {
 	 * @return Input stream from the file
 	 */
 	public InputStream getInputStream() throws FileNotFoundException, MalformedURLException, IOException;
+
+	/**
+	 * Get input stream from the file. close() on stream closes XInputFile, too.
+	 * 
+	 * @return Input stream from the file
+	 */
+	public InputStream getInputStream(long start_position) throws FileNotFoundException, MalformedURLException, IOException;
 
 	/**
 	 * rename file
@@ -199,4 +215,15 @@ public interface XInputFileIF {
 	 * @throws java.io.IOException
 	 */
 	public long randomAccessReadLong() throws IOException;
+
+	/**
+	 *
+	 */
+	public void setStreamInfo(StreamInfo _streamInfo);
+
+	/**
+	 *
+	 */
+	public StreamInfo getStreamInfo();
+
 }

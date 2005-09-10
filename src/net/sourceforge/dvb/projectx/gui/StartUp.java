@@ -1,5 +1,5 @@
 /*
- * @(#)StartUp.java - mini info, holf a place for start infos
+ * @(#)StartUp.java - mini info, hold a place for start infos
  *
  * Copyright (c) 2004-2005 by dvb.matt, All Rights Reserved. 
  * 
@@ -31,6 +31,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.Dimension;
+
+import java.awt.BorderLayout;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -38,124 +41,261 @@ import javax.swing.ButtonGroup;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
+import javax.swing.JButton;
+import javax.swing.JProgressBar;
+import javax.swing.Box;
 
 import net.sourceforge.dvb.projectx.common.Resource;
-import net.sourceforge.dvb.projectx.common.X;
+import net.sourceforge.dvb.projectx.common.Common;
+import net.sourceforge.dvb.projectx.common.Keys;
 
+import net.sourceforge.dvb.projectx.gui.MainFrame;
+import net.sourceforge.dvb.projectx.gui.ColumnLayout;
+import net.sourceforge.dvb.projectx.gui.CommonGui;
 
-//DM17022004 081.6 int17 introduced, int18 changed
-public class StartUp extends JFrame 
-{
+/**
+ *
+ */
+public class StartUp extends JFrame {
+
 	/** Background Color */
-	private static final Color BACKGROUND_COLOR = new Color(224,224,224,224);
+	private final Color BACKGROUND_COLOR = new Color(200, 200, 200);
 
-	boolean agreement = false;
-	JRadioButton disagree;
-	JRadioButton agree;
-	Listener listener = new Listener();
+	private boolean agreement = false;
 
-	class Listener implements ActionListener
-	{
-		public void actionPerformed(ActionEvent e)
-		{
-			String actName = e.getActionCommand();
+	private JButton agree;
+	private JProgressBar progressBar;
+	private JLabel progress;
+	private JLabel message;
 
-			if (actName.equals("agree")) 
-			{
-				if (!agree.isEnabled())
-					return;
-
-				setVisible(false);
-				X.setButton(1, true);
-				X.setVisible0(true);
-			}
-
-			else if (actName.equals("disagree")) 
-			{
-				System.exit(0);
-			}
-		}
-	}
-
+	/**
+	 *
+	 */
 	public StartUp()
 	{
-		open(Resource.getString("startup.title"));
+		open(Resource.getString("StartUp.Title"));
 	}
 
+	/**
+	 *
+	 */
 	public StartUp(String title)
 	{
 		open(title);
 	}
 
+	/**
+	 *
+	 */
 	protected void open(String title)
 	{
 		setTitle(title);
 
 		JPanel container = new JPanel();
-		container.setBackground(BACKGROUND_COLOR);
 		container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
-		container.setBorder( BorderFactory.createEmptyBorder(10,10,10,10));
+		container.setBackground(BACKGROUND_COLOR);
 
-		String terms[] = Resource.getStringByLines("terms");
-
-		for (int a=0; a<terms.length; a++) 
-			container.add(new JLabel(terms[a]));
-
-		disagree = new JRadioButton(Resource.getString("terms.disagree"));
-		disagree.setActionCommand("disagree");
-		disagree.setOpaque(false);
-		agree = new JRadioButton(Resource.getString("terms.agree"));
-		agree.setActionCommand("agree");
-		agree.setOpaque(false);
-		agree.setEnabled(false); //DM16042004 081.7 int01 add
-
-		ButtonGroup BrGroup = new ButtonGroup();
-		BrGroup.add(disagree);
-		BrGroup.add(agree);
-
-		container.add(disagree);
-		container.add(agree);
-		disagree.addActionListener(listener);
-		agree.addActionListener(listener);
+		container.add(buildUpperPanel());
+		container.add(buildHLinePanel());
+		container.add(buildLoadPanel());
+		container.add(buildHLinePanel());
+		container.add(Box.createRigidArea(new Dimension(1, 10)));
+		container.add(buildButtonPanel());
+		container.add(Box.createRigidArea(new Dimension(1, 10)));
 
 		JPanel container2 = new JPanel();
+		container2.setBorder(BorderFactory.createRaisedBevelBorder());
 		container2.setBackground(BACKGROUND_COLOR);
-		container2.setBorder( BorderFactory.createRaisedBevelBorder());
 		container2.add(container);
 
 		getContentPane().add(container2);
+		pack();
 
-		if (!X.CLI_mode)
-			pack();
-
-		setLocation(200,200);
-		setResizable(false); //DM17042004 081.7 int02 add
+		setLocation(200, 200);
+		setResizable(false);
 
 		addWindowListener (new WindowAdapter() { 
 			public void windowClosing(WindowEvent e) { 
-				System.exit(0); 
+				Common.exitApplication(0);
 			}
 		});
+
 
 		return;
 	}
 
-	public void set( boolean agreement)
+	/**
+	 *
+	 */
+	protected JPanel buildUpperPanel()
 	{
-		agree.setEnabled(!agreement);
+		JPanel panel = new JPanel();
+		panel.setBackground(new Color(224, 224, 224));
+		panel.setLayout(new ColumnLayout());
 
-		this.agreement = agreement;
-		agree.setSelected(agreement);
-		if (agreement)
-			agree.setForeground(Color.green);
+		panel.add(Box.createRigidArea(new Dimension(1, 20)));
+		panel.add(new JLabel("  " + Resource.getString("StartUp.Init")));
+		panel.add(Box.createRigidArea(new Dimension(1, 10)));
+		panel.add(message = new JLabel("  " + Resource.getString("StartUp.Wait")));
+		panel.add(Box.createRigidArea(new Dimension(1, 20)));
+
+
+		JPanel panel_1 = new JPanel();
+		panel_1.setBackground(new Color(224, 224, 224));
+		panel_1.setLayout(new BorderLayout());
+
+		panel_1.add(new JLabel(CommonGui.loadIcon("px.gif")), BorderLayout.EAST);
+		panel_1.add(panel, BorderLayout.WEST);
+
+		return panel_1;
 	}
 
+	/**
+	 *
+	 */
+	protected JPanel buildHLinePanel()
+	{
+		JPanel panel = new JPanel();
+		panel.setLayout(new ColumnLayout());
+		panel.setBorder(BorderFactory.createEtchedBorder());
+
+		return panel;
+	}
+
+	/**
+	 *
+	 */
+	protected JPanel buildLoadPanel()
+	{
+		JPanel panel = new JPanel();
+		panel.setBackground(BACKGROUND_COLOR);
+		panel.setLayout(new ColumnLayout());
+
+		panel.add(Box.createRigidArea(new Dimension(1, 10)));
+
+		progress = new JLabel("Start...");
+		panel.add(progress);
+
+		progressBar = new JProgressBar();
+		progressBar.setStringPainted(true);
+		progressBar.setValue(0);
+		progressBar.setPreferredSize(new Dimension(500, 24));
+		progressBar.setForeground(new Color(20, 240, 20));
+
+		panel.add(Box.createRigidArea(new Dimension(1, 5)));
+
+		panel.add(progressBar);
+
+		panel.add(Box.createRigidArea(new Dimension(1, 20)));
+
+		String terms[] = Resource.getStringByLines("terms");
+
+		for (int i = 0; i < terms.length; i++) 
+			panel.add(new JLabel(terms[i]));
+
+		panel.add(Box.createRigidArea(new Dimension(1, 10)));
+
+		return panel;
+	}
+
+	/**
+	 *
+	 */
+	protected JPanel buildButtonPanel()
+	{
+		JButton cancel = new JButton();
+		CommonGui.localize(cancel, "Common.Cancel");
+		cancel.setActionCommand("disagree");
+		cancel.addActionListener( new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				Common.exitApplication(0);
+			}
+		});
+
+		JButton disagree = new JButton(Resource.getString("terms.disagree"));
+		disagree.setActionCommand("disagree");
+		disagree.addActionListener( new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				Common.exitApplication(0);
+			}
+		});
+
+		agree = new JButton(Resource.getString("terms.agree"));
+		agree.setActionCommand("agree");
+		agree.setEnabled(false);
+		agree.addActionListener( new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				if (!agree.isEnabled())
+					return;
+
+				setVisible(false);
+				Common.getSettings().setProperty(Keys.KEY_Agreement[0], "1");
+				MainFrame.setVisible0(true);
+			}
+		});
+
+		JPanel panel = new JPanel();
+		panel.setBackground(BACKGROUND_COLOR);
+		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+
+		panel.add(agree);
+		panel.add(Box.createRigidArea(new Dimension(10, 1)));
+		panel.add(disagree);
+
+
+		JPanel panel_1 = new JPanel();
+		panel_1.setBackground(BACKGROUND_COLOR);
+		panel_1.setLayout(new BorderLayout());
+
+		panel_1.add(panel, BorderLayout.WEST);
+		panel_1.add(cancel, BorderLayout.EAST);
+
+		return panel_1;
+	}
+
+	/**
+	 *
+	 */
+	public void set(boolean _agreement)
+	{
+		agree.setEnabled(!_agreement);
+
+		agreement = _agreement;
+		agree.setSelected(agreement);
+
+		if (agreement)
+			agree.setForeground(Color.green);
+
+		else
+			message.setText("  " + Resource.getString("StartUp.Choose"));
+	}
+
+	/**
+	 *
+	 */
 	public boolean get()
 	{
 		return agree.isSelected();
 	}
 
+	/**
+	 *
+	 */
+	public void setProgress(int value, String str)
+	{
+		progress.setText(str);
+		progressBar.setStringPainted(true);
+		progressBar.setValue(value);
+
+		System.out.println(str);
+	}
+
+	/**
+	 *
+	 */
 	public void close()
 	{
 		dispose();

@@ -30,29 +30,64 @@ import javax.swing.JFileChooser;
 import java.io.File;
 
 import net.sourceforge.dvb.projectx.common.Resource;
-import net.sourceforge.dvb.projectx.common.X;
+import net.sourceforge.dvb.projectx.common.Common;
+import net.sourceforge.dvb.projectx.common.Keys;
 
 
-public class X_JFileChooser extends JFileChooser
-{
+public class X_JFileChooser extends JFileChooser {
+
+	/**
+	 *
+	 */
 	public X_JFileChooser()
 	{
 		super();
-		setApproveButtonText(Resource.getString("select.file"));
-		setDialogTitle(Resource.getString("select.title"));
+		localize();
 	}
 
-	public void rescanCurrentDirectory()
+	/**
+	 *
+	 */
+	public X_JFileChooser(String current_directory)
 	{
-		String current_directory = X.getStringOfTextfield(8);
-		//String current_directory = X.d2vfield[8].getText();
+		super(current_directory);
+		localize();
+	}
 
+	/**
+	 *
+	 */
+	private void localize()
+	{
+		setCurrentDirectory(Common.getSettings().getProperty(Keys.KEY_ActiveDirectory));
+		setApproveButtonText(Resource.getString("FileChooser.Select"));
+		setDialogTitle(Resource.getString("FileChooser.Title"));
+	}
+
+	/**
+	 *
+	 */
+	public void setCurrentDirectory(String current_directory)
+	{
 		if (current_directory.startsWith("?"))
 			super.setCurrentDirectory(new File(current_directory.substring(1)));
 
-		else if (!current_directory.equals("") && super.getCurrentDirectory().toString().equals(System.getProperty("user.home")))
+	//	else if (!current_directory.equals("") && super.getCurrentDirectory().toString().equals(System.getProperty("user.home")))
+		else if (!current_directory.equals(""))
 			super.setCurrentDirectory(new File(current_directory));
+	}
+
+	/**
+	 *
+	 */
+	public void rescanCurrentDirectory()
+	{
+		String current_directory = Common.getSettings().getProperty(Keys.KEY_StartPath_Value);
+
+		setCurrentDirectory(current_directory);
 
 		super.rescanCurrentDirectory();
+
+		Common.getSettings().setProperty(Keys.KEY_ActiveDirectory[0], super.getCurrentDirectory().toString());
 	}
 }

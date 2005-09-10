@@ -26,6 +26,11 @@
 
 package net.sourceforge.dvb.projectx.thirdparty;
 
+import java.util.List;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Arrays;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -34,13 +39,13 @@ import java.io.RandomAccessFile;
 import net.sourceforge.dvb.projectx.audio.CRC;
 import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.common.Resource;
-import net.sourceforge.dvb.projectx.common.X;
 import net.sourceforge.dvb.projectx.subtitle.Teletext;
 
-public class TS
-{
+public class TS {
 
-	//DM14062004 081.7 int04 changed
+	public TS()
+	{}
+
 	private static byte[] TF4000header = {
 		(byte)0xCD, 0x39, 0xc, 0, //MJD
 		(byte)0xCD, 0x39, 0xc, 0, //MJD
@@ -151,7 +156,7 @@ public class TS
 		(byte)0x85, (byte)0x33, (byte)0x49, (byte)0x7e
 	};
 
-	private int count1=0, count2=0, count3=0;
+	private static int count1=0, count2=0, count3=0;
 
 	private static byte[] pcr = new byte[188];
 	private static byte[] pat = new byte[188];
@@ -168,10 +173,9 @@ public class TS
 	private static byte[] autopmt = new byte[0];
 
 	private static int firstID = 0xE0;
-	private static boolean myTTX=false;
+	private static boolean myTTX = false;
 
-	//DM09082004 081.7 int08 changed
-	public void setPmtPids(java.util.ArrayList PIDs) throws IOException
+	public static void setPmtPids(List PIDs) throws IOException
 	{
 		if (myTTX) 
 			PIDs.add("" + 0x39F);
@@ -180,7 +184,7 @@ public class TS
 
 		if (Pids.length == 0)
 		{
-			X.Msg(Resource.getString("ts.msg1"));
+			Common.setMessage(Resource.getString("ts.msg1"));
 			autopmt = pmt;
 
 			return;
@@ -188,7 +192,7 @@ public class TS
 
 		ByteArrayOutputStream pmtout = new ByteArrayOutputStream();
 
-		java.util.Arrays.sort(Pids);
+		Arrays.sort(Pids);
 
 		int lfn = 1;  // byte 7 = substreamID for program component
 
@@ -245,14 +249,14 @@ public class TS
 
 		pmtout.reset();
 		pmtout.write(newpmt);
-		pmtout.write(CRC.generateCRC32(newpmt, 1)); //DM10042004 081.7 int01 changed
+		pmtout.write(CRC.generateCRC32(newpmt, 1)); 
 
 		newpmt = pmtout.toByteArray();
 
 		int pmtpacks = ((newpmt.length - 1) / 184) + 1; // = number of needed pmt packs
 		autopmt = new byte[pmtpacks * 188];
 
-		java.util.Arrays.fill(autopmt, (byte)0xff);
+		Arrays.fill(autopmt, (byte)0xff);
 
 		int i = 0, c = 0;
 		while (i < newpmt.length)
@@ -277,7 +281,7 @@ public class TS
 	}
 
 	// auto PMT 
-	public byte[] getAutoPmt()
+	public static byte[] getAutoPMT()
 	{ 
 		for (int i=0; i < autopmt.length; i+=188) 
 			autopmt[i+3] = (byte)(0x10 | (0xf&(count1++)));
@@ -285,13 +289,13 @@ public class TS
 		return autopmt;
 	}
 
-	public int getfirstID()
+	public static int getfirstID()
 	{ 
 		return firstID; 
 	}
 
 	//DM09082004 081.7 int08 changed
-	public void setfirstID()
+	public static void setfirstID()
 	{ 
 		firstID = 0xE0; 
 		pmtPCR[2] = (byte)firstID; 
@@ -334,15 +338,15 @@ public class TS
 	};
 
 	//DM26052004 081.7 int03 changed
-	public byte[] getTTX(byte[] data, String pts)
+	public static byte[] getTTX(byte[] data, int offset, String pts)
 	{
 		byte[] tPTS = pts.getBytes();
 
-		for (int a=0; a < tPTS.length; a++) 
+		for (int a = 0; a < tPTS.length; a++) 
 			tPTS[a] = Teletext.bytereverse(Teletext.parity(tPTS[a]));
 
 		System.arraycopy(tPTS, 0, ttx, 169, tPTS.length);
-		System.arraycopy(data, 9, ttx, 13, 5);
+		System.arraycopy(data, 9 + offset, ttx, 13, 5);
 
 		ttx[13] &= ~0x10;
 		ttx[3] = (byte)(0x10 | (0xF & (count3++)));
@@ -350,21 +354,21 @@ public class TS
 		return ttx;
 	}
 
-	public byte[] getPmt()
+	public static byte[] getPMT()
 	{ 
 		pmt[3] = (byte)(0x10 | (0xf & (count1++))); 
 
 		return pmt; 
 	}
 
-	public byte[] getPat()
+	public static byte[] getPAT()
 	{ 
 		pat[3] = (byte)(0x10 | (0xf & (count2++))); 
 
 		return pat; 
 	}
 
-	public byte[] getPCR(long pts, int count, int PCRPid)
+	public static byte[] getPCR(long pts, int count, int PCRPid)
 	{
 		/* Construct the PCR, PTS-55000 (2ms) 1Bit ~ 3Ticks (counter) */
 		pcr[2] = (byte)(PCRPid);
@@ -379,15 +383,15 @@ public class TS
 		return pcr;
 	}
 
-	//DM09082004 081.7 int08 changed
-	public byte[] init(String name, boolean ac3, boolean myTTX, int mode)
+
+	public static byte[] init(String name, boolean ac3, boolean _myTTX, int mode)
 	{ 
 		count1 = count2 = count3 = 0;
-		TS.myTTX = myTTX;
+		myTTX = _myTTX;
 
-		java.util.Arrays.fill(pat, (byte)0xff);
-		java.util.Arrays.fill(pmt, (byte)0xff);
-		java.util.Arrays.fill(pcr, (byte)0xff);
+		Arrays.fill(pat, (byte) 0xFF);
+		Arrays.fill(pmt, (byte) 0xFF);
+		Arrays.fill(pcr, (byte) 0xFf);
 
 		System.arraycopy(pmt1, 0, pmt, 0, pmt1.length);
 		System.arraycopy(pat1, 0, pat, 0, pat1.length);
@@ -399,19 +403,21 @@ public class TS
 			return initTF4000header(name, ac3);
 
 		case 2:
-			return initTF5000header(name, ac3);
+			return initTF5000header(name, ac3, 1692); //fmly 1316
 
+		case 3:
+			return initTF5000header(name, ac3, 3760);
 		}
 
 		return (new byte[0]);
 	}
 
-	//DM09082004 081.7 int08 outsourced from X ++
-	private void updateHeader(int pos, int val)
+
+	private static void updateHeader(int pos, int val)
 	{
 		//only last 8 bits used
-		TF4000header[pos] = (byte)val;
-		TF5000header[pos] = (byte)val;
+		TF4000header[pos] = (byte) val;
+		TF5000header[pos] = (byte) val;
 	}
 
 	public static String updateAdditionalHeader(String old_name, long time[], int mode) throws IOException
@@ -435,6 +441,7 @@ public class TS
 			break;
 
 		case 2:
+		case 3:
 			new_name = old_name.substring(0, old_name.length() - 3) + ".rec";
 
 			if (new File(new_name).exists()) 
@@ -460,32 +467,32 @@ public class TS
 		event[2] = (event[0] / 86400000L) + 40587;
 		event[3] = (event[1] / 86400000L) + 40587;
 
-		java.util.Calendar datum = java.util.Calendar.getInstance();
-		datum.setTime(new java.util.Date(event[0]));
+		Calendar datum = Calendar.getInstance();
+		datum.setTime(new Date(event[0]));
 
 		RandomAccessFile ts = new RandomAccessFile(name, "rw");
 
 		ts.seek(0);
 		ts.writeShort((short)event[2]);
-		ts.writeByte((byte)datum.get(11));
-		ts.writeByte((byte)datum.get(12));
+		ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
+		ts.writeByte((byte)datum.get(Calendar.MINUTE));
 		ts.writeShort((short)event[2]);
-		ts.writeByte((byte)datum.get(11));
-		ts.writeByte((byte)datum.get(12));
+		ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
+		ts.writeByte((byte)datum.get(Calendar.MINUTE));
 		ts.writeShort(minutes);
 
 		ts.seek(0x44);
 		ts.writeShort((short)event[2]);
-		ts.writeByte((byte)datum.get(11));
-		ts.writeByte((byte)datum.get(12));
+		ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
+		ts.writeByte((byte)datum.get(Calendar.MINUTE));
 		ts.writeShort(minutes);
 
-		datum.setTime(new java.util.Date(event[1]));
+		datum.setTime(new Date(event[1]));
 
 		ts.seek(0x40);
 		ts.writeShort((short)event[3]);
-		ts.writeByte((byte)datum.get(11));
-		ts.writeByte((byte)datum.get(12));
+		ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
+		ts.writeByte((byte)datum.get(Calendar.MINUTE));
 
 		ts.close();
 	}
@@ -502,8 +509,8 @@ public class TS
 		event[2] = (event[0] / 86400000L) + 40587;
 		event[3] = (event[1] / 86400000L) + 40587;
 
-		java.util.Calendar datum = java.util.Calendar.getInstance();
-		datum.setTime(new java.util.Date(event[0]));
+		Calendar datum = Calendar.getInstance();
+		datum.setTime(new Date(event[0]));
 
 		RandomAccessFile ts = new RandomAccessFile(name, "rw");
 
@@ -515,20 +522,20 @@ public class TS
 
 		ts.seek(0x50);
 		ts.writeShort((short)event[2]);
-		ts.writeByte((byte)datum.get(11));
-		ts.writeByte((byte)datum.get(12));
+		ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
+		ts.writeByte((byte)datum.get(Calendar.MINUTE));
 
-		datum.setTime(new java.util.Date(event[1]));
+		datum.setTime(new Date(event[1]));
 
 		ts.seek(0x4c);
 		ts.writeShort((short)event[3]);
-		ts.writeByte((byte)datum.get(11));
-		ts.writeByte((byte)datum.get(12));   
+		ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
+		ts.writeByte((byte)datum.get(Calendar.MINUTE));   
 
 		ts.close();
 	}
 
-	private byte[] initTF4000header(String name, boolean ac3)
+	private static byte[] initTF4000header(String name, boolean ac3)
 	{
 		byte header[] = new byte[564]; //TF4000
 		System.arraycopy(TF4000header, 0, header, 0, TF4000header.length);
@@ -544,16 +551,16 @@ public class TS
 		}
 		else
 		{
-			header[26] = 0; //DM14062004 081.7 int04 changed
+			header[26] = 0;
 			header[27] = (byte)0xC0; 
 		}
 
 		return header;
 	}
 
-	private byte[] initTF5000header(String name, boolean ac3)
+	private static byte[] initTF5000header(String name, boolean ac3, int headerlength)
 	{
-		byte header[] = new byte[1316]; //TF5000
+		byte header[] = new byte[headerlength];
 		System.arraycopy(TF5000header, 0, header, 0, TF5000header.length);
 
 		byte file_name[] = new File(name).getName().getBytes();
@@ -567,12 +574,11 @@ public class TS
 		}
 		else
 		{
-			header[26] = 0; //DM14062004 081.7 int04 changed
+			header[26] = 0;
 			header[27] = (byte)0xC0; //MPA
 		}
 
 		return header;
 	}
-	//DM09082004 081.7 int08 outsourced from X --
 
 }

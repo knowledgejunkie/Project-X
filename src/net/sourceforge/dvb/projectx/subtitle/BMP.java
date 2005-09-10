@@ -29,11 +29,16 @@ package net.sourceforge.dvb.projectx.subtitle;
 
 //DM24042004 081.7 int02 introduced
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
-public class BMP
-{
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.Enumeration;
+
+public class BMP extends Object {
+
 	private static final byte defaultHeader[] = {
 		0x42, 0x4D, //'B','M'
 		0, 0, 0, 0, // real filesize 32bit, little endian (real size*3 + header(0x36))

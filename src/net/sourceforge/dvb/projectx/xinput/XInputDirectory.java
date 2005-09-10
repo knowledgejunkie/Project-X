@@ -28,6 +28,8 @@ package net.sourceforge.dvb.projectx.xinput;
 
 import java.util.Iterator;
 
+import net.sourceforge.dvb.projectx.common.Common;
+
 public class XInputDirectory implements XInputDirectoryIF {
 
 	// Implementation class
@@ -73,21 +75,32 @@ public class XInputDirectory implements XInputDirectoryIF {
 
 		DirType dirType = null;
 
-		for (Iterator dirTypes = DirType.getDirTypes().iterator(); dirTypes.hasNext();) {
+		for (Iterator dirTypes = DirType.getDirTypes().iterator(); dirTypes.hasNext();)
+		{
 			dirType = (DirType) dirTypes.next();
 
-			if (dirType.equals(DirType.DEFAULT)) {
+			if (dirType.equals(DirType.DEFAULT))
 				continue;
-			}
 
 			try {
-				if (debug) System.out.println("Try DirType '" + dirType.getName() + "'");
+				if (debug) 
+					System.out.println("Try DirType '" + dirType.getName() + "'");
+
 				impl = (XInputDirectoryIF) dirType.getImplementation().getConstructor(parameterTypes).newInstance(
 						parameterValues);
-				if (debug) System.out.println("Use DirType '" + dirType.getName() + "' for file '" + impl.toString() + "'");
+
+				/**
+				 * simply disable access, if commons-net is missing
+				 */
+/**				if (dirType.getName().equals("FTP_DIR") && !Common.canAccessFtp())
+					impl = null;
+**/
+				if (debug) 
+					System.out.println("Use DirType '" + dirType.getName() + "' for file '" + impl.toString() + "'");
+
 				if (debug)
-						System.out
-								.println("Leave XInputDirectory.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
+						System.out.println("Leave XInputDirectory.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
+
 				return;
 			} catch (Exception e) {
 				// Failed, try next type

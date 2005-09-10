@@ -35,8 +35,8 @@ import java.io.PrintWriter;
 
 import net.sourceforge.dvb.projectx.common.Common;
 
-public class IDDBufferedOutputStream extends BufferedOutputStream
-{
+public class IDDBufferedOutputStream extends BufferedOutputStream {
+
 	long pos = 0;
 	int type = 0;
 	String name = "", chaptersname = "";
@@ -259,6 +259,11 @@ public class IDDBufferedOutputStream extends BufferedOutputStream
 			return;
 
 		ChaptersOut.println(str);
+	}
+
+	public synchronized void flush() throws IOException
+	{
+		super.flush();
 	}
 
 	//DM18022004 081.6 int17 changed
