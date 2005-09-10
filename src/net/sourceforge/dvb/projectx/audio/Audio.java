@@ -976,10 +976,19 @@ public class Audio extends Object {
 	private boolean DecodeRDS = false;
 	private boolean Debug = false;
 
+	private String[] rds_values = new String[4];
+	private String[] pty_list = {
+		"undefined", "News", "Current Affairs", "Information", "Sport", "Education", "Drama", "Culture", "Science", 
+		"Varied", "Pop Music", "Rock Music", "Easy Listening", "Light Classical", "Seriuos Classical", "Other Music", 
+		"Weather", "Finance", "Children", "Social Affairs", "Religion", "Phone In", "Travel", "Leisure", "Jazz Music", 
+		"Country Music", "National Music", "Oldies Music", "Folk Music", "Documentary", "Alarm Test", "Alarm"
+	};
+
 	public void initRDSDecoding(boolean b, boolean b1)
 	{
 		DecodeRDS = b;
 		Debug = b1;
+		Arrays.fill(rds_values, null);
 	}
 
 	public void testRDS(byte[] frame)
@@ -1032,13 +1041,12 @@ public class Audio extends Object {
 		if (eom_index < 0)
 			return;
 
-		int chunklen = 0;
-
-		for (int i = 0; i < 4; i++)
-			chunklen |= Integer.parseInt(list.get(1 + i).toString())<<(8 * (3 - i));
+		int chunklen = Integer.parseInt(list.get(4).toString());
 
 		chunklen ++;   //start_marker
-		chunklen += 4; //len field itself
+		chunklen += 2; //address  10b site add + 6b enc add; site: 0 all, 1-3ff; enc: 0 all, 1-3f
+		chunklen ++;   //sequence cnt 01-ff
+		chunklen ++;   //len field itself
 		chunklen += 2; //crc
 
 		if (eom_index < chunklen)
@@ -1079,21 +1087,35 @@ public class Audio extends Object {
 			bo.write(value);
 		}
 
+		String str;
+
 		switch (type)
 		{
 		case 0x0A: //RT
-			printRT(bo.toByteArray());
+			compareMsg(printRT(bo.toByteArray()), 0);
+			break;
+
+		case 0x01: //PI
+			compareMsg(printPI(bo.toByteArray()), 1);
 			break;
 
 		case 0x02: //PS program service name 
-			printPS(bo.toByteArray());
+			compareMsg(printPS(bo.toByteArray()), 2);
 			break;
 
-		case 0x0D: //? 
-		case 0x30: //? 
-		case 0x40: //CT calendar
-		case 0x42: //? 
-		case 0x46: //?
+		case 0x07: //PTY
+			compareMsg(printPTY(bo.toByteArray()), 3);
+			break;
+
+		case 0x0D: //RTC
+		case 0x30: //TMC 
+		case 0x40: //ODA SMC
+		case 0x42: //ODA free 
+		case 0x46: //ODA data
+		case 0x4A: //CT
+		case 0x04: //TA
+		case 0x05: //MS
+		case 0x06: //PIN
 			break;
 		}
 
@@ -1103,11 +1125,25 @@ public class Audio extends Object {
 	/**
 	 * 
 	 */
-	private void printRT(byte[] array)
+	private void compareMsg(String str, int index)
+	{
+		if (str == null || str.equals(rds_values[index]))
+			return;
+
+		rds_values[index] = str;
+
+		Common.setMessage(str);
+	}
+
+	/**
+	 * 
+	 */
+	private String printRT(byte[] array)
 	{
 		int index = 0;
 
-		int offs = (0xFF & array[index])<<8 | (0xFF & array[index + 1]);
+		int dsn = 0xFF & array[index];
+		int psn = 0xFF & array[index + 1];
 
 		index += 2;
 
@@ -1123,17 +1159,19 @@ public class Audio extends Object {
 
 		String str = new String(array, index, len - 1);
 
-		Common.setMessage("-> RT (" + change + "): '" + str.trim() + "'");
+		return ("-> RT (" + Integer.toHexString(change).toUpperCase() + "): '" + str.trim() + "'");
 	}
 
 	/**
 	 * 
 	 */
-	private void printPS(byte[] array)
+	private String printPS(byte[] array)
 	{
+		//FE xx aa bb 0B 02 | 00 00 | 52 41 44 49 4F 20 31 20 | xx yy | FF
 		int index = 0;
 
-		int offs = (0xFF & array[index])<<8 | (0xFF & array[index + 1]);
+		int dsn = 0xFF & array[index];
+		int psn = 0xFF & array[index + 1];
 
 		index += 2;
 
@@ -1143,7 +1181,43 @@ public class Audio extends Object {
 
 		String str = new String(array, index, len - 1);
 
-		Common.setMessage("-> PS : '" + str.trim() + "'");
+		return ("-> PS (" + psn + "): '" + str.trim() + "'");
+	}
+
+	/**
+	 * 
+	 */
+	private String printPI(byte[] array)
+	{
+		//FE xx aa bb 05 01 | 00 01 | D6 21 | xx yy | FF
+		int index = 0;
+
+		int dsn = 0xFF & array[index];
+		int psn = 0xFF & array[index + 1];
+
+		index += 2;
+
+		int pi_code = (0xFF & array[index])<<8 | (0xFF & array[index + 1]);
+
+		return ("-> PI (" + psn + "): 0x" + Integer.toHexString(pi_code));
+	}
+
+	/**
+	 * 
+	 */
+	private String printPTY(byte[] array)
+	{
+		//FE xx aa bb 04 07 | 00 01 | 09 | xx yy | FF
+		int index = 0;
+
+		int dsn = 0xFF & array[index];
+		int psn = 0xFF & array[index + 1];
+
+		index += 2;
+
+		int pty = 0x1F & array[index];
+
+		return ("-> PTY (" + psn + "): " + pty_list[pty]);
 	}
 
 	/**
