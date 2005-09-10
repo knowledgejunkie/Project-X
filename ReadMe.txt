@@ -100,6 +100,10 @@
        to the .jar file, later, 
        or you put them into the same folder where the compiled .jar is executed.
 
+
+   (D) new with version 0.90 and later:
+       it is possible to compile and run this program without the gui (means all source files in /gui/..).
+       so there is no requirement of running a X server or similars anymore, calling it from the commandline.
        
 
    the compiling process doesn't take more than about 30 seconds.

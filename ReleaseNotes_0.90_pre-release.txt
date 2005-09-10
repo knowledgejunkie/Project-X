@@ -1,0 +1,26 @@
+ Note: 
+   - the archive contains all necessary files
+
+
+ Project X 0.90 pre-release
+ 10.09.2005
+
+   collects all patches from 0.82.1 and some fixes
+
+   it is possible to compile and run it without the gui (means all source files in /gui/..).
+   so there is no requirement of running a X server or similars anymore, calling it from the commandline.
+
+   the source/key/settings handling has been changed completely, that means i.e. CL + ini parameters. 
+   old one's won't work anymore.
+   tell us, whether or not more CLI switches are wished. (with examples)
+
+   the gui and its placement of options has been changed, don't cry..
+
+ why a pre-release?
+   there are so many changes inside, that we would be happy when it works as before at this point.
+   so don't expect better error handling. that will come sometime later..
+   we can't test all functions, that is your part..
+   the language files have to be updated.
+
+   I haven't the time to write a whole description of changes.
+   you'll find it out..
