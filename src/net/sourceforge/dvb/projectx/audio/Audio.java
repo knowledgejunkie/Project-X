@@ -976,7 +976,7 @@ public class Audio extends Object {
 	private boolean DecodeRDS = false;
 	private boolean Debug = false;
 
-	private String[] rds_values = new String[4];
+	private String[] rds_values = new String[7];
 	private String[] pty_list = {
 		"undefined", "News", "Current Affairs", "Information", "Sport", "Education", "Drama", "Culture", "Science", 
 		"Varied", "Pop Music", "Rock Music", "Easy Listening", "Light Classical", "Seriuos Classical", "Other Music", 
@@ -1092,29 +1092,38 @@ public class Audio extends Object {
 		switch (type)
 		{
 		case 0x0A: //RT
-			compareMsg(printRT(bo.toByteArray()), 0);
+			compareMsg(getRT(bo.toByteArray()), 0);
 			break;
 
 		case 0x01: //PI
-			compareMsg(printPI(bo.toByteArray()), 1);
+			compareMsg(getPI(bo.toByteArray()), 1);
 			break;
 
 		case 0x02: //PS program service name 
-			compareMsg(printPS(bo.toByteArray()), 2);
+			compareMsg(getPS(bo.toByteArray()), 2);
+			break;
+
+		case 0x03: //TA
+			compareMsg(getTP(bo.toByteArray()), 3);
+			break;
+
+		case 0x05: //MS
+			compareMsg(getMS(bo.toByteArray()), 4);
 			break;
 
 		case 0x07: //PTY
-			compareMsg(printPTY(bo.toByteArray()), 3);
+			compareMsg(getPTY(bo.toByteArray()), 5);
 			break;
 
 		case 0x0D: //RTC
+			compareMsg(getRTC(bo.toByteArray()), 6);
+			break;
+
 		case 0x30: //TMC 
 		case 0x40: //ODA SMC
 		case 0x42: //ODA free 
 		case 0x46: //ODA data
 		case 0x4A: //CT
-		case 0x04: //TA
-		case 0x05: //MS
 		case 0x06: //PIN
 			break;
 		}
@@ -1138,7 +1147,7 @@ public class Audio extends Object {
 	/**
 	 * 
 	 */
-	private String printRT(byte[] array)
+	private String getRT(byte[] array)
 	{
 		int index = 0;
 
@@ -1165,9 +1174,8 @@ public class Audio extends Object {
 	/**
 	 * 
 	 */
-	private String printPS(byte[] array)
+	private String getPS(byte[] array)
 	{
-		//FE xx aa bb 0B 02 | 00 00 | 52 41 44 49 4F 20 31 20 | xx yy | FF
 		int index = 0;
 
 		int dsn = 0xFF & array[index];
@@ -1187,9 +1195,8 @@ public class Audio extends Object {
 	/**
 	 * 
 	 */
-	private String printPI(byte[] array)
+	private String getPI(byte[] array)
 	{
-		//FE xx aa bb 05 01 | 00 01 | D6 21 | xx yy | FF
 		int index = 0;
 
 		int dsn = 0xFF & array[index];
@@ -1205,9 +1212,43 @@ public class Audio extends Object {
 	/**
 	 * 
 	 */
-	private String printPTY(byte[] array)
+	private String getTP(byte[] array)
 	{
-		//FE xx aa bb 04 07 | 00 01 | 09 | xx yy | FF
+		int index = 0;
+
+		int dsn = 0xFF & array[index];
+		int psn = 0xFF & array[index + 1];
+
+		index += 2;
+
+		boolean tp = (2 & array[index]) != 0;
+		boolean ta = (1 & array[index]) != 0;
+
+		return ("-> TP/TA (" + psn + "): " + (tp ? "TP" : "no TP") + " / " + (ta ? "TA on air" : "no TA"));
+	}
+
+	/**
+	 * 
+	 */
+	private String getMS(byte[] array)
+	{
+		int index = 0;
+
+		int dsn = 0xFF & array[index];
+		int psn = 0xFF & array[index + 1];
+
+		index += 2;
+
+		boolean speech = (1 & array[index]) != 0;
+
+		return ("-> MS (" + psn + "): " + (speech ? "Speech" : "Music"));
+	}
+
+	/**
+	 * 
+	 */
+	private String getPTY(byte[] array)
+	{
 		int index = 0;
 
 		int dsn = 0xFF & array[index];
@@ -1218,6 +1259,28 @@ public class Audio extends Object {
 		int pty = 0x1F & array[index];
 
 		return ("-> PTY (" + psn + "): " + pty_list[pty]);
+	}
+
+	/**
+	 * 
+	 */
+	private String getRTC(byte[] array)
+	{
+		int index = 0;
+
+		String year  = "20" + Common.adaptString(Integer.toHexString(0x7F & array[index]), 2);
+		String month = Common.adaptString(String.valueOf(0xF & array[index + 1]), 2);
+		String date  = Common.adaptString(String.valueOf(0x1F & array[index + 2]), 2);
+		String hour  = Common.adaptString(String.valueOf(0x1F & array[index + 3]), 2);
+		String min   = Common.adaptString(String.valueOf(0x3F & array[index + 4]), 2);
+		String sec   = Common.adaptString(String.valueOf(0x3F & array[index + 5]), 2);
+		String censec= Common.adaptString(String.valueOf(0x7F & array[index + 6]), 2);
+
+		int ltoffs   = 0xFF & array[index + 7];
+
+		String loctime = ltoffs != 0xFF ? (((0x20 & ltoffs) != 0) ? "-" + ((0x1F & ltoffs) / 2) : "+" + ((0x1F & ltoffs) / 2)) : "\u00B1" + "0";
+
+		return ("-> RTC (" + loctime + "h): " + year + "." + month + "." + date + "  " + hour + ":" + min + ":" + sec + "." + censec);
 	}
 
 	/**
