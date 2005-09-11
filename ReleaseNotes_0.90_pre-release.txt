@@ -18,9 +18,11 @@
 
  why a pre-release?
    there are so many changes inside, that we would be happy when it works as before at this point.
+   we can't test all functions, that is your part.. pls check the functions with your files.
+
    don't expect better error handling. that will come sometime later.. we still have to make a lot of changes.
-   we can't test all functions, that is your part..
+
    the language files have to be updated.
 
-   I haven't the time to write a whole description of all changes.
-   you'll find it out..
+   I haven't the time to write a whole description of all changes for this pre.
+   but I'm sure you'll find it out..
