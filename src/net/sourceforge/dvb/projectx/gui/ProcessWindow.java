@@ -78,7 +78,6 @@ import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Common;
 
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
-import net.sourceforge.dvb.projectx.parser.MainProcess;
 
 import net.sourceforge.dvb.projectx.gui.CheckBoxListener;
 
@@ -429,7 +428,7 @@ public class ProcessWindow extends JFrame {
 
 					CommonParsing.setPvaPidToExtract(-1);
 
-					new MainProcess().start();
+					Common.startMainProcess();
 				}
 
 				else
@@ -492,7 +491,7 @@ public class ProcessWindow extends JFrame {
 				CommonParsing.setPvaPidToExtract(-1);
 				CommonParsing.setInfoScan(true);
 
-				new MainProcess().start();
+				Common.startMainProcess();
 			}
 		});
 
@@ -521,7 +520,7 @@ public class ProcessWindow extends JFrame {
 
 				Common.setMessage(Resource.getString("golistener.msg.extracting") + extractComboBox.getSelectedItem().toString() + "...");
 
-				new MainProcess().start();
+				Common.startMainProcess();
 			}
 		});
 
@@ -556,7 +555,14 @@ public class ProcessWindow extends JFrame {
 
 		panel.add(Monitor);
 
-		panel.add(Box.createRigidArea(new Dimension(4, 1)));
+		JPanel status_7 = new JPanel(new BorderLayout());
+		status_7.setBorder(BorderFactory.createLoweredBevelBorder());
+		status_7.add(Monitor);
+		status_7.setPreferredSize(new Dimension(114, 36));
+		status_7.setMaximumSize(new Dimension(114, 36));
+
+		panel.add(status_7);
+
 
 		final JLabel troughput = new JLabel();
 		final JLabel collLabel = new JLabel();

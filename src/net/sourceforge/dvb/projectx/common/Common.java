@@ -63,6 +63,7 @@ import net.sourceforge.dvb.projectx.common.GuiInterface;
 
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
 import net.sourceforge.dvb.projectx.parser.Scan;
+import net.sourceforge.dvb.projectx.parser.MainProcess;
 
 import net.sourceforge.dvb.projectx.subtitle.Subpicture;
 
@@ -79,8 +80,8 @@ import net.sourceforge.dvb.projectx.xinput.topfield_raw.RawInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90 pre-release";
-	private static String version_date = "10.09.2005";
+	private static String version_name = "ProjectX 0.90 pre_01";
+	private static String version_date = "12.09.2005";
 
 	private static String line_separator = System.getProperty("line.separator");
 
@@ -275,6 +276,14 @@ public final class Common extends Object {
 	public static MpvDecoder getMpvDecoderClass()
 	{
 		return mpvdecoder;
+	}
+
+	/**
+	 * 
+	 */
+	public static void startMainProcess()
+	{
+		new MainProcess().start();
 	}
 
 	/**
@@ -981,6 +990,22 @@ public final class Common extends Object {
 	public static void setOSDMessage(String str, boolean b)
 	{
 		getGuiInterface().setOSDMessage(str, b);
+	}
+
+	/**
+	 * post commands
+	 */
+	public static void performCommand(String str)
+	{
+		if (str == null || str.trim().length() == 0)
+			return;
+
+		try {
+			Runtime.getRuntime().exec(str);
+
+		} catch (Exception ex) { 
+			setExceptionMessage(ex); 
+		}
 	}
 
 	/**

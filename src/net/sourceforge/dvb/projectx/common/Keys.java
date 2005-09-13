@@ -140,6 +140,7 @@ public class Keys extends Object {
 	public final static String[] KEY_MainBuffer = { "OptionPanel.MainBuffer", "4096000" }; //combobox[10]
 	public final static String[] KEY_ScanBuffer = { "OptionPanel.ScanBuffer", "1024000" }; //combobox[37]
 	public final static String[] KEY_PreviewBuffer = { "OptionPanel.PreviewBuffer", "512000" }; //combobox[38]
+	public final static String[] KEY_holdStreamInfoOnOSD = { "OptionPanel.holdStreamInfoOnOSD", "0" };
 
 
 	/**

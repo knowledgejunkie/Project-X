@@ -1033,7 +1033,7 @@ public class StreamDemultiplexer extends Object {
 		try {
 
 			if (pes_payloadlength <= 0)
-				Common.setMessage(Resource.getString("demux.error.video.payload") + " (" + pes_packet.length + "/" + offset + "/" + pes_extensionlength + "/" + pes_payloadlength + ")");
+				Common.setMessage(Resource.getString("demux.error.video.payload") + " (" + pack + "/" + pes_packet.length + "/" + offset + "/" + pes_extensionlength + "/" + pes_payloadlength + ")");
 
 			else
 				packet.write(pes_packet, offset + pes_extensionlength, pes_payloadlength);

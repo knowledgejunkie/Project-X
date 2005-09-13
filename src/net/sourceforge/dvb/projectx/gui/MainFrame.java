@@ -2160,7 +2160,11 @@ public class MainFrame extends JPanel {
 		panel_1.add(memo, BorderLayout.NORTH);
 
 		panel_1.add(Box.createRigidArea(new Dimension(1, 5)));
-		panel_1.add(Box.createRigidArea(new Dimension(1, 90)));
+//		panel_1.add(Box.createRigidArea(new Dimension(1, 90)));
+		panel_1.add(Box.createRigidArea(new Dimension(1, 36)));
+
+
+		panel_1.add(buildQuickStart());
 
 		panel_1.add(buildProcessControlPanel());
 		panel_1.add(buildCollectionControlPanel());
@@ -2192,6 +2196,45 @@ public class MainFrame extends JPanel {
 
 		panel.add(panel_2, BorderLayout.CENTER);
 		panel.add(buildFilePanel(), BorderLayout.SOUTH);
+
+		return panel;
+	}
+
+	/**
+	 *
+	 */
+	protected JPanel buildQuickStart()
+	{
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		panel.setBorder(BorderFactory.createTitledBorder( BorderFactory.createEtchedBorder(), Resource.getString("MainPanel.Process")));
+
+		/**
+		 * 
+		 */
+		JButton processwindow = new JButton(Resource.getString("MainPanel.QuickStart"));
+		processwindow.setToolTipText(Resource.getString("MainPanel.QuickStart.Tip"));
+		processwindow.setPreferredSize(new Dimension(100, 24));
+		processwindow.setMaximumSize(new Dimension(100, 24));
+		processwindow.setMinimumSize(new Dimension(100, 24));
+		processwindow.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				if (!Common.isRunningProcess())
+				{
+					if (Common.isCollectionListEmpty())
+						return;
+
+					Common.setRunningProcess(true);
+
+					CommonParsing.setPvaPidToExtract(-1);
+
+					Common.startMainProcess();
+				}
+			}
+		});
+
+		panel.add(processwindow);
 
 		return panel;
 	}

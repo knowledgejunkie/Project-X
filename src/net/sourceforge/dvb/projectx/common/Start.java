@@ -276,7 +276,7 @@ public class Start extends Object {
 				Common.setRunningCLI(true);
 				Common.setRunningProcess(true);
 
-				new MainProcess().start();
+				Common.startMainProcess();
 			}
 
 			else

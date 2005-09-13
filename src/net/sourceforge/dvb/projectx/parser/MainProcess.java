@@ -4051,6 +4051,9 @@ public class MainProcess extends Thread {
 								pes_packetlength = pes_packetoffset + pes_payloadlength;
 								pes_ID = streamdemultiplexer.getID();
 
+								/**
+								 * non video packet size usually < 0xFFFF
+								 */
 								if (streamdemultiplexer.getType() != CommonParsing.MPEG_VIDEO)
 								{
 									if (action == CommonParsing.ACTION_DEMUX)
@@ -4065,7 +4068,7 @@ public class MainProcess extends Thread {
 								 */
 								else
 								{
-									pes_packetlength = action == CommonParsing.ACTION_DEMUX ? 0x10000 : 0x1800;
+									pes_packetlength = action == CommonParsing.ACTION_DEMUX ? 0xFFFC : 0x1800;
 
 									for (int i = 0, j, pes_remaininglength = pes_packetlength, flags = (0xF3 & pes_packet[6])<<16; i < pes_packet.length; i += pes_remaininglength)
 									{

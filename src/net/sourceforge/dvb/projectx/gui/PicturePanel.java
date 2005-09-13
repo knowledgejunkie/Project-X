@@ -52,6 +52,7 @@ import javax.swing.JPanel;
 
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Common;
+import net.sourceforge.dvb.projectx.common.Keys;
 
 import net.sourceforge.dvb.projectx.gui.X_JFileChooser;
 
@@ -567,7 +568,7 @@ public class PicturePanel extends JPanel {
 		streamInfo = _streamInfo.getNewInstance();  //betta to get a copy
 		showFileInfo = streamInfo != null;
 
-		if (showFileInfo)
+		if (showFileInfo && !Common.getSettings().getBooleanProperty(Keys.KEY_holdStreamInfoOnOSD))
 			startClock(10000);
 
 		isSubpictureAvailable = showFileInfo && streamInfo.getStreamType() == CommonParsing.ES_SUP_TYPE;

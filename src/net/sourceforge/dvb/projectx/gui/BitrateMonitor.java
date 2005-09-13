@@ -73,7 +73,7 @@ import javax.swing.JPanel;
 public class BitrateMonitor extends JPanel {
 
 	private int w = 110;
-	private int h = 34;
+	private int h = 32;
 	private int divisor = 695;
 	private BufferedImage bimg;
 	private Graphics2D big;
@@ -164,14 +164,13 @@ public class BitrateMonitor extends JPanel {
 		// .. Draw bitrate string ..
 		big.setColor(Color.white);
 		usedStr = String.valueOf(bitrate * 400 / 1000) + "kbps ";
-		big.drawString(usedStr, 60, h - descent - 10 - descent);
+		big.drawString(usedStr, 60, h - descent - 9 - descent);
 		big.drawString(timeStr, 60, h - descent);
-		big.drawRect(0, 0, w, h);
 
 		// .. Draw History Graph ..
 		big.setColor(graphColor);
 		int graphX = 2;
-		int graphY = 2;
+		int graphY = 1;
 		int graphW = 50;   // w =55
 		int graphH = 30;  // h=55. 48
 		graphOutlineRect.setRect(graphX, graphY, graphW, graphH);

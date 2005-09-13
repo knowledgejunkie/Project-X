@@ -1303,7 +1303,8 @@ public class PreSettings extends JFrame {
 		op0.setBorder( BorderFactory.createTitledBorder(Resource.getString("OptionPanel.Various.Title")) );
 
 		String[][] objects = {
-			Keys.KEY_dumpDroppedGop
+			Keys.KEY_dumpDroppedGop,
+			Keys.KEY_holdStreamInfoOnOSD
 		};
 
 		JCheckBox[] box = new JCheckBox[objects.length];
@@ -1321,7 +1322,7 @@ public class PreSettings extends JFrame {
 			op0.add(box[i]);
 		}
 
-		op0.add(Box.createRigidArea(new Dimension(1,2)));
+		op0.add(Box.createRigidArea(new Dimension(1, 4)));
 
 		JTextField start_path = new JTextField(Common.getSettings().getProperty(Keys.KEY_StartPath_Value));
 		start_path.setPreferredSize(new Dimension(250, 25));
@@ -1449,15 +1450,18 @@ public class PreSettings extends JFrame {
 			{
 				try {
 					String actName = e.getActionCommand();
+					String str = "";
 
 					if (actName.equals(Keys.KEY_PostCommands_Cmd1[0])) 
-						Runtime.getRuntime().exec(Common.getSettings().getProperty(Keys.KEY_PostCommands_Cmd1));
+						str = Common.getSettings().getProperty(Keys.KEY_PostCommands_Cmd1);
 
 					else if (actName.equals(Keys.KEY_PostCommands_Cmd2[0])) 
-						Runtime.getRuntime().exec(Common.getSettings().getProperty(Keys.KEY_PostCommands_Cmd2));
+						str = Common.getSettings().getProperty(Keys.KEY_PostCommands_Cmd2);
 
 					else if (actName.equals(Keys.KEY_PostCommands_Cmd3[0])) 
-						Runtime.getRuntime().exec(Common.getSettings().getProperty(Keys.KEY_PostCommands_Cmd3));
+						str = Common.getSettings().getProperty(Keys.KEY_PostCommands_Cmd3);
+
+					Common.performCommand(str);
 
 				} catch (Exception ex) { 
 

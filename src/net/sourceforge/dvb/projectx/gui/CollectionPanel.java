@@ -498,13 +498,13 @@ public class CollectionPanel extends JPanel {
 		for (int i = 0; i < 3; i++)
 			panel.add(box[i]);
 
-		panel.add(Box.createRigidArea(new Dimension(1, 72)));
+		panel.add(Box.createRigidArea(new Dimension(1, 32)));
 
 
 		panel.add(new JLabel(Resource.getString("CollectionPanel.PidList")));
 
 		includeField = new JTextField("");
-		includeField.setPreferredSize(new Dimension(80,25));
+		includeField.setPreferredSize(new Dimension(80, 25));
 		includeField.setEditable(true);
 		includeField.setActionCommand("ID");
 		includeField.setToolTipText(Resource.getString("CollectionPanel.PidList.Tip1"));
@@ -516,7 +516,7 @@ public class CollectionPanel extends JPanel {
 		includeField.addActionListener(cutAction);
 
 		JScrollPane scrollList = new JScrollPane();
-		scrollList.setPreferredSize(new Dimension(80, 100));
+		scrollList.setPreferredSize(new Dimension(80, 140));
 		scrollList.setViewportView(includeList);
 		panel.add(scrollList);
 

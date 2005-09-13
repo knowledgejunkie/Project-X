@@ -1286,7 +1286,7 @@ public class Audio extends Object {
 	{
 		String str = "";
 
-		for (int i = offset, val; i < length; i++)
+		for (int i = offset, val, j = offset + length; i < j; i++)
 		{
 			val = 0xFF & array[i];
 
