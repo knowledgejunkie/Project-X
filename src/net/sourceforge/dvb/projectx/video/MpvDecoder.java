@@ -2691,6 +2691,21 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	/**
 	 * 
 	 */
+	public void clearPreviewPixel()
+	{
+		info_1 = "";
+		info_2 = "";
+
+		Arrays.fill(pixels2, 0xFF505050);
+
+		WSS.init(new int[0], 0);
+
+		Common.getGuiInterface().updatePreviewPixel();
+	}
+
+	/**
+	 * 
+	 */
 	public int getWidth()
 	{
 		return horizontal_size;

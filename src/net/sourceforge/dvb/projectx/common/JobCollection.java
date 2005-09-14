@@ -158,7 +158,7 @@ public class JobCollection extends Object {
 	{
 		progress_status = true;
 
-		job_processing = new JobProcessing(b);
+		job_processing = new JobProcessing(b, getOutputDirectory());
 	}
 
 	/**
@@ -167,6 +167,12 @@ public class JobCollection extends Object {
 	public void finishProcessing()
 	{
 		progress_status = false;
+
+		if (job_processing != null)
+		{
+			job_processing.finishProcessing();
+			setOutputDirectory(job_processing.getSavedOutputDirectory());
+		}
 
 		job_processing = null;
 	}

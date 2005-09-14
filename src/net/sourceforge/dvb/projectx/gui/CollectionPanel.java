@@ -203,6 +203,9 @@ public class CollectionPanel extends JPanel {
 	{
 		public void actionPerformed(ActionEvent e)
 		{
+			if (collection == null)
+				return;
+
 			if (!action) 
 				return;
 
@@ -277,6 +280,9 @@ public class CollectionPanel extends JPanel {
 	{
 		public void actionPerformed(ActionEvent e)
 		{
+			if (collection == null)
+				return;
+
 			if (!action)
 				return;
 
@@ -523,6 +529,9 @@ public class CollectionPanel extends JPanel {
 		includeList.addMouseListener( new MouseAdapter() {
 			public void mouseClicked(MouseEvent e)
 			{
+				if (collection == null)
+					return;
+
 				if (e.getClickCount() >= 2)
 				{
 					Object[] val = includeList.getSelectedValues();
@@ -638,6 +647,9 @@ public class CollectionPanel extends JPanel {
 		{
 			public void stateChanged(ChangeEvent e)
 			{
+				if (collection == null)
+					return;
+
 				if (!action)
 					return;
 
@@ -660,6 +672,9 @@ public class CollectionPanel extends JPanel {
 		{ 
 			public void keyPressed(KeyEvent e)
 			{ 
+				if (collection == null)
+					return;
+
 				int i = 0; 
 				int ic = 0; 
 				int offs = 0; 
@@ -1021,7 +1036,7 @@ public class CollectionPanel extends JPanel {
 	 */
 	private void getType()
 	{
-		Object[] obj = collection.getCutpoints();
+		Object[] obj = collection != null ? collection.getCutpoints() : new Object[0];
 		int index;
 
 		if (obj.length > 0)
@@ -1171,7 +1186,7 @@ public class CollectionPanel extends JPanel {
 	{
 		cut_combobox.removeAllItems();
 
-		Object[] object = collection.getCutpoints();
+		Object[] object = collection != null ? collection.getCutpoints() : new Object[0];
 
 		for (int i = 0; i < object.length; i++)
 			cut_combobox.addItem(object[i]);
@@ -1248,12 +1263,49 @@ public class CollectionPanel extends JPanel {
 	/**
 	 *
 	 */
+	private boolean checkActiveCollection()
+	{
+		if (active_collection >= 0)
+			return true;
+
+		collection = null;
+
+		action = false;
+
+		includeList.setListData(new Object[0]);
+		previewList.clear();
+		reloadCutpoints();
+		Common.getGuiInterface().showCutIcon(true, null, previewList);
+
+		scannedPID.setText(Resource.getString("CollectionPanel.Preview.offline"));
+		firstfile.setText("");
+		slider.setMaximum(1);
+		setTitle(Resource.getString("CollectionPanel.Title2"));
+
+		Common.setOSDMessage(Resource.getString("CollectionPanel.Preview.offline"));
+
+		action = true;
+
+		return false;
+	}
+
+	/**
+	 *
+	 */
 	public void entry(int _active_collection)
 	{
 		if (active_collection != _active_collection)
 			cutview.clearViews();
 
 		active_collection = _active_collection;
+
+		Common.getMpvDecoderClass().clearPreviewPixel();
+
+		/**
+		 *
+		 */
+		if (!checkActiveCollection())
+			return;
 
 		CommonGui.getPicturePanel().showCollectionNumber(active_collection);
 
@@ -1312,11 +1364,11 @@ public class CollectionPanel extends JPanel {
 			}
 		}
 
-		if (end > 16)
-			slider.setMaximum((int)(end / 16));
+		action = false;
 
-		else
-			slider.setMaximum(1);
+		slider.setMaximum(end > 16 ? (int)(end / 16) : 1);
+
+		action = true;
 
 		if (Common.getSettings().getIntProperty(Keys.KEY_CutMode) == CommonParsing.CUTMODE_BYTE && !previewList.isEmpty())
 			preview(0);
@@ -1324,6 +1376,9 @@ public class CollectionPanel extends JPanel {
 		else
 		{
 			scannedPID.setText(Resource.getString("CollectionPanel.Preview.offline"));
+			firstfile.setText("");
+
+			Common.getMpvDecoderClass().clearPreviewPixel();
 			Common.setOSDMessage(Resource.getString("CollectionPanel.Preview.offline"));
 		}
 

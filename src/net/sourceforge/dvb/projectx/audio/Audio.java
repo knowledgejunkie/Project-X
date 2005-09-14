@@ -1020,7 +1020,7 @@ public class Audio extends Object {
 	/**
 	 * 
 	 */
-	private void decodeChunk(java.util.ArrayList list)
+	private void decodeChunk(ArrayList list)
 	{
 		int index = list.indexOf("254"); //0xfe, start
 
@@ -1040,6 +1040,13 @@ public class Audio extends Object {
 
 		if (eom_index < 0)
 			return;
+
+		else if (eom_index < 5) //fe xx yy zz ll aa 
+		{
+			list.remove(0);
+			return;
+		}
+
 
 		int chunklen = Integer.parseInt(list.get(4).toString());
 

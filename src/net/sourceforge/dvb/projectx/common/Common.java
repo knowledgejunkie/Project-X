@@ -80,8 +80,8 @@ import net.sourceforge.dvb.projectx.xinput.topfield_raw.RawInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90 pre_01";
-	private static String version_date = "12.09.2005";
+	private static String version_name = "ProjectX 0.90 pre_02";
+	private static String version_date = "14.09.2005";
 
 	private static String line_separator = System.getProperty("line.separator");
 

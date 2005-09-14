@@ -360,6 +360,11 @@ public class MainProcess extends Thread {
 					 * M2S finish chapters file per coll#
 					 */
 					job_processing.getChapters().finish(collection.getFirstFileBase());
+
+					/**
+					 * finish collection
+					 */
+					collection.finishProcessing();
 				}
 			}
 
@@ -1485,6 +1490,8 @@ public class MainProcess extends Thread {
 
 					if ((returncode = CommonParsing.validateStartcode(pes_packet, 0)) < 0 || pesID < CommonParsing.SYSTEM_END_CODE)
 					{
+						returncode = returncode < 0 ? -returncode : 4;
+
 						if (Message_2 && !missing_startcode)
 							Common.setMessage(Resource.getString("parseSecondaryPES.missing.startcode") + " " + count);
 

@@ -396,7 +396,9 @@ public class Settings extends Object {
 	 */
 	public void setProperty(String key, Object value)
 	{
-		setProperty(key, String.valueOf(value));
+		String str = value == null ? null : String.valueOf(value);
+
+		setProperty(key, str);
 	}
 
 	/**

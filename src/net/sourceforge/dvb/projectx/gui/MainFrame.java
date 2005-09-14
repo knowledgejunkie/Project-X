@@ -2344,7 +2344,7 @@ public class MainFrame extends JPanel {
 
 
 		/**
-		 *  add collection
+		 *  remove collection
 		 */
 		JButton remove_coll = new JButton(CommonGui.loadIcon("rem.gif"));
 		remove_coll.setPreferredSize(new Dimension(50, 24));
@@ -2368,6 +2368,9 @@ public class MainFrame extends JPanel {
 
 				if (index < comboBox_0.getItemCount())
 					comboBox_0.setSelectedIndex(index);
+
+				if (Common.isCollectionListEmpty())
+					updateCollectionPanel(-1);
 			}
 		});
 
@@ -2382,6 +2385,8 @@ public class MainFrame extends JPanel {
 			public void actionPerformed(ActionEvent e)
 			{
 				Common.addCollection();
+
+				updateCollectionPanel(Common.getActiveCollection());
 			}
 		});
 

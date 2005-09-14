@@ -373,6 +373,7 @@ public class ProcessWindow extends JFrame {
 		CommonGui.localize(preferencesMenu, "Common.Preferences");
 
 		JMenuItem preferences = new JMenuItem();
+		preferences.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
 		CommonGui.localize(preferences, "Common.Preferences");
 		preferences.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)

@@ -243,6 +243,9 @@ public class Gop extends Object {
 
 					break;
 				}
+
+				else
+					i += 4;
 			}
 
 			diff = thisTC - job_processing.getLastGopTimecode();

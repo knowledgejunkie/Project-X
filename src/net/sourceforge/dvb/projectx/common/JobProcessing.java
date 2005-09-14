@@ -86,6 +86,7 @@ public class JobProcessing extends Object {
 	private boolean runningFromCLI;
 
 	private String[] VBASIC;
+	private String savedOutputDirectory;
 
 	private long firstVideoPTS;
 	private long CUT_BYTEPOSITION;
@@ -110,9 +111,11 @@ public class JobProcessing extends Object {
 	/**
 	 *
 	 */
-	public JobProcessing(boolean b)
+	public JobProcessing(boolean b, String str)
 	{
 		runningFromCLI = b;
+		savedOutputDirectory = str;
+
 		startProcessing();
 	}
 
@@ -950,6 +953,14 @@ public class JobProcessing extends Object {
 	public long getAllMediaFilesExportLength()
 	{
 		return AllMediaFilesExportLength;
+	}
+
+	/**
+	 * 
+	 */
+	public String getSavedOutputDirectory()
+	{
+		return savedOutputDirectory;
 	}
 
 }
