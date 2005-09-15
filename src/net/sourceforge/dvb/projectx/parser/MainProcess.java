@@ -2207,9 +2207,9 @@ public class MainProcess extends Thread {
 			base = count;
 			size = count + aXInputFile.length();
 
-			PushbackInputStream in = new PushbackInputStream(aXInputFile.getInputStream(startPoint), pes_packet.length);
+			PushbackInputStream in = new PushbackInputStream(aXInputFile.getInputStream(startPoint - base), pes_packet.length);
 
-			count += startPoint;
+			count += (startPoint - base);
 
 			Common.updateProgressBar((action == CommonParsing.ACTION_DEMUX ? Resource.getString("parsePrimaryPES.demuxing") : Resource.getString("parsePrimaryPES.converting")) + " " + Resource.getString("parsePrimaryPES.avpes.file") + " " + aXInputFile.getName(), (count - base), (size - base));
 
@@ -3397,9 +3397,9 @@ public class MainProcess extends Thread {
 			base = count;
 			size = count + xInputFile.length();
 
-			PushbackInputStream in = new PushbackInputStream(xInputFile.getInputStream(startPoint), 200);
+			PushbackInputStream in = new PushbackInputStream(xInputFile.getInputStream(startPoint - base), 200);
 
-			count += startPoint;
+			count += (startPoint - base);
 
 			Common.updateProgressBar((action == CommonParsing.ACTION_DEMUX ? Resource.getString("parseTS.demuxing") : Resource.getString("parseTS.converting")) + " " + Resource.getString("parseTS.dvb.mpeg") + " " + xInputFile.getName(), (count - base), (size - base));
 
@@ -4858,9 +4858,9 @@ public class MainProcess extends Thread {
 			base = count;
 			size = count + aPvaXInputFile.length();
 
-			PushbackInputStream in = new PushbackInputStream(aPvaXInputFile.getInputStream(startPoint), pva_buffersize);
+			PushbackInputStream in = new PushbackInputStream(aPvaXInputFile.getInputStream(startPoint - base), pva_buffersize);
 
-			count += startPoint;
+			count += (startPoint - base);
 
 			overlapPVA(collection, overlapnext);
 
