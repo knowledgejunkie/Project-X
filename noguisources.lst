@@ -18,6 +18,7 @@ src/net/sourceforge/dvb/projectx/io/StandardBuffer.java
 src/net/sourceforge/dvb/projectx/parser/CommonParsing.java
 src/net/sourceforge/dvb/projectx/parser/Gop.java
 src/net/sourceforge/dvb/projectx/parser/GopArray.java
+src/net/sourceforge/dvb/projectx/parser/HpFix.java
 src/net/sourceforge/dvb/projectx/parser/MainProcess.java
 src/net/sourceforge/dvb/projectx/parser/Scan.java
 src/net/sourceforge/dvb/projectx/parser/StreamBuffer.java

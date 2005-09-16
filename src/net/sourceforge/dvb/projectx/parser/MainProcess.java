@@ -5719,7 +5719,8 @@ public class MainProcess extends Thread {
  	 */
 	private boolean processAudio(JobCollection collection, XInputFile xInputFile, String filename_pts, String filename_type, String videofile_pts, int isElementaryStream, int MpaConversionMode)
 	{
-		String fchild = collection.getOutputName(xInputFile.getName());
+	//	String fchild = collection.getOutputName(xInputFile.getName());
+		String fchild = isElementaryStream == CommonParsing.ES_TYPE ? collection.getOutputName(xInputFile.getName()) : xInputFile.getName();
 		String fparent = collection.getOutputNameParent(fchild);
 
 		Common.getGuiInterface().showAVOffset(Resource.getString("MainPanel.AudioVideoOffset"));
@@ -8385,7 +8386,10 @@ public class MainProcess extends Thread {
 				else
 					pn = userdefined_pages.length;
 
-				String fchild = collection.getOutputName(xInputFile.getName());
+			//  not supported as an elementary stream
+			//	String fchild = isElementaryStream == CommonParsing.ES_TYPE ? collection.getOutputName(xInputFile.getName()) : xInputFile.getName();
+			//	String fchild = collection.getOutputName(xInputFile.getName());
+				String fchild = xInputFile.getName();
 				String fparent = collection.getOutputNameParent(fchild);
 
 				size = xInputFile.length();
@@ -9494,7 +9498,8 @@ public class MainProcess extends Thread {
 
 		JobProcessing job_processing = collection.getJobProcessing();
 
-		String fchild = collection.getOutputName(xInputFile.getName());
+		String fchild = isElementaryStream == CommonParsing.ES_TYPE ? collection.getOutputName(xInputFile.getName()) : xInputFile.getName();
+	//	String fchild = collection.getOutputName(xInputFile.getName());
 		String fparent = collection.getOutputNameParent(fchild);
 
 		fparent += isElementaryStream == CommonParsing.ES_TYPE ? "(new)" : "";

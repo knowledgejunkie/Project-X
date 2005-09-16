@@ -326,6 +326,7 @@ public final class WSS extends Object {
 
 		case 2: // 1  Biphase 10
 			group2[0]= "  " + Resource.getString("wss.group_3.0.10"); 
+			format += "[UT]";
 			break;
 
 		default:

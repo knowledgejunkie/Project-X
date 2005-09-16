@@ -146,8 +146,138 @@ public class CollectionPanel extends JPanel {
 	private JobCollection collection;
 
 	private CutView cutview;
+//
 
+	/**
+	 * class to control short OSD fadings
+	 */
+	private class SlideShow implements Runnable {
 
+		private Thread clockThread = null;
+
+		private long value = 0;
+		private long skip = 50000;
+
+		private Object[] cutpoints = null;
+
+		/**
+		 *
+		 */
+		public void start(long _value)
+		{
+			if (clockThread == null)
+			{
+				clockThread = new Thread(this, "SlideShow");
+				clockThread.setPriority(Thread.MIN_PRIORITY);
+
+				value = _value;
+				skip = getLoadSize() / 8;
+
+				getCutPoints();
+
+				clockThread.start();
+			}
+		}
+
+		/**
+		 *
+		 */
+		private void getCutPoints()
+		{
+			cutpoints = collection == null ? null : collection.getCutpoints();
+		}
+
+		/**
+		 *
+		 */
+		public void run()
+		{
+			Thread myThread = Thread.currentThread();
+
+			while (clockThread == myThread)
+			{
+				try {
+
+					for (long val;; )
+					{
+						val = update(value);
+						Thread.sleep(5);
+
+						if (!slideshow || val < value)
+							break;
+
+						value = skipArea(val);
+
+						if (value < val)
+							break;
+					}
+
+					stop();
+
+				} catch (InterruptedException e) {}
+
+			}
+		}
+
+		/**
+		 *
+		 */
+		private long update(long val)
+		{
+			return preview(val);
+		}
+
+		/**
+		 *
+		 */
+		private long skipArea(long val)
+		{
+			// next gop
+			if (cutpoints == null || cutpoints.length == 0)
+				return (val + skip);
+
+			int index = getCutIndex(cutpoints, String.valueOf(val));
+
+			// area among cutpoints
+			if (index < 0)
+			{
+				// next gop "in" area
+				if ((index & 1) == 0)
+					return (val + skip);
+
+				// stop
+				if (-index > cutpoints.length)
+					return (val - skip);
+
+				// jump to next export area (-index - 1)
+				return Long.parseLong(cutpoints[index + 1].toString());
+			}
+
+			// exact cut point "in" area
+			if ((index & 1) == 0)
+				return (val + skip);
+
+			// stop
+			if (index + 1 >= cutpoints.length)
+				return (val - skip);
+
+			// jump to next exported area
+			return Long.parseLong(cutpoints[index + 1].toString());
+		}
+
+		/**
+		 *
+		 */
+		public void stop()
+		{
+			clockThread = null;
+		}
+	}
+
+	private SlideShow cl = new SlideShow();
+	private boolean slideshow = false;
+
+//
 	ComboBoxIndexListener _ComboBoxIndexListener = new ComboBoxIndexListener();
 	ComboBoxItemListener _ComboBoxItemListener = new ComboBoxItemListener();
 	CheckBoxListener _CheckBoxListener = new CheckBoxListener();
@@ -615,6 +745,24 @@ public class CollectionPanel extends JPanel {
 		slider.setMaximumSize(new Dimension(512, 24));
 		slider.setValue(0);
 
+		slider.addMouseListener(new MouseAdapter()
+		{
+			public void mouseClicked(MouseEvent e)
+			{
+				if (slideshow || previewList.isEmpty() || Common.getSettings().getIntProperty(Keys.KEY_CutMode) != CommonParsing.CUTMODE_BYTE)
+				{
+					slideshow = false;
+					return;
+				}
+
+				if (e.getClickCount() < 2)
+					return;
+
+				slideshow = true;
+				cl.start(lastPosition);
+			}
+		});
+
 
 		/**
 		 *
@@ -1009,6 +1157,7 @@ public class CollectionPanel extends JPanel {
 		panel_3.setMinimumSize(new Dimension(124, 22));
 		panel_3.add(chp);
 
+
 /**		_del.addActionListener(cutAction);
 		_add.addActionListener(cutAction);
 		_combobox.addActionListener(cutAction);
@@ -1105,8 +1254,10 @@ public class CollectionPanel extends JPanel {
 
 			if (str.length() > 32)
 			{
-				String _str = str.substring(0, str.indexOf('-') + 2);
-				str = _str + "..." + str.substring(str.length() - 32, str.length());
+				int i = str.indexOf('-');
+
+				String _str = str.substring(0, i + 2);
+				str = _str + "..." + str.substring(i + 2, str.length());
 			}
 
 			firstfile.setText(str);

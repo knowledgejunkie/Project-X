@@ -235,9 +235,6 @@ public class PicturePanel extends JPanel {
 	 */
 	public void paint(Graphics g)
 	{
-		int x[] = { 10, 10, 30 };
-		int y[] = { 294, 314, 304 };
-
 		g.setColor(Color.black);
 		g.fillRect(0, 0, 600, 600);
 
@@ -251,7 +248,7 @@ public class PicturePanel extends JPanel {
 
 		paintWSSInfo(g);
 		paintErrorInfo(g);
-		paintPlayInfo(g, x, y);
+		paintPlayInfo(g);
 
 		g.setFont(font_2);
 
@@ -307,8 +304,11 @@ public class PicturePanel extends JPanel {
 	/**
 	 * paint play info
 	 */
-	private void paintPlayInfo(Graphics g, int[] x, int[] y)
+	private void paintPlayInfo(Graphics g)
 	{
+		int x[] = { 10, 10, 30 };
+		int y[] = { 294, 314, 304 };
+
 		if (PLAY)
 		{
 			g.setColor(Color.green);
@@ -382,7 +382,6 @@ public class PicturePanel extends JPanel {
 					g.fillRect(x1 + p0, y1, p1 - p0, h1);
 				}
 
-				//g.setColor(new Color(150, 100, 255));
 				g.setColor(new Color(200, 100, 200));
 				g.fillRect(x1 + p1 - 1, y1 - 4, 2, h1 + 8);
 

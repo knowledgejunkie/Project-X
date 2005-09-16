@@ -117,6 +117,7 @@ import java.net.URL;
 
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
 import net.sourceforge.dvb.projectx.parser.MainProcess;
+import net.sourceforge.dvb.projectx.parser.HpFix;
 
 import net.sourceforge.dvb.projectx.xinput.DirType;
 import net.sourceforge.dvb.projectx.xinput.XInputDirectory;
@@ -319,7 +320,7 @@ public class MainFrame extends JPanel {
 
 				String name = ((XInputFile) collection.getInputFiles()[0]).getName(); 
 
-				String newoutname = CommonGui.getUserInput( name, Resource.getString("autoload.dialog.newOutName") + " " + name, collection.getOutputName());
+				String newoutname = CommonGui.getUserInput( name, Resource.getString("popup.newOutName") + " " + name, collection.getOutputName());
 
 				if (newoutname != null)
 				{
@@ -413,6 +414,40 @@ public class MainFrame extends JPanel {
 
 				if (xInputFile.exists())
 					new HexViewer().view(xInputFile);
+			}
+
+			/**
+			 *
+			 */
+			else if (actName.equals("fixHpAc3"))
+			{
+				int index = tableView.getSelectedRow();
+
+				if (index < 0 || tableView.getValueAt(index, 0) == null)
+					return;
+
+				JobCollection collection = Common.getCollection(Common.getActiveCollection());
+
+				XInputFile xInputFile = (XInputFile) collection.getInputFile(index);
+
+				if (xInputFile.exists())
+				{
+					HpFix hpfix = new HpFix();
+
+					Common.setOSDMessage("fixing wrong Hp Ac3 File...");
+
+					xInputFile = hpfix.process(xInputFile);
+
+					collection.removeInputFile(index);
+
+					if (xInputFile != null)
+						collection.addInputFile(index, xInputFile);
+
+					updateCollectionTable(collection.getCollectionAsTable());
+					updateCollectionPanel(Common.getActiveCollection());
+
+					tableView.clearSelection();
+				}
 			}
 
 			/**
@@ -737,6 +772,9 @@ public class MainFrame extends JPanel {
 		JMenuItem menuitem_10 = popup.add(Resource.getString("popup.changeTimestamp"));
 		menuitem_10.setActionCommand("changeTimestamp");
 
+		JMenuItem menuitem_12 = popup.add(Resource.getString("popup.fixHpAc3"));
+		menuitem_12.setActionCommand("fixHpAc3");
+
 		popup.addSeparator();
 
 	//	JMenuItem menuitem_7 = popup.add(Resource.getString("popup.sendtocl3"));
@@ -805,6 +843,7 @@ public class MainFrame extends JPanel {
 		menuitem_9.addActionListener(_MenuListener);
 		menuitem_10.addActionListener(_MenuListener);
 		menuitem_11.addActionListener(_MenuListener);
+		menuitem_12.addActionListener(_MenuListener);
 	}
 
 	/**
@@ -1350,10 +1389,10 @@ public class MainFrame extends JPanel {
 					if (elements == null)
 						return;
 
-					for (int i = 1; i < 7; i++)
+					for (int i = 1; i < 8; i++)
 						elements[i].getComponent().setEnabled(row >= 0);
 
-					for (int i = 7; i < elements.length; i++)
+					for (int i = 8; i < elements.length; i++)
 						elements[i].getComponent().setEnabled(index >= 0);
 
 					popup.show(tableView, e.getX(), e.getY() - popup.getHeight());
@@ -2137,7 +2176,7 @@ public class MainFrame extends JPanel {
 
 		UIManager.addPropertyChangeListener(new UISwitchListener(control_2));
 
-		autoload.setBounds(200, 200, 500, 300);
+		autoload.setBounds(200, 200, 700, 300);
 	}
 
 	/**
