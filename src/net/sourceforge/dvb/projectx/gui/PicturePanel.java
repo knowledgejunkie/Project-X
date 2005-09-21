@@ -96,6 +96,8 @@ public class PicturePanel extends JPanel {
 
 	private long cutfiles_length = 0;
 	private long[] cutfiles_points = null;
+	private long chapter_length = 0;
+	private long[] chapter_points = null;
 
 	private Object[] OSDInfo;
 
@@ -253,6 +255,7 @@ public class PicturePanel extends JPanel {
 		g.setFont(font_2);
 
 		paintCutInfo(g);
+		paintChapterInfo(g);
 		paintSubpicture(g);
 		paintOSDInfo(g);
 		paintFileInfo(g);
@@ -354,7 +357,7 @@ public class PicturePanel extends JPanel {
 		if (cutfiles_length <= 0)
 			return;
 
-		int x1 = 10, y1 = 326, w1 = 492, h1 = 6;
+		int x1 = 10, y1 = 327, w1 = 492, h1 = 6;
 
 		g.setColor(new Color(0, 200, 0));
 		g.fillRect(x1, y1, w1, h1);
@@ -397,6 +400,42 @@ public class PicturePanel extends JPanel {
 
 				g.setColor(new Color(150, 0, 0));
 				g.fillRect(x1 + p0, y1, w1 - p0, h1);
+			}
+		}
+	}
+
+	/**
+	 * paint chapter info
+	 */
+	private void paintChapterInfo(Graphics g)
+	{
+		if (chapter_length <= 0)
+			return;
+
+		int x1 = 10, y1 = 327, w1 = 492, h1 = 6;
+
+		/**
+		 * paint chapter markers
+		 */
+		if (chapter_points != null && chapter_points.length > 0)
+		{
+			int p0 = 0, p1 = 0;
+
+			for (int i = 0; i < chapter_points.length; i++)
+			{
+				if (chapter_points[i] > chapter_length)
+					break; 
+
+				p0 = i == 0 ? 0 : (int)(chapter_points[i - 1] * w1 / chapter_length);
+				p1 = (int)(chapter_points[i] * w1 / chapter_length);
+
+				g.setColor(new Color(195, 205, 255));
+				g.fillRect(x1 + p1 - 1, y1 - 4, 2, h1 + 8);
+
+				int[] x = { x1 + p1 - 1, x1 + p1 - 5, x1 + p1 + 5 };
+				int[] y = { y1 + h1 + 3, y1 + h1 + 3 + 5, y1 +h1 + 3 + 5 };
+
+				g.fillPolygon(x, y, 3);
 			}
 		}
 	}
@@ -671,6 +710,42 @@ public class PicturePanel extends JPanel {
 		{
 			cutfiles_length = 0;
 			cutfiles_points = null;
+		}
+
+		repaint();
+	}
+
+	/**
+	 * updates chapter symbols in preview info field
+	 *
+	 * @param1 - do_export bool
+	 * @param2 - chapterpoints list array
+	 * @param3 - previewlist of files
+	 */
+	public void showChapterIcon(Object[] obj, Object list)
+	{
+		List previewList = (List) list;
+
+		if (!previewList.isEmpty())
+		{
+			chapter_length = ((PreviewObject) previewList.get(previewList.size() - 1)).getEnd();
+
+			if (obj != null)
+			{
+				chapter_points = new long[obj.length];
+
+				for (int i = 0; i < chapter_points.length; i++)
+					chapter_points[i] = CommonParsing.parseCutValue(obj[i].toString(), false);
+			}
+
+			else
+				chapter_points = null;
+		}
+
+		else
+		{
+			chapter_length = 0;
+			chapter_points = null;
 		}
 
 		repaint();

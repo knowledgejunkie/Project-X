@@ -851,7 +851,7 @@ public class StreamDemultiplexer extends Object {
 				/**
 				 * celltimes.txt 
 				 */
-				if (CreateCellTimes)
+				if (CreateCellTimes && !cell.isEmpty())
 				{
 					BufferedWriter cellout = new BufferedWriter(new FileWriter(workouts + "CellTimes.txt"));
 
@@ -896,25 +896,25 @@ public class StreamDemultiplexer extends Object {
 	/**
 	 * temporary redirected access to goptest from video-es
 	 */
-	public void writeVideoES(JobProcessing job_processing, IDDBufferedOutputStream _out, byte[] _vidbuf, byte[] _vptsbytes, DataOutputStream _pts_log, String _parentname, int[] _MPGVideotype, List _CutpointList, boolean _doWrite)
+	public void writeVideoES(JobProcessing job_processing, IDDBufferedOutputStream _out, byte[] _vidbuf, byte[] _vptsbytes, DataOutputStream _pts_log, String _parentname, int[] _MPGVideotype, List _CutpointList, List _ChapterpointList, boolean _doWrite)
 	{
-		job_processing.getGop().goptest(job_processing, _out, _vidbuf, _vptsbytes, _pts_log, _parentname, _MPGVideotype, _CutpointList, _doWrite);
+		job_processing.getGop().goptest(job_processing, _out, _vidbuf, _vptsbytes, _pts_log, _parentname, _MPGVideotype, _CutpointList, _ChapterpointList, _doWrite);
 	}
 
 	/**
 	 * write video 
 	 * data = 1 pespacket from demux
 	 */
-	public void writeVideo(JobProcessing job_processing, byte[] pes_packet, boolean pes_hasHeader, List CutpointList)
+	public void writeVideo(JobProcessing job_processing, byte[] pes_packet, boolean pes_hasHeader, List CutpointList, List ChapterpointList)
 	{
-		writeVideo(job_processing, pes_packet, 0, pes_packet.length, pes_hasHeader, CutpointList);
+		writeVideo(job_processing, pes_packet, 0, pes_packet.length, pes_hasHeader, CutpointList, ChapterpointList);
 	}
 
 	/**
 	 * write video 
 	 * data = 1 pespacket from demux
 	 */
-	public void writeVideo(JobProcessing job_processing, byte[] pes_packet, int pes_packetoffset, int pes_payloadlength, boolean pes_hasHeader, List CutpointList)
+	public void writeVideo(JobProcessing job_processing, byte[] pes_packet, int pes_packetoffset, int pes_payloadlength, boolean pes_hasHeader, List CutpointList, List ChapterpointList)
 	{
 		int pes_extensionlength = 0;
 		int offset = pes_packetoffset;
@@ -1095,7 +1095,7 @@ public class StreamDemultiplexer extends Object {
 					vidbuf.write(data, j, i);
 
 					if (!first) 
-						job_processing.getGop().goptest(job_processing, out, vidbuf.toByteArray(), vptsbytes.toByteArray(), pts_log, parentname, MPGVideotype, CutpointList);
+						job_processing.getGop().goptest(job_processing, out, vidbuf.toByteArray(), vptsbytes.toByteArray(), pts_log, parentname, MPGVideotype, CutpointList, ChapterpointList);
 
 					vptsbytes.reset();
 					vidbuf.reset(); 

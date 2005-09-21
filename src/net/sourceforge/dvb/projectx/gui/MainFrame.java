@@ -248,7 +248,10 @@ public class MainFrame extends JPanel {
 					return;
 
 				try {
-					Runtime.getRuntime().exec( Common.getSettings().getProperty(Keys.KEY_PostCommands_Cmd3) + " \"" + Common.getCollection(Common.getActiveCollection()).getInputFile(index).toString() + "\"");
+					String str = Common.getSettings().getProperty(Keys.KEY_PostCommands_Cmd3);
+
+					if (str.trim().length() > 0)
+						Common.performCommand(str + " \"" + Common.getCollection(Common.getActiveCollection()).getInputFile(index).toString() + "\"");
 
 				} catch (Exception ex) {
 
@@ -430,7 +433,7 @@ public class MainFrame extends JPanel {
 
 				XInputFile xInputFile = (XInputFile) collection.getInputFile(index);
 
-				if (xInputFile.exists())
+				if (xInputFile.exists() && CommonGui.getUserConfirmation("really process '" + xInputFile.getName() + "' ?"))
 				{
 					HpFix hpfix = new HpFix();
 
@@ -767,6 +770,9 @@ public class MainFrame extends JPanel {
 		JMenuItem menuitem_6 = popup.add(Resource.getString("popup.patchbasics"));
 		menuitem_6.setActionCommand("editBasics");
 
+		JMenuItem menuitem_7 = popup.add(Resource.getString("popup.sendtocl3"));
+		menuitem_7.setActionCommand("sendTo3");
+
 		popup.addSeparator();
 
 		JMenuItem menuitem_10 = popup.add(Resource.getString("popup.changeTimestamp"));
@@ -776,9 +782,6 @@ public class MainFrame extends JPanel {
 		menuitem_12.setActionCommand("fixHpAc3");
 
 		popup.addSeparator();
-
-	//	JMenuItem menuitem_7 = popup.add(Resource.getString("popup.sendtocl3"));
-	//	menuitem_7.setActionCommand("sendTo3");
 
 		JMenuItem menuitem_11 = popup.add(Resource.getString("popup.copyInfoToClipboard"));
 		menuitem_11.setActionCommand("clipboard");
@@ -838,7 +841,7 @@ public class MainFrame extends JPanel {
 		menuitem_4.addActionListener(_MenuListener);
 		menuitem_5.addActionListener(_MenuListener);
 		menuitem_6.addActionListener(_MenuListener);	
-	//	menuitem_7.addActionListener(_MenuListener);
+		menuitem_7.addActionListener(_MenuListener);
 		menuitem_8.addActionListener(_MenuListener);
 		menuitem_9.addActionListener(_MenuListener);
 		menuitem_10.addActionListener(_MenuListener);
@@ -1389,10 +1392,10 @@ public class MainFrame extends JPanel {
 					if (elements == null)
 						return;
 
-					for (int i = 1; i < 8; i++)
+					for (int i = 1; i < 9; i++)
 						elements[i].getComponent().setEnabled(row >= 0);
 
-					for (int i = 8; i < elements.length; i++)
+					for (int i = 9; i < elements.length; i++)
 						elements[i].getComponent().setEnabled(index >= 0);
 
 					popup.show(tableView, e.getX(), e.getY() - popup.getHeight());
@@ -2517,6 +2520,10 @@ public class MainFrame extends JPanel {
 		final JLabel date = new JLabel();
 		final JLabel time = new JLabel();
 
+		final DateFormat long_format = DateFormat.getDateInstance(DateFormat.LONG);
+		final DateFormat medium_format = DateFormat.getTimeInstance(DateFormat.MEDIUM);
+
+
 		class Clock implements Runnable {
 			private Thread clockThread = null;
 
@@ -2569,7 +2576,7 @@ public class MainFrame extends JPanel {
 
 			private void updateDateLabel()
 			{
-				String str = DateFormat.getDateInstance(DateFormat.LONG).format(new Date());
+				String str = long_format.format(new Date());
 
 				if (str.equals(DateString))
 					return;
@@ -2581,7 +2588,7 @@ public class MainFrame extends JPanel {
 
 			private void updateTimeLabel()
 			{
-				time.setText(DateFormat.getTimeInstance(DateFormat.MEDIUM).format(new Date()));
+				time.setText(medium_format.format(new Date()));
 			}
 
 			public void stop()

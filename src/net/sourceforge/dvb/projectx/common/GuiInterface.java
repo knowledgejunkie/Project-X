@@ -418,6 +418,15 @@ public class GuiInterface implements GuiInterfaceIF {
 	/**
 	 *
 	 */
+	public void showChapterIcon(Object[] obj, Object list)
+	{
+		if (isAvailable())
+			impl.showChapterIcon(obj, list);
+	}
+
+	/**
+	 *
+	 */
 	public void updatePreviewPixel()
 	{
 		if (isAvailable())

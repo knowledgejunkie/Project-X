@@ -420,6 +420,14 @@ public class GuiInterfaceImpl implements GuiInterfaceIF {
 	/**
 	 *
 	 */
+	public void showChapterIcon(Object[] obj, Object list)
+	{
+		CommonGui.getPicturePanel().showChapterIcon(obj, list);
+	}
+
+	/**
+	 *
+	 */
 	public void updatePreviewPixel()
 	{
 		CommonGui.getPicturePanel().updatePreviewPixel();

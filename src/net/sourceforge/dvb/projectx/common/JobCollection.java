@@ -633,6 +633,53 @@ public class JobCollection extends Object {
 	/**
 	 *
 	 */
+	public void addChapterpoint(Object value)
+	{
+		if (!chapter_points.contains(value))
+			chapter_points.add(value);
+	}
+
+	/**
+	 *
+	 */
+	public void addChapterpoint(int index, Object value)
+	{
+		chapter_points.add(index, value);
+	}
+
+	/**
+	 *
+	 */
+	public void addChapterpoint(Object[] values)
+	{
+		for (int i = 0; i < values.length; i++)
+			addChapterpoint(values[i]);
+	}
+
+	/**
+	 *
+	 */
+	public void clearChapterpoints()
+	{
+		chapter_points.clear();
+	}
+
+	/**
+	 *
+	 */
+	public Object removeChapterpoint(int index)
+	{
+		if (index < 0 || index >= chapter_points.size())
+			return null;
+
+		Object obj = chapter_points.remove(index);
+
+		return obj;
+	}
+
+	/**
+	 *
+	 */
 	public Object[] getChapterpoints()
 	{
 		return chapter_points.toArray();
@@ -875,7 +922,7 @@ public class JobCollection extends Object {
 		str += line_separator;
 		str += Resource.getString("JobCollection.Cutpoints") + " " + getCutpointCount();
 		str += line_separator;
-		str += Resource.getString("JobCollection.Chapters") + " " + 0;
+		str += Resource.getString("JobCollection.Chapters") + " " + getChapterpointCount();
 		str += line_separator;
 		str += Resource.getString("JobCollection.PidSelection") + " " + getPIDCount();
 		str += line_separator;

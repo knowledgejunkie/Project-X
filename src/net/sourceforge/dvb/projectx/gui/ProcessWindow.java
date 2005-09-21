@@ -837,12 +837,12 @@ public class ProcessWindow extends JFrame {
 
 
 		JPanel main6 = new JPanel();
-		main6.setLayout(new GridLayout(1,1));
+		main6.setLayout(new GridLayout(1, 1));
 		main6.add(main5);
 
 		TextArea = new JTextArea();
 		TextArea.setEditable(true);
-		TextArea.setRows(4);
+		TextArea.setRows(16);
 		TextArea.setTabSize(12);
 		TextArea.setFont(new Font("Tahoma", Font.PLAIN, 12));
 
@@ -887,8 +887,8 @@ public class ProcessWindow extends JFrame {
 			{
 				if (Common.isRunningCLI())
 				{
-					System.out.print("\r" + (int)(Progressbar.getPercentComplete() * 100) + "% ");
-					System.out.print("" + Progressbar.getString());
+				//	System.out.print("\r" + (int)(Progressbar.getPercentComplete() * 100) + "% ");
+				//	System.out.print("" + Progressbar.getString());
 				}
 
 				else
@@ -939,6 +939,7 @@ public class ProcessWindow extends JFrame {
 		}
 
 		TextArea.append(Common.getLineSeparator() + msg);
+
 		viewport.setViewPosition(new Point(0, TextArea.getHeight()));
 	}
 

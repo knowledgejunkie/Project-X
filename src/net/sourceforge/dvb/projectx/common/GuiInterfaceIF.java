@@ -65,6 +65,7 @@ public interface GuiInterfaceIF {
 	public void repaintSubpicture();
 	public void setOSDMessage(String str, boolean b);
 	public void showCutIcon(boolean b, Object[] obj, Object list);
+	public void showChapterIcon(Object[] obj, Object list);
 	public void updatePreviewPixel();
 	public void repaintPicturePanel();
 

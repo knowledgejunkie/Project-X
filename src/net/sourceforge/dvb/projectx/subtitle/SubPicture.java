@@ -1046,6 +1046,9 @@ public class Subpicture extends Object {
 				for (int b=0; b<2; b++)
 					start_pos[b] = Get_Bits(data, BPos, 16);
 				break;
+			case 7: // extra alpha + color area definition
+				Get_Bits(data, BPos, 16);
+				break;
 			default:
 				Common.setMessage(Resource.getString("subpicture.msg3") + ": " + cmd_switch);
 			}

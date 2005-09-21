@@ -418,9 +418,7 @@ public class PreSettings extends JFrame {
 			Keys.KEY_WriteOptions_writeVideo,
 			Keys.KEY_WriteOptions_writeAudio,
 			Keys.KEY_additionalOffset,
-			Keys.KEY_ExportPanel_Export_Overlap,
-			Keys.KEY_OptionHorizontalResolution,
-			Keys.KEY_OptionDAR
+			Keys.KEY_ExportPanel_Export_Overlap
 		};
 
 		JCheckBox[] box = new JCheckBox[objects.length];
@@ -513,54 +511,6 @@ public class PreSettings extends JFrame {
 		op4.add(box[8]);
 		op4.add(box[9]);
 
-		op4.add(Box.createRigidArea(new Dimension(1, 8)));
-
-		op4.add(new JLabel(Resource.getString("CollectionPanel.ExportLimits")));
-
-		/**
-		 *
-		 */
-		JPanel CL2 = new JPanel();
-		CL2.setLayout(new BoxLayout(CL2, BoxLayout.X_AXIS));
-
-		box[12].setPreferredSize(new Dimension(110, 20));
-		box[12].setMaximumSize(new Dimension(110, 20));
-		CL2.add(box[12]);  
-
-
-		JComboBox combobox_34 = new JComboBox(Keys.ITEMS_ExportHorizontalResolution);
-		combobox_34.setMaximumRowCount(7);
-		combobox_34.setPreferredSize(new Dimension(90, 20));
-		combobox_34.setMaximumSize(new Dimension(90, 20));
-		combobox_34.setActionCommand(Keys.KEY_ExportHorizontalResolution[0]);
-		combobox_34.setEditable(true);
-		combobox_34.setSelectedItem(Common.getSettings().getProperty(Keys.KEY_ExportHorizontalResolution));
-		combobox_34.addActionListener(_ComboBoxItemListener);
-		CL2.add(combobox_34);
-
-		op4.add(CL2);
-
-
-		/**
-		 *
-		 */
-		JPanel CL3 = new JPanel();
-		CL3.setLayout(new BoxLayout(CL3, BoxLayout.X_AXIS));
-
-		box[13].setPreferredSize(new Dimension(80, 20));
-		box[13].setMaximumSize(new Dimension(80, 20));
-		CL3.add(box[13]);  
-
-		JComboBox combobox_24 = new JComboBox(Keys.ITEMS_ExportDAR);
-		combobox_24.setMaximumRowCount(7);
-		combobox_24.setPreferredSize(new Dimension(120, 20));
-		combobox_24.setMaximumSize(new Dimension(120, 20));
-		combobox_24.setActionCommand(Keys.KEY_ExportDAR[0]);
-		combobox_24.setSelectedIndex(Common.getSettings().getIntProperty(Keys.KEY_ExportDAR));
-		combobox_24.addActionListener(_ComboBoxIndexListener);
-		CL3.add(combobox_24);
-
-		op4.add(CL3);
 
 		exportPanel.add(op4);
 

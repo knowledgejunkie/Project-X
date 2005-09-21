@@ -186,7 +186,7 @@ public class Keys extends Object {
 	 * ExternPanel
 	 */
 	public final static String[] KEY_ExternPanel_createVdrIndex = { "ExternPanel.createVdrIndex", "0" }; //cbox[54]
-	public final static String[] KEY_ExternPanel_createCellTimes = { "ExternPanel.createCellTimes", "0" }; //cbox[26] !!
+	public final static String[] KEY_ExternPanel_createCellTimes = { "ExternPanel.createCellTimes", "1" }; //cbox[26] !!
 	public final static String[] KEY_ExternPanel_exportPts = { "ExternPanel.exportPts", "0" }; //cbox[64] !!
 	public final static String[] KEY_ExternPanel_save1stFrameOfGop = { "ExternPanel.save1stFrameOfGop", "0" }; //cbox[65]
 	public final static String[] KEY_ExternPanel_createChapters = { "ExternPanel.createChapters", "0" }; //cbox[63]

@@ -104,20 +104,31 @@ import net.sourceforge.dvb.projectx.gui.CommonGui;
 public class CollectionPanel extends JPanel {
 
 	private X_JFileChooser chooser;
-	private JTextField includeField;
-	private JTextField framecutfield;
+
 	private JList includeList;
 	private JSlider slider;
+
+	private JTextField includeField;
+	private JTextField cutfield;
+	private JTextField chapterfield;
 	private JTextField pointslength;
+	private JTextField chp;
 	private JTextField firstfile;
 	private JTextField scannedPID;
+
 	private JLabel titleLabel;
+
 	private JButton cutdel;
 	private JButton cutadd;
+	private JButton chapterdel;
+	private JButton chapteradd;
 	private JButton loadlist;
 	private JButton savelist;
+
 	private JComboBox cut_combobox;
+	private JComboBox chapter_combobox;
 	private JComboBox cutmode_combobox;
+
 	private JTabbedPane tabbedPane;
 
 	private List previewList = new ArrayList();
@@ -427,7 +438,7 @@ public class CollectionPanel extends JPanel {
 
 			else if (actName.equals("cutnumber") || actName.equals("addpoint"))
 			{
-				String value = framecutfield.getText();
+				String value = cutfield.getText();
 
 				if (!value.equals("") && addCutpoint(value))
 				{
@@ -435,7 +446,21 @@ public class CollectionPanel extends JPanel {
 						collection.setCutImage(value, Common.getMpvDecoderClass().getCutImage());
 				}
 
-				framecutfield.setText("");
+				cutfield.setText("");
+			}
+
+			else if (actName.equals("delchapter"))
+			{
+				if (chapter_combobox.getItemCount() > 0)
+					removeChapterpoint(chapter_combobox.getSelectedIndex());
+			}
+
+			else if (actName.equals("addchapter"))
+			{
+				String value = cutfield.getText();
+
+				if (!value.equals("") && addChapterpoint(value))
+				{}
 			}
 
 			else if (actName.equals("ID"))
@@ -468,7 +493,7 @@ public class CollectionPanel extends JPanel {
 			}
 
 			/**
-			 * changes will be saved instantly
+			 * changes will be saved immediately
 			 */
 			else if (actName.equals("transferPIDs"))
 			{
@@ -565,7 +590,36 @@ public class CollectionPanel extends JPanel {
 				updateCutView(String.valueOf(lastPosition));
 			}
 
+			/**
+			 * stuff completion for add and del chapterpoints
+			 */
+			if (chapter_combobox.getItemCount() > 0)
+			{
+				Object[] obj = collection.getChapterpoints();
 
+				int index = chapter_combobox.getSelectedIndex();
+
+				chapterfield.setText(String.valueOf(index + 1));
+
+				Common.getGuiInterface().showChapterIcon(obj, previewList);
+
+				if (actName.equals("chapterbox"))
+				{
+					if (Common.getSettings().getIntProperty(Keys.KEY_CutMode) == CommonParsing.CUTMODE_BYTE)
+						preview(Long.parseLong(obj[index].toString()));
+				}
+			}
+
+			else
+			{
+				Common.getGuiInterface().showChapterIcon(null, previewList);
+
+				chapterfield.setText("");
+			}
+
+			/**
+			 * 
+			 */
 			if (Common.getSettings().getIntProperty(Keys.KEY_CutMode) == CommonParsing.CUTMODE_BYTE)
 				slider.requestFocus();
 
@@ -615,7 +669,9 @@ public class CollectionPanel extends JPanel {
 		String[][] objects = {
 			Keys.KEY_Preview_fastDecode,
 			Keys.KEY_Preview_LiveUpdate,
-			Keys.KEY_Preview_AllGops
+			Keys.KEY_Preview_AllGops,
+			Keys.KEY_OptionHorizontalResolution,
+			Keys.KEY_OptionDAR
 		};
 
 		JCheckBox[] box = new JCheckBox[objects.length];
@@ -634,27 +690,86 @@ public class CollectionPanel extends JPanel {
 		for (int i = 0; i < 3; i++)
 			panel.add(box[i]);
 
-		panel.add(Box.createRigidArea(new Dimension(1, 32)));
+		panel.add(Box.createRigidArea(new Dimension(1, 4)));
 
 
-		panel.add(new JLabel(Resource.getString("CollectionPanel.PidList")));
+		panel.add(new JLabel(Resource.getString("CollectionPanel.ExportLimits")));
+
+		/**
+		 *
+		 */
+		JPanel CL2 = new JPanel();
+		CL2.setLayout(new BoxLayout(CL2, BoxLayout.X_AXIS));
+
+		box[3].setPreferredSize(new Dimension(110, 20));
+		box[3].setMaximumSize(new Dimension(110, 20));
+		CL2.add(box[3]);  
+
+
+		JComboBox combobox_34 = new JComboBox(Keys.ITEMS_ExportHorizontalResolution);
+		combobox_34.setMaximumRowCount(7);
+		combobox_34.setPreferredSize(new Dimension(90, 20));
+		combobox_34.setMaximumSize(new Dimension(90, 20));
+		combobox_34.setActionCommand(Keys.KEY_ExportHorizontalResolution[0]);
+		combobox_34.setEditable(true);
+		combobox_34.setSelectedItem(Common.getSettings().getProperty(Keys.KEY_ExportHorizontalResolution));
+		combobox_34.addActionListener(_ComboBoxItemListener);
+		CL2.add(combobox_34);
+
+		panel.add(CL2);
+
+
+		/**
+		 *
+		 */
+		JPanel CL3 = new JPanel();
+		CL3.setLayout(new BoxLayout(CL3, BoxLayout.X_AXIS));
+
+		box[4].setPreferredSize(new Dimension(80, 20));
+		box[4].setMaximumSize(new Dimension(80, 20));
+		CL3.add(box[4]);  
+
+		JComboBox combobox_24 = new JComboBox(Keys.ITEMS_ExportDAR);
+		combobox_24.setMaximumRowCount(7);
+		combobox_24.setPreferredSize(new Dimension(120, 20));
+		combobox_24.setMaximumSize(new Dimension(120, 20));
+		combobox_24.setActionCommand(Keys.KEY_ExportDAR[0]);
+		combobox_24.setSelectedIndex(Common.getSettings().getIntProperty(Keys.KEY_ExportDAR));
+		combobox_24.addActionListener(_ComboBoxIndexListener);
+		CL3.add(combobox_24);
+
+		panel.add(CL3);
+
+		panel.add(Box.createRigidArea(new Dimension(1, 4)));
+
+
+		/**
+		 *
+		 */
+		JPanel CL4 = new JPanel();
+		CL4.setLayout(new BoxLayout(CL4, BoxLayout.X_AXIS));
+		CL4.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), Resource.getString("CollectionPanel.PidList")));
 
 		includeField = new JTextField("");
 		includeField.setPreferredSize(new Dimension(80, 25));
+		includeField.setMaximumSize(new Dimension(80, 25));
 		includeField.setEditable(true);
 		includeField.setActionCommand("ID");
 		includeField.setToolTipText(Resource.getString("CollectionPanel.PidList.Tip1"));
 
 		includeList = new JList();
 		includeList.setToolTipText(Resource.getString("CollectionPanel.PidList.Tip2"));
-		panel.add(includeField);
+		CL4.add(includeField);
 
 		includeField.addActionListener(cutAction);
 
+		CL4.add(new JLabel("=>"));
+
 		JScrollPane scrollList = new JScrollPane();
-		scrollList.setPreferredSize(new Dimension(80, 140));
+		scrollList.setPreferredSize(new Dimension(80, 110));
+		scrollList.setMaximumSize(new Dimension(80, 110));
 		scrollList.setViewportView(includeList);
-		panel.add(scrollList);
+		CL4.add(scrollList);
 
 		includeList.addMouseListener( new MouseAdapter() {
 			public void mouseClicked(MouseEvent e)
@@ -672,6 +787,10 @@ public class CollectionPanel extends JPanel {
 			}
 		});
 
+		panel.add(CL4);
+
+		panel.add(Box.createRigidArea(new Dimension(1, 4)));
+
 		JButton pids = new JButton(Resource.getString("CollectionPanel.transferPids1"));
 		pids.setPreferredSize(new Dimension(220, 20));
 		pids.setMaximumSize(new Dimension(220, 20));
@@ -688,7 +807,7 @@ public class CollectionPanel extends JPanel {
 		cpoints.addActionListener(cutAction);
 		panel.add(cpoints);
 
-		//panel.add(Box.createRigidArea(new Dimension(1, 20)));
+		panel.add(Box.createRigidArea(new Dimension(1, 6)));
 
 		return panel;
 	}
@@ -925,7 +1044,7 @@ public class CollectionPanel extends JPanel {
 
 
 		DropTarget dropTarget_3 = new DropTarget(loadlist, dnd2);
-		DropTarget dropTarget_4 = new DropTarget(framecutfield, dnd2);
+		DropTarget dropTarget_4 = new DropTarget(cutfield, dnd2);
 
 		grid.add(cutPanel, BorderLayout.EAST);
 
@@ -1012,11 +1131,11 @@ public class CollectionPanel extends JPanel {
 		cutadd.setPreferredSize(new Dimension(34, 22));
 		cutadd.setMaximumSize(new Dimension(34, 22));
 
-		framecutfield = new JTextField("");
-		framecutfield.setPreferredSize(new Dimension(90, 22));
-		framecutfield.setMaximumSize(new Dimension(90, 22));
-		framecutfield.setToolTipText(Resource.getString("CollectionPanel.CutPanel.Tip4"));
-		framecutfield.setActionCommand("cutnumber");
+		cutfield = new JTextField("");
+		cutfield.setPreferredSize(new Dimension(112, 22));
+		cutfield.setMaximumSize(new Dimension(112, 22));
+		cutfield.setToolTipText(Resource.getString("CollectionPanel.CutPanel.Tip4"));
+		cutfield.setActionCommand("cutnumber");
 
 		/**
 		 *
@@ -1024,7 +1143,7 @@ public class CollectionPanel extends JPanel {
 		JPanel panel_1 = new JPanel();
 		panel_1.setLayout(new BoxLayout(panel_1, BoxLayout.X_AXIS));
 		panel_1.add(cutadd);
-		panel_1.add(framecutfield);
+		panel_1.add(cutfield);
 
 		/**
 		 *
@@ -1036,8 +1155,8 @@ public class CollectionPanel extends JPanel {
 
 		cut_combobox = new JComboBox();
 		cut_combobox.setMaximumRowCount(8);
-		cut_combobox.setPreferredSize(new Dimension(90, 22));
-		cut_combobox.setMaximumSize(new Dimension(90, 22));
+		cut_combobox.setPreferredSize(new Dimension(112, 22));
+		cut_combobox.setMaximumSize(new Dimension(112, 22));
 		cut_combobox.setActionCommand("cutbox");
 
 		/**
@@ -1058,15 +1177,15 @@ public class CollectionPanel extends JPanel {
 
 		JPanel panel_3 = new JPanel();
 		panel_3.setLayout(new GridLayout(1, 1));
-		panel_3.setPreferredSize(new Dimension(124, 22));
-		panel_3.setMaximumSize(new Dimension(124, 22));
-		panel_3.setMinimumSize(new Dimension(124, 22));
+		panel_3.setPreferredSize(new Dimension(146, 22));
+		panel_3.setMaximumSize(new Dimension(146, 22));
+		panel_3.setMinimumSize(new Dimension(146, 22));
 		panel_3.add(pointslength);
 
 		cutdel.addActionListener(cutAction);
 		cutadd.addActionListener(cutAction);
 		cut_combobox.addActionListener(cutAction);
-		framecutfield.addActionListener(cutAction);
+		cutfield.addActionListener(cutAction);
 
 		/**
 		 *
@@ -1093,76 +1212,68 @@ public class CollectionPanel extends JPanel {
 		/**
 		 *
 		 */
-		JButton _add = new JButton(CommonGui.loadIcon("add.gif"));
-		_add.setActionCommand("addpoint");
-		_add.setPreferredSize(new Dimension(34, 22));
-		_add.setMaximumSize(new Dimension(34, 22));
+		chapteradd = new JButton(CommonGui.loadIcon("add.gif"));
+		chapteradd.setActionCommand("addchapter");
+		chapteradd.setPreferredSize(new Dimension(34, 22));
+		chapteradd.setMaximumSize(new Dimension(34, 22));
 
-		_add.setEnabled(false);
+		chapterdel = new JButton(CommonGui.loadIcon("rem.gif"));
+		chapterdel.setActionCommand("delchapter");
+		chapterdel.setPreferredSize(new Dimension(34, 22));
+		chapterdel.setMaximumSize(new Dimension(34, 22));
 
-		JTextField _field = new JTextField("");
-		_field.setPreferredSize(new Dimension(90, 22));
-		_field.setMaximumSize(new Dimension(90, 22));
-		_field.setToolTipText(Resource.getString("CollectionPanel.CutPanel.Tip4"));
-		_field.setActionCommand("chapternumber");
-
-		_field.setEnabled(false);
+		chapterfield = new JTextField("");
+		chapterfield.setPreferredSize(new Dimension(34, 22));
+		chapterfield.setMaximumSize(new Dimension(34, 22));
+		chapterfield.setEditable(false);
 
 		/**
 		 *
 		 */
 		JPanel panel_1 = new JPanel();
 		panel_1.setLayout(new BoxLayout(panel_1, BoxLayout.X_AXIS));
-		panel_1.add(_add);
-		panel_1.add(_field);
+		panel_1.add(chapteradd);
+		panel_1.add(chapterdel);
+		panel_1.add(chapterfield);
 
 		/**
 		 *
 		 */
-		JButton _del = new JButton(CommonGui.loadIcon("rem.gif"));
-		_del.setActionCommand("delpoint");
-		_del.setPreferredSize(new Dimension(34, 22));
-		_del.setMaximumSize(new Dimension(34, 22));
 
-		_del.setEnabled(false);
-
-		JComboBox _combo = new JComboBox();
-		_combo.setMaximumRowCount(8);
-		_combo.setPreferredSize(new Dimension(90, 22));
-		_combo.setMaximumSize(new Dimension(90, 22));
-		_combo.setActionCommand("chapterbox");
-
-		_combo.setEnabled(false);
+		chapter_combobox = new JComboBox();
+		chapter_combobox.setMaximumRowCount(8);
+		chapter_combobox.setPreferredSize(new Dimension(102, 22));
+		chapter_combobox.setMaximumSize(new Dimension(102, 22));
+		chapter_combobox.setActionCommand("chapterbox");
 
 		/**
 		 *
 		 */
 		JPanel panel_2 = new JPanel();
 		panel_2.setLayout(new BoxLayout(panel_2, BoxLayout.X_AXIS));
-		panel_2.add(_del);
-		panel_2.add(_combo);
+		panel_2.add(chapter_combobox);
 
 		/**
 		 *
 		 */
-		JTextField chp = new JTextField(Resource.getString("CollectionPanel.NumberOfChapters"));
+		chp = new JTextField(Resource.getString("CollectionPanel.NumberOfChapters"));
 		chp.setToolTipText(Resource.getString("CollectionPanel.NumberOfChapters.Tip"));
 		chp.setBackground(new java.awt.Color(230, 230, 230));
 		chp.setEditable(false);
 
 		JPanel panel_3 = new JPanel();
 		panel_3.setLayout(new GridLayout(1, 1));
-		panel_3.setPreferredSize(new Dimension(124, 22));
-		panel_3.setMaximumSize(new Dimension(124, 22));
-		panel_3.setMinimumSize(new Dimension(124, 22));
+		panel_3.setPreferredSize(new Dimension(102, 22));
+		panel_3.setMaximumSize(new Dimension(102, 22));
+		panel_3.setMinimumSize(new Dimension(102, 22));
 		panel_3.add(chp);
 
 
-/**		_del.addActionListener(cutAction);
-		_add.addActionListener(cutAction);
-		_combobox.addActionListener(cutAction);
+		chapterdel.addActionListener(cutAction);
+		chapteradd.addActionListener(cutAction);
+		chapter_combobox.addActionListener(cutAction);
 		chp.addActionListener(cutAction);
-**/
+
 		/**
 		 *
 		 */
@@ -1173,8 +1284,8 @@ public class CollectionPanel extends JPanel {
 		panel.add(panel_3);
 
 		Color c = new Color(195, 205, 255);
-		setComponentColor(_add, c);
-		setComponentColor(_del, c);
+		setComponentColor(chapteradd, c);
+		setComponentColor(chapterdel, c);
 		setComponentColor(panel, c);
 
 		return panel;
@@ -1185,6 +1296,9 @@ public class CollectionPanel extends JPanel {
 	 */
 	private void getType()
 	{
+		/**
+		 * cuts
+		 */
 		Object[] obj = collection != null ? collection.getCutpoints() : new Object[0];
 		int index;
 
@@ -1197,6 +1311,18 @@ public class CollectionPanel extends JPanel {
 
 		else
 			Common.getGuiInterface().showCutIcon(true, null, previewList);
+
+		/**
+		 * chapters
+		 */
+		obj = collection != null ? collection.getChapterpoints() : new Object[0];
+
+		if (obj.length > 0)
+			Common.getGuiInterface().showChapterIcon(obj, previewList);
+
+		else
+			Common.getGuiInterface().showChapterIcon(null, previewList);
+
 	}
 
 	/**
@@ -1257,7 +1383,7 @@ public class CollectionPanel extends JPanel {
 				int i = str.indexOf('-');
 
 				String _str = str.substring(0, i + 2);
-				str = _str + "..." + str.substring(i + 2, str.length());
+				str = _str + "..." + str.substring(i + 2 + (str.length() - 34 - i), str.length());
 			}
 
 			firstfile.setText(str);
@@ -1267,7 +1393,7 @@ public class CollectionPanel extends JPanel {
 			lastPosition = position;
 
 			slider.setValue((int)(lastPosition / 16));
-			framecutfield.setText(String.valueOf(lastPosition));
+			cutfield.setText(String.valueOf(lastPosition));
 			slider.requestFocus();
 
 		} catch (IOException e6) {
@@ -1283,6 +1409,64 @@ public class CollectionPanel extends JPanel {
 		action = true;
 
 		return lastPosition;
+	}
+
+	/**
+	 * 
+	 */
+	private boolean addChapterpoint(String value)
+	{
+		int index = 0;
+
+		index = getCutIndex(collection.getChapterpoints(), value);
+
+		if (index >= 0)
+			return false;
+
+		collection.addChapterpoint(-index - 1, value);
+
+		reloadChapterpoints();
+
+		chapter_combobox.setSelectedItem(value);
+
+		return true;
+	}
+
+	/**
+	 * 
+	 */
+	private Object removeChapterpoint(int index)
+	{
+		Object obj = collection.removeChapterpoint(index);
+
+		reloadChapterpoints();
+
+		Object[] objects = collection.getChapterpoints();
+
+		if (objects.length > 0)
+		{
+			int _index = -getCutIndex(collection.getChapterpoints(), obj.toString()) - 1;
+
+			if (_index >= objects.length)
+				_index = objects.length - 1;
+ 
+			chapter_combobox.setSelectedIndex(_index);
+		}
+
+		return obj;
+	}
+
+	/**
+	 * 
+	 */
+	private void reloadChapterpoints()
+	{
+		chapter_combobox.removeAllItems();
+
+		Object[] object = collection != null ? collection.getChapterpoints() : new Object[0];
+
+		for (int i = 0; i < object.length; i++)
+			chapter_combobox.addItem(object[i]);
 	}
 
 	/**
@@ -1381,9 +1565,9 @@ public class CollectionPanel extends JPanel {
 			return;
 		}
 
-		Object[] listData = collection.getCutpoints();
+		Object[] listData = collection == null ? null : collection.getCutpoints();
 
-		if (listData.length == 0)
+		if (listData == null || listData.length == 0)
 		{
 			cutview.clearViews();
 			return;
@@ -1426,7 +1610,9 @@ public class CollectionPanel extends JPanel {
 		includeList.setListData(new Object[0]);
 		previewList.clear();
 		reloadCutpoints();
+		reloadChapterpoints();
 		Common.getGuiInterface().showCutIcon(true, null, previewList);
+		Common.getGuiInterface().showChapterIcon(null, previewList);
 
 		scannedPID.setText(Resource.getString("CollectionPanel.Preview.offline"));
 		firstfile.setText("");
@@ -1539,6 +1725,7 @@ public class CollectionPanel extends JPanel {
 		action = false;
 
 		reloadCutpoints();
+		reloadChapterpoints();
 		cut_combobox.setSelectedIndex(cut_combobox.getItemCount() - 1);
 
 		getExpectedSize();
@@ -1730,6 +1917,7 @@ public class CollectionPanel extends JPanel {
 		String length = Common.getSettings().getIntProperty(Keys.KEY_CutMode) == CommonParsing.CUTMODE_BYTE ? (Resource.getString("CollectionPanel.expectedSize") + ((end - diff) / 1048576L) + "MB") : "";
 
 		pointslength.setText(length);
+		chp.setText(Resource.getString("CollectionPanel.NumberOfChapters") + " " + chapter_combobox.getItemCount());
 	}
 
 	private void setTitle(String str)

@@ -99,9 +99,6 @@ public class Scan extends Object {
 
 		StreamInfo streamInfo = aXInputFile.getStreamInfo();
 
-//hier daten vergleichen, ob neuer scan notwendig
-//auf name, ort, datum, größe, stromtyp
-//wenn streaminfo != null und keine änderung bzw. autom. streamermittlung, dann kein neuer scan
 		if (aXInputFile.exists())
 		{
 			if (streamInfo == null)
@@ -480,23 +477,22 @@ public class Scan extends Object {
 
 			if ( (0xF0 & id) == 0xE0)
 			{
-				try 
-				{
+				try {
 					checkVid(scanobject.getData());
-				}
-				catch  ( Exception e)
-				{ 
+
+				} catch (Exception e) { 
+
 					video_streams.add(msg_8); 
 				}
 			}
+
 			else
 			{
-				try 
-				{
+				try {
 					checkPES(scanobject.getData());
-				}
-				catch  ( Exception e)
-				{ 
+
+				} catch (Exception e) { 
+
 					audio_streams.add(msg_8); 
 				}
 			}
@@ -555,23 +551,21 @@ public class Scan extends Object {
 
 			if (str.equals("1"))
 			{
-				try 
-				{
+				try {
 					checkVid(scanobject.getData());
-				}
-				catch  ( Exception e)
-				{ 
+
+				} catch  ( Exception e) { 
+
 					video_streams.add(msg_8); 
 				}
 			}
 			else
 			{
-				try 
-				{
+				try {
 					checkPES(scanobject.getData());
-				}
-				catch  ( Exception e)
-				{ 
+
+				} catch  ( Exception e) { 
+
 					audio_streams.add(msg_8); 
 				}
 			}
@@ -1370,9 +1364,11 @@ public class Scan extends Object {
 	}
 
 
+	/**
+	 *
+	 */
+	private class ScanObject {
 
-	class ScanObject
-	{
 		private ByteArrayOutputStream buf = null;
 		private int id;
 		private int type;

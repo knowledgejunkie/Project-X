@@ -176,15 +176,15 @@ public class Gop extends Object {
 	/**
 	 * gop changing/testing
 	 */
-	public void goptest(JobProcessing job_processing, IDDBufferedOutputStream video_sequence, byte[] gop, byte[] pts, DataOutputStream log, String dumpname, int[] MPGVideotype, List CutpointList)
+	public void goptest(JobProcessing job_processing, IDDBufferedOutputStream video_sequence, byte[] gop, byte[] pts, DataOutputStream log, String dumpname, int[] MPGVideotype, List CutpointList, List ChapterpointList)
 	{
-		goptest(job_processing, video_sequence, gop, pts, log, dumpname, MPGVideotype, CutpointList, true);
+		goptest(job_processing, video_sequence, gop, pts, log, dumpname, MPGVideotype, CutpointList, ChapterpointList, true);
 	}
 
 	/**
 	 * gop changing/testing
 	 */
-	public void goptest(JobProcessing job_processing, IDDBufferedOutputStream video_sequence, byte[] gop, byte[] pts, DataOutputStream log, String dumpname, int[] MPGVideotype, List CutpointList, boolean doWrite)
+	public void goptest(JobProcessing job_processing, IDDBufferedOutputStream video_sequence, byte[] gop, byte[] pts, DataOutputStream log, String dumpname, int[] MPGVideotype, List CutpointList, List ChapterpointList, boolean doWrite)
 	{
 		int[] clv = job_processing.getStatusVariables();
 
@@ -336,7 +336,7 @@ public class Gop extends Object {
 		boolean writeframe = true;
 		boolean is_I_Frame = false;
 		boolean d2vinsert = false;
-		boolean mpegtype = false;
+		boolean mpeg2type = false;
 		boolean format_changed = false;
 		boolean error = false;
 		boolean broken_link = false;
@@ -378,10 +378,8 @@ public class Gop extends Object {
 				System.arraycopy(headerrescue, 0, newgop, 0, headerrescue.length);
 				System.arraycopy(gop, 0, newgop, headerrescue.length, gop.length);
 
-			//	gop = new byte[newgop.length];
 				gop = newgop; 
 
-			//	newgop = null;
 				job_processing.setSequenceHeader(true);
 
 				for (int a = 0; a < vpts[1].length; a++) 
@@ -395,10 +393,8 @@ public class Gop extends Object {
 				System.arraycopy(headerrescue, 0, newgop, 0, headerrescue.length);
 				System.arraycopy(gop, 0, newgop, headerrescue.length, gop.length);
 
-			//	gop = new byte[newgop.length];
 				gop = newgop; 
 
-			//	newgop = null;
 				job_processing.setSequenceHeader(true);
 
 				for (int a = 0; a < vpts[1].length; a++) 
@@ -412,10 +408,8 @@ public class Gop extends Object {
 				System.arraycopy(headerrescue, 0, newgop, 0, headerrescue.length);
 				System.arraycopy(gop, 0, newgop, headerrescue.length, gop.length);
 
-			//	gop = new byte[newgop.length];
 				gop = newgop; 
 
-			//	newgop = null;
 				job_processing.setSequenceHeader(true);
 
 				for (int a = 0; a < vpts[1].length; a++) 
@@ -596,10 +590,10 @@ public class Gop extends Object {
 					continue goploop;
 				}
 
-				else if (!mpegtype && pes_ID == CommonParsing.EXTENSION_START_CODE && gop[s + 4]>>>4 == 1)    /*** 0xb5 sequence extension ***/
+				else if (!mpeg2type && pes_ID == CommonParsing.EXTENSION_START_CODE && gop[s + 4]>>>4 == 1)    /*** 0xb5 sequence extension ***/
 				{
 					MPGVideotype[0] = 1;
-					mpegtype = true; 
+					mpeg2type = true; 
 					prog_seq = s + 5;
 					SDE_marker = s + 10;
 					s += 9;
@@ -1256,12 +1250,14 @@ public class Gop extends Object {
 							job_processing.countMediaFilesExportLength(+4);
 							job_processing.countAllMediaFilesExportLength(+4);
 							job_processing.countProjectFileExportLength(+4);
+
+							job_processing.addCellTime(String.valueOf(job_processing.getExportedVideoFrameNumber()));
 						}
 
 						/**
 						 * add SDE, mpeg2 only
 						 */
-						if (mpegtype && AddSequenceDisplayExension && !SDE_found && job_processing.hasSequenceHeader())
+						if (mpeg2type && AddSequenceDisplayExension && !SDE_found && job_processing.hasSequenceHeader())
 						{
 							int offs = SDE_marker != -1 ? SDE_marker : headerrescue.length;
 
@@ -1280,6 +1276,9 @@ public class Gop extends Object {
 						}
 
 						job_processing.countMediaFilesExportLength(gop.length);
+
+						if (ChapterpointList.indexOf(String.valueOf(cutposition)) >= 0)
+							job_processing.addCellTime(String.valueOf(job_processing.getExportedVideoFrameNumber()));
 
 						doExport = true;
 					}

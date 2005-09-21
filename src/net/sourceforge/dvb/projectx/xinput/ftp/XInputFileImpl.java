@@ -327,7 +327,7 @@ public class XInputFileImpl implements XInputFileIF {
 
 		if (debug) System.out.println("gIS name " + getName());
 
-		xIs = new XInputStream(client.retrieveFileStream(getName()));
+		xIs = new XInputStream(client.retrieveFileStream(ftpFile.getName()));
 
 		if (debug) System.out.println("gIS retriveStream " + client.getReplyString());
 
@@ -536,7 +536,7 @@ public class XInputFileImpl implements XInputFileIF {
 		client.setRestartOffset(aPosition);  //void
 		if (debug) System.out.println("rAS REST " + client.getReplyString() + " /aP " + aPosition);
 
-		in = new DataInputStream(client.retrieveFileStream(getName()));
+		in = new DataInputStream(client.retrieveFileStream(ftpFile.getName()));
 		if (debug) System.out.println("rAS retriveStream " + client.getReplyString());
 	}
 

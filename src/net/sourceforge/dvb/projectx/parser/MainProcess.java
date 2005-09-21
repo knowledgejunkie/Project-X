@@ -308,11 +308,19 @@ public class MainProcess extends Thread {
 
 					collection.setLogFiles();
 
+					/**
+					 * gets collection priority of action type
+					 */
+					int action = collection.getActionType();
+
+					if (action < 0)
+						action = Common.getSettings().getIntProperty(Keys.KEY_ConversionMode);
+
 					/** 
 					 * quick pre-run for TS autoPMT 
 					 * depends also on collection priority of action type
 					 */ 
-					if (!CommonParsing.isInfoScan() && collection.getActionType() == CommonParsing.ACTION_TO_TS && Common.getSettings().getBooleanProperty(Keys.KEY_TS_generatePmt))
+					if (!CommonParsing.isInfoScan() && action == CommonParsing.ACTION_TO_TS && Common.getSettings().getBooleanProperty(Keys.KEY_TS_generatePmt))
 					{
 						Common.setMessage("");
 						Common.setMessage(Resource.getString("run.start.quick.info"));
@@ -463,7 +471,7 @@ public class MainProcess extends Thread {
 		 * exit on CLI mode
 		 */
 		if (Common.isRunningCLI() || Common.getSettings().getBooleanProperty(Keys.KEY_closeOnEnd))
-			Common.exitApplication(0);
+			Common.exitApplication(stop_on_error ? 1 : 0);
 
 		Common.getGuiInterface().resetMainFrameTitle();
 	}  
@@ -1049,9 +1057,7 @@ public class MainProcess extends Thread {
 				Common.performPostCommand(lastlist);
 		}
 
-		Common.setMessage("=> " + Common.formatNumber(job_processing.getMediaFilesExportLength()) + " " + Resource.getString("working.bytes.written"));
-
-		Toolkit.getDefaultToolkit().beep();
+		Common.setMessage("=> " + Common.formatNumber(job_processing.getMediaFilesExportLength()) + " " + Resource.getString("working.bytes.written"), false, 0xEFFFEF);
 
 		//yield();
 
@@ -1080,6 +1086,8 @@ public class MainProcess extends Thread {
 		}
 
 		job_processing.setSplitSize(splitsize);
+
+		Toolkit.getDefaultToolkit().beep();
 	}
 
 
@@ -2170,6 +2178,7 @@ public class MainProcess extends Thread {
 				startPoint = job_processing.getLastHeaderBytePosition() - (1048576L * (Common.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1));
 
 			List CutpointList = collection.getCutpointList();
+			List ChapterpointList = collection.getChapterpointList();
 
 			/** 
 			 * jump near to first cut-in point to collect more audio
@@ -2385,7 +2394,7 @@ public class MainProcess extends Thread {
 
 											job_processing.setSequenceHeader(true);
 											job_processing.setNewVideoStream(true);
-											job_processing.addCellTime(String.valueOf(job_processing.getExportedVideoFrameNumber()));
+										//	job_processing.addCellTime(String.valueOf(job_processing.getExportedVideoFrameNumber()));
 										}
 									}
 								}
@@ -2897,7 +2906,7 @@ public class MainProcess extends Thread {
 								if (pesID0 != streamdemultiplexer.getID()) 
 									continue zeropacketloop;
 
-								streamdemultiplexer.writeVideo(job_processing, pes_packet, 0, pes_packetlength, true, CutpointList);
+								streamdemultiplexer.writeVideo(job_processing, pes_packet, 0, pes_packetlength, true, CutpointList, ChapterpointList);
 							}
 							else 
 								streamdemultiplexer.write(job_processing, pes_packet, 0, pes_packetlength, true);
@@ -2957,7 +2966,7 @@ public class MainProcess extends Thread {
 
 							job_processing.setSequenceHeader(true);
 							job_processing.setNewVideoStream(true);
-							job_processing.addCellTime(String.valueOf(job_processing.getExportedVideoFrameNumber()));
+					//		job_processing.addCellTime(String.valueOf(job_processing.getExportedVideoFrameNumber()));
 						}
 					}
 
@@ -3359,6 +3368,7 @@ public class MainProcess extends Thread {
 				startPoint = job_processing.getLastHeaderBytePosition() - (1048576L * (Common.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1));
 
 			List CutpointList = collection.getCutpointList();
+			List ChapterpointList = collection.getChapterpointList();
 
 			/**
 			 * jump near to first cut-in point to collect more audio
@@ -4088,7 +4098,7 @@ public class MainProcess extends Thread {
 
 											if (action == CommonParsing.ACTION_DEMUX)
 											{
-												streamdemultiplexer.writeVideo(job_processing, pes_packet, i, pes_remaininglength, true, CutpointList);
+												streamdemultiplexer.writeVideo(job_processing, pes_packet, i, pes_remaininglength, true, CutpointList, ChapterpointList);
 												job_processing.setCutByteposition(next_CUT_BYTEPOSITION);
 											}
 
@@ -4106,7 +4116,7 @@ public class MainProcess extends Thread {
 
 											if (action == CommonParsing.ACTION_DEMUX)
 											{
-												streamdemultiplexer.writeVideo(job_processing, pes_packet, j, pes_remaininglength + 3, true, CutpointList);
+												streamdemultiplexer.writeVideo(job_processing, pes_packet, j, pes_remaininglength + 3, true, CutpointList, ChapterpointList);
 												job_processing.setCutByteposition(next_CUT_BYTEPOSITION);
 											}
 
@@ -4161,7 +4171,7 @@ public class MainProcess extends Thread {
 					size += nextXInputFile.length();
 					base = count;
 
-					job_processing.addCellTime(String.valueOf(job_processing.getExportedVideoFrameNumber()));
+				//	job_processing.addCellTime(String.valueOf(job_processing.getExportedVideoFrameNumber()));
 
 					Common.setMessage(Resource.getString("parseTS.actual.vframes") + " " + job_processing.getExportedVideoFrameNumber());
 					Common.setMessage(Resource.getString("parseTS.switch.to") + " " + nextXInputFile + " (" + Common.formatNumber(nextXInputFile.length()) + " bytes)");
@@ -4821,6 +4831,7 @@ public class MainProcess extends Thread {
 				startPoint = job_processing.getLastHeaderBytePosition() - (1048576L * (Common.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1));
 
 			List CutpointList = collection.getCutpointList();
+			List ChapterpointList = collection.getChapterpointList();
 
 			/**
 			 * jump near to first cut-in point to collect more audio
@@ -5234,7 +5245,7 @@ public class MainProcess extends Thread {
 					if (action == CommonParsing.ACTION_DEMUX)
 					{
 						if (streamdemultiplexer.getType() == CommonParsing.MPEG_VIDEO) 
-							streamdemultiplexer.writeVideo(job_processing, pva_packet, pva_packetoffset, pva_payloadlength, false, CutpointList);
+							streamdemultiplexer.writeVideo(job_processing, pva_packet, pva_packetoffset, pva_payloadlength, false, CutpointList, ChapterpointList);
 
 						else
 						{ 
@@ -5377,7 +5388,7 @@ public class MainProcess extends Thread {
 							job_processing.setNewVideoStream(true);
 						}
 
-						job_processing.addCellTime(String.valueOf(job_processing.getExportedVideoFrameNumber()));
+					//	job_processing.addCellTime(String.valueOf(job_processing.getExportedVideoFrameNumber()));
 					}
 
 					XInputFile nextXInputFile = (XInputFile) collection.getInputFile(job_processing.countFileNumber(+1));
@@ -10366,6 +10377,7 @@ public class MainProcess extends Thread {
 			}
 
 			List CutpointList = collection.getCutpointList();
+			List ChapterpointList = collection.getChapterpointList();
 
 			/**
 			 * if you do so, there's no common entry point with audio anymore,
@@ -10494,7 +10506,7 @@ public class MainProcess extends Thread {
 							}
 
 							// route through demuxer
-							streamdemultiplexer.writeVideoES(job_processing, vstream, es_packet, vptsbytes, vlog, fparent, MPGVideotype, CutpointList, doWrite);
+							streamdemultiplexer.writeVideoES(job_processing, vstream, es_packet, vptsbytes, vlog, fparent, MPGVideotype, CutpointList, ChapterpointList, doWrite);
 						}
 
 						es_packetbuffer.reset();

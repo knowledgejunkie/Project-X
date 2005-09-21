@@ -756,8 +756,8 @@ public class CommonParsing extends Object {
 
 							saveCuts(comparePoint, startPTS, lastframes, cuts_filename);
 
-							if (lastframes > 0) 
-								cell.add("" + lastframes); // celltimes for cutin
+						//	if (lastframes > 0) 
+						//		cell.add("" + lastframes); // celltimes for cutin
 
 							break;
 						}
@@ -788,8 +788,8 @@ public class CommonParsing extends Object {
 
 					saveCuts(comparePoint, startPTS, lastframes, cuts_filename);
 
-					if (lastframes > 0) 
-						cell.add("" + lastframes); // celltimes for cutin
+				//	if (lastframes > 0) 
+				//		cell.add("" + lastframes); // celltimes for cutin
 
 					if (_cutcount >= ctemp.size()) 
 						return _bool;
