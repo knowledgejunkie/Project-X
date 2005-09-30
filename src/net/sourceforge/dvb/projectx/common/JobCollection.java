@@ -51,8 +51,8 @@ import net.sourceforge.dvb.projectx.parser.Gop;
 import net.sourceforge.dvb.projectx.parser.GopArray;
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
 
-import net.sourceforge.dvb.projectx.thirdparty.D2V;
-import net.sourceforge.dvb.projectx.thirdparty.Chapters;
+//import net.sourceforge.dvb.projectx.thirdparty.D2V;
+//import net.sourceforge.dvb.projectx.thirdparty.Chapters;
 
 /**
  * saves all stuff of a collection
@@ -108,9 +108,10 @@ public class JobCollection extends Object {
 	/**
 	 * 
 	 */
-	public JobCollection(String _output_directory, String _output_name, int _action_type, List _cut_points, List _input_files, List _predefined_IDs)
+	public JobCollection(String _output_directory, String _output_name, int _action_type, List _cut_points, List _chapter_points, List _input_files, List _predefined_IDs)
 	{
 		cut_points = copyListElements(_cut_points);
+		chapter_points = copyListElements(_chapter_points);
 		input_files = copyListElements(_input_files);
 		predefined_IDs = copyListElements(_predefined_IDs);
 
@@ -148,7 +149,7 @@ public class JobCollection extends Object {
 	 */
 	public JobCollection getNewInstance()
 	{
-		return (new JobCollection(output_directory, output_name, action_type, cut_points, input_files, predefined_IDs));
+		return (new JobCollection(output_directory, output_name, action_type, cut_points, chapter_points, input_files, predefined_IDs));
 	}
 
 	/**

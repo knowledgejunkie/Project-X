@@ -62,7 +62,6 @@ public class Keys extends Object {
 	public final static String[] KEY_PostCommands_Cmd7 = { "PostCommands.Cmd7", "" }; 
 	public final static String[] KEY_PostCommands_Cmd8 = { "PostCommands.Cmd8", "" }; 
 
-
 	/**
 	 * MessagePanel
 	 */
@@ -73,6 +72,7 @@ public class Keys extends Object {
 	public final static String[] KEY_MessagePanel_Msg5 = { "MessagePanel.logWSS", "1" }; //WSS
 	public final static String[] KEY_MessagePanel_Msg6 = { "MessagePanel.logVPS", "1" }; //VPS
 	public final static String[] KEY_MessagePanel_Msg7 = { "MessagePanel.logRDS", "1" }; //RDS
+	public final static String[] KEY_MessagePanel_Msg8 = { "MessagePanel.log100Errors", "0" };
 
 	/**
 	 * MainPanel
@@ -139,7 +139,7 @@ public class Keys extends Object {
 	public final static String[] KEY_StartPath_Value = { "OptionPanel.StartPath.Value", "" }; 
 	public final static String[] KEY_MainBuffer = { "OptionPanel.MainBuffer", "4096000" }; //combobox[10]
 	public final static String[] KEY_ScanBuffer = { "OptionPanel.ScanBuffer", "1024000" }; //combobox[37]
-	public final static String[] KEY_PreviewBuffer = { "OptionPanel.PreviewBuffer", "512000" }; //combobox[38]
+	public final static String[] KEY_PreviewBuffer = { "OptionPanel.PreviewBuffer", "768000" }; //combobox[38]
 	public final static String[] KEY_holdStreamInfoOnOSD = { "OptionPanel.holdStreamInfoOnOSD", "0" };
 
 
@@ -190,7 +190,7 @@ public class Keys extends Object {
 	public final static String[] KEY_ExternPanel_exportPts = { "ExternPanel.exportPts", "0" }; //cbox[64] !!
 	public final static String[] KEY_ExternPanel_save1stFrameOfGop = { "ExternPanel.save1stFrameOfGop", "0" }; //cbox[65]
 	public final static String[] KEY_ExternPanel_createChapters = { "ExternPanel.createChapters", "0" }; //cbox[63]
-	public final static String[] KEY_ExternPanel_renameAudio = { "ExternPanel.renameAudio", "1" }; //cbox[16]
+	public final static String[] KEY_ExternPanel_renameAudio = { "ExternPanel.renameAudio", "0" }; //cbox[16]
 	public final static String[] KEY_ExternPanel_renameVideo = { "ExternPanel.renameVideo", "0" }; //cbox[32]
 	public final static String[] KEY_ExternPanel_appendExtension = { "ExternPanel.appendExtension", "0" }; //cbox[66] !!
 	public final static String[] KEY_ExternPanel_createM2sIndex = { "ExternPanel.createM2sIndex", "0" }; //cbox[34] 
@@ -279,6 +279,7 @@ public class Keys extends Object {
 	public final static String[] KEY_AudioPanel_addRiffToMpgAudioL3 = { "AudioPanel.addRiffToMpgAudioL3", "0" }; //cbox[4] + rbutton[15] riff für layer3
 	public final static String[] KEY_AudioPanel_PitchValue = { "AudioPanel.PitchValue", "0" }; 
 	public final static String[] KEY_AudioPanel_NormalizeValue = { "AudioPanel.NormalizeValue", "98" }; 
+	public final static String[] KEY_AudioPanel_createDDWave = { "AudioPanel.createDDWave", "0" };
 
 	public final static String[] KEY_AudioPanel_loslessMpaConversionMode = { "AudioPanel.loslessMpaConversionMode", "0" }; 
 

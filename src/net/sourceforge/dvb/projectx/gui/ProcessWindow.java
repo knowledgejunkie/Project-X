@@ -341,6 +341,7 @@ public class ProcessWindow extends JFrame {
 			Keys.KEY_MessagePanel_Msg1,
 			Keys.KEY_MessagePanel_Msg2,
 			Keys.KEY_MessagePanel_Msg3,
+			Keys.KEY_MessagePanel_Msg8,
 			Keys.KEY_MessagePanel_Msg5,
 			Keys.KEY_MessagePanel_Msg6,
 			Keys.KEY_MessagePanel_Msg7,
@@ -355,7 +356,7 @@ public class ProcessWindow extends JFrame {
 			box.setState(Common.getSettings().getBooleanProperty(objects[i]));
 			box.addActionListener(_BoxListener);
 
-			if (i == 3 || i == 6)
+			if (i == 3 || i == 4 || i == 7)
 				messageMenu.addSeparator();
 
 			messageMenu.add(box);

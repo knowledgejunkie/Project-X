@@ -33,47 +33,82 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 
+import java.util.Arrays;
+
 import net.sourceforge.dvb.projectx.common.Common;
+
+import net.sourceforge.dvb.projectx.parser.CommonParsing;
 
 public class IDDBufferedOutputStream extends BufferedOutputStream {
 
 	long pos = 0;
 	int type = 0;
-	String name = "", chaptersname = "";
-	boolean sequenceend = false, chapters = false;
 
-	byte IddHeader[][] = {
-		{ (byte)'i',(byte)'d',(byte)'d',2 },  //video V2
-		{ (byte)'i',(byte)'d',(byte)'d',3 }   //audio V3
+	String name = "";
+	String chaptersname = "";
+
+	boolean sequenceend = false;
+	boolean chapters = false;
+	boolean CreateAc3Wave = false;
+	boolean CreateDtsWave = false;
+	boolean CreateDts48Wave = false;
+
+	byte[][] IddHeader = {
+		{ (byte)'i', (byte)'d', (byte)'d', 2 },  //video V2
+		{ (byte)'i', (byte)'d', (byte)'d', 3 }   //audio V3
 	};
+
+	/**
+	 * Lil' endian - header, one frame, length of this frame in bits
+	 */
+	byte[] DD_header = { 0x72, (byte)0xF8, 0x1F, 0x4E, 1, 0, 0, 0 };
+	byte[] padding_block = null;
 
 	BufferedOutputStream IddOut = null;
 	PrintWriter ChaptersOut = null;
 
-	int filenumber=1;  //DM18022004 081.6 int17 new
+	int filenumber = 1;
 
+	/**
+	 *
+	 */
 	public IDDBufferedOutputStream(OutputStream out)
 	{
 		super(out);
 	}
 
+	/**
+	 *
+	 */
 	public IDDBufferedOutputStream(OutputStream out, int size)
 	{
-		super(out,size);
+		super(out, size);
 	}
 
+	/**
+	 *
+	 */
 	public synchronized void write(byte b[], int off, int len) throws IOException
 	{
 		switch (type)
 		{
-		case 3: //DM18022004 081.6 int17 new, vdrindex, //DM21022004 081.6 int18 changed
+		case 3: //vdrindex
 			if ((0xF0 & b[off+3])!=0xE0)
 				break;
 
-			for (int a = off + 9 + (0xFF & b[8]); a < off + len - 3; a++)
+			for (int a = off + 9 + (0xFF & b[8]), ret; a < off + len - 3; a++)
 			{
-				if (b[a] != 0 || b[a + 1] != 0 || b[a + 2] != 1 || b[a + 3] != 0)
+				if ((ret = CommonParsing.validateStartcode(b, a)) < 0)
+				{
+					a += (-ret) - 1;
 					continue;
+				}
+
+				if (b[a + 3] != 0)
+				{
+					a += 3;
+					continue;
+				}
 
 				if (a + 5 >= off + len)
 					break;
@@ -91,10 +126,13 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 			break;
 
 		case 1:  //idd Video
-			for (int a = off; a < off + len - 3; a++)
+			for (int a = off, ret; a < off + len - 3; a++)
 			{
-				if (b[a] != 0 || b[a + 1] != 0 || b[a + 2] != 1)
+				if ((ret = CommonParsing.validateStartcode(b, a)) < 0)
+				{
+					a += (-ret) - 1;
 					continue;
+				}
 
 				if ((0xFF & b[a + 3]) == 0xB3)
 				{
@@ -126,7 +164,7 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 					IddOut.write(0xFF & tref);
 					IddOut.write(tref>>>8);
 					IddOut.write(7 & b[a + 5]>>>3); //pic
-					a += 8; //DM14122003 081.6 int06
+					a += 8;
 				}
 			}
 			break;
@@ -136,72 +174,175 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 				IddOut.write(littleEndian(0));
 		}
 
-		super.write(b, off, len);
-		pos += len;
+
+		/**
+		 * build new frame with header + padding
+		 */
+		if (CreateAc3Wave)
+		{
+			int bitlen = len<<3;
+
+			DD_header[6] = (byte) (0xFF & bitlen);
+			DD_header[7] = (byte) (0xFF & bitlen>>8);
+
+			super.write(DD_header, 0, 8);  // header
+
+			pos += 8;
+
+			Common.changeByteOrder(b, off, len);
+
+			super.write(b, off, len);  // the reversed frame
+			super.write(padding_block, len, padding_block.length - len);  // the padding zero's
+
+			pos += padding_block.length;
+		}
+
+		/**
+		 * build new frame with padding
+		 */
+		else if (CreateDtsWave)
+		{
+			if (CreateDts48Wave)
+			{
+				int len_1 = len > 0x800 ? 0x1000 : 0x800;
+
+				System.arraycopy(b, off, padding_block, 0, len); //copy frame
+				Arrays.fill(padding_block, len, len_1 + 1, (byte)0);
+
+				Common.changeByteOrder(padding_block, 0, len_1);
+
+				super.write(padding_block, 0, len_1);  // the reversed frame
+				pos += len_1;
+			}
+
+			else
+			{
+				int j = 0;
+				long val;
+
+				for (int i = off, k = off + len; i < k; i += 7, j += 8)
+				{
+					val = CommonParsing.getValue(b, i, 7, !CommonParsing.BYTEREORDERING);
+
+					padding_block[j] = (byte)(0xFF & val>>42);
+					padding_block[j + 1] = (byte)((byte)(0xFC & val>>48)>>2);
+					padding_block[j + 2] = (byte)(0xFF & val>>28);
+					padding_block[j + 3] = (byte)((byte)(0xFC & val>>34)>>2);
+					padding_block[j + 4] = (byte)(0xFF & val>>14);
+					padding_block[j + 5] = (byte)((byte)(0xFC & val>>20)>>2);
+					padding_block[j + 6] = (byte)(0xFF & val);
+					padding_block[j + 7] = (byte)((byte)(0xFC & val>>6)>>2);
+				}
+
+				super.write(padding_block, 0, j);  // the reversed frame
+				pos += j;
+			}
+		}
+
+		else
+		{
+			super.write(b, off, len);
+			pos += len;
+		}
 	}
 
+	/**
+	 *
+	 */
 	public synchronized void write(int b) throws IOException
 	{
 		super.write(b);
 		pos++;
 	}
 
-	//DM18022004 081.6 int17 new
+	/**
+	 *
+	 */
 	public byte[] VdrIndex()
 	{
 		byte bpos[] = new byte[4];
 
-		for (int a=0; a<4; a++)
-			bpos[a]=(byte)(0xFFL & pos>>>(a*8));
+		for (int a = 0; a < 4; a++)
+			bpos[a] = (byte)(0xFFL & pos>>>(a * 8));
 
 		return bpos;
 	}
 
-	public void InitVdr(String vdrname, int file_number) throws IOException
+	/**
+	 *
+	 */
+	public void setWave(boolean b1, boolean b2, boolean b3, int val) throws IOException
 	{
-		name=vdrname;
-		filenumber=file_number+1;
-		type=3;
+		if (!b1)
+			return;
 
-		IddOut=new BufferedOutputStream(new FileOutputStream(name,filenumber==1?false:true),655350);
+		CreateAc3Wave = b2;
+		CreateDtsWave = b3;
+		CreateDts48Wave = (CreateDtsWave && val > 1411200);
+
+		if (padding_block == null)
+			padding_block = new byte[0x17F8];
 	}
 
+	/**
+	 *
+	 */
+	public void InitVdr(String vdrname, int file_number) throws IOException
+	{
+		name = vdrname;
+		filenumber = file_number + 1;
+		type = 3;
+
+		IddOut = new BufferedOutputStream(new FileOutputStream(name, filenumber == 1 ? false : true), 655350);
+	}
+
+	/**
+	 *
+	 */
 	public String renameVdrTo(String parent, String oldName)
 	{
-		String num = "000"+filenumber+".vdr";
-		String newName = parent + num.substring(num.length()-7);
+		String num = "000" + filenumber + ".vdr";
+		String newName = parent + num.substring(num.length() - 7);
 
 		File nname = new File(newName);
 		File oname = new File(oldName);
 
-		//DM09072004 081.7 int06 changed
 		if (!oname.getName().equals(nname.getName()) && nname.exists())
 			nname.delete();
 
-		Common.renameTo(oname, nname); //DM13042004 081.7 int01 changed
+		Common.renameTo(oname, nname);
 
 		return newName;
 	}
 
+	/**
+	 *
+	 */
 	public byte[] littleEndian(int off)
 	{
 		byte bpos[] = new byte[8];
 
-		for (int a=0; a < 8; a++)
+		for (int a = 0; a < 8; a++)
 			bpos[a] = (byte)(0xFFL & (pos + off)>>>(a * 8));
 
 		return bpos;
 	}
 
+	/**
+	 *
+	 */
 	public void InitIdd(String iddname, int iddtype) throws IOException
 	{
 		name = iddname + ".id";
 		type = iddtype;
 
-		IddOut = new BufferedOutputStream(new FileOutputStream(name),655350);
-		IddOut.write(IddHeader[type-1]);
+		IddOut = new BufferedOutputStream(new FileOutputStream(name), 655350);
+		IddOut.write(IddHeader[type - 1]);
 	}
 
+	/**
+	 *
+	 */
 	public void renameIddTo(File newName)
 	{
 		String str = newName.toString();
@@ -213,7 +354,7 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 			if (nname.exists())
 				nname.delete();
 
-			if (new File(name).exists())  //DM13042004 081.7 int01 changed
+			if (new File(name).exists())
 				Common.renameTo(new File(name), nname);
 		}
 		else
@@ -229,6 +370,9 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 		}
 	}
 
+	/**
+	 *
+	 */
 	public void renameVideoIddTo(String newName)
 	{
 		File nname = new File(newName + ".idd");
@@ -239,12 +383,18 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 		Common.renameTo(new File(name), nname);
 	}
 
+	/**
+	 *
+	 */
 	public void deleteIdd()
 	{
 		new File(name).delete();
 		new File(chaptersname).delete();
 	}
 
+	/**
+	 *
+	 */
 	public void InitChapters(String filename) throws IOException
 	{
 		chaptersname = filename + ".chp";
@@ -253,6 +403,9 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 		ChaptersOut = new PrintWriter(new FileOutputStream(chaptersname));
 	}
 
+	/**
+	 *
+	 */
 	public void addChapter(String str) throws IOException
 	{
 		if (!chapters)
@@ -261,12 +414,17 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 		ChaptersOut.println(str);
 	}
 
+	/**
+	 *
+	 */
 	public synchronized void flush() throws IOException
 	{
 		super.flush();
 	}
 
-	//DM18022004 081.6 int17 changed
+	/**
+	 *
+	 */
 	public synchronized void close() throws IOException
 	{
 		if (chapters)

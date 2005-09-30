@@ -82,6 +82,13 @@ public class MpaConverter extends Object {
 	private final int DUAL = 2;
 	private final int SINGLE = 3;
 
+	private final int SINGLE_TO_3DSTEREO= 1;
+	private final int SINGLE_TO_STEREO  = 2;
+	private final int SINGLE_TO_JSTEREO = 3;
+	private final int SPLIT_INTO_SINGLE = 4;
+
+	private boolean[] framebuffer;
+
 	private int maxBitSize = 0;
 	private short[] Bal = new short[0];
 	private short[][] Allocation;
@@ -100,6 +107,16 @@ public class MpaConverter extends Object {
 		maxBitSize = Sizes[14];
 		Bal = bal27mp1;
 		Allocation = alloc27;
+
+		framebuffer = new boolean[maxBitSize]; //max=1152bytes=9216bits
+	}
+
+	/**
+	 *
+	 */
+	public void resetBuffer()
+	{
+		Arrays.fill(framebuffer, false);
 	}
 
 	/**
@@ -134,9 +151,9 @@ public class MpaConverter extends Object {
 
 		switch(MpaConversionMode)
 		{
-			case 1:  //single channel to dual(A)
-			case 2:  //single channel to stereo
-			case 3:  //single channel to jstereo
+			case SINGLE_TO_3DSTEREO:  //single channel to 3D
+			case SINGLE_TO_STEREO:  //single channel to stereo
+			case SINGLE_TO_JSTEREO:  //single channel to jstereo
 				if (Audio.Channel == 1)
 					newAudioFrames = createByteArrays(makeTwoChannel(createBitArray(AudioFrame), MpaConversionMode, 0));
 
@@ -145,7 +162,7 @@ public class MpaConverter extends Object {
 
 				break;
 
-			case 4: //dual-stereo-jointstereo to 2 x mono
+			case SPLIT_INTO_SINGLE: //dual-stereo-jointstereo to 2 x mono
 				if (Audio.Channel == 2)
 					newAudioFrames = createByteArrays(splitTwoChannel(createBitArray(AudioFrame),MpaConversionMode));
 
@@ -180,7 +197,7 @@ public class MpaConverter extends Object {
 		int[] size = new int[2];
 		size[1] = size[0] = (0xF0 & AudioFrame[2])>>>4;
 
-		if (MpaConversionMode < 4)
+		if (MpaConversionMode != SPLIT_INTO_SINGLE)
 		{
 			if (size[0] == BRindex[0]) //same size
 				return input;
@@ -234,7 +251,7 @@ public class MpaConverter extends Object {
 			output[ch][2] &= (byte)~0xF0;
 			output[ch][2] |= (byte)BRindex[ch + (MpaConversionMode>>>2)]<<4;
 
-			if (MpaConversionMode < 4)
+			if (MpaConversionMode != SPLIT_INTO_SINGLE)
 				break;
 
 			else if (BRindex[ch+1] > 10)
@@ -364,25 +381,198 @@ public class MpaConverter extends Object {
 	{
 		boolean[] output = new boolean[maxBitSize];
 		int i = 32;
+		int i_b = 32;
 		int o = 32;
 		int size = getSizeFromIndex(input);
+
 		System.arraycopy(input, 0, output, 0, 32); //copy source frameheader 1:1
 
 		switch(MpaConversionMode)
 		{
-			case 1:  //make a simple dual A
-				for (int a=0; a < Bal.length; i += Bal[a], o += (Bal[a]<<1), a++) //insert gaps for channel B in BAL
-					System.arraycopy(input, i, output, o, Bal[a]);
+			case SINGLE_TO_3DSTEREO:  //make a 3d stereo (delayed channel B)
+				int _Bal_length = Bal.length;
+				int[][] _allocation = new int[2][_Bal_length];
+				int[][] _scfsi = new int[2][_Bal_length];
 
-				System.arraycopy(input, i, output, o, size - i); //append the rest
-				o += size - i;
-				setChannelMode(output, DUAL); //set to dual
+				try {
+					// copy BAL
+					for (int a = 0; a < _Bal_length; a++)
+					{
+						// ch A
+						for (int b = 0; b < Bal[a]; b++)
+						{
+							if (input[i + b])
+							{
+								output[o + b] = true;
+								_allocation[0][a] |= 1<<(Bal[a] - 1 - b);
+							}
+						}
+
+						i += Bal[a];
+						o += Bal[a]; 
+
+						// ch B
+						for (int b = 0; b < Bal[a]; b++)
+						{
+							if (framebuffer[i_b + b])
+							{
+								output[o + b] = true;
+								_allocation[1][a] |= 1<<(Bal[a] - 1 - b);
+							}
+						}
+
+						i_b += Bal[a];
+						o += Bal[a]; 
+					}
+
+					// copy SCFSI
+					for (int a = 0; a < _Bal_length; a++)
+					{
+						// ch A
+						if (_allocation[0][a] != 0)
+						{
+							for (int b = 0; b < 2; b++)
+							{
+								if (input[i + b])
+								{
+									output[o + b] = true;
+									_scfsi[0][a] |= 1<<(1 - b);
+								}
+							}
+
+							i += 2; 
+							o += 2;
+						}
+
+						// ch B
+						if (_allocation[1][a] != 0)
+						{
+							for (int b = 0; b < 2; b++)
+							{
+								if (framebuffer[i_b + b])
+								{
+									output[o + b] = true;
+									_scfsi[1][a] |= 1<<(1 - b);
+								}
+							}
+
+							i_b += 2; 
+							o += 2;
+						}
+					}
+
+					// copy Scalefactors
+					for (int a = 0, b = 0; a < _Bal_length; a++)
+					{
+						// ch A
+						if (_allocation[0][a] != 0)
+						{
+							switch (_scfsi[0][a])
+							{
+								case 0:
+									b = 18;
+									break;
+
+								case 1:
+								case 3:
+									b = 12;
+									break;
+
+								case 2:
+									b = 6;
+							}
+
+							System.arraycopy(input, i, output, o, b);
+
+							i += b; 
+							o += b; 
+						}
+
+						// ch B
+						if (_allocation[1][a] != 0)
+						{
+							switch (_scfsi[1][a])
+							{
+								case 0:
+									b = 18;
+									break;
+
+								case 1:
+								case 3:
+									b = 12;
+									break;
+
+								case 2:
+									b = 6;
+							}
+
+							System.arraycopy(framebuffer, i_b, output, o, b);
+
+							i_b += b; 
+							o += b; 
+						}
+					}
+
+					// copy Samples
+					for (int x = 0; x < 12; x++)
+					{
+						for (int a = 0, j, k; a < _Bal_length; a++)
+						{
+							// ch A
+							if (_allocation[0][a] != 0)
+							{
+								j = Allocation[a][_allocation[0][a]];
+								k = getbits[j];
+
+								if (grouping[j] > 0)
+								{
+									System.arraycopy(input, i, output, o, k); 
+									o += k;
+									i += k;
+								}
+
+								else
+								{
+									System.arraycopy(input, i, output, o, (3 * k)); 
+									o += (3 * k);
+									i += (3 * k);
+								}
+							}
+
+							// ch B
+							if (_allocation[1][a] != 0)
+							{
+								j = Allocation[a][_allocation[1][a]];
+								k = getbits[j];
+
+								if (grouping[j] > 0)
+								{
+									System.arraycopy(framebuffer, i_b, output, o, k); 
+									o += k;
+									i_b += k;
+								}
+
+								else
+								{
+									System.arraycopy(framebuffer, i_b, output, o, (3 * k)); 
+									o += (3 * k);
+									i_b += (3 * k);
+								}
+							}
+						}
+					}
+				} catch (Exception e) {
+					setError(1);
+				}
+
+				setChannelMode(output, STEREO); //set to stereo/jstereo
 				setBitRateIndex(output, o, channel); //set BR_index 
 
+				System.arraycopy(input, 0, framebuffer, 0, input.length); //copy source frame 1:1
 				break;
 
-			case 2: // make a stereo
-			case 3: // make a jointstereo mode 00,  sb 4..31 shared
+			case SINGLE_TO_STEREO: // make a stereo
+			case SINGLE_TO_JSTEREO: // make a jointstereo mode 00,  sb 4..31 shared
 				int Bal_length = Bal.length;
 				int[] allocation = new int[Bal_length];
 				int[] scfsi = new int[Bal_length];
@@ -397,7 +587,7 @@ public class MpaConverter extends Object {
 							{
 								output[o + b] = true;
 
-								if (MpaConversionMode == 2 || a < 4)
+								if (MpaConversionMode == SINGLE_TO_STEREO || a < 4)
 									output[o + Bal[a] + b] = true;
 
 								allocation[a] |= 1<<(Bal[a] - 1 - b);
@@ -405,7 +595,7 @@ public class MpaConverter extends Object {
 						}
 
 						i += Bal[a];
-						o += (MpaConversionMode == 2 || a < 4) ? (Bal[a]<<1) : Bal[a]; 
+						o += (MpaConversionMode == SINGLE_TO_STEREO || a < 4) ? (Bal[a]<<1) : Bal[a]; 
 					}
 
 					// copy SCFSI
@@ -458,19 +648,19 @@ public class MpaConverter extends Object {
 					// copy Samples
 					for (int x=0; x < 12; x++)
 					{
-						for (int a=0; a < Bal_length; a++)
+						for (int a=0, j, k; a < Bal_length; a++)
 						{
 							if (allocation[a] != 0)
 							{
-								int j = Allocation[a][allocation[a]];
-								int k = getbits[j];
+								j = Allocation[a][allocation[a]];
+								k = getbits[j];
 
 								if (grouping[j] > 0)
 								{
 									System.arraycopy(input, i, output, o, k); 
 									o += k;
 
-									if (MpaConversionMode == 2 || a < 4)
+									if (MpaConversionMode == SINGLE_TO_STEREO || a < 4)
 									{ 
 										System.arraycopy(input, i, output, o, k); 
 										o += k; 
@@ -484,7 +674,7 @@ public class MpaConverter extends Object {
 									System.arraycopy(input, i, output, o, (3 * k)); 
 									o += (3 * k);
 
-									if (MpaConversionMode == 2 || a < 4)
+									if (MpaConversionMode == SINGLE_TO_STEREO || a < 4)
 									{ 
 										System.arraycopy(input, i, output, o, (3 * k)); 
 										o += (3 * k); 
@@ -623,12 +813,12 @@ public class MpaConverter extends Object {
 			{
 				for (int a=0; a < bound; a++)
 				{
-					for (int ch=0; ch < 2; ch++)
+					for (int ch=0, j, k; ch < 2; ch++)
 					{
 						if (allocation[ch][a] != 0)
 						{
-							int j = Allocation[a][allocation[ch][a]];
-							int k = getbits[j];
+							j = Allocation[a][allocation[ch][a]];
+							k = getbits[j];
 
 							if (grouping[j] > 0)
 							{
@@ -647,12 +837,12 @@ public class MpaConverter extends Object {
 					}
 				}
 
-				for (int a=bound; a < Bal_length; a++)
+				for (int a=bound, j, k; a < Bal_length; a++)
 				{
 					if (allocation[0][a] != 0)
 					{
-						int j = Allocation[a][allocation[0][a]];
-						int k = getbits[j];
+						j = Allocation[a][allocation[0][a]];
+						k = getbits[j];
 
 						if (grouping[j] > 0)
 						{

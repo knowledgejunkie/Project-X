@@ -470,9 +470,9 @@ public class PicturePanel extends JPanel {
 		if (!isOSDInfoAvailable || OSDInfo == null || OSDInfo.length == 0)
 			return;
 
-		int x3 = 15;
+		int x3 = 8; //15;
 		int y3 = 8;
-		int w3 = 482;
+		int w3 = 496; //482;
 		int h3 = 240;
 		int yOffset = 0;
 
@@ -497,9 +497,9 @@ public class PicturePanel extends JPanel {
 		if (!showFileInfo)
 			return;
 
-		int x3 = 15;
+		int x3 = 8; //15;
 		int y3 = 8;
-		int w3 = 482;
+		int w3 = 496; //482;
 		int h3 = 240;
 		int yOffset = 0;
 		Object[] obj;

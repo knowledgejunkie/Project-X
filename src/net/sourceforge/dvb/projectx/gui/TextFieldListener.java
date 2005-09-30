@@ -43,8 +43,8 @@ public class TextFieldListener implements ActionListener {
 	public void actionPerformed(ActionEvent e)
 	{
 		String actName = e.getActionCommand();
-
 		JTextField textfield = (JTextField) e.getSource();
+
 		Common.getSettings().setProperty(actName, textfield.getText());
 	}
 }

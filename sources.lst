@@ -24,6 +24,7 @@ src/net/sourceforge/dvb/projectx/parser/Scan.java
 src/net/sourceforge/dvb/projectx/parser/StreamBuffer.java
 src/net/sourceforge/dvb/projectx/parser/StreamConverter.java
 src/net/sourceforge/dvb/projectx/parser/StreamDemultiplexer.java
+src/net/sourceforge/dvb/projectx/parser/StripAudio.java
 src/net/sourceforge/dvb/projectx/parser/VBI.java
 src/net/sourceforge/dvb/projectx/subtitle/Bitmap.java
 src/net/sourceforge/dvb/projectx/subtitle/BMP.java
@@ -88,5 +89,6 @@ src/net/sourceforge/dvb/projectx/gui/StartUp.java
 src/net/sourceforge/dvb/projectx/gui/SubpictureFrame.java
 src/net/sourceforge/dvb/projectx/gui/TeletextPageMatrix.java
 src/net/sourceforge/dvb/projectx/gui/TextFieldListener.java
+src/net/sourceforge/dvb/projectx/gui/TextFieldKeyListener.java
 src/net/sourceforge/dvb/projectx/gui/UISwitchListener.java
 src/net/sourceforge/dvb/projectx/gui/X_JFileChooser.java

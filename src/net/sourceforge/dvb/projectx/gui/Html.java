@@ -54,8 +54,18 @@ public class Html extends JFrame {
 	 */
 	public Html()
 	{
+		init(null);
+	}
+
+	public Html(String str)
+	{
+		init(str);
+	}
+
+	private void init(String str)
+	{
 		setBounds( 200, 25, 600, 600);
-		HtmlPane html = new HtmlPane();
+		HtmlPane html = new HtmlPane(str);
 		setContentPane(html);
 		setTitle(Resource.getString("html.title"));		
 
@@ -90,11 +100,16 @@ class HtmlPane extends JScrollPane implements HyperlinkListener
 	/**
 	 * Constructor of HtmlPane.
 	 */
-	public HtmlPane()
+	public HtmlPane(String url_str)
 	{
 		try
 		{
-			html = new JEditorPane(Resource.getLocalizedResourceURL("htmls", "index.html"));
+			if (url_str != null)
+				html = new JEditorPane(url_str);
+
+			else
+				html = new JEditorPane(Resource.getLocalizedResourceURL("htmls", "index.html"));
+
 			html.setEditable(false);
 			html.addHyperlinkListener(this);
 

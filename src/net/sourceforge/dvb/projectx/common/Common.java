@@ -80,8 +80,8 @@ import net.sourceforge.dvb.projectx.xinput.topfield_raw.RawInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90 pre_05";
-	private static String version_date = "20.09.2005";
+	private static String version_name = "ProjectX 0.90.1.00";
+	private static String version_date = "30.09.2005";
 
 	private static String line_separator = System.getProperty("line.separator");
 
@@ -91,11 +91,14 @@ public final class Common extends Object {
 	private static int ActiveCollection = -1;
 
 	private static int ProcessedPercent = 0;
+	private static int ErrorCount = 0;
 
 	private static boolean showGUI = false;
 	private static boolean runningCLI = false;
 	private static boolean runningProcess = false;
 	private static boolean GlobalDebug = false;
+	private static boolean TimeLog = false;
+	private static boolean MaxLog = false;
 
 	private static boolean canAccessFtp = true;
 	private static boolean canAccessRawread = true;
@@ -293,7 +296,11 @@ public final class Common extends Object {
 	{
 		runningProcess = b;
 
-		if (b)
+		TimeLog = getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg4);
+		MaxLog = getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg8);
+		ErrorCount = 0;
+
+		if (runningProcess)
 		{
 			setMessage(null, true, 0xFFFFFF);
 
@@ -462,6 +469,14 @@ public final class Common extends Object {
 	/**
 	 * return collection
 	 */
+	public static JobCollection getCollection()
+	{
+		return getCollection(getActiveCollection());
+	}
+
+	/**
+	 * return collection
+	 */
 	public static JobCollection getCollection(int index)
 	{
 		if (index < 0 || index >= collectionList.size())
@@ -565,12 +580,15 @@ public final class Common extends Object {
 	 */
 	public static void changeByteOrder(byte[] data, int off, int len)
 	{
-		temp_byte = data[off + 1];
-		data[off + 1] = data[off];
-		data[off] = temp_byte;
+		for (int i = off, j = len - 1; i < j; i += 2)
+		{
+			temp_byte = data[i + 1];
+			data[i + 1] = data[i];
+			data[i] = temp_byte;
+		}
 
-		if (len > 2)
-			setMessage("byte swap > 2 not yet defined!!");
+		if ((len & 1) != 0)
+			setMessage("!> byte swap, len has an odd value: " + len + " /off " + off);
 	}
 
 	// should try a while to rename with success, if file_system is blocked by another app.
@@ -847,6 +865,7 @@ public final class Common extends Object {
 	public static void clearMessageLog()
 	{
 		messagelog = "";
+		ErrorCount = 0;
 	}
 
 	/**
@@ -855,6 +874,14 @@ public final class Common extends Object {
 	public static String getMessageLog()
 	{
 		return messagelog;
+	}
+
+	/**
+	 * 
+	 */
+	public static int getErrorCount()
+	{
+		return ErrorCount;
 	}
 
 	/**
@@ -905,7 +932,18 @@ public final class Common extends Object {
 			return;
 		}
 
-		if (getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg4)) 
+		if (msg.startsWith("!>"))
+		{
+			ErrorCount++;
+
+			if (MaxLog && ErrorCount > 100)
+				return;
+		}
+
+		if (MaxLog && ErrorCount == 100)
+			msg += getLineSeparator() + Resource.getString("all.msg.error.max");
+
+		if (TimeLog) 
 			msg = "[" + formatTime_1(System.currentTimeMillis()) + "] " + msg;
 
 		if (getGlobalDebug()) 
@@ -1339,46 +1377,6 @@ public final class Common extends Object {
 	public static void setStatusString(String str)
 	{
 		StatusString = str;
-	}
-
-	/**
-	 * Checks the languages of Project-X
-	 */
-	public static void checkAvailableLanguages() {
-		try
-		{
-			URL url = new URL("http://project-x.sourceforge.net/optional/resources/");
-			URLConnection urlConn = url.openConnection();
-			BufferedReader br = new BufferedReader(new InputStreamReader(urlConn.getInputStream()));
-
-			List list = new ArrayList();
-			String line = null;
-			int index = 0;
-
-			while ((line = br.readLine()) != null)
-			{
-				if ((index = line.indexOf("pjxresources_")) < 0)
-					continue;
-	
-				list.add(line.substring(index, index + 26));
-			}
-
-			line = "cannot determine";
-
-			if (!list.isEmpty())
-			{
-				line = "";
-
-				for (int i = 0; i < list.size(); i++)
-					line += "(" + i + ") " + list.get(i).toString() + "\n";
-			}
-
-			getGuiInterface().showMessageDialog(line, "online verfügbare Sprachendateien");
-
-		} catch(Exception e) {
-
-			setExceptionMessage(e);
-		}
 	}
 
 	/**

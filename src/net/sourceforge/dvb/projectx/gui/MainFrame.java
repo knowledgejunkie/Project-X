@@ -2,11 +2,11 @@
  * @(#)MainFrame.java - holds main gui
  *
  * Copyright (c) 2001-2005 by dvb.matt, All rights reserved.
- * 
+ *
  * This file is part of X, a free Java based demux utility.
  * X is intended for educational purposes only, as a non-commercial test project.
  * It may not be used otherwise. Most parts are only experimental.
- * 
+ *
  *
  * This program is free software; you can redistribute it free of charge
  * and/or modify it under the terms of the GNU General Public License as published by
@@ -118,6 +118,7 @@ import java.net.URL;
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
 import net.sourceforge.dvb.projectx.parser.MainProcess;
 import net.sourceforge.dvb.projectx.parser.HpFix;
+import net.sourceforge.dvb.projectx.parser.StripAudio;
 
 import net.sourceforge.dvb.projectx.xinput.DirType;
 import net.sourceforge.dvb.projectx.xinput.XInputDirectory;
@@ -165,7 +166,7 @@ public class MainFrame extends JPanel {
 
 	private static boolean SilentAction = true;
 
-	//create empty table 
+	//create empty table
 	private static Object[][] FileObjectTable = new Object[5][11];
 
 	private static CollectionPanel collection_panel;
@@ -182,8 +183,8 @@ public class MainFrame extends JPanel {
 	/**
 	 * radio buttons for look and feels in general menu
 	 */
-	private JRadioButtonMenuItem lf_item[] = null; 
-	
+	private JRadioButtonMenuItem lf_item[] = null;
+
 
 	private JTable tableView;
 	private JList list1;
@@ -214,7 +215,7 @@ public class MainFrame extends JPanel {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private ActionListener _BoxListener = new ActionListener() {
 		public void actionPerformed(ActionEvent e)
@@ -227,7 +228,7 @@ public class MainFrame extends JPanel {
 	};
 
 	/**
-	 * 
+	 *
 	 */
 	private ActionListener _MenuListener = new ActionListener() {
 		public void actionPerformed(ActionEvent e)
@@ -251,7 +252,7 @@ public class MainFrame extends JPanel {
 					String str = Common.getSettings().getProperty(Keys.KEY_PostCommands_Cmd3);
 
 					if (str.trim().length() > 0)
-						Common.performCommand(str + " \"" + Common.getCollection(Common.getActiveCollection()).getInputFile(index).toString() + "\"");
+						Common.performCommand(str + " \"" + Common.getCollection().getInputFile(index).toString() + "\"");
 
 				} catch (Exception ex) {
 
@@ -290,11 +291,11 @@ public class MainFrame extends JPanel {
 					{
 						Common.addCollection(false);
 
-						JobCollection collection = Common.getCollection(Common.getActiveCollection());
+						JobCollection collection = Common.getCollection();
 
 						/**
-						 * must use getAbsolutFile to ensure right ClassType, 
-						 * sometimes the returned Object.getClass 
+						 * must use getAbsolutFile to ensure right ClassType,
+						 * sometimes the returned Object.getClass
 						 * from selection is NOT of java.io.File!!
 						 */
 	 					for (int i = 0; i < theFiles.length; i++)
@@ -316,12 +317,12 @@ public class MainFrame extends JPanel {
 			{
 				int index = tableView.getSelectedRow();
 
-				JobCollection collection = Common.getCollection(Common.getActiveCollection());
+				JobCollection collection = Common.getCollection();
 
 				if (index < 0 || index >= collection.getInputFilesCount())
 					return;
 
-				String name = ((XInputFile) collection.getInputFiles()[0]).getName(); 
+				String name = ((XInputFile) collection.getInputFiles()[0]).getName();
 
 				String newoutname = CommonGui.getUserInput( name, Resource.getString("popup.newOutName") + " " + name, collection.getOutputName());
 
@@ -343,7 +344,7 @@ public class MainFrame extends JPanel {
 
 				if (indices.length > 0)
 				{
-					JobCollection collection = Common.getCollection(Common.getActiveCollection());
+					JobCollection collection = Common.getCollection();
 
 					collection.removeInputFile(indices);
 
@@ -364,7 +365,7 @@ public class MainFrame extends JPanel {
 				if (index < 0 || tableView.getValueAt(index, 0) == null)
 					return;
 
-				JobCollection collection = Common.getCollection(Common.getActiveCollection());
+				JobCollection collection = Common.getCollection();
 
 				try {
 					if (((XInputFile) collection.getInputFile(index)).rename())
@@ -385,7 +386,7 @@ public class MainFrame extends JPanel {
 				if (indices.length == 0)
 					return;
 
-				JobCollection collection = Common.getCollection(Common.getActiveCollection());
+				JobCollection collection = Common.getCollection();
 
 				for (int i = 0; i < indices.length; i++)
 				{
@@ -411,7 +412,7 @@ public class MainFrame extends JPanel {
 				if (index < 0 || tableView.getValueAt(index, 0) == null)
 					return;
 
-				JobCollection collection = Common.getCollection(Common.getActiveCollection());
+				JobCollection collection = Common.getCollection();
 
 				XInputFile xInputFile = (XInputFile) collection.getInputFile(index);
 
@@ -429,7 +430,7 @@ public class MainFrame extends JPanel {
 				if (index < 0 || tableView.getValueAt(index, 0) == null)
 					return;
 
-				JobCollection collection = Common.getCollection(Common.getActiveCollection());
+				JobCollection collection = Common.getCollection();
 
 				XInputFile xInputFile = (XInputFile) collection.getInputFile(index);
 
@@ -439,7 +440,41 @@ public class MainFrame extends JPanel {
 
 					Common.setOSDMessage("fixing wrong Hp Ac3 File...");
 
-					xInputFile = hpfix.process(xInputFile);
+					xInputFile = hpfix.process(xInputFile.getNewInstance());
+
+					collection.removeInputFile(index);
+
+					if (xInputFile != null)
+						collection.addInputFile(index, xInputFile);
+
+					updateCollectionTable(collection.getCollectionAsTable());
+					updateCollectionPanel(Common.getActiveCollection());
+
+					tableView.clearSelection();
+				}
+			}
+
+			/**
+			 *
+			 */
+			else if (actName.equals("stripAudio"))
+			{
+				int index = tableView.getSelectedRow();
+
+				if (index < 0 || tableView.getValueAt(index, 0) == null)
+					return;
+
+				JobCollection collection = Common.getCollection();
+
+				XInputFile xInputFile = (XInputFile) collection.getInputFile(index);
+
+				if (xInputFile.exists() && xInputFile.getStreamInfo().getStreamType() == CommonParsing.ES_RIFF_TYPE && CommonGui.getUserConfirmation("really process '" + xInputFile.getName() + "' ?"))
+				{
+					StripAudio stripAudio = new StripAudio();
+
+					Common.setOSDMessage("strip audio data...");
+
+					xInputFile = stripAudio.process(xInputFile.getNewInstance());
 
 					collection.removeInputFile(index);
 
@@ -463,7 +498,7 @@ public class MainFrame extends JPanel {
 				if (index < 0 || tableView.getValueAt(index, 0) == null)
 					return;
 
-				JobCollection collection = Common.getCollection(Common.getActiveCollection());
+				JobCollection collection = Common.getCollection();
 
 				XInputFile xInputFile = (XInputFile) collection.getInputFile(index);
 
@@ -484,7 +519,7 @@ public class MainFrame extends JPanel {
 				if (index < 0 || tableView.getValueAt(index, 0) == null)
 					return;
 
-				JobCollection collection = Common.getCollection(Common.getActiveCollection());
+				JobCollection collection = Common.getCollection();
 
 				XInputFile xInputFile = (XInputFile) collection.getInputFile(index);
 
@@ -522,7 +557,7 @@ public class MainFrame extends JPanel {
 					}
 				}
 
-				Common.getCollection(Common.getActiveCollection()).setActionType(val);
+				Common.getCollection().setActionType(val);
 			}
 
 			/**
@@ -535,7 +570,7 @@ public class MainFrame extends JPanel {
 				if (index < 0 || tableView.getValueAt(index, 0) == null)
 					return;
 
-				JobCollection collection = Common.getCollection(Common.getActiveCollection());
+				JobCollection collection = Common.getCollection();
 
 				XInputFile xInputFile = (XInputFile) collection.getInputFile(index);
 
@@ -634,7 +669,7 @@ public class MainFrame extends JPanel {
 
 				Common.addCollection(false);
 
-				JobCollection collection = Common.getCollection(Common.getActiveCollection());
+				JobCollection collection = Common.getCollection();
 
 				collection.addInputFile(inputValue);
 
@@ -715,7 +750,7 @@ public class MainFrame extends JPanel {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private void buildGUI(StartUp startup)
 	{
@@ -781,6 +816,9 @@ public class MainFrame extends JPanel {
 		JMenuItem menuitem_12 = popup.add(Resource.getString("popup.fixHpAc3"));
 		menuitem_12.setActionCommand("fixHpAc3");
 
+		JMenuItem menuitem_14 = popup.add(Resource.getString("popup.stripAudio"));
+		menuitem_14.setActionCommand("stripAudio");
+
 		popup.addSeparator();
 
 		JMenuItem menuitem_11 = popup.add(Resource.getString("popup.copyInfoToClipboard"));
@@ -840,13 +878,14 @@ public class MainFrame extends JPanel {
 
 		menuitem_4.addActionListener(_MenuListener);
 		menuitem_5.addActionListener(_MenuListener);
-		menuitem_6.addActionListener(_MenuListener);	
+		menuitem_6.addActionListener(_MenuListener);
 		menuitem_7.addActionListener(_MenuListener);
 		menuitem_8.addActionListener(_MenuListener);
 		menuitem_9.addActionListener(_MenuListener);
 		menuitem_10.addActionListener(_MenuListener);
 		menuitem_11.addActionListener(_MenuListener);
 		menuitem_12.addActionListener(_MenuListener);
+		menuitem_14.addActionListener(_MenuListener);
 	}
 
 	/**
@@ -864,7 +903,7 @@ public class MainFrame extends JPanel {
 		menuBar.add(buildAddonMenu());
 		menuBar.add(buildHelpMenu());
 
-		frame.setJMenuBar(menuBar);	
+		frame.setJMenuBar(menuBar);
 	}
 
 
@@ -990,7 +1029,7 @@ public class MainFrame extends JPanel {
 			}
 		};
 
-		for (int a = 0; a < lf_item.length; a++) 
+		for (int a = 0; a < lf_item.length; a++)
 		{
 			lf_item[a] = new JRadioButtonMenuItem(lf_info[a].getClassName());
 			general.add(lf_item[a]);
@@ -1006,18 +1045,18 @@ public class MainFrame extends JPanel {
 
 	/**
 	 * sets the new look and feel.
-	 * 
+	 *
 	 * @param lnfName
 	 */
 	private void setLookAndFeel(String lnfName)
 	{
-		if (lnfName != null && !lnfName.equals("")) 
+		if (lnfName != null && !lnfName.equals(""))
 		{
 			JRadioButtonMenuItem selectedRadio = null;
 
 			try {
 				// update radio menu items
-				for (int a=0; a < lf_item.length; a++) 
+				for (int a=0; a < lf_item.length; a++)
 				{
 					if (lf_item[a].getActionCommand().equals(lnfName))
 					{
@@ -1029,14 +1068,16 @@ public class MainFrame extends JPanel {
 				// now update the components
 				UIManager.setLookAndFeel(lnfName);
 				SwingUtilities.updateComponentTreeUI(frame);
-	
-				if(CommonGui.getMainFileChooser() != null) 
+
+				if(CommonGui.getMainFileChooser() != null)
 					SwingUtilities.updateComponentTreeUI(CommonGui.getMainFileChooser());
 
 			} catch (Exception exc) {
 
 				selectedRadio.getParent().remove(selectedRadio);
+
 				System.err.println("!> Could not load LookAndFeel: " + lnfName);
+				Common.setErrorMessage("!> Could not load LookAndFeel: " + lnfName);
 			}
 		}
 	}
@@ -1053,6 +1094,7 @@ public class MainFrame extends JPanel {
 		JMenuItem hex = new JMenuItem();
 		CommonGui.localize(hex, "options.openhexview");
 		hex.setActionCommand("viewAsHex");
+		hex.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H, ActionEvent.CTRL_MASK));
 
 		preview.add(hex);
 		preview.addSeparator();
@@ -1060,6 +1102,7 @@ public class MainFrame extends JPanel {
 		JMenuItem basic = new JMenuItem();
 		CommonGui.localize(basic, "options.pachtbasics");
 		basic.setActionCommand("editBasics");
+		basic.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.CTRL_MASK));
 
 		preview.add(basic);
 		preview.addSeparator();
@@ -1072,6 +1115,7 @@ public class MainFrame extends JPanel {
 				Common.getGuiInterface().showSubpicture();
 			}
 		});
+		subtitle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK));
 
 		preview.add(subtitle);
 
@@ -1085,7 +1129,7 @@ public class MainFrame extends JPanel {
 				Common.getGuiInterface().showTtxPageMatrix();
 			}
 		});
-
+		pagematrix.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, ActionEvent.CTRL_MASK));
 
 		preview.add(pagematrix);
 
@@ -1098,7 +1142,7 @@ public class MainFrame extends JPanel {
 
 	/**
 	 * Builds the Language Menu.
-	 * 
+	 *
 	 * @return JMenu
 	 */
 	protected JMenu buildLanguageMenu()
@@ -1110,7 +1154,7 @@ public class MainFrame extends JPanel {
 
 				if (action.equals("check"))
 				{
-					Common.checkAvailableLanguages();
+					new Html("http://project-x.sourceforge.net/optional/resources/").show();
 					return;
 				}
 
@@ -1124,7 +1168,7 @@ public class MainFrame extends JPanel {
 			}
 		};
 
-		
+
 		JMenu langMenu = new JMenu();
 		CommonGui.localize(langMenu, "language.menu");
 
@@ -1135,7 +1179,7 @@ public class MainFrame extends JPanel {
 		langMenu.add(item_check);
 
 		langMenu.addSeparator();
-		
+
 		ButtonGroup group = new ButtonGroup();
 
 		JRadioButtonMenuItem item_sys = new JRadioButtonMenuItem();
@@ -1193,7 +1237,7 @@ public class MainFrame extends JPanel {
 
 		if (Common.canAccessColorTable())
 			menu.add(new JMenuItem("color tables (DVB subpicture)"));
-			
+
 		if (Common.canAccessSilentAC3())
 			menu.add(new JMenuItem("silent AC3 frames (replacements)"));
 
@@ -1254,16 +1298,16 @@ public class MainFrame extends JPanel {
 
         // final
         final String[] names = {
-			"#", 
-			Resource.getString("CollectionTable.Source"), 
-			Resource.getString("CollectionTable.FileName"), 
-			Resource.getString("CollectionTable.FileLocation"), 
-			Resource.getString("CollectionTable.Size"), 
-			Resource.getString("CollectionTable.lastModified"), 
-			Resource.getString("ScanInfo.Video").substring(0, 1), 
-			Resource.getString("ScanInfo.Audio").substring(0, 1), 
-			Resource.getString("ScanInfo.Teletext").substring(0, 1), 
-			Resource.getString("ScanInfo.Subpicture").substring(0, 1), 
+			"#",
+			Resource.getString("CollectionTable.Source"),
+			Resource.getString("CollectionTable.FileName"),
+			Resource.getString("CollectionTable.FileLocation"),
+			Resource.getString("CollectionTable.Size"),
+			Resource.getString("CollectionTable.lastModified"),
+			Resource.getString("ScanInfo.Video").substring(0, 1),
+			Resource.getString("ScanInfo.Audio").substring(0, 1),
+			Resource.getString("ScanInfo.Teletext").substring(0, 1),
+			Resource.getString("ScanInfo.Subpicture").substring(0, 1),
 			Resource.getString("CollectionTable.Streamtype")
 		};
 
@@ -1318,18 +1362,6 @@ public class MainFrame extends JPanel {
         // Show colors by rendering them in their own color.
 		DefaultTableCellRenderer renderer_1 = new DefaultTableCellRenderer();
 		DefaultTableCellRenderer renderer_2 = new DefaultTableCellRenderer();
-/**		{
-			public void setValue(Object value)
-			{
-				if (value instanceof Color)
-				{
-					Color c = (Color)value;
-					setForeground(c);
-					setText(c.getRed() + ", " + c.getGreen() + ", " + c.getBlue());
-				}
-			}
-        };
-**/
 
 		renderer_1.setHorizontalAlignment(JLabel.RIGHT);
 		renderer_2.setHorizontalAlignment(JLabel.CENTER);
@@ -1383,7 +1415,7 @@ public class MainFrame extends JPanel {
 				if (row >= 0 && tableView.getValueAt(row, 0) == null)
 					row = -1;
 
-				int index = Common.getActiveCollection(); 
+				int index = Common.getActiveCollection();
 
 				if (e.getModifiers() == MouseEvent.BUTTON3_MASK)
 				{
@@ -1392,10 +1424,10 @@ public class MainFrame extends JPanel {
 					if (elements == null)
 						return;
 
-					for (int i = 1; i < 9; i++)
+					for (int i = 1; i < 10; i++)
 						elements[i].getComponent().setEnabled(row >= 0);
 
-					for (int i = 9; i < elements.length; i++)
+					for (int i = 10; i < elements.length; i++)
 						elements[i].getComponent().setEnabled(index >= 0);
 
 					popup.show(tableView, e.getX(), e.getY() - popup.getHeight());
@@ -1411,13 +1443,13 @@ public class MainFrame extends JPanel {
 			public void drop(DropTargetDropEvent e)
 			{
 				try {
-	
+
 					int dropaction = e.getDropAction();  // 1=copy, 2=move
 
 					if (dropaction == 0 || dropaction > 2)
-					{ 
-						e.rejectDrop(); 
-						return; 
+					{
+						e.rejectDrop();
+						return;
 					}
 
 					e.acceptDrop(dropaction);
@@ -1494,9 +1526,9 @@ public class MainFrame extends JPanel {
 					if (list.size() > 0)
 						updateCollectionPanel(Common.getActiveCollection());
 
-				} catch (Exception eee) { 
+				} catch (Exception eee) {
 
-					e.dropComplete(false); 
+					e.dropComplete(false);
 					Common.setExceptionMessage(eee);
 				}
 
@@ -1504,7 +1536,7 @@ public class MainFrame extends JPanel {
 			}
 
 			public void dragEnter(DropTargetDragEvent e)
-			{ 
+			{
 				tableView.setBackground(Color.green);
 			}
 
@@ -1600,7 +1632,7 @@ public class MainFrame extends JPanel {
 							indices[i] = index - 1;
 						}
 					}
-	
+
 					updateCollectionTable(collection.getCollectionAsTable());
 
 					updateCollectionPanel(Common.getActiveCollection());
@@ -1608,7 +1640,7 @@ public class MainFrame extends JPanel {
 			}
 		});
 		panel_1.add(file_up);
-	
+
 
 		/**
 		 * down
@@ -1638,7 +1670,7 @@ public class MainFrame extends JPanel {
 							indices[i] = index + 1;
 						}
 					}
-	
+
 					updateCollectionTable(collection.getCollectionAsTable());
 
 					updateCollectionPanel(Common.getActiveCollection());
@@ -1649,7 +1681,7 @@ public class MainFrame extends JPanel {
 
 
 		/**
-		 * 
+		 *
 		 */
 		JPanel panel_2 = new JPanel();
 		panel_2.setLayout(new BoxLayout(panel_2, BoxLayout.X_AXIS));
@@ -1675,7 +1707,7 @@ public class MainFrame extends JPanel {
 
 
 		/**
-		 * 
+		 *
 		 */
 		// recent output
 		final JComboBox comboBox_13 = new JComboBox(Common.getSettings().getOutputDirectories().toArray());
@@ -1699,7 +1731,7 @@ public class MainFrame extends JPanel {
 					{
 						Common.setActiveCollection(comboBox_0.getSelectedIndex());
 
-						JobCollection collection = Common.getCollection(Common.getActiveCollection());
+						JobCollection collection = Common.getCollection();
 
 						collection.setOutputDirectory(Common.getSettings().getProperty(Keys.KEY_OutputDirectory));
 
@@ -1717,7 +1749,7 @@ public class MainFrame extends JPanel {
 					{
 						Common.setActiveCollection(comboBox_0.getSelectedIndex());
 
-						JobCollection collection = Common.getCollection(Common.getActiveCollection());
+						JobCollection collection = Common.getCollection();
 
 						collection.setOutputDirectory(Common.getSettings().getProperty(Keys.KEY_OutputDirectory));
 
@@ -1730,7 +1762,7 @@ public class MainFrame extends JPanel {
 		});
 
 		/**
-		 * 
+		 *
 		 */
 		JButton add_output = new JButton(CommonGui.loadIcon("add.gif"));
 		add_output.setMinimumSize(new Dimension(24, 20));
@@ -1752,15 +1784,15 @@ public class MainFrame extends JPanel {
 
 					if (theFile != null)
 					{
-						if (theFile.isFile()) 
-							file = theFile.getParent(); 
+						if (theFile.isFile())
+							file = theFile.getParent();
 
-						else if (theFile.isDirectory()) 
-							file = theFile.getAbsolutePath(); 
+						else if (theFile.isDirectory())
+							file = theFile.getAbsolutePath();
 
 						// do not list duplicates
 						for (int i = 0; i < comboBox_13.getItemCount(); i++)
-							if (file.equalsIgnoreCase(comboBox_13.getItemAt(i).toString())) 
+							if (file.equalsIgnoreCase(comboBox_13.getItemAt(i).toString()))
 								return;
 
 						Common.getSettings().addOutputDirectory(file);
@@ -1774,7 +1806,7 @@ public class MainFrame extends JPanel {
 
 
 		/**
-		 * 
+		 *
 		 */
 		JButton remove_output = new JButton(CommonGui.loadIcon("rem.gif"));
 		remove_output.setMinimumSize(new Dimension(24, 20));
@@ -1844,7 +1876,7 @@ public class MainFrame extends JPanel {
 
 
 	/**
-	 * 
+	 *
 	 */
 	private void close_AutoloadPanel()
 	{
@@ -1852,7 +1884,7 @@ public class MainFrame extends JPanel {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	protected void buildAutoloadPanel()
 	{
@@ -1869,14 +1901,14 @@ public class MainFrame extends JPanel {
 		bb.setLayout( new ColumnLayout() );
 
 		/**
-		 * 
+		 *
 		 */
 		final JComboBox comboBox_12 = new JComboBox(Common.getSettings().getListProperty(Keys.KEY_InputDirectories).toArray());  // recent input
 		comboBox_12.setMaximumRowCount(8);
 		comboBox_12.setPreferredSize(new Dimension(400, 24));
 
 		/**
-		 * 
+		 *
 		 */
 		JButton remove_input = new JButton(CommonGui.loadIcon("rem.gif"));
 		remove_input.setPreferredSize(new Dimension(50,28));
@@ -1885,7 +1917,7 @@ public class MainFrame extends JPanel {
 		remove_input.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				if (comboBox_12.getItemCount() > 0) 
+				if (comboBox_12.getItemCount() > 0)
 				{
 					int index = comboBox_12.getSelectedIndex();
 
@@ -1901,7 +1933,7 @@ public class MainFrame extends JPanel {
 		bb.add(remove_input);
 
 		/**
-		 * 
+		 *
 		 */
 		JButton add_input = new JButton(CommonGui.loadIcon("add.gif"));
 		add_input.setPreferredSize(new Dimension(50,28));
@@ -1922,12 +1954,12 @@ public class MainFrame extends JPanel {
 
 					if (theFile != null)
 					{
-						if (theFile.isFile()) 
+						if (theFile.isFile())
 							theFile = theFile.getParentFile();
 
 						/**
-						 * must use getAbsolutFile to ensure right ClassType, 
-						 * sometimes the returned Object.getClass 
+						 * must use getAbsolutFile to ensure right ClassType,
+						 * sometimes the returned Object.getClass
 						 * from selection is NOT of java.io.File!!
 						 */
 						String str = Common.getSettings().addInputDirectory(theFile.getAbsoluteFile());
@@ -1995,7 +2027,7 @@ public class MainFrame extends JPanel {
 		bb.add(add_inputftp);
 
 		/**
-		 * 
+		 *
 		 */
 		JButton refresh_list = new JButton(CommonGui.loadIcon("rf.gif"));
 		refresh_list.setPreferredSize(new Dimension(50,28));
@@ -2004,7 +2036,7 @@ public class MainFrame extends JPanel {
 		refresh_list.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				reloadInputDirectories(); 
+				reloadInputDirectories();
 			}
 		});
 		bb.add(refresh_list);
@@ -2013,7 +2045,7 @@ public class MainFrame extends JPanel {
 		bb.add(new JLabel(" "));
 
 		/**
-		 * 
+		 *
 		 */
 		JButton add_coll_and_files = new JButton(CommonGui.loadIcon("addleft.gif"));
 		add_coll_and_files.setPreferredSize(new Dimension(50,28));
@@ -2044,7 +2076,7 @@ public class MainFrame extends JPanel {
 
 
 		/**
-		 * 
+		 *
 		 */
 		JButton add_files = new JButton(CommonGui.loadIcon("left.gif"));
 		add_files.setPreferredSize(new Dimension(50, 28));
@@ -2073,7 +2105,7 @@ public class MainFrame extends JPanel {
 		bb.add(new JLabel(" "));
 
 		/**
-		 * 
+		 *
 		 */
 		JButton close = new JButton(CommonGui.loadIcon("x.gif"));
 		close.setPreferredSize(new Dimension(50,28));
@@ -2162,7 +2194,7 @@ public class MainFrame extends JPanel {
 		scrolltext.setViewportView(list1);
 
 		/**
-		 * 
+		 *
 		 */
 		JPanel control_1 = new JPanel(new BorderLayout());
 		control_1.setAlignmentX(CENTER_ALIGNMENT);
@@ -2252,10 +2284,11 @@ public class MainFrame extends JPanel {
 		panel.setBorder(BorderFactory.createTitledBorder( BorderFactory.createEtchedBorder(), Resource.getString("MainPanel.Process")));
 
 		/**
-		 * 
+		 *
 		 */
 		JButton processwindow = new JButton(Resource.getString("MainPanel.QuickStart"));
 		processwindow.setToolTipText(Resource.getString("MainPanel.QuickStart.Tip"));
+		processwindow.setMnemonic('q');
 		processwindow.setPreferredSize(new Dimension(100, 24));
 		processwindow.setMaximumSize(new Dimension(100, 24));
 		processwindow.setMinimumSize(new Dimension(100, 24));
@@ -2297,6 +2330,8 @@ public class MainFrame extends JPanel {
 		processwindow.setPreferredSize(new Dimension(100, 24));
 		processwindow.setMaximumSize(new Dimension(100, 24));
 		processwindow.setMinimumSize(new Dimension(100, 24));
+		processwindow.setToolTipText(Resource.getString("ProcessWindow.Title") + " " + Resource.getString("ProcessWindowPanel.Button"));
+		processwindow.setMnemonic('p');
 		processwindow.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -2364,7 +2399,7 @@ public class MainFrame extends JPanel {
 				{
 					Common.setActiveCollection(comboBox_0.getSelectedIndex());
 
-					JobCollection collection = Common.getCollection(Common.getActiveCollection());
+					JobCollection collection = Common.getCollection();
 
 					updateOutputField(collection);
 
@@ -2374,10 +2409,10 @@ public class MainFrame extends JPanel {
 						updateCollectionPanel(Common.getActiveCollection());
 				}
 				else
-				{ 
+				{
 					Common.setActiveCollection(-1);
 
-					outfield.setText(""); 
+					outfield.setText("");
 
 					updateCollectionTable(null);
 				}
@@ -2405,7 +2440,7 @@ public class MainFrame extends JPanel {
 
 				comboBox_0.removeAllItems();
 
-				for (int i = 0; i < Common.getCollectionListSize(); i++) 
+				for (int i = 0; i < Common.getCollectionListSize(); i++)
 					comboBox_0.addItem(String.valueOf(i));
 
 				if (index < comboBox_0.getItemCount())
@@ -2485,7 +2520,7 @@ public class MainFrame extends JPanel {
 
 			private void update()
 			{
-				JobCollection collection = Common.getCollection(Common.getActiveCollection());
+				JobCollection collection = Common.getCollection();
 
 				String str = collection == null ? Resource.getString("JobCollection.NoInfo") : collection.getShortSummary();
 
@@ -2520,8 +2555,8 @@ public class MainFrame extends JPanel {
 		final JLabel date = new JLabel();
 		final JLabel time = new JLabel();
 
-		final DateFormat long_format = DateFormat.getDateInstance(DateFormat.LONG);
-		final DateFormat medium_format = DateFormat.getTimeInstance(DateFormat.MEDIUM);
+		final DateFormat date_format = DateFormat.getDateInstance(DateFormat.LONG);
+		final DateFormat time_format = DateFormat.getTimeInstance(DateFormat.LONG);
 
 
 		class Clock implements Runnable {
@@ -2576,7 +2611,7 @@ public class MainFrame extends JPanel {
 
 			private void updateDateLabel()
 			{
-				String str = long_format.format(new Date());
+				String str = date_format.format(new Date());
 
 				if (str.equals(DateString))
 					return;
@@ -2588,7 +2623,7 @@ public class MainFrame extends JPanel {
 
 			private void updateTimeLabel()
 			{
-				time.setText(medium_format.format(new Date()));
+				time.setText(time_format.format(new Date()));
 			}
 
 			public void stop()
@@ -2601,20 +2636,20 @@ public class MainFrame extends JPanel {
 
 		JPanel status_1 = new JPanel(new BorderLayout());
 		status_1.setBorder(BorderFactory.createLoweredBevelBorder());
-		status_1.setPreferredSize(new Dimension(710, 22));
-		status_1.setMaximumSize(new Dimension(710, 22));
+		status_1.setPreferredSize(new Dimension(650, 22));
+		status_1.setMaximumSize(new Dimension(650, 22));
 		status_1.add(status);
 
 		JPanel status_4 = new JPanel(new BorderLayout());
 		status_4.setBorder(BorderFactory.createLoweredBevelBorder());
-		status_4.setPreferredSize(new Dimension(120, 22));
-		status_4.setMaximumSize(new Dimension(120, 22));
+		status_4.setPreferredSize(new Dimension(130, 22));
+		status_4.setMaximumSize(new Dimension(130, 22));
 		status_4.add(date);
 
 		JPanel status_5 = new JPanel(new BorderLayout());
 		status_5.setBorder(BorderFactory.createLoweredBevelBorder());
-		status_5.setPreferredSize(new Dimension(80, 22));
-		status_5.setMaximumSize(new Dimension(80, 22));
+		status_5.setPreferredSize(new Dimension(130, 22));
+		status_5.setMaximumSize(new Dimension(130, 22));
 		status_5.add(time);
 
 		JPanel mainStatusPanel = new JPanel();
@@ -2701,7 +2736,7 @@ public class MainFrame extends JPanel {
 		}
 
 		updateAutoloadList(arraylist.isEmpty() ? new Object[0] : arraylist.toArray());
-	}   
+	}
 
 	/**
 	 * main
@@ -2734,24 +2769,24 @@ public class MainFrame extends JPanel {
 			showStartUpProgress(startup, 70, "Loading Input Directories...");
 
 			reloadInputDirectories();
-	
+
 			/**
-			 * loading GUI 
+			 * loading GUI
 			 */
 			showStartUpProgress(startup, 80, "Loading Main Frame...");
 
-			frame.addWindowListener (new WindowAdapter() { 
+			frame.addWindowListener (new WindowAdapter() {
 				public void windowClosing(WindowEvent e)
-				{ 
+				{
 				//	X.closeProgram(true);
 					Common.exitApplication(0);
 				}
 			});
 
 			frame.addComponentListener(new ComponentListener() {
-				public void componentHidden(ComponentEvent e) {} 
-				public void componentMoved(ComponentEvent e) {} 
-				public void componentShown(ComponentEvent e) {} 
+				public void componentHidden(ComponentEvent e) {}
+				public void componentMoved(ComponentEvent e) {}
+				public void componentShown(ComponentEvent e) {}
 
 				public void componentResized(ComponentEvent e)
 				{
@@ -2767,9 +2802,9 @@ public class MainFrame extends JPanel {
 					c.setSize(new Dimension((int)newWidth, (int)newHeight));
 				}
 			});
-	
+
 			frame.getContentPane().add(this);
-	
+
 			frame.setLocation(Common.getSettings().getIntProperty(Keys.KEY_WindowPositionMain_X), Common.getSettings().getIntProperty(Keys.KEY_WindowPositionMain_Y));
 			frame.setSize(new Dimension(Common.getSettings().getIntProperty(Keys.KEY_WindowPositionMain_Width), Common.getSettings().getIntProperty(Keys.KEY_WindowPositionMain_Height)));
 
@@ -2786,13 +2821,13 @@ public class MainFrame extends JPanel {
 
 			// to OSD
 			CommonGui.getPicturePanel().setOSDMessage(obj, true);
-	
+
 			showStartUpProgress(startup, 100, "Showing Main Frame...");
 
 			if (startup != null)
 			{
 				startup.set(Common.getSettings().getBooleanProperty(Keys.KEY_Agreement));
-		
+
 				if (startup.get())
 				{
 					setVisible0(true);
@@ -2804,7 +2839,7 @@ public class MainFrame extends JPanel {
 			else
 				setVisible0(true);
 
-		/** 
+		/**
 		 * catch all other unhandled exception
 		 */
 		} catch(Exception e) {
@@ -2812,7 +2847,7 @@ public class MainFrame extends JPanel {
 			/**
 			 * in GUI mode clean GUI and show GUI message
 			 */
-			if (Common.showGUI()) 
+			if (Common.showGUI())
 			{
 				/**
 				 * close startup
@@ -2843,7 +2878,7 @@ public class MainFrame extends JPanel {
 			/**
 			 * in CLI mode simply show stackTrace
 			 */
-			else 
+			else
 			{
 				e.printStackTrace();
 			}
@@ -2874,7 +2909,7 @@ public class MainFrame extends JPanel {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public static void setFrameTitle(String str)
 	{
@@ -2882,7 +2917,7 @@ public class MainFrame extends JPanel {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public static void resetFrameTitle()
 	{
@@ -2890,7 +2925,7 @@ public class MainFrame extends JPanel {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public static Rectangle getFrameBounds()
 	{
@@ -2898,7 +2933,7 @@ public class MainFrame extends JPanel {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public static void minimize()
 	{

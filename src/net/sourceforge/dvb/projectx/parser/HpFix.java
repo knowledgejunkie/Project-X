@@ -54,11 +54,11 @@ public class HpFix extends Object {
 			byte[] header = new byte[9];
 			byte[] data;
 
-			for (;;)
+			for (int ret, len, pes_ext;;)
 			{
-				int ret = in.read(header, 0, 9);
+				ret = in.read(header, 0, 9);
 
-				if (ret < 0)
+				if (ret < 9)
 					break;
 
 				if ((ret = CommonParsing.validateStartcode(header, 0)) < 0 || header[3] != (byte)0xBD)
@@ -69,12 +69,12 @@ public class HpFix extends Object {
 					continue;
 				}
 
-				int len = (0xFF & header[4])<<8 | (0xFF & header[5]);
+				len = (0xFF & header[4])<<8 | (0xFF & header[5]);
 				len -= 6;
 				header[4] = (byte)(0xFF & len>>>8);
 				header[5] = (byte)(0xFF & len);
 
-				int pes_ext = (0xFF & header[8]);
+				pes_ext = (0xFF & header[8]);
 				pes_ext += 4;
 				header[8] = (byte)(0xFF & pes_ext);
 

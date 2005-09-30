@@ -367,7 +367,7 @@ public class MainProcess extends Thread {
 					/**
 					 * M2S finish chapters file per coll#
 					 */
-					job_processing.getChapters().finish(collection.getFirstFileBase());
+					job_processing.getChapters().finish(collection.getOutputDirectory(), collection.getFirstFileName());
 
 					/**
 					 * finish collection
@@ -421,6 +421,11 @@ public class MainProcess extends Thread {
 
 					CommonParsing.setPvaPidToExtract(0);
 
+					/**
+					 * finish collection
+					 */
+					collection.finishProcessing();
+
 					break;
 				}
 			} 
@@ -459,11 +464,16 @@ public class MainProcess extends Thread {
 
 		if (stop_on_error)
 		{
+			Common.setMessage(Resource.getString("all.msg.error.summary", String.valueOf(Common.getErrorCount())));
+
 			collection.closeDebugLogStream();
 			collection.closeNormalLogStream(Common.getMessageLog());
 
 			Common.clearMessageLog();
 		}
+
+		else
+			Common.setMessage(" ", false, 0xEFFFEF);
 
 		collection.finishProcessing();
 
@@ -525,11 +535,11 @@ public class MainProcess extends Thread {
 
 			//d2v_1
 			if (Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex))
-				Common.setMessage("-> " + Resource.getString("ExternPanel.d2v") + " " + Resource.getString(Keys.KEY_ExternPanel_createD2vIndex[0]));
+				Common.setMessage("-> " + Resource.getString(Keys.KEY_ExternPanel_createD2vIndex[0]));
 
 			//d2v_2
 			if (Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile))
-				Common.setMessage("-> " + Resource.getString("ExternPanel.d2v") + " " + Resource.getString(Keys.KEY_ExternPanel_splitProjectFile[0]));
+				Common.setMessage("-> " + Resource.getString(Keys.KEY_ExternPanel_createD2vIndex[0]) + " " + Resource.getString(Keys.KEY_ExternPanel_splitProjectFile[0]));
 
 			//dar export limit
 			if (Common.getSettings().getBooleanProperty(Keys.KEY_OptionDAR))
@@ -928,24 +938,36 @@ public class MainProcess extends Thread {
 					break;
 
 				case CommonParsing.PVA_TYPE:
-					if (!CommonParsing.getPvaPidExtraction()) 
-						Common.setMessage(convertType[action]);
-	
-					vptslog = parsePVA(collection, xInputFile, CommonParsing.PES_AV_TYPE, action, vptslog);
+					if (i > 0) 
+						Common.setMessage(Resource.getString("all.msg.noprimaryfile"));
 
-					if (action == CommonParsing.ACTION_DEMUX) 
-						resetSplitMode(job_processing, vptslog);
+					else
+					{
+						if (!CommonParsing.getPvaPidExtraction()) 
+							Common.setMessage(convertType[action]);
+	
+						vptslog = parsePVA(collection, xInputFile, CommonParsing.PES_AV_TYPE, action, vptslog);
+
+						if (action == CommonParsing.ACTION_DEMUX) 
+							resetSplitMode(job_processing, vptslog);
+					}
 
 					break;
 
 				case CommonParsing.TS_TYPE:
-					if (!CommonParsing.getPvaPidExtraction()) 
-						Common.setMessage(convertType[action]);
+					if (i > 0) 
+						Common.setMessage(Resource.getString("all.msg.noprimaryfile"));
 
-					vptslog = parseTS(collection, xInputFile, CommonParsing.PES_AV_TYPE, action);
+					else
+					{
+						if (!CommonParsing.getPvaPidExtraction()) 
+							Common.setMessage(convertType[action]);
 
-					if (action == CommonParsing.ACTION_DEMUX) 
-						resetSplitMode(job_processing, vptslog);
+						vptslog = parseTS(collection, xInputFile, CommonParsing.PES_AV_TYPE, action);
+
+						if (action == CommonParsing.ACTION_DEMUX) 
+							resetSplitMode(job_processing, vptslog);
+					}
 
 					break;
 
@@ -1057,7 +1079,9 @@ public class MainProcess extends Thread {
 				Common.performPostCommand(lastlist);
 		}
 
-		Common.setMessage("=> " + Common.formatNumber(job_processing.getMediaFilesExportLength()) + " " + Resource.getString("working.bytes.written"), false, 0xEFFFEF);
+		Common.setMessage("=> " + Common.formatNumber(job_processing.getMediaFilesExportLength()) + " " + Resource.getString("working.bytes.written"));
+
+		Common.setMessage(Resource.getString("all.msg.error.summary", String.valueOf(Common.getErrorCount())));
 
 		//yield();
 
@@ -1565,9 +1589,25 @@ public class MainProcess extends Thread {
 
 								offset = 7 & pes_packet[13];
 
-								in.skip(offset);
+								count += 14;
 
-								count += (14 + offset);
+								in.read(pes_packet, 14, offset);
+
+								if (offset > 0)
+								{
+									for (int i = 0; i < offset; i++)
+										if (pes_packet[14 + i] != -1)
+										{
+											in.unread(pes_packet, 14, offset);
+
+											Common.setMessage("!> wrong pack header stuffing @ " + count);
+											missing_startcode = true;
+											continue loop;
+										}
+								}
+
+								count += offset;
+
 								continue loop;
 							}
 
@@ -1996,6 +2036,7 @@ public class MainProcess extends Thread {
 		boolean DumpDroppedGop = Common.getSettings().getBooleanProperty(Keys.KEY_dumpDroppedGop);
 		boolean CreateD2vIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
 		boolean SplitProjectFile = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
+		boolean Overlap = Common.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
 
 		boolean isTeletext = false;
 		boolean missing_startcode = false;
@@ -2046,6 +2087,7 @@ public class MainProcess extends Thread {
 		long lastpts = 0;
 		long startPoint = 0;
 		long starts[] = new long[collection.getPrimaryInputFileSegments()];
+		long Overlap_Value = 1048576L * (Common.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1);
 
 		String vptslog = "-1";
 
@@ -2175,7 +2217,14 @@ public class MainProcess extends Thread {
 			 * split skipping first, for next split part
 			 */
 			if (job_processing.getSplitSize() > 0)
-				startPoint = job_processing.getLastHeaderBytePosition() - (1048576L * (Common.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1));
+			{
+				startPoint = job_processing.getLastHeaderBytePosition();
+				startPoint -= !Overlap ? 0 : Overlap_Value;
+
+				job_processing.setLastGopTimecode(0);
+				job_processing.setLastGopPts(0);
+				job_processing.setLastSimplifiedPts(0);
+			}
 
 			List CutpointList = collection.getCutpointList();
 			List ChapterpointList = collection.getChapterpointList();
@@ -2347,9 +2396,25 @@ public class MainProcess extends Thread {
 
 								offset = 7 & pes_packet[13];
 
-								in.skip(offset);
+								count += 14;
 
-								count += (14 + offset);
+								in.read(pes_packet, 14, offset);
+
+								if (offset > 0)
+								{
+									for (int i = 0; i < offset; i++)
+										if (pes_packet[14 + i] != -1)
+										{
+											in.unread(pes_packet, 14, offset);
+
+											Common.setMessage("!> wrong pack header stuffing @ " + count);
+											missing_startcode = true;
+											continue loop;
+										}
+								}
+
+								count += offset;
+
 								continue loop;
 							}
 
@@ -3151,6 +3216,7 @@ public class MainProcess extends Thread {
 		boolean CreateD2vIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
 		boolean SplitProjectFile = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
 		boolean UseAutoPidFilter = Common.getSettings().getBooleanProperty(Keys.KEY_useAutoPidFilter);
+		boolean Overlap = Common.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
 
 		boolean ts_isIncomplete = false;
 		boolean ts_startunit = false;
@@ -3202,6 +3268,7 @@ public class MainProcess extends Thread {
 		long base;
 		long startPoint = 0;
 		long starts[] = new long[collection.getPrimaryInputFileSegments()];
+		long Overlap_Value = 1048576L * (Common.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1);
 		long qexit;
 
 
@@ -3225,6 +3292,13 @@ public class MainProcess extends Thread {
 
 		else
 		{
+			for (int i = 0; i < TSPidlist.size(); i++)
+			{
+				streambuffer = (StreamBuffer) TSPidlist.get(i);
+				streambuffer.reset();
+				streambuffer.setStarted(false);
+			}
+
 			for (int i = 0; i < demuxList.size(); i++)
 			{
 				streamdemultiplexer = (StreamDemultiplexer) demuxList.get(i);
@@ -3365,7 +3439,14 @@ public class MainProcess extends Thread {
 			 * split skipping first, for next split part
 			 */
 			if (job_processing.getSplitSize() > 0)
-				startPoint = job_processing.getLastHeaderBytePosition() - (1048576L * (Common.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1));
+			{
+				startPoint = job_processing.getLastHeaderBytePosition();
+				startPoint -= !Overlap ? 0 : Overlap_Value;
+
+				job_processing.setLastGopTimecode(0);
+				job_processing.setLastGopPts(0);
+				job_processing.setLastSimplifiedPts(0);
+			}
 
 			List CutpointList = collection.getCutpointList();
 			List ChapterpointList = collection.getChapterpointList();
@@ -4647,6 +4728,7 @@ public class MainProcess extends Thread {
 		boolean Concatenate = Common.getSettings().getBooleanProperty(Keys.KEY_Input_concatenateForeignRecords);
 		boolean CreateD2vIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
 		boolean SplitProjectFile = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
+		boolean Overlap = Common.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
 
 		boolean containsPts = false;
 		boolean ende = false;
@@ -4689,6 +4771,7 @@ public class MainProcess extends Thread {
 		long base;
 		long startPoint = 0;
 		long starts[] = new long[collection.getPrimaryInputFileSegments()];
+		long Overlap_Value = 1048576L * (Common.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1);
 		long qexit;
 
 	
@@ -4717,6 +4800,13 @@ public class MainProcess extends Thread {
 		}
 		else
 		{
+			for (int i = 0; i < PVAPidlist.size(); i++)
+			{
+				streambuffer = (StreamBuffer) PVAPidlist.get(i);
+				streambuffer.reset();
+				streambuffer.setStarted(true);
+			}
+
 			for (int i = 0; i < demuxList.size(); i++)
 			{
 				streamdemultiplexer = (StreamDemultiplexer) demuxList.get(i);
@@ -4828,7 +4918,14 @@ public class MainProcess extends Thread {
 			 * split skipping first, for next split part
 			 */
 			if (job_processing.getSplitSize() > 0)
-				startPoint = job_processing.getLastHeaderBytePosition() - (1048576L * (Common.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1));
+			{
+				startPoint = job_processing.getLastHeaderBytePosition();
+				startPoint -= !Overlap ? 0 : Overlap_Value;
+
+				job_processing.setLastGopTimecode(0);
+				job_processing.setLastGopPts(0);
+				job_processing.setLastSimplifiedPts(0);
+			}
 
 			List CutpointList = collection.getCutpointList();
 			List ChapterpointList = collection.getChapterpointList();
@@ -4991,12 +5088,12 @@ public class MainProcess extends Thread {
 
 					packet++;
 
-					pva_pid = 0xFF & pva_packet[2];
+					pva_pid     = 0xFF & pva_packet[2];
 					pva_counter = 0xFF & pva_packet[3];                             
-					ptsflag = 0xFF & pva_packet[5];
+					ptsflag     = 0xFF & pva_packet[5];
 					containsPts = (0x10 & ptsflag) != 0;
-					pre_bytes = 3 & ptsflag>>>2;
-					post_bytes = 3 & ptsflag;
+					pre_bytes   = 3 & ptsflag>>>2;
+					post_bytes  = 3 & ptsflag;
 					pva_payloadlength = (0xFF & pva_packet[6])<<8 | (0xFF & pva_packet[7]);
 
 					pva_packetoffset = pva_headerlength;
@@ -5106,6 +5203,7 @@ public class MainProcess extends Thread {
 						if (foundObject)
 							break; 
 					}
+
 
 					/**
 					 * create new PID object
@@ -5235,6 +5333,7 @@ public class MainProcess extends Thread {
 
 						Common.setMessage(Resource.getString("parsePVA.id.0x") + Integer.toHexString(pva_pid).toUpperCase() + " " + IDtype);
 					}
+
 
 					if (!streamdemultiplexer.StreamEnabled())
 						continue loop;
@@ -5719,6 +5818,8 @@ public class MainProcess extends Thread {
 
 			if ( (0x10000L & CommonParsing.getAudioProcessingFlags()) != 0) 
 				MpaConversionMode = 0;
+
+			MPAConverter.resetBuffer();
 		}
 
 		CommonParsing.setAudioProcessingFlags(CommonParsing.getAudioProcessingFlags() & 3L);
@@ -5765,6 +5866,7 @@ public class MainProcess extends Thread {
 		boolean DecodeMpgAudio = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_decodeMpgAudio);
 		boolean ClearCRC = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_clearCRC);
 		boolean IgnoreErrors = Common.getSettings().getBooleanProperty(Keys.KEY_Audio_ignoreErrors);
+		boolean CreateDDWave = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_createDDWave);
 
 		/**
 		 * messages
@@ -5795,6 +5897,9 @@ public class MainProcess extends Thread {
 
 		if (AddFrames)
 			Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_addFrames[0]));
+
+		if (CreateDDWave)
+			Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_createDDWave[0]));
 
 
 		int ResampleAudioMode = Common.getSettings().getIntProperty(Keys.KEY_AudioPanel_resampleAudioMode);
@@ -5995,6 +6100,12 @@ public class MainProcess extends Thread {
 				Common.setMessage(Resource.getString("audio.msg.addriff.ac3"));
 			}
 
+			else if (CreateDDWave && es_streamtype == CommonParsing.AC3_AUDIO)
+				audiooutL.write(audio.getRiffHeader());
+
+			else if (CreateDDWave && es_streamtype == CommonParsing.DTS_AUDIO)
+				audiooutL.write(audio.getRiffHeader());
+
 
 			bigloop:
 			while (true)
@@ -6066,6 +6177,8 @@ public class MainProcess extends Thread {
 						is_DTS = false;
 						is_AC3 = true;
 					}
+
+					audiooutL.setWave(CreateDDWave, is_AC3, is_DTS, audio.Bitrate);
 
 					/**
 					 * prepare fo read entire frame 
@@ -8007,6 +8120,14 @@ public class MainProcess extends Thread {
 				pureaudio[1][0] += ".wav";
 			}
 
+			else if (CreateDDWave)
+			{
+				pureaudio[0][0] += ".wav";
+				pureaudio[1][0] += ".wav";
+				pureaudio[0][4] += ".wav";
+				pureaudio[1][4] += ".wav";
+			}
+
 			File ac3name = new File (fparent + pureaudio[isElementaryStream][0]);
 			File mp1name = new File (fparent + pureaudio[isElementaryStream][1]);
 			File mp2name = new File (fparent + pureaudio[isElementaryStream][2]);
@@ -8096,9 +8217,13 @@ public class MainProcess extends Thread {
 			}
 
 			else if (es_streamtype == CommonParsing.LPCM_AUDIO)
-			{
 				audio.fillRiffHeader(newnameL);
-			}
+
+			else if (CreateDDWave && es_streamtype == CommonParsing.AC3_AUDIO)
+				audio.fillStdRiffHeader(newnameL, (long)(time_counter / 90.0f));
+
+			else if (CreateDDWave && es_streamtype == CommonParsing.DTS_AUDIO)
+				audio.fillStdRiffHeader(newnameL, (long)(time_counter / 90.0f));
 
 
 			File audioout1 = new File(newnameL);
@@ -8366,7 +8491,7 @@ public class MainProcess extends Thread {
 
 		Subpicture subpicture = Common.getSubpictureClass();
 
-		if (ShowSubpictureWindow)
+		if (ShowSubpictureWindow && (SubtitleExportFormat.equalsIgnoreCase(Keys.ITEMS_SubtitleExportFormat[6].toString()) || SubtitleExportFormat.equalsIgnoreCase(Keys.ITEMS_SubtitleExportFormat[7].toString())))
 			Common.getGuiInterface().showSubpicture();
 
 		if (SubtitleExportFormat.equalsIgnoreCase(Keys.ITEMS_SubtitleExportFormat[7].toString()) || SubtitleExportFormat.equalsIgnoreCase(Keys.ITEMS_SubtitleExportFormat[6].toString())) // SUP + SON, set variables
@@ -10288,6 +10413,7 @@ public class MainProcess extends Thread {
 		boolean AddSequenceEndcode = Common.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_addEndcode);
 		boolean RenameVideo = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_renameVideo);
 		boolean Debug = collection.DebugMode();
+		boolean Overlap = Common.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
 
 		boolean first = true;
 		boolean doWrite = true;
@@ -10302,6 +10428,7 @@ public class MainProcess extends Thread {
 		long pos = 0;
 		long pts = 0;
 		long startPoint = 0;
+		long Overlap_Value = 1048576L * (Common.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1);
 
 		int CutMode =  Common.getSettings().getIntProperty(Keys.KEY_CutMode);
 		int[] MPGVideotype = { 0 };
@@ -10357,7 +10484,9 @@ public class MainProcess extends Thread {
 			 */
 			if (job_processing.getSplitSize() > 0)
 			{
-				startPoint = job_processing.getLastHeaderBytePosition() - (1048576L * (Common.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1)); //go back for overlapping output
+				startPoint = job_processing.getLastHeaderBytePosition();
+				startPoint -= !Overlap ? 0 : Overlap_Value;
+
 				doWrite = false;
 
 				/**

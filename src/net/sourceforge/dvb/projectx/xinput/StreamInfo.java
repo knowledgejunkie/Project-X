@@ -171,13 +171,6 @@ public class StreamInfo extends Object {
 	 */
 	public String getFileType()
 	{
-		if (pids.length > 1)
-		{
-			int[] values = getPIDs();
-
-			return (file_type + "  (SID 0x" + Integer.toHexString(values[0]).toUpperCase() + ", PMT 0x" + Integer.toHexString(values[1]).toUpperCase() + ")");
-		}
-
 		return file_type;
 	}
 
@@ -326,6 +319,15 @@ public class StreamInfo extends Object {
 	{
 		streamtype = _streamtype;
 		file_type = Keys.ITEMS_FileTypes[streamtype].toString();
+	}
+
+	/**
+	 *
+	 */
+	public void setStreamType(int _streamtype, String str)
+	{
+		streamtype = _streamtype;
+		file_type = Keys.ITEMS_FileTypes[streamtype].toString() + str;
 	}
 
 	/**

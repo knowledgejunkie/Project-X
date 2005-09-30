@@ -61,6 +61,7 @@ import net.sourceforge.dvb.projectx.gui.ComboBoxIndexListener;
 import net.sourceforge.dvb.projectx.gui.ComboBoxItemListener;
 import net.sourceforge.dvb.projectx.gui.CheckBoxListener;
 import net.sourceforge.dvb.projectx.gui.TextFieldListener;
+import net.sourceforge.dvb.projectx.gui.TextFieldKeyListener;
 
 import net.sourceforge.dvb.projectx.common.Keys;
 import net.sourceforge.dvb.projectx.common.Common;
@@ -79,6 +80,7 @@ public class PreSettings extends JFrame {
 	private ComboBoxItemListener _ComboBoxItemListener = new ComboBoxItemListener();
 	private CheckBoxListener _CheckBoxListener = new CheckBoxListener();
 	private TextFieldListener _TextFieldListener = new TextFieldListener();
+	private TextFieldKeyListener _TextFieldKeyListener = new TextFieldKeyListener();
 
 	/**
 	 * Constructor
@@ -530,6 +532,7 @@ public class PreSettings extends JFrame {
 		offset_value.setEditable(true);
 		offset_value.setActionCommand(Keys.KEY_ExportPanel_additionalOffset_Value[0]);
 		offset_value.addActionListener(_TextFieldListener);
+		offset_value.addKeyListener(_TextFieldKeyListener);
 		op7.add(offset_value);
 
 		op5.add(op7);
@@ -617,6 +620,7 @@ public class PreSettings extends JFrame {
 		sde_value.setEditable(true);
 		sde_value.setActionCommand(Keys.KEY_VideoPanel_SdeValue[0]);
 		sde_value.addActionListener(_TextFieldListener);
+		sde_value.addKeyListener(_TextFieldKeyListener);
 		SdePanel.add(sde_value);
 
 		video2Panel.add(SdePanel);
@@ -818,6 +822,7 @@ public class PreSettings extends JFrame {
 		d2v_splitsize.setEditable(true);
 		d2v_splitsize.setActionCommand(Keys.KEY_ExternPanel_ProjectFileSplitSize[0]);
 		d2v_splitsize.addActionListener(_TextFieldListener);
+		d2v_splitsize.addKeyListener(_TextFieldKeyListener);
 
 		JPanel d2vPanel = new JPanel();
 		JLabel d2vLabel = new JLabel (Resource.getString("ExternPanel.ProjectFileSplitSize"));
@@ -871,9 +876,10 @@ public class PreSettings extends JFrame {
 			Keys.KEY_AudioPanel_patch1stAc3Header,
 			Keys.KEY_AudioPanel_replaceAc3withSilence,
 			Keys.KEY_AudioPanel_allowSpaces,
-			Keys.KEY_AudioPanel_addRiffToAc3,
 			Keys.KEY_AudioPanel_addRiffToMpgAudio,
-			Keys.KEY_AudioPanel_addRiffToMpgAudioL3
+			Keys.KEY_AudioPanel_addRiffToMpgAudioL3,
+			Keys.KEY_AudioPanel_addRiffToAc3,
+			Keys.KEY_AudioPanel_createDDWave
 		};
 
 		final JCheckBox[] box = new JCheckBox[objects.length];
@@ -906,6 +912,7 @@ public class PreSettings extends JFrame {
 		normalize_value.setEditable(true);
 		normalize_value.setActionCommand(Keys.KEY_AudioPanel_NormalizeValue[0]);
 		normalize_value.addActionListener(_TextFieldListener);
+		normalize_value.addKeyListener(_TextFieldKeyListener);
 		normalize_value.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -987,8 +994,12 @@ public class PreSettings extends JFrame {
 		audio1.setBorder( BorderFactory.createTitledBorder(Resource.getString("AudioPanel.Title2")) );
 
 		for (int i = 6; i < objects.length; i++)
-			audio1.add(box[i]);
+		{
+			if (i == 13 || i == 16)
+				audio1.add(Box.createRigidArea(new Dimension(1, 10)));
 
+			audio1.add(box[i]);
+		}
 
 		ActionListener al_2 = new ActionListener() {
 			public void actionPerformed(ActionEvent e)
@@ -1082,7 +1093,7 @@ public class PreSettings extends JFrame {
 			Keys.KEY_SubtitlePanel_TtxPage6
 		};
 
-		Object[] pagenumber = { "null", "149", "150", "691", "692", "693", "694", "777", "779", "784", "785", "786", "881", "882", "884", "885", "886", "887", "888", "889" };
+		Object[] pagenumber = { "null", "149", "150", "199", "299", "599", "691", "692", "693", "694", "699", "777", "779", "784", "785", "786", "881", "882", "884", "885", "886", "887", "888", "889" };
 
 		for (int i = 0; i < keys.length; i++)
 		{
@@ -1200,6 +1211,8 @@ public class PreSettings extends JFrame {
 		subpicture_values.setEditable(true);
 		subpicture_values.setActionCommand(Keys.KEY_SubtitlePanel_Format_SUP_Values[0]);
 		subpicture_values.addActionListener(_TextFieldListener);
+		subpicture_values.addKeyListener(_TextFieldKeyListener);
+
 		panel_1_3.add(subpicture_values);
 
 		panel_1.add(panel_1_3);
@@ -1230,7 +1243,8 @@ public class PreSettings extends JFrame {
 		page_id.setEditable(true);
 		page_id.setActionCommand(Keys.KEY_SubtitlePanel_PageId_Value[0]);
 		page_id.addActionListener(_TextFieldListener);
-	
+		page_id.addKeyListener(_TextFieldKeyListener);
+
 		panel_2_1.add(page_id);
 
 		panel_1.add(panel_2_1);
@@ -1280,6 +1294,7 @@ public class PreSettings extends JFrame {
 		start_path.setEditable(true);
 		start_path.setActionCommand(Keys.KEY_StartPath_Value[0]);
 		start_path.addActionListener(_TextFieldListener);
+		start_path.addKeyListener(_TextFieldKeyListener);
 
 		op0.add(new JLabel(Resource.getString("OptionPanel.StartPath")));
 		op0.add(start_path);
@@ -1380,6 +1395,7 @@ public class PreSettings extends JFrame {
 		ftpcommand.setToolTipText(Resource.getString(Keys.KEY_FtpServer_Commands[0] + Keys.KEY_Tip));
 		ftpcommand.setActionCommand(Keys.KEY_FtpServer_Commands[0]);
 		ftpcommand.addActionListener(_TextFieldListener);
+		ftpcommand.addKeyListener(_TextFieldKeyListener);
 		ftpPanel.add(ftpcommand);
 
 		panel_1.add(ftpPanel);
@@ -1442,6 +1458,7 @@ public class PreSettings extends JFrame {
 			text_field.setEditable(true);
 			text_field.setActionCommand(objects[i][0]);
 			text_field.addActionListener(_TextFieldListener);
+			text_field.addKeyListener(_TextFieldKeyListener);
 
 			JButton exe = new JButton(Resource.getString("PostCommands.Execute"));
 			exe.setActionCommand(objects[i][0]);
@@ -1469,6 +1486,7 @@ public class PreSettings extends JFrame {
 			text_field.setEditable(true);
 			text_field.setActionCommand(objects[i][0]);
 			text_field.addActionListener(_TextFieldListener);
+			text_field.addKeyListener(_TextFieldKeyListener);
 
 			JPanel panel = new JPanel();
 			panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));

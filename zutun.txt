@@ -147,17 +147,20 @@
 --kaputte ac3 daten von haup. aufbereiten, kontext
 --slideshow des exportbereichs
 --fehler beim umlauten via ftp
+--fehler bei ac3 crc check 44100hz
+--dd-wave auspacken
+--dts-wav /ac3-wav für cd-pcm format ausgeben (1411,2kbps), 
+--mono zu 3d-stereo bei mpa, als ersatz für single to dual
 
 !-extra einstellungen für coll übernehmen, wird nur gelesen bei mainprocessing, vorbereitet
 !!-auto split mpa, wenn dual detektiert
 !!-profile hd,mpg reseted,vob, etc ermöglichen?
 !!-MPAD überarbeiten, nicht mehr statisch; decode: arrays.fill statt new init ca. 20% schneller
-!!-dts-wav /ac3-wav für cd-pcm format ausgeben (1422kbps)
 !!-Bc(losed) nur vorwärtreferenzeirte B-Frames ? behandeln
 !!-audio.java umbauen als interface, bei ac3 vergleichskriterium dn, sm, cm erweitern
 !!-ac3 bitraten patch mit CRC neu berechnung
 !!-info .00 sek, :00 frame, ;00 dropframes (semikoloon)
-!!-h264 ?
+!-h264 ? nur info
 !!-finepass wrapper,humax wrapper,vcd-svcd-image wrapper etc evtl. übergeordnet?
 !!-avi(bmp)film zu .sup
 !!-fixes array für gops verwenden (max 6MB)
@@ -167,7 +170,7 @@
 !-ftp,dll access als status , falls nicht verfügbar, apache libs optional machen, dann ohne ftp
 !!-dvb-subs,  besonderer hinweis: pagenumber definieren "http://www.cs.helsinki.fi/u/mikkila/son2srt/"
 !!-vbvbuffer bei mpeg1 nicht?
-!!-mono zu 3d-stereo
+!!-ts-pid-wechseln folgen
 
 //
 java.applet.AudioClip ac = java.applet.Applet.newAudioClip(Resource.getResourceURL("bsp.wav"));

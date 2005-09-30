@@ -625,9 +625,11 @@ public class Audio extends Object {
 		Emphasis = 0; 
 		Protection_bit = 0 ^ 1; 
 	
-		if ( (Sampling_frequency = dts_frequency_index[0xF&(frame[pos+8]>>>2)]) < 1) 
+		if ( (Sampling_frequency = dts_frequency_index[0xF & (frame[pos + 8]>>>2)]) < 1) 
 			return -4; 
-		Bitrate = dts_bitrate_index[((3&frame[pos+8])<<3)|(7&(frame[pos+9]>>>5))]; 
+
+		Bitrate = dts_bitrate_index[((3 & frame[pos + 8])<<3) | (7 & (frame[pos + 9]>>>5))]; 
+
 		if ( Bitrate < 1) 
 			return -3; 
 	
@@ -736,22 +738,30 @@ public class Audio extends Object {
 	
 	private int littleEndian(byte[] data, int offset, int len, boolean INTEL)
 	{
-		int value=0;
-		for (int a=0; a<len; a++)
-			value|=INTEL?((0xFF&data[offset+a])<<(a*8)):((0xFF&data[offset+a])<<((len-1-a)*8));
+		int value = 0;
+
+		for (int a = 0; a < len; a++)
+			value |= INTEL ? ((0xFF & data[offset + a])<<(a * 8)) : ((0xFF & data[offset + a])<<((len - 1 - a) * 8));
+
 		return value;
 	}
 	
 	private int littleEndian(int data, int len)
 	{
-		if (!INTEL)	
-			return data;
-		if (len==4) 
-			return ( (0xFF&data>>>24) | (0xFF&data>>>16)<<8 | (0xFF&data>>>8)<<16 | (0xFF&data)<<24 );
-		else 
-			return ( (0xFF&data>>>8) | (0xFF&data)<<8 );
+		return littleEndian(data, len, INTEL);
 	}
 	
+	private int littleEndian(int data, int len, boolean b)
+	{
+		if (!b)	
+			return data;
+
+		if (len == 4) 
+			return ( (0xFF & data>>>24) | (0xFF & data>>>16)<<8 | (0xFF & data>>>8)<<16 | (0xFF & data)<<24 );
+
+		else 
+			return ( (0xFF & data>>>8) | (0xFF & data)<<8 );
+	}
 	
 	/*** parse RIFF_WAVE Header ***/ 
 	public int WAV_parseHeader(byte[] frame, int pos)
@@ -859,6 +869,34 @@ public class Audio extends Object {
 		};
 
 		return RIFF;
+	}
+
+	/**
+	 * updates std RIFF
+	 */
+	public void fillStdRiffHeader(String file, long time_len) throws IOException
+	{
+		RandomAccessFile riff = new RandomAccessFile(file, "rw");
+
+		int len = (int)riff.length() - 8;
+		int bitrate = 1411200;
+
+		riff.seek(4);
+		riff.writeInt(littleEndian(len, 4, true));  //data+chunksize
+
+		riff.seek(16);
+		riff.writeInt(littleEndian(0x10, 4, true));  //chunk length
+		riff.writeShort(littleEndian(1, 2, true));   //pcm
+		riff.writeShort((short)littleEndian(2, 2, true)); //channels
+		riff.writeInt(littleEndian(44100, 4, true));  //sample_freq
+		riff.writeInt(littleEndian(bitrate / 8, 4, true)); //byterate
+		riff.writeShort((short)littleEndian(4, 2, true)); //blockalign
+		riff.writeShort((short)littleEndian(16, 2, true)); //bits_per_sample
+
+		riff.seek(40);
+		riff.writeInt(littleEndian(len - 36, 4, true));  //data-size
+	
+		riff.close();
 	}
 
 	/**

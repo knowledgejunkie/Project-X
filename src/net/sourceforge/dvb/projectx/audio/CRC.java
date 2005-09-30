@@ -88,17 +88,23 @@ public final class CRC extends Object {
 		int[] g = { 1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1 }; // x^16 + x^15 + x^2 + 1
 
 		int[] shift_reg = new int[16];
-		int crc = 0, crc1 = 0;
-		int nr_bits = (len-offset) * 8;
-		int crc1_len = ((len>>>1) + (len>>>3) - offset) * 8;
+		int crc = 0;
+		int crc1 = 0;
+		int nr_bits = (len - offset) * 8;
 
-		for (int bit_count=0, bit_in_byte=0, data_bit; bit_count < nr_bits; bit_count++)
+		int words = len>>>1; //to word
+		int crc1_len = (words>>>1) + (words>>>3);
+
+		crc1_len <<= 4; //from word to bit
+		crc1_len -= (offset<<3); // exclude byte offset
+
+		for (int bit_count = 0, bit_in_byte = 0, data_bit; bit_count < nr_bits; bit_count++)
 		{
 			if (bit_count == crc1_len)
 			{
 				crc1 = 0;
-				for (int i=0; i<16; i++)
-					crc1 = ((crc1 << 1) | (shift_reg[15-i]));
+				for (int i = 0; i < 16; i++)
+					crc1 = ((crc1 << 1) | (shift_reg[15 - i]));
 
 				if (crc1 != 0)
 					return 1;
@@ -201,8 +207,11 @@ public final class CRC extends Object {
 
 		java.util.Arrays.fill(shift_reg, 1);
 
-		for (int bit_count=0, bit_in_byte=0, data_bit; bit_count < nr_bits; bit_count++)
+		for (int bit_count=0, bit_in_byte=0, data_bit, j = data.length; bit_count < nr_bits; bit_count++)
 		{
+			if (offset >= j)
+				break;
+
 			data_bit = (data[offset] & 0x80>>>(bit_in_byte++)) != 0 ? 1 : 0;
 
 			if ((bit_in_byte &= 7) == 0)

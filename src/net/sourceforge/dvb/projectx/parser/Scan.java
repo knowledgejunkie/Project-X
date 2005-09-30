@@ -107,7 +107,7 @@ public class Scan extends Object {
 			// type must be first when scanning
 			streamInfo.setStreamInfo(aXInputFile.getFileType().getName(), getType(aXInputFile), _name, _location, _date, _size, getPlaytime(), getVideo(), getAudio(), getText(), getPics());
 
-			streamInfo.setStreamType(filetype);
+			streamInfo.setStreamType(filetype, addInfo);
 			streamInfo.setPIDs(getPIDs());
 			streamInfo.setVideoHeader(getVBasic());
 		}
@@ -676,7 +676,126 @@ public class Scan extends Object {
 			} 
 		} 
 
+		return checkH264(check, length);
+
+		//return false;
+	}
+
+	/**
+	 *
+	 */
+	private boolean checkH264(byte[] check, int length)
+	{ 
+		ByteArrayOutputStream bytecheck = new ByteArrayOutputStream();
+		int[] BitPosition = { 0 };
+
+		for (int i = 0, flag, nal_unit, nal_ref, profile, forb_zero, level_idc, hori, vert, j = length - 50; i < j; i++)
+		{
+			if (check[i] != 0 || check[1 + i] != 0 || check[2 + i] != 0 || check[3 + i] != 1)
+				continue;
+
+			BitPosition[0] = (4 + i)<<3;
+
+			forb_zero = getBits(check, BitPosition, 1); //forb_zero = 0x80 & check[4 + i];
+			nal_ref = getBits(check, BitPosition, 2); //nal_ref  = (0xE0 & check[4 + i])>>>5;
+			nal_unit = getBits(check, BitPosition, 5); //nal_unit = 0x1F & check[4 + i];
+
+			if (forb_zero != 0 || nal_unit != 7)
+				continue;
+
+			//seq_param
+			profile = getBits(check, BitPosition, 8); //profile = 0xFF & check[5 + i];
+			getBits(check, BitPosition, 3); //constraint 0,1,2
+			getBits(check, BitPosition, 5); //5 zero_bits
+
+			level_idc = getBits(check, BitPosition, 8); //0xFF & check[7 + i];
+			flag = getCodeNum(check, BitPosition); // seq_parameter_set_id 0 ue(v)
+			flag = getCodeNum(check, BitPosition); // log2_max_frame_num_minus4 0 ue(v)
+			flag = getCodeNum(check, BitPosition); // pic_order_cnt_type 0 ue(v)
+
+			if (flag == 0)
+				getCodeNum(check, BitPosition); // log2_max_pic_order_cnt_lsb_minus4 0 ue(v)
+
+			else if (flag == 1)
+			{
+				getBits(check, BitPosition, 1); //delta_pic_order_always_zero_flag 0 u(1)
+				getSignedCodeNum(check, BitPosition); //offset_for_non_ref_pic 0 se(v)
+				getSignedCodeNum(check, BitPosition); //offset_for_top_to_bottom_field 0 se(v)
+				flag = getCodeNum(check, BitPosition); // num_ref_frames_in_pic_order_cnt_cycle 0 ue(v)
+
+				for (int k = 0; k < flag; k++)
+					getSignedCodeNum(check, BitPosition); //offset_for_ref_frame[ i ] 0 se(v)
+			}
+
+			getCodeNum(check, BitPosition); //num_ref_frames 0 ue(v)
+			getBits(check, BitPosition, 1); //gaps_in_frame_num_value_allowed_flag 0 u(1)
+			hori = 16 * (1 + getCodeNum(check, BitPosition)); //pic_width_in_mbs_minus1 0 ue(v)
+			vert = 16 * (1 + getCodeNum(check, BitPosition)); //pic_height_in_map_units_minus1 0 ue(v)
+			flag = getBits(check, BitPosition, 1); //frame_mbs_only_flag 0 u(1)
+
+			video_streams.add("MPEG-4/H.264, " + hori + "*" + (flag == 0 ? vert<<1 : vert));
+			return true;
+		} 
+
 		return false;
+	}
+
+	/**
+	 *
+	 */
+	private int getSignedCodeNum(byte[] array, int[] BitPosition)
+	{
+		int codeNum = getCodeNum(array, BitPosition);
+
+		codeNum = (codeNum & 1) == 0 ? codeNum>>>1 : -(codeNum>>>1);
+
+		return codeNum;
+	}
+
+	/**
+	 *
+	 */
+	private int getCodeNum(byte[] array, int[] BitPosition)
+	{
+		int leadingZeroBits = -1;
+		int codeNum;
+
+		for (int b = 0; b == 0; leadingZeroBits++)
+			b = getBits(array, BitPosition, 1);
+
+		codeNum = (1<<leadingZeroBits) - 1 + getBits(array, BitPosition, leadingZeroBits);
+
+		return codeNum;
+	}
+
+	/**
+	 *
+	 */
+	private int getBits(byte[] array, int[] BitPosition, int N)
+	{
+		int Pos, Val;
+		Pos = BitPosition[0]>>>3;
+
+		if (N == 0)
+			return 0;
+
+		if (Pos >= array.length - 4)
+		{
+			BitPosition[0] += N;
+			return -1;
+		}
+
+		Val =   (0xFF & array[Pos])<<24 |
+			(0xFF & array[Pos + 1])<<16 |
+			(0xFF & array[Pos + 2])<<8 |
+			(0xFF & array[Pos + 3]);
+
+		Val <<= BitPosition[0] & 7;
+		Val >>>= 32 - N;
+
+		BitPosition[0] += N;
+
+		return Val;
 	}
 
 	/**

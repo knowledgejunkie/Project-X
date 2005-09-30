@@ -69,6 +69,9 @@ public class Preview extends Object {
 
 	public String getProcessedPID()
 	{
+		if (processed_PID < 0)
+			return "---";
+
 		return (Integer.toHexString(processed_PID).toUpperCase());
 	}
 

@@ -36,6 +36,8 @@ import java.util.ArrayList;
 public class Chapters extends Object {
 
 	boolean active = false;
+	String file_separator = System.getProperty("file.separator");
+
 	ArrayList list;
 
 	public Chapters()
@@ -65,12 +67,15 @@ public class Chapters extends Object {
 		list.add(time + " ; " + comment);
 	}
 
-	public void finish(String str) throws IOException
+	public void finish(String str, String name) throws IOException
 	{
-		if (!active && list.size() == 0)
+		if (!active || list.size() == 0)
 			return;
 
-		str += ".chp.txt";
+		if (!str.endsWith(file_separator))
+			str += file_separator;
+
+		str += (name + ".chp.txt");
 
 		Object chapters[] = list.toArray();
 

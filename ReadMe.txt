@@ -111,7 +111,11 @@
 
 /==============================================================================/
 
- ProjectX - CVS at sourceforge.net/projects/project-x/
+  the 2 official ProjectX sites:
+
+  Project + D/L, only @ sourceforge.net/projects/project-x/
+
+  Support for the official version, only @ forum.dvbtechnics.info
 
 /==============================================================================/
 

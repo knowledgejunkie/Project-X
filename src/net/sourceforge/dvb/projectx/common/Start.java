@@ -433,6 +433,40 @@ public class Start extends Object {
 				Common.getSettings().setProperty(Keys.KEY_ConversionMode[0], "5");
 
 			/**
+			 * split output
+			 */
+			if ((index = getSwitch("-split")) >= 0)
+			{
+				switch_error = false;
+
+				if (index < cli_switches.size())
+				{
+					str = cli_switches.get(index).toString();
+
+					try {
+						int val = Integer.parseInt(str);
+
+						Common.getSettings().setProperty(Keys.KEY_SplitSize[0], "1");
+						Common.getSettings().setProperty(Keys.KEY_ExportPanel_SplitSize_Value[0], String.valueOf(val));
+
+					} catch (Exception e) {
+						switch_error = true;
+					}
+
+					cli_switches.remove(index);
+				}
+
+				else
+					switch_error = false;
+
+				if (switch_error)
+				{
+					System.out.println("can't set split size value ...");
+					error = true;
+				}
+			}
+
+			/**
 			 * new output base directory
 			 */
 			if ((index = getSwitch("-out")) >= 0)
