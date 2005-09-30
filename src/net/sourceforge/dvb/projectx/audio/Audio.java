@@ -1228,7 +1228,7 @@ public class Audio extends Object {
 
 		int len = array.length >= index + 8 ? 8 : array.length - index;
 
-		String str = getString(array, index, len - 1);
+		String str = getString(array, index, len);
 
 		return ("-> PS (" + psn + "): '" + str.trim() + "'");
 	}
