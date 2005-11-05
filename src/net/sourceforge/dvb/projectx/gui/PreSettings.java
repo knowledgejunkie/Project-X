@@ -810,6 +810,8 @@ public class PreSettings extends JFrame {
 		// right grid
 		video3Panel.add(box[7]);
 
+		video3Panel.add(Box.createRigidArea(new Dimension(1, 10)));
+
 		video3Panel.add(new JLabel(Resource.getString("ExternPanel.createD2vIndex")));
 
 		// right grid
@@ -1058,8 +1060,8 @@ public class PreSettings extends JFrame {
 		for (int i = 0; i < objects.length; i++)
 		{
 			box[i] = new JCheckBox(Resource.getString(objects[i][0]));
-			box[i].setPreferredSize(new Dimension(250, 20));
-			box[i].setMaximumSize(new Dimension(250, 20));
+			box[i].setPreferredSize(new Dimension(260, 20));
+			box[i].setMaximumSize(new Dimension(260, 20));
 			box[i].setToolTipText(Resource.getString(objects[i][0] + Keys.KEY_Tip));
 			box[i].setActionCommand(objects[i][0]);
 			box[i].setSelected(Common.getSettings().getBooleanProperty(objects[i]));
@@ -1454,7 +1456,7 @@ public class PreSettings extends JFrame {
 		for (int i = 0; i < 3; i++)
 		{
 			JTextField text_field = new JTextField(Common.getSettings().getProperty(objects[i]));
-			text_field.setPreferredSize(new Dimension(300, 25));
+			text_field.setPreferredSize(new Dimension(400, 25));
 			text_field.setEditable(true);
 			text_field.setActionCommand(objects[i][0]);
 			text_field.addActionListener(_TextFieldListener);
@@ -1473,6 +1475,8 @@ public class PreSettings extends JFrame {
 			container.add(panel);
 		}
 
+		container.add(Box.createRigidArea(new Dimension(1, 10)));
+
 		JLabel label = new JLabel(Resource.getString("PostCommands.PostProcessing"));
 		label.setToolTipText(Resource.getString("PostCommands.PostProcessing.Tip"));
 
@@ -1482,7 +1486,7 @@ public class PreSettings extends JFrame {
 		for (int i = 3; i < objects.length; i++)
 		{
 			JTextField text_field = new JTextField(Common.getSettings().getProperty(objects[i]));
-			text_field.setPreferredSize(new Dimension(300, 25));
+			text_field.setPreferredSize(new Dimension(400, 25));
 			text_field.setEditable(true);
 			text_field.setActionCommand(objects[i][0]);
 			text_field.addActionListener(_TextFieldListener);

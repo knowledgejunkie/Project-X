@@ -1013,7 +1013,7 @@ public class CollectionPanel extends JPanel {
 		titleLabel = new JLabel("");
 		titleLabel.setPreferredSize(new Dimension(230, 22));
 		titleLabel.setMaximumSize(new Dimension(230, 22));
-		cutPanel.add(titleLabel);
+	//	cutPanel.add(titleLabel);
 
 		cutPanel.add(buildRightPanel());
 

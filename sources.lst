@@ -25,6 +25,7 @@ src/net/sourceforge/dvb/projectx/parser/StreamBuffer.java
 src/net/sourceforge/dvb/projectx/parser/StreamConverter.java
 src/net/sourceforge/dvb/projectx/parser/StreamDemultiplexer.java
 src/net/sourceforge/dvb/projectx/parser/StripAudio.java
+src/net/sourceforge/dvb/projectx/parser/StripRelook.java
 src/net/sourceforge/dvb/projectx/parser/VBI.java
 src/net/sourceforge/dvb/projectx/subtitle/Bitmap.java
 src/net/sourceforge/dvb/projectx/subtitle/BMP.java

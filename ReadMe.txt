@@ -104,6 +104,9 @@
    (D) new with version 0.90 and later:
        it is possible to compile and run this program without the gui (means all source files in /gui/..).
        so there is no requirement of running a X server or similars anymore, calling it from the commandline.
+
+       if you can't start the non-gui version without a X server, try to call pjx with the 'headless' option
+       java -Djava.awt.headless=true -jar ProjectX.jar [options] <file>
        
 
    the compiling process doesn't take more than about 30 seconds.

@@ -52,7 +52,7 @@ public interface GuiInterfaceIF {
 	public void showErrorMessageDialog(Object message, String title);
 	public void showMessageDialog(Object message, String title);
 	public Object getMainFrameBounds();
-	public void minimizeMainFrame();
+	public void showMainFrame(boolean b);
 	public void setMainFrameTitle(String str);
 	public void resetMainFrameTitle();
 	public void addCollectionAtEnd();

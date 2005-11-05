@@ -36,6 +36,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
 import java.awt.image.MemoryImageSource;
 
 import java.io.BufferedOutputStream;
@@ -49,6 +52,9 @@ import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.UIManager;
 
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Common;
@@ -59,6 +65,7 @@ import net.sourceforge.dvb.projectx.gui.X_JFileChooser;
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
 
 import net.sourceforge.dvb.projectx.video.PreviewObject;
+import net.sourceforge.dvb.projectx.video.Video;
 
 import net.sourceforge.dvb.projectx.xinput.StreamInfo;
 
@@ -100,6 +107,8 @@ public class PicturePanel extends JPanel {
 	private long[] chapter_points = null;
 
 	private Object[] OSDInfo;
+
+	private JPopupMenu popup;
 
 	private Clock clock;
 
@@ -198,6 +207,8 @@ public class PicturePanel extends JPanel {
 		setToolTipText(tooltip1); // <- VORSCHLAG 1 Tooltip! 
 		setSize(512, 346);
 
+		buildPopupMenu();
+
 		addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e)
 			{
@@ -208,12 +219,50 @@ public class PicturePanel extends JPanel {
 					repaint();
 				}
 
-				if (e.getClickCount() > 1)
-					saveBMP(Common.getMpvDecoderClass().getPixels(), Common.getMpvDecoderClass().getWidth(), Common.getMpvDecoderClass().getHeight());
+	//			if (e.getClickCount() > 1)
+	//				saveBMP(Common.getMpvDecoderClass().getPixels(), Common.getMpvDecoderClass().getWidth(), Common.getMpvDecoderClass().getHeight(), Common.getMpvDecoderClass().getAspectRatio());
+
+				if (e.getClickCount() >= 1 && e.getModifiers() == MouseEvent.BUTTON3_MASK)
+					popup.show(getParent(), e.getX(), e.getY());
 			}
 		});
 
 		clock = new Clock();
+	}
+
+	/**
+	 *
+	 */
+	protected void buildPopupMenu()
+	{
+		ActionListener al = new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				String actName = e.getActionCommand();
+
+				if (actName.equals("save_1"))
+					saveBMP(Common.getMpvDecoderClass().getPixels(), Common.getMpvDecoderClass().getWidth(), Common.getMpvDecoderClass().getHeight(), 0, false);
+
+				else if (actName.equals("save_2"))
+					saveBMP(Common.getMpvDecoderClass().getPixels(), Common.getMpvDecoderClass().getWidth(), Common.getMpvDecoderClass().getHeight(), Common.getMpvDecoderClass().getAspectRatio(), true);
+			}
+		};
+
+		popup = new JPopupMenu("save");
+
+		JMenuItem menuitem_1 = popup.add(Resource.getString("PreviewPanel.saveCurrentPicture"));
+		menuitem_1.setActionCommand("save_1");
+
+		JMenuItem menuitem_2 = popup.add(Resource.getString("PreviewPanel.saveCurrentPictureDAR"));
+		menuitem_2.setActionCommand("save_2");
+
+		popup.pack();
+
+		UIManager.addPropertyChangeListener(new UISwitchListener(popup));
+
+		menuitem_1.addActionListener(al);
+		menuitem_2.addActionListener(al);
 	}
 
 	/**
@@ -810,13 +859,33 @@ public class PicturePanel extends JPanel {
 	}
 
 	/**
+	 *
+	 */
+	private final float[] aspectratio_table = { 
+		1.3333f, 1.3333f, 1.3333f, 1.7778f, 2.2100f, 1.3333f, 1.3333f, 1.3333f, 
+		1.3333f, 1.3333f, 1.3333f, 1.3333f, 1.3333f, 1.3333f, 1.3333f, 1.3333f 
+	};
+
+	/**
 	 * saves cached preview source picture as BMP
 	 *
 	 * @param1 - automatic saving (demux mode - <extern> panel option)
 	 * @param2 - if GUI is not visible, don't update
 	 */
-	public void saveBMP(int[] pixels, int horizontal_size, int vertical_size)
+	private void saveBMP(int[] pixels, int horizontal_size, int vertical_size, int aspectratio, boolean useAspectRatio)
 	{
+		int[] sourcepixel = null;
+
+		if (useAspectRatio)
+		{
+			sourcepixel = getScaledPixel(pixels, horizontal_size, vertical_size, aspectratio_table[aspectratio]);
+			horizontal_size = (int) Math.round(aspectratio_table[aspectratio] * vertical_size);
+		}
+
+		else
+			sourcepixel = pixels;
+
+
 		int size = horizontal_size * vertical_size;
 
 		if (size <= 0)
@@ -864,7 +933,7 @@ public class PicturePanel extends JPanel {
 			for (int a = vertical_size - 1; a >= 0; a--)
 				for (int b = 0, pixel = 0; b < horizontal_size; b++)
 				{
-					pixel = YUVtoRGB(pixels[b + a * horizontal_size]);
+					pixel = YUVtoRGB(sourcepixel[b + a * horizontal_size]);
 
 					for (int c = 0; c < 3; c++)
 						bmp24[c] = (byte)(pixel >>(c * 8) & 0xFF);
@@ -881,5 +950,30 @@ public class PicturePanel extends JPanel {
 		catch (IOException e)
 		{}
 	}
+
+	/**
+	 * create new cutimage pixel data
+	 */
+	private int[] getScaledPixel(int[] pixels, int horizontal_size, int vertical_size, float aspectratio)
+	{
+		int new_height = vertical_size;
+		int new_width = (int) Math.round(aspectratio * vertical_size);
+		int source_height = vertical_size;
+		int source_width = horizontal_size;
+
+		float Y = 0;
+		float X = 0;
+		float decimate_height = (float)source_height / new_height;
+		float decimate_width = (float)source_width / new_width;
+
+		int[] new_image = new int[new_width * new_height];
+
+		for (int y = 0; Y < source_height && y < new_height; Y += decimate_height, y++, X = 0)
+			for (int x = 0; X < source_width && x < new_width; X += decimate_width, x++)
+				new_image[x + (y * new_width)] = pixels[(int)X + ((int)Y * source_width)];
+
+		return new_image;
+	}
+
 
 }

@@ -72,7 +72,7 @@ public class Keys extends Object {
 	public final static String[] KEY_MessagePanel_Msg5 = { "MessagePanel.logWSS", "1" }; //WSS
 	public final static String[] KEY_MessagePanel_Msg6 = { "MessagePanel.logVPS", "1" }; //VPS
 	public final static String[] KEY_MessagePanel_Msg7 = { "MessagePanel.logRDS", "1" }; //RDS
-	public final static String[] KEY_MessagePanel_Msg8 = { "MessagePanel.log100Errors", "0" };
+	public final static String[] KEY_MessagePanel_Msg8 = { "MessagePanel.logErrorMaximum", "1" };
 
 	/**
 	 * MainPanel
@@ -139,7 +139,7 @@ public class Keys extends Object {
 	public final static String[] KEY_StartPath_Value = { "OptionPanel.StartPath.Value", "" }; 
 	public final static String[] KEY_MainBuffer = { "OptionPanel.MainBuffer", "4096000" }; //combobox[10]
 	public final static String[] KEY_ScanBuffer = { "OptionPanel.ScanBuffer", "1024000" }; //combobox[37]
-	public final static String[] KEY_PreviewBuffer = { "OptionPanel.PreviewBuffer", "768000" }; //combobox[38]
+	public final static String[] KEY_PreviewBuffer = { "OptionPanel.PreviewBuffer", "1024000" }; //combobox[38]
 	public final static String[] KEY_holdStreamInfoOnOSD = { "OptionPanel.holdStreamInfoOnOSD", "0" };
 
 
@@ -261,8 +261,8 @@ public class Keys extends Object {
 	public static Object[] ITEMS_SubtitleExportFormat = null;
 
 	public final static String[] KEY_AudioPanel_decodeMpgAudio = { "AudioPanel.decodeMpgAudio", "0" }; //cbox[50] 
-	public final static String[] KEY_AudioPanel_validateCRC = { "AudioPanel.validateCRC", "0" }; //cbox[68] 
-	public final static String[] KEY_AudioPanel_clearCRC = { "AudioPanel.clearCRC", "0" }; //cbox[1] 
+	public final static String[] KEY_AudioPanel_validateCRC = { "AudioPanel.validateCRC", "1" }; //cbox[68] 
+	public final static String[] KEY_AudioPanel_clearCRC = { "AudioPanel.clearCRC", "1" }; //cbox[1] 
 	public final static String[] KEY_AudioPanel_fillGapsWithLastFrame = { "AudioPanel.fillGapsWithLastFrame", "0" }; //cbox[0] 
 	public final static String[] KEY_AudioPanel_addFrames = { "AudioPanel.addFrames", "1" }; //cbox[20] 
 	public final static String[] KEY_AudioPanel_patch1stAc3Header = { "AudioPanel.patch1stAc3Header", "0" }; //cbox[9] 
@@ -290,7 +290,7 @@ public class Keys extends Object {
 	public static Object[] ITEMS_resampleAudioMode = null;
 
 	public final static String[] KEY_Preview_fastDecode = { "CollectionPanel.Preview.fastDecode", "0" }; //rbutton[10] 
-	public final static String[] KEY_Preview_LiveUpdate = { "CollectionPanel.Preview.LiveUpdate", "0" }; //rbutton[16] 
+	public final static String[] KEY_Preview_LiveUpdate = { "CollectionPanel.Preview.LiveUpdate", "1" }; //rbutton[16] 
 	public final static String[] KEY_Preview_AllGops = { "CollectionPanel.Preview.AllGops", "0" }; //rbutton[6] 
 	public final static String[] KEY_OptionHorizontalResolution = { "CollectionPanel.OptionHorizontalResolution", "0" }; //cbox[52]
 	public final static String[] KEY_OptionDAR = { "CollectionPanel.OptionDAR", "0" }; //cbox[47]

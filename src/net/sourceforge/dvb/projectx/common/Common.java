@@ -80,8 +80,8 @@ import net.sourceforge.dvb.projectx.xinput.topfield_raw.RawInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90.1.00";
-	private static String version_date = "30.09.2005";
+	private static String version_name = "ProjectX 0.90.2.00";
+	private static String version_date = "05.11.2005";
 
 	private static String line_separator = System.getProperty("line.separator");
 
@@ -305,14 +305,17 @@ public final class Common extends Object {
 			setMessage(null, true, 0xFFFFFF);
 
 			if (getSettings().getBooleanProperty(Keys.KEY_minimizeMainFrame))
-				minimizeMainFrame();
+				showMainFrame(false);
 
 			if (getSettings().getBooleanProperty(Keys.KEY_hideProcessWindow))
 				getGuiInterface().closeLogWindow();
 		}
 
-		else if (getSettings().getBooleanProperty(Keys.KEY_hideProcessWindow))
+		else 
+		{
+			showMainFrame(true);
 			getGuiInterface().showLogWindow();
+		}
 	}
 
 	/**
@@ -926,8 +929,14 @@ public final class Common extends Object {
 	{
 		if (msg == null)
 		{
-			if (!isRunningCLI()) 
-				getGuiInterface().setMessage(msg, tofront, background);
+			if (!isRunningCLI())
+			{
+				if (getGuiInterface() != null)
+					getGuiInterface().setMessage(msg, tofront, background);
+
+				else
+					System.out.println(msg); 
+			}
 
 			return;
 		}
@@ -936,11 +945,11 @@ public final class Common extends Object {
 		{
 			ErrorCount++;
 
-			if (MaxLog && ErrorCount > 100)
+			if (MaxLog && ErrorCount > 500)
 				return;
 		}
 
-		if (MaxLog && ErrorCount == 100)
+		if (MaxLog && ErrorCount == 500)
 			msg += getLineSeparator() + Resource.getString("all.msg.error.max");
 
 		if (TimeLog) 
@@ -949,8 +958,8 @@ public final class Common extends Object {
 		if (getGlobalDebug()) 
 			System.out.println(msg); 
 
-		if (isRunningCLI()) 
-			System.out.println("\r" + msg); 
+		if (isRunningCLI() || getGuiInterface() == null) 
+			System.out.println(msg); 
 
 		else
 			getGuiInterface().setMessage(msg, tofront, background);
@@ -1434,9 +1443,9 @@ public final class Common extends Object {
 	/**
 	 *
 	 */
-	public static void minimizeMainFrame()
+	public static void showMainFrame(boolean b)
 	{
-		getGuiInterface().minimizeMainFrame();
+		getGuiInterface().showMainFrame(b);
 	}
 
 	/**

@@ -2722,6 +2722,14 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	/**
 	 * 
 	 */
+	public int getAspectRatio()
+	{
+		return aspect_ratio_information;
+	}
+
+	/**
+	 * 
+	 */
 	public String getInfo_1()
 	{
 		return info_1;

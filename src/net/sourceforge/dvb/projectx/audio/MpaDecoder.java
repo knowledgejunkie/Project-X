@@ -37,6 +37,8 @@ import java.io.RandomAccessFile;
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 
+import java.util.Arrays;
+
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
 
 public class MpaDecoder extends Object {
@@ -1015,7 +1017,9 @@ private static ByteArrayOutputStream out1 = new ByteArrayOutputStream();
 private static ByteArrayOutputStream out2 = new ByteArrayOutputStream();
 private static double saveS[] = new double[2]; //DM14052004 081.7 int02 changed
 
-private static int LEFT_RIGHT=0;
+public static boolean PRESCAN = false;
+
+private static int LEFT_RIGHT = 0;
 public static boolean MOTOROLA=false, DOWNSAMPLE=false, DOWNMIX=false, 
 		WAVE=true, MONO=false, RESET=false, NORMALIZE=false;
 
@@ -1096,17 +1100,38 @@ public static void flushBuffer(int N) {
 	BufferPos += N;
 }
 
-public static byte[] intel_ByteOrder(short pcm) {
-	byte b[] = new byte[2];
-	if (!MOTOROLA) {
-		b[0] = (byte)(pcm & 0xFF);
-		b[1] = (byte)(pcm>>>8 & 0xFF);
-	} else {
-		b[0] = (byte)(pcm>>>8 & 0xFF);
-		b[1] = (byte)(pcm & 0xFF);
+	/**
+	 *
+	 */
+	private static byte[] intel_ByteOrder(short value)
+	{
+		byte b[] = new byte[2];
+
+		if (!MOTOROLA)
+		{
+			b[0] = (byte)(value & 0xFF);
+			b[1] = (byte)(value>>>8 & 0xFF);
+		}
+
+		else
+		{
+			b[0] = (byte)(value>>>8 & 0xFF);
+			b[1] = (byte)(value & 0xFF);
+		}
+
+		return b;
 	}
-	return b;
-}
+
+	/**
+	 *
+	 */
+	private static void writeSample(ByteArrayOutputStream baos, short value) throws IOException
+	{
+		if (PRESCAN)
+			return;
+
+		baos.write(intel_ByteOrder(value));
+	}
 
 //DM30122003 081.6 int10 changed & moved+
 final static int bitrate[][][] = {
@@ -1251,26 +1276,24 @@ public static int decode_layer2() throws IOException {
 
 	loadbits(head.framesize-4-(head.protection_bit*2));
 
-	short pcm[] = new short[2];
-	int i,k,n,m;
+	short[] pcm = new short[2];
+	int i,j,k,n,m;
 	int step;
 	int bits;
 	int o1,o2;
-	
 	int code;
-	
 	int sb,ch,gr;
 
-	int allocation[][] = new int[32][2];
-	int scfsi[][] = new int[32][2];
-	int scalefactor[][][] = new int[32][2][3];
-	double sample[][][][] = new double[12][3][32][2];
+	int[][] allocation = new int[32][2];
+	int[][] scfsi = new int[32][2];
+	int[][][] scalefactor = new int[32][2][3];
+	double[][][][] sample = new double[12][3][32][2];
 
-	double U[] = new double[1024];
-	double W[] = new double[1024];
+	double[] U = new double[1024];
+	double[] W = new double[1024];
 
-	double s[] = new double[2];
-	int ss[] = new int[2];
+	double[] s = new double[2];
+	int[] ss = new int[2];
 	
 	final int[] table_nbal;
 	final int[][] table_alloc;
@@ -1414,66 +1437,98 @@ public static int decode_layer2() throws IOException {
 	/** downmix */
 	if (DOWNMIX && head.channel==2) 
 		head.newchannel=1;
+
 	else 
 		head.newchannel=2;
 
-	int channel=head.channel;
-	int last_resample=resample;
+	int channel = head.channel;
+	int last_resample = resample;
 
 	writeLoop:
-	while (true) {
+	while (true)
+	{
 		out1.reset();
 		out2.reset();
-		resample=last_resample;
 
-		/* subband synthesis */
-		for(gr=0;gr<12;gr++){
-			for(m=0;m<3;m++){
-				/* shifting */
+		resample = last_resample;
+
+		// subband synthesis
+		for(gr = 0; gr < 12; gr++)
+		{
+			for(m = 0; m < 3; m++)
+			{
+				// shifting
 				work.offset -= 128;
-				work.offset &= 2047;
-				/* matrixing */
-				for(i=0;i<64;i++){
-					for(ch=0;ch<head.channel;ch++){
-						work.area[work.offset+i*2+ch] = table_Nik[i][0] * sample[gr][m][0][ch];
-						for(k=1;k<head.sblimit;k++){
-							work.area[work.offset+i*2+ch] += table_Nik[i][k] * sample[gr][m][k][ch];
-						}
+				work.offset &= 0x7FF;
+
+				// matrixing
+				for(i = 0; i < 64; i++)
+				{
+					j = work.offset + i * 2;
+
+					for(ch = 0; ch < head.channel; ch++)
+					{
+						work.area[j + ch] = table_Nik[i][0] * sample[gr][m][0][ch];
+
+						for(k = 1; k < head.sblimit; k++)
+							work.area[j + ch] += table_Nik[i][k] * sample[gr][m][k][ch];
 					}
-				}
-				/* build vector U */
-				for(i=0;i<8;i++){
-					o1 = (work.offset + i*256) & 2047;
-					o2 = (work.offset + i*256 + 192) & 2047;
-					for(k=0;k<32;k++){
-						U[(i*64+k)*2+0] = work.area[o1+k*2+0];
-						U[(i*64+k)*2+1] = work.area[o1+k*2+1];
-						U[(i*64+32+k)*2+0] = work.area[o2+k*2+0];
-						U[(i*64+32+k)*2+1] = work.area[o2+k*2+1];
-					}
-				}
-				/* window */
-				for(i=0;i<512;i++){
-					W[i*2+0] = U[i*2+0]*table_b3[i];
-					W[i*2+1] = U[i*2+1]*table_b3[i];
 				}
 
-				/* calc sample */
-				for(i=0;i<32;i++){
-					s[0] = W[i*2+0];
-					s[1] = W[i*2+1];
-					for(k=1;k<16;k++){
-						s[0] += W[(32*k+i)*2+0];
-						s[1] += W[(32*k+i)*2+1];
+				// build vector U
+				for(i = 0; i < 8; i++)
+				{
+					j = work.offset + i * 256;
+
+					o1 = j & 0x7FF;
+					o2 = (j + 192) & 0x7FF;
+
+					for(k = 0; k < 32; k++)
+					{
+						j = (i * 64 + k) * 2;
+						n = o1 + k * 2;
+
+						U[j] = work.area[n];
+						U[j + 1] = work.area[n + 1];
+
+						j = (i * 64 + 32 + k) * 2;
+						n = o2 + k * 2;
+
+						U[j] = work.area[n];
+						U[j + 1] = work.area[n + 1];
+					}
+				}
+
+				// window
+				for(i = 0; i < 512; i++)
+				{
+					j = i * 2;
+
+					W[j] = U[j] * table_b3[i];
+					W[j + 1] = U[j + 1] * table_b3[i];
+				}
+
+				// calc sample
+				for(i = 0; i < 32; i++)
+				{
+					j = i * 2;
+
+					s[0] = W[j];
+					s[1] = W[j + 1];
+
+					for(k = 1; k < 16; k++)
+					{
+						j = (32 * k + i) * 2;
+
+						s[0] += W[j];
+						s[1] += W[j + 1];
 					}
 
-					//DM10042004 081.7 int01 changed+
 					s[0] *= 32768;
 					s[1] *= 32768;
 
-					//DM14052004 081.7 int02 changed++
 					if (resample == Resample[LEFT_RIGHT>>>3 & 1].length)
-						resample=0;
+						resample = 0;
 
 					if (head.sampling_frequency == 48000 && (LEFT_RIGHT & 0xC) != 0)  //resample
 					{
@@ -1498,7 +1553,6 @@ public static int decode_layer2() throws IOException {
 							System.arraycopy(saveS2, 0, saveS, 0, 2);
 						}
 					}
-					//DM14052004 081.7 int02 changed--
 
 					ss[0] = (int)(s[0] * MULTIPLY);
 					ss[1] = (int)(s[1] * MULTIPLY);
@@ -1510,13 +1564,15 @@ public static int decode_layer2() throws IOException {
 
 						pcm[0] = (short)MAX_VALUE;
 					}
-					else if(ss[0] < -(MAX_VALUE+1))
+
+					else if(ss[0] < -(MAX_VALUE + 1))
 					{
 						if (NORMALIZE)
-							MULTIPLY = Math.abs(1.0 * -(MAX_VALUE+1) / s[0]);
+							MULTIPLY = Math.abs(1.0 * -(MAX_VALUE + 1) / s[0]);
 
-						pcm[0] = (short)(-(MAX_VALUE+1));
+						pcm[0] = (short)(-(MAX_VALUE + 1));
 					}
+
 					else
 					{
 						pcm[0] = (short)ss[0];
@@ -1529,40 +1585,53 @@ public static int decode_layer2() throws IOException {
 
 						pcm[1] = (short)MAX_VALUE;
 					}
-					else if(ss[1] < -(MAX_VALUE+1))
+
+					else if(ss[1] < -(MAX_VALUE + 1))
 					{
 						if (NORMALIZE)
-							MULTIPLY = Math.abs(1.0 * -(MAX_VALUE+1) / s[1]);
+							MULTIPLY = Math.abs(1.0 * -(MAX_VALUE + 1) / s[1]);
 
-						pcm[1] = (short)(-(MAX_VALUE+1));
+						pcm[1] = (short)(-(MAX_VALUE + 1));
 					}
+
 					else
 					{
 						pcm[1] = (short)ss[1];
 					}
-					//DM10042004 081.7 int01 changed-
 
 					if ((LEFT_RIGHT & 1) != 1)  // exchange r<->l
-						out1.write(intel_ByteOrder(pcm[0])); // write left or mix
-					else 
-						out1.write(intel_ByteOrder(pcm[1])); // write right
+						writeSample(out1, pcm[0]);
 
-					if (!MONO) {
-						if (head.channel==1) { 
+					else 
+						writeSample(out1, pcm[1]);
+
+					if (!MONO)
+					{
+						if (head.channel == 1)
+						{ 
 							if ((LEFT_RIGHT & 1) != 1) 
-								out1.write(intel_ByteOrder(pcm[0]));
+								writeSample(out1, pcm[0]);
+
 							else 
-								out1.write(intel_ByteOrder(pcm[1]));
-							channel=2;
-						} else {
-							if ((LEFT_RIGHT & 1) != 1) 
-								out1.write(intel_ByteOrder(pcm[1]));
-							else 
-								out1.write(intel_ByteOrder(pcm[0]));
+								writeSample(out1, pcm[1]);
+
+							channel = 2;
 						}
-					} else {
-						channel=1;
-						out2.write(intel_ByteOrder(pcm[1]));
+
+						else
+						{
+							if ((LEFT_RIGHT & 1) != 1) 
+								writeSample(out1, pcm[1]);
+
+							else 
+								writeSample(out1, pcm[0]);
+						}
+					}
+
+					else
+					{
+						channel = 1;
+						writeSample(out2, pcm[1]);
 					}
 
 					if (DOWNSAMPLE) 
@@ -1570,10 +1639,12 @@ public static int decode_layer2() throws IOException {
 				}
 			}
 		}
+
 		break;
 	}
 
 	head.newchannel = channel;
+
 	return 1;
 }
 
@@ -1784,21 +1855,38 @@ public static int decode_layer1() throws IOException {
 			}
 			//DM10042004 081.7 int01 changed-
 
-			if ((LEFT_RIGHT & 1) != 1) out1.write(intel_ByteOrder(pcm[0]));
-			else out1.write(intel_ByteOrder(pcm[1]));
-			
-			if (!MONO) {
-				if (head.channel==1) { 
-					if ((LEFT_RIGHT & 1) != 1) out1.write(intel_ByteOrder(pcm[0]));
-					else out1.write(intel_ByteOrder(pcm[1]));
-					channel=2;
-				} else {
-					if ((LEFT_RIGHT & 1) != 1) out1.write(intel_ByteOrder(pcm[1]));
-					else out1.write(intel_ByteOrder(pcm[0]));
-				}
-			} else channel=1;
+			if ((LEFT_RIGHT & 1) != 1)
+				writeSample(out1, pcm[0]);
 
-			if (DOWNSAMPLE) i++;
+			else
+				writeSample(out1, pcm[1]);
+			
+			if (!MONO)
+			{
+				if (head.channel==1)
+				{ 
+					if ((LEFT_RIGHT & 1) != 1)
+						writeSample(out1, pcm[0]);
+
+					else
+						writeSample(out1, pcm[1]);
+
+					channel=2;
+				}
+				else
+				{
+					if ((LEFT_RIGHT & 1) != 1) 
+						writeSample(out1, pcm[1]);
+
+					else 
+						writeSample(out1, pcm[0]);
+				}
+			}
+			else 
+				channel=1;
+
+			if (DOWNSAMPLE) 
+				i++;
 		}
 	}
 
@@ -1807,183 +1895,222 @@ public static int decode_layer1() throws IOException {
 	return 1;
 }
 
-public static void init_work(int resample_type) {
-	java.util.Arrays.fill(work.area,0.0);
-	work.offset = 0;
-	resample=0;
-	Frame=0;
-	BufferPos=0;
-	saveS = new double[2]; //DM14052004 081.7 int02 changed
-	LEFT_RIGHT = resample_type<<2; //DM22112003 081.5++ fix
-}
-
-public static int littleEndian(int data,int flag) {
-	if (MOTOROLA) 
-		return data;
-	if (flag==4) 
-		return ( (0xFF&data>>>24) | (0xFF&data>>>16)<<8 | (0xFF&data>>>8)<<16 | (0xFF&data)<<24 );
-	else 
-		return ( (0xFF&data>>>8) | (0xFF&data)<<8 );
-}
-
-
-//DM07022004 081.6 int16 new+
-public static void fillAiff(String file, long playtime) throws IOException {
-	//always MSB
-	RandomAccessFile aiff = new RandomAccessFile(file,"rw");
-	int len = (int)(aiff.length()-8);
-
-	if (DOWNSAMPLE) 
-		head.sampling_frequency /= 2;
-	else if ((LEFT_RIGHT & 0xC)!=0) 
-		head.sampling_frequency = (head.sampling_frequency*Resample_frequency[LEFT_RIGHT>>>3 &1][0])/Resample_frequency[LEFT_RIGHT>>>3 &1][1];
-
-	aiff.seek(4);
-	aiff.writeInt(len);  //data+chunksize
-	aiff.seek(16);
-	aiff.writeInt(0x12);  //chunk length
-	aiff.writeShort((short)head.newchannel); //channels
-	aiff.writeInt((int)(head.sampling_frequency * playtime/1000.0)); //playtime
-	aiff.writeShort((short)head.bits_per_sample); //bits_per_sample
-	aiff.write(ConvertToIeeeExtended((double)head.sampling_frequency));  //sample_freq
-	aiff.seek(42);
-	aiff.writeInt(len-38);  //chunk size sample data
-
-	aiff.close();
-}
-
-public static void deleteAiff(String file) throws IOException {
-	RandomAccessFile aiff = new RandomAccessFile(file,"rw");
-	aiff.seek(0);
-	aiff.write(new byte[46]);
-	aiff.close();
-}
-
-/*
- * C O N V E R T   T O   I E E E   E X T E N D E D
- *
- * Copyright (C) 1988-1991 Apple Computer, Inc.
- * All rights reserved.
- *
- * Machine-independent I/O routines for IEEE floating-point numbers.
- *
- * here: 80-bit floating point value of sample_rate in AIFF files
- *
- * simple Java adaption by dvb.matt 2004/02/07
- * no deep tests..
- */
-
-private static long FloatToUnsigned(double f)
-{
-	return ((long)(((long)(f - 2147483648.0)) + 2147483647L) + 1);
-}
-
-private static byte[] ConvertToIeeeExtended(double num)
-{
-	byte bytes[] = new byte[10];
-	int sign;
-	int expon=0;
-	double fMant=0.0, fsMant;
-	long hiMant, loMant;
-
-	if (num < 0)
+	/**
+	 *
+	 */
+	public static void init_work(int resample_type)
 	{
-		sign = 0x8000;
-		num *= -1;
+		Arrays.fill(work.area, 0.0);
+		work.offset = 0;
+		resample = 0;
+		Frame = 0;
+		BufferPos = 0;
+		saveS = new double[2];
+		LEFT_RIGHT = resample_type<<2;
 	}
-	else
-		sign = 0;
 
-	if (num == 0)
+	/**
+	 *
+	 */
+	public static int littleEndian(int data,int flag)
 	{
-		expon = 0;
-		hiMant = 0;
-		loMant = 0;
+		if (MOTOROLA) 
+			return data;
+
+		if (flag==4) 
+			return ( (0xFF&data>>>24) | (0xFF&data>>>16)<<8 | (0xFF&data>>>8)<<16 | (0xFF&data)<<24 );
+
+		else 
+			return ( (0xFF&data>>>8) | (0xFF&data)<<8 );
 	}
-	else
-	{
-		for (int a=1; a<32; a++)
-			if ((num /= 2) < 1.0)
-			{
-				expon = a;
-				fMant = num;
-				break;
-			}
 
-		if ((expon > 16384) || !(fMant < 1))
-		{    /* Infinity or NaN */
-			expon = sign|0x7FFF;
-			hiMant = 0;
-			loMant = 0; /* infinity */
+	/**
+	 *
+	 */
+	public static void fillAiff(String file, long playtime) throws IOException
+	{
+		//always MSB
+		RandomAccessFile aiff = new RandomAccessFile(file,"rw");
+
+		int len = (int)(aiff.length() - 8);
+
+		if (DOWNSAMPLE) 
+			head.sampling_frequency /= 2;
+
+		else if ((LEFT_RIGHT & 0xC) != 0 && head.sampling_frequency == 48000) 
+			head.sampling_frequency = (head.sampling_frequency * Resample_frequency[LEFT_RIGHT>>>3 & 1][0]) / Resample_frequency[LEFT_RIGHT>>>3 & 1][1];
+
+		aiff.seek(4);
+		aiff.writeInt(len);  //data+chunksize
+
+		aiff.seek(16);
+		aiff.writeInt(0x12);  //chunk length
+		aiff.writeShort((short)head.newchannel); //channels
+		aiff.writeInt((int)(head.sampling_frequency * playtime / 1000.0)); //playtime
+		aiff.writeShort((short)head.bits_per_sample); //bits_per_sample
+		aiff.write(ConvertToIeeeExtended((double)head.sampling_frequency));  //sample_freq
+
+		aiff.seek(42);
+		aiff.writeInt(len - 38);  //chunk size sample data
+
+		aiff.close();
+	}
+
+	/**
+	 *
+	 */
+	public static void deleteAiff(String file) throws IOException
+	{
+		RandomAccessFile aiff = new RandomAccessFile(file,"rw");
+
+		aiff.seek(0);
+		aiff.write(new byte[46]);
+
+		aiff.close();
+	}
+
+	/*
+	 * C O N V E R T   T O   I E E E   E X T E N D E D
+	 *
+	 * Copyright (C) 1988-1991 Apple Computer, Inc.
+	 * All rights reserved.
+	 *
+	 * Machine-independent I/O routines for IEEE floating-point numbers.
+	 *
+	 * here: 80-bit floating point value of sample_rate in AIFF files
+	 *
+	 * simple Java adaption by dvb.matt 2004/02/07
+	 * no deep tests..
+	 */
+	private static long FloatToUnsigned(double f)
+	{
+		return ((long)(((long)(f - 2147483648.0)) + 2147483647L) + 1);
+	}
+
+	/**
+	 *
+	 */
+	private static byte[] ConvertToIeeeExtended(double num)
+	{
+		byte bytes[] = new byte[10];
+		int sign;
+		int expon=0;
+		double fMant = 0.0, fsMant;
+		long hiMant, loMant;
+
+		if (num < 0)
+		{
+			sign = 0x8000;
+			num *= -1;
 		}
 		else
-		{    /* Finite */
-			expon += 16382;
-			if (expon < 0)
-			{    /* denormalized */
-				fMant *= (1L<<expon);
-				expon = 0;
+			sign = 0;
+
+		if (num == 0)
+		{
+			expon = 0;
+			hiMant = 0;
+			loMant = 0;
 			}
+		else
+		{
+			for (int a = 1; a < 32; a++)
+				if ((num /= 2) < 1.0)
+				{
+					expon = a;
+					fMant = num;
+					break;
+				}
 
-			expon |= sign;
-			fMant *= (1L<<32);
-			fsMant = Math.floor(fMant); 
-			hiMant = FloatToUnsigned(fsMant);
-			fMant = (fMant - fsMant) * (1L<<32);
-			fsMant = Math.floor(fMant); 
-			loMant = FloatToUnsigned(fsMant);
+			if ((expon > 16384) || !(fMant < 1))
+			{    /* Infinity or NaN */
+				expon = sign | 0x7FFF;
+				hiMant = 0;
+				loMant = 0; /* infinity */
+			}
+			else
+			{    /* Finite */
+				expon += 16382;
+
+				if (expon < 0)
+				{    /* denormalized */
+					fMant *= (1L<<expon);
+					expon = 0;
+				}
+
+				expon |= sign;
+				fMant *= (1L<<32);
+				fsMant = Math.floor(fMant); 
+				hiMant = FloatToUnsigned(fsMant);
+				fMant = (fMant - fsMant) * (1L<<32);
+				fsMant = Math.floor(fMant); 
+				loMant = FloatToUnsigned(fsMant);
+			}
 		}
-	}
     
-	bytes[0] = (byte)(expon >> 8);
-	bytes[1] = (byte)expon;
-	bytes[2] = (byte)(hiMant >> 24);
-	bytes[3] = (byte)(hiMant >> 16);
-	bytes[4] = (byte)(hiMant >> 8);
-	bytes[5] = (byte)hiMant;
-	bytes[6] = (byte)(loMant >> 24);
-	bytes[7] = (byte)(loMant >> 16);
-	bytes[8] = (byte)(loMant >> 8);
-	bytes[9] = (byte)loMant;
-
-	return bytes;
-}
-//DM07022004 081.6 int16 new-
-
-
-public static void fillRIFF(String file) throws IOException {
-	RandomAccessFile riff = new RandomAccessFile(file,"rw");
-	int len = (int)riff.length()-8;
-	if (DOWNSAMPLE) 
-		head.sampling_frequency /= 2;
-	else if ((LEFT_RIGHT & 0xC)!=0) 
-		head.sampling_frequency = (head.sampling_frequency*Resample_frequency[LEFT_RIGHT>>>3 &1][0])/Resample_frequency[LEFT_RIGHT>>>3 &1][1];
-	if (MOTOROLA) { 
-		riff.seek(3); 
-		riff.write('X');  //RIFX nonIntel
+		bytes[0] = (byte)(expon >> 8);
+		bytes[1] = (byte)expon;
+		bytes[2] = (byte)(hiMant >> 24);
+		bytes[3] = (byte)(hiMant >> 16);
+		bytes[4] = (byte)(hiMant >> 8);
+		bytes[5] = (byte)hiMant;
+		bytes[6] = (byte)(loMant >> 24);
+		bytes[7] = (byte)(loMant >> 16);
+		bytes[8] = (byte)(loMant >> 8);
+		bytes[9] = (byte)loMant;
+	
+		return bytes;
 	}
-	riff.seek(4);
-	riff.writeInt(littleEndian(len,4));  //data+chunksize
-	riff.seek(16);
-	riff.writeInt(littleEndian(0x10,4));  //chunk length
-	riff.writeShort(littleEndian(1,2));   //pcm
-	riff.writeShort((short)littleEndian(head.newchannel,2)); //channels
-	riff.writeInt(littleEndian(head.sampling_frequency,4));  //sample_freq
-	riff.writeInt(littleEndian(head.sampling_frequency*head.newchannel*head.bits_per_sample/8,4)); //byterate
-	riff.writeShort((short)littleEndian(head.newchannel*head.bits_per_sample/8,2)); //blockalign
-	riff.writeShort((short)littleEndian(head.bits_per_sample,2)); //bits_per_sample
-	riff.seek(40);
-	riff.writeInt(littleEndian(len-36,4));  //data-size //DM13092003 fix
 
-	riff.close();
-}
+	/**
+	 *
+	 */
+	public static void fillRIFF(String file) throws IOException
+	{
+		RandomAccessFile riff = new RandomAccessFile(file,"rw");
 
+		int len = (int)riff.length() - 8;
+
+		if (DOWNSAMPLE) 
+			head.sampling_frequency /= 2;
+
+		else if ((LEFT_RIGHT & 0xC) != 0 && head.sampling_frequency == 48000) 
+			head.sampling_frequency = (head.sampling_frequency * Resample_frequency[LEFT_RIGHT>>>3 & 1][0]) / Resample_frequency[LEFT_RIGHT>>>3 & 1][1];
+
+		if (MOTOROLA)
+		{ 
+			riff.seek(3); 
+			riff.write('X');  //RIFX nonIntel
+		}
+
+		riff.seek(4);
+		riff.writeInt(littleEndian(len, 4));  //data+chunksize
+
+		riff.seek(16);
+		riff.writeInt(littleEndian(0x10, 4));  //chunk length
+		riff.writeShort(littleEndian(1, 2));   //pcm
+		riff.writeShort((short)littleEndian(head.newchannel, 2)); //channels
+		riff.writeInt(littleEndian(head.sampling_frequency, 4));  //sample_freq
+		riff.writeInt(littleEndian(head.sampling_frequency * head.newchannel * head.bits_per_sample / 8, 4)); //byterate
+		riff.writeShort((short)littleEndian(head.newchannel * head.bits_per_sample / 8, 2)); //blockalign
+		riff.writeShort((short)littleEndian(head.bits_per_sample, 2)); //bits_per_sample
+
+		riff.seek(40);
+		riff.writeInt(littleEndian(len - 36, 4));  //data-size
+
+		riff.close();
+	}
+
+	/**
+	 *
+	 */
 	public static void deleteRIFF(String file) throws IOException
 	{
 		RandomAccessFile riff = new RandomAccessFile(file, "rw");
 
 		riff.seek(0);
 		riff.write(new byte[44]);
+
 		riff.close();
 	}
 
@@ -2005,6 +2132,7 @@ public static void fillRIFF(String file) throws IOException {
 
 		out1.reset();
 		out2.reset();
+
 		out1.write(samples);
 		out2.write(samples);
 	}

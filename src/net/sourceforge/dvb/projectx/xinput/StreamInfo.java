@@ -270,7 +270,7 @@ public class StreamInfo extends Object {
 		String str = "";
 
 		if (obj == null || obj.length == 0)
-			return str;
+			return "n/a";
 
 		str = obj[0].toString();
 

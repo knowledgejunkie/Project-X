@@ -90,6 +90,7 @@ public class CommonParsing extends Object {
 	public final static int LPCM_AUDIO = 4;
 	public final static int SUBPICTURE = 5;
 	public final static int DTS_AUDIO  = 6;	//handled with in AC3_AUDIO so far
+	public final static int WAV_AUDIO  = 7;	
 
 	public final static int ACTION_DEMUX  = 0;	
 	public final static int ACTION_TO_VDR = 1;	
@@ -901,14 +902,16 @@ public class CommonParsing extends Object {
 				return; 
 			}
 
+			int max_bitrate_value = 22500; // 9.0Mbit, (video only)
+
 			/**
 			 * bitraten 
 			 */
 			if (Common.getSettings().getIntProperty(Keys.KEY_ChangeBitrateInFirstSequence) > 0)
 			{
-				int newmux = (Common.getSettings().getIntProperty(Keys.KEY_ChangeBitrateInFirstSequence) == 3) ? job_processing.getMaxBitrate() : 24500;   //max - 9.8
+				int newmux = (Common.getSettings().getIntProperty(Keys.KEY_ChangeBitrateInFirstSequence) == 3) ? job_processing.getMaxBitrate() : max_bitrate_value;
 
-				if (Common.getSettings().getIntProperty(Keys.KEY_ChangeBitrateInFirstSequence) == 2 && job_processing.getMaxBitrate() < 24500) 
+				if (Common.getSettings().getIntProperty(Keys.KEY_ChangeBitrateInFirstSequence) == 2 && job_processing.getMaxBitrate() < max_bitrate_value) 
 					newmux = job_processing.getMaxBitrate();
 
 				if (Common.getSettings().getIntProperty(Keys.KEY_ChangeBitrateInFirstSequence) == 1)
@@ -920,7 +923,7 @@ public class CommonParsing extends Object {
 					{
 						newmux = (int)(((pv2.length() * 8000L) / time) / 400);
 
-						if (newmux < 0 || newmux > 24500) 
+						if (newmux < 0 || newmux > max_bitrate_value) 
 							newmux = (job_processing.getMinBitrate() + job_processing.getMaxBitrate()) / 2;   // old calcul. avg.
 					}
 				}

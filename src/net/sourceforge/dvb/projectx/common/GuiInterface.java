@@ -299,10 +299,10 @@ public class GuiInterface implements GuiInterfaceIF {
 	/**
 	 *
 	 */
-	public void minimizeMainFrame()
+	public void showMainFrame(boolean b)
 	{
 		if (isAvailable())
-			impl.minimizeMainFrame();
+			impl.showMainFrame(b);
 	}
 
 	/**

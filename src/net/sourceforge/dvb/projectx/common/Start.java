@@ -563,6 +563,38 @@ public class Start extends Object {
 			}
 
 			/**
+			 * load point list
+			 */
+			if ((index = getSwitch("-chp")) >= 0)
+			{
+				switch_error = false;
+
+				collection = createCollection(collection);
+
+				if (index < cli_switches.size())
+				{
+					str = cli_switches.get(index).toString();
+
+					if (new File(str).exists())
+						loadChapterPoints(collection, str);
+
+					else
+						switch_error = false;
+
+					cli_switches.remove(index);
+				}
+
+				else
+					switch_error = false;
+
+				if (switch_error)
+				{
+					System.out.println("can't set chapterpoints ...");
+					error = true;
+				}
+			}
+
+			/**
 			 * load PID list
 			 */
 			if ((index = getSwitch("-id")) >= 0)
@@ -718,11 +750,45 @@ public class Start extends Object {
 
 			points.close();
 
-			Common.setMessage(Resource.getString("msg.loading.cutpoints", String.valueOf(collection.getCutpointCount())));
+			Common.setMessage("Successful reading of " + String.valueOf(collection.getCutpointCount()) + " cutpoints");
 
 		} catch (Exception e5) { 
 
-			Common.setMessage(Resource.getString("msg.loading.cutpoints.error") + " '" + file + "'");
+			Common.setMessage("Error while reading file: '" + file + "'");
+			Common.setExceptionMessage(e5);
+		}
+	}
+
+	/**
+	 * load chapterfile
+	 */
+	private static void loadChapterPoints(JobCollection collection, String file)
+	{
+		try {
+
+			BufferedReader points = new BufferedReader(new FileReader(file));
+			String point = "";
+
+			while (true)
+			{
+				point = points.readLine();
+
+				if (point == null) 
+					break;
+
+				if (point.trim().equals("")) 
+					continue;
+
+				collection.addChapterpoint(point);
+			}
+
+			points.close();
+
+			Common.setMessage("Successful reading of " + String.valueOf(collection.getChapterpointCount()) + " chapterpoints");
+
+		} catch (Exception e5) { 
+
+			Common.setMessage("Error while reading file: '" + file + "'");
 			Common.setExceptionMessage(e5);
 		}
 	}

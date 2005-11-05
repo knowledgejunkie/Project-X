@@ -1232,13 +1232,13 @@ public class StreamDemultiplexer extends Object {
 	{
 		if (offset < 0 || offset >= packet.length)
 		{
-			Common.setMessage("!> packet writing: index out of bounds, ignore it..");
+			Common.setMessage("!> packet writing: index out of bounds, ignore it.. (" + Integer.toHexString(getPID()) + " / " + Integer.toHexString(getID()) + " / " + Integer.toHexString(getnewID()) + " / " + getPackCount() + " -- " + packet.length + " / " + offset + " / " + length + ") @ PTS " + Common.formatTime_1(lastPTS / 90));
 			return 0;
 		}
 
 		if (offset + length > packet.length)
 		{
-			Common.setMessage("!> packet writing: length index out of bounds, shortened..");
+			Common.setMessage("!> packet writing: length index out of bounds, shortened.. (" + Integer.toHexString(getPID()) + " / " + Integer.toHexString(getID()) + " / " + Integer.toHexString(getnewID()) + " / " + getPackCount() + " -- " + packet.length + " / " + offset + " / " + length + ") @ PTS " + Common.formatTime_1(lastPTS / 90));
 			length = packet.length - offset;
 		}
 

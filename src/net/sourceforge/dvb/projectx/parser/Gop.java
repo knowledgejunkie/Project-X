@@ -1278,7 +1278,10 @@ public class Gop extends Object {
 						job_processing.countMediaFilesExportLength(gop.length);
 
 						if (ChapterpointList.indexOf(String.valueOf(cutposition)) >= 0)
+						{
 							job_processing.addCellTime(String.valueOf(job_processing.getExportedVideoFrameNumber()));
+							Common.setMessage("-> save ChapterFrameIndex: " + job_processing.getExportedVideoFrameNumber());
+						}
 
 						doExport = true;
 					}

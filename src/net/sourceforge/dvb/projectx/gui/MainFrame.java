@@ -119,6 +119,7 @@ import net.sourceforge.dvb.projectx.parser.CommonParsing;
 import net.sourceforge.dvb.projectx.parser.MainProcess;
 import net.sourceforge.dvb.projectx.parser.HpFix;
 import net.sourceforge.dvb.projectx.parser.StripAudio;
+import net.sourceforge.dvb.projectx.parser.StripRelook;
 
 import net.sourceforge.dvb.projectx.xinput.DirType;
 import net.sourceforge.dvb.projectx.xinput.XInputDirectory;
@@ -346,6 +347,9 @@ public class MainFrame extends JPanel {
 				{
 					JobCollection collection = Common.getCollection();
 
+					if (collection == null)
+						return;
+
 					collection.removeInputFile(indices);
 
 					updateCollectionTable(collection.getCollectionAsTable());
@@ -480,6 +484,46 @@ public class MainFrame extends JPanel {
 
 					if (xInputFile != null)
 						collection.addInputFile(index, xInputFile);
+
+					updateCollectionTable(collection.getCollectionAsTable());
+					updateCollectionPanel(Common.getActiveCollection());
+
+					tableView.clearSelection();
+				}
+			}
+
+			/**
+			 *
+			 */
+			else if (actName.equals("stripRelook"))
+			{
+				int index = tableView.getSelectedRow();
+
+				if (index < 0 || tableView.getValueAt(index, 0) == null)
+					return;
+
+				JobCollection collection = Common.getCollection();
+
+				XInputFile xInputFile = (XInputFile) collection.getInputFile(index);
+
+				if (xInputFile.exists() && xInputFile.getStreamInfo().getStreamType() == CommonParsing.PES_AV_TYPE && CommonGui.getUserConfirmation("really process '" + xInputFile.getName() + "' ?"))
+				{
+					StripRelook stripRelook = new StripRelook();
+
+					Common.setOSDMessage("strip relook data...");
+
+					XInputFile[] xif = stripRelook.process(xInputFile.getNewInstance(), collection.getOutputDirectory());
+
+					collection.removeInputFile(index);
+
+					if (xif != null)
+					{
+						if (xif[0] != null)
+							collection.addInputFile(index, xif[0]);
+
+						if (xif[1] != null)
+							collection.addInputFile(index + 1, xif[1]);
+					}
 
 					updateCollectionTable(collection.getCollectionAsTable());
 					updateCollectionPanel(Common.getActiveCollection());
@@ -819,6 +863,9 @@ public class MainFrame extends JPanel {
 		JMenuItem menuitem_14 = popup.add(Resource.getString("popup.stripAudio"));
 		menuitem_14.setActionCommand("stripAudio");
 
+		JMenuItem menuitem_15 = popup.add("strip relook to separate pes");
+		menuitem_15.setActionCommand("stripRelook");
+
 		popup.addSeparator();
 
 		JMenuItem menuitem_11 = popup.add(Resource.getString("popup.copyInfoToClipboard"));
@@ -886,6 +933,7 @@ public class MainFrame extends JPanel {
 		menuitem_11.addActionListener(_MenuListener);
 		menuitem_12.addActionListener(_MenuListener);
 		menuitem_14.addActionListener(_MenuListener);
+		menuitem_15.addActionListener(_MenuListener);
 	}
 
 	/**
@@ -1424,10 +1472,10 @@ public class MainFrame extends JPanel {
 					if (elements == null)
 						return;
 
-					for (int i = 1; i < 10; i++)
+					for (int i = 1; i < 11; i++)
 						elements[i].getComponent().setEnabled(row >= 0);
 
-					for (int i = 10; i < elements.length; i++)
+					for (int i = 11; i < elements.length; i++)
 						elements[i].getComponent().setEnabled(index >= 0);
 
 					popup.show(tableView, e.getX(), e.getY() - popup.getHeight());
@@ -1435,6 +1483,9 @@ public class MainFrame extends JPanel {
 
 				else if (row >= 0)
 					ScanInfo((XInputFile) Common.getCollection(index).getInputFile(row));
+
+				if (e.getClickCount() >= 2 && e.getModifiers() == MouseEvent.BUTTON1_MASK)
+					Common.getGuiInterface().showPreSettings();
 			}
 		});
 
@@ -1577,6 +1628,7 @@ public class MainFrame extends JPanel {
 		open_autoload.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
+				autoload.setState(0);
 				autoload.show();
 			}
 		});
@@ -1620,6 +1672,9 @@ public class MainFrame extends JPanel {
 				{
 					JobCollection collection = Common.getCollection(comboBox_0.getSelectedIndex());
 
+					if (collection == null)
+						return;
+
 					for (int i = 0; i < indices.length; i++)
 					{
 						int index = indices[i];
@@ -1657,6 +1712,9 @@ public class MainFrame extends JPanel {
 				if (indices.length > 0)
 				{
 					JobCollection collection = Common.getCollection(comboBox_0.getSelectedIndex());
+
+					if (collection == null)
+						return;
 
 					for (int i = indices.length - 1; i >= 0; i--)
 					{
@@ -1878,7 +1936,7 @@ public class MainFrame extends JPanel {
 	/**
 	 *
 	 */
-	private void close_AutoloadPanel()
+	private void closeAutoloadPanel()
 	{
 		autoload.dispose();
 	}
@@ -1893,7 +1951,7 @@ public class MainFrame extends JPanel {
 		{
 			public void windowClosing(WindowEvent e)
 			{
-				close_AutoloadPanel();
+				closeAutoloadPanel();
 			}
 		});
 
@@ -2015,12 +2073,9 @@ public class MainFrame extends JPanel {
 					}
 
 					reloadInputDirectories();
-
-					autoload.toFront();
-
-					return;
 				}
 
+				autoload.setState(0);
 				autoload.toFront();
 			}
 		});
@@ -2070,6 +2125,8 @@ public class MainFrame extends JPanel {
 
 				if (val.length > 0)
 					updateCollectionPanel(Common.getActiveCollection());
+
+				autoload.toFront();
 			}
 		});
 		bb.add(add_coll_and_files);
@@ -2096,6 +2153,8 @@ public class MainFrame extends JPanel {
 
 					updateCollectionTable(collection.getCollectionAsTable());
 					updateCollectionPanel(Common.getActiveCollection());
+
+					autoload.toFront();
 				}
 			}
 		});
@@ -2114,7 +2173,7 @@ public class MainFrame extends JPanel {
 		close.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				close_AutoloadPanel();
+				closeAutoloadPanel();
 			}
 		});
 		bb.add(close);
@@ -2158,6 +2217,8 @@ public class MainFrame extends JPanel {
 							updateCollectionTable(collection.getCollectionAsTable());
 							updateCollectionPanel(Common.getActiveCollection());
 						}
+
+						autoload.toFront();
 					}
 				}
 
@@ -2186,6 +2247,8 @@ public class MainFrame extends JPanel {
 						updateCollectionTable(collection.getCollectionAsTable());
 						updateCollectionPanel(Common.getActiveCollection());
 					}
+
+					autoload.toFront();
 				}
 			}
 		});
@@ -2552,6 +2615,9 @@ public class MainFrame extends JPanel {
 		final JLabel status = new JLabel(Resource.getString("run.status"));
 		status.setToolTipText("status of processing");
 
+		final JLabel settings = new JLabel(CommonGui.loadIcon("save_no.gif"));
+		settings.setToolTipText("do or don't save settings on exit");
+
 		final JLabel date = new JLabel();
 		final JLabel time = new JLabel();
 
@@ -2564,6 +2630,7 @@ public class MainFrame extends JPanel {
 
 			private String StatusString = "";
 			private String DateString = "";
+			private boolean SaveSettings = false;
 
 			public void start()
 			{
@@ -2593,6 +2660,7 @@ public class MainFrame extends JPanel {
 			private void update()
 			{
 				updateStatusLabel();
+				updateSettingsLabel();
 				updateDateLabel();
 				updateTimeLabel();
 			}
@@ -2607,6 +2675,18 @@ public class MainFrame extends JPanel {
 				StatusString = str;
 
 				status.setText(StatusString);
+			}
+
+			private void updateSettingsLabel()
+			{
+				boolean b = Common.getSettings().getBooleanProperty(Keys.KEY_SaveSettingsOnExit);
+
+				if (b == SaveSettings)
+					return;
+
+				SaveSettings = b;
+
+				settings.setIcon(CommonGui.loadIcon(SaveSettings ? "save_yes.gif" : "save_no.gif"));
 			}
 
 			private void updateDateLabel()
@@ -2636,9 +2716,15 @@ public class MainFrame extends JPanel {
 
 		JPanel status_1 = new JPanel(new BorderLayout());
 		status_1.setBorder(BorderFactory.createLoweredBevelBorder());
-		status_1.setPreferredSize(new Dimension(650, 22));
-		status_1.setMaximumSize(new Dimension(650, 22));
+		status_1.setPreferredSize(new Dimension(620, 22));
+		status_1.setMaximumSize(new Dimension(620, 22));
 		status_1.add(status);
+
+		JPanel status_3 = new JPanel(new BorderLayout());
+		status_3.setBorder(BorderFactory.createLoweredBevelBorder());
+		status_3.setPreferredSize(new Dimension(30, 22));
+		status_3.setMaximumSize(new Dimension(30, 22));
+		status_3.add(settings);
 
 		JPanel status_4 = new JPanel(new BorderLayout());
 		status_4.setBorder(BorderFactory.createLoweredBevelBorder());
@@ -2655,6 +2741,7 @@ public class MainFrame extends JPanel {
 		JPanel mainStatusPanel = new JPanel();
 		mainStatusPanel.setLayout(new BoxLayout(mainStatusPanel, BoxLayout.X_AXIS));
 		mainStatusPanel.add(status_1);
+		mainStatusPanel.add(status_3);
 		mainStatusPanel.add(status_4);
 		mainStatusPanel.add(status_5);
 
@@ -2935,9 +3022,13 @@ public class MainFrame extends JPanel {
 	/**
 	 *
 	 */
-	public static void minimize()
+	public static void showFrame(boolean b)
 	{
-		frame.setState(frame.ICONIFIED);
+		if (b)
+			frame.setState(frame.NORMAL);
+
+		else
+			frame.setState(frame.ICONIFIED);
 	}
 
 	/**

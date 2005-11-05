@@ -132,7 +132,10 @@ public class GuiInterfaceImpl implements GuiInterfaceIF {
 		initPreSettings();
 
 		if (presettings.isVisible())
+		{
+			presettings.setState(0);
 			presettings.toFront();
+		}
 
 		else
 			presettings.show();
@@ -244,7 +247,10 @@ public class GuiInterfaceImpl implements GuiInterfaceIF {
 	public void showLogWindow()
 	{
 		if (processwindow.isVisible())
+		{
+			processwindow.setState(0);
 			processwindow.toFront();
+		}
 
 		else
 			processwindow.show();
@@ -293,9 +299,9 @@ public class GuiInterfaceImpl implements GuiInterfaceIF {
 	/**
 	 *
 	 */
-	public void minimizeMainFrame()
+	public void showMainFrame(boolean b)
 	{
-		MainFrame.minimize();
+		MainFrame.showFrame(b);
 	}
 
 	/**
@@ -364,7 +370,10 @@ public class GuiInterfaceImpl implements GuiInterfaceIF {
 		initSubpictureFrame();
 
 		if (subpictureframe.isVisible())
+		{
+			subpictureframe.setState(0);
 			subpictureframe.toFront();
+		}
 
 		else
 			subpictureframe.show();

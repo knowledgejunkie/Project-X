@@ -413,6 +413,8 @@ public class MainProcess extends Thread {
 					}
 
 					Common.setMessage(Resource.getString("run.write.raw") + " " + collection.getOutputDirectory());
+
+					collection.startProcessing(Common.isRunningCLI());
  
 					/**
 					 * call the process
@@ -1713,14 +1715,17 @@ public class MainProcess extends Thread {
 							{
 								scrambling_messaged = true;
 
-								Common.setMessage(Resource.getString("parseTS.scrambled", Integer.toHexString(pesID).toUpperCase(), "-", String.valueOf(count - pes_packetlength)));
+								Common.setMessage(Resource.getString("parseTS.scrambled", Integer.toHexString(pesID).toUpperCase(), String.valueOf(clv[5]), String.valueOf(count - pes_packetlength)));
 							}
 
 							continue loop;
 						}
 
 						else if (scrambling_messaged)
-							Common.setMessage(Resource.getString("parseTS.clear", Integer.toHexString(pesID).toUpperCase(), "-", String.valueOf(count - pes_packetlength)));
+						{
+							Common.setMessage(Resource.getString("parseTS.clear", Integer.toHexString(pesID).toUpperCase(), String.valueOf(clv[5]), String.valueOf(count - pes_packetlength)));
+							scrambling_messaged = false;
+						}
 					}
 
 					/**
@@ -2660,14 +2665,17 @@ public class MainProcess extends Thread {
 								{
 									scrambling_messaged = true;
 
-									Common.setMessage(Resource.getString("parseTS.scrambled", Integer.toHexString(pesID).toUpperCase(), "-", String.valueOf(count - pes_packetlength)));
+									Common.setMessage(Resource.getString("parseTS.scrambled", Integer.toHexString(pesID).toUpperCase(), String.valueOf(clv[5]), String.valueOf(count - pes_packetlength)));
 								}
 
 								continue zeropacketloop;
 							}
 
 							else if (scrambling_messaged)
-								Common.setMessage(Resource.getString("parseTS.clear", Integer.toHexString(pesID).toUpperCase(), "-", String.valueOf(count - pes_packetlength)));
+							{
+								Common.setMessage(Resource.getString("parseTS.clear", Integer.toHexString(pesID).toUpperCase(), String.valueOf(clv[5]), String.valueOf(count - pes_packetlength)));
+								scrambling_messaged = false;
+							}
 						}
 
 						/**
@@ -2769,7 +2777,7 @@ public class MainProcess extends Thread {
 							if (subID != 0)
 								pes_packet[6] |= 4; //set alignment
 
-							streamconverter.writePacket(job_processing, pes_packet, 0, pes_packetlength);
+							streamconverter.write(job_processing, pes_packet, 0, pes_packetlength, null, job_processing.getCutByteposition(), CommonParsing.isInfoScan(), CutpointList);
 							continue zeropacketloop;
 						}
 
@@ -3330,10 +3338,19 @@ public class MainProcess extends Thread {
 			{
 				Common.setMessage(Resource.getString("parseTS.sid") + Integer.toHexString(pids[0]).toUpperCase());
 				Common.setMessage(Resource.getString("parseTS.pmt.refers", Integer.toHexString(pids[1]).toUpperCase()));
-				Common.setMessage(Resource.getString("ScanInfo.Video") + "\t" + streamInfo.getVideo());
-				Common.setMessage(Resource.getString("ScanInfo.Audio") + "\t" + streamInfo.getAudio());
-				Common.setMessage(Resource.getString("ScanInfo.Teletext") + "\t" + streamInfo.getTeletext());
-				Common.setMessage(Resource.getString("ScanInfo.Subpicture") + "\t" + streamInfo.getSubpicture());
+
+				Common.setMessage(Resource.getString("ScanInfo.Video"));
+				Common.setMessage(streamInfo.getVideo());
+
+				Common.setMessage(Resource.getString("ScanInfo.Audio"));
+				Common.setMessage(streamInfo.getAudio());
+
+				Common.setMessage(Resource.getString("ScanInfo.Teletext"));
+				Common.setMessage(streamInfo.getTeletext());
+
+				Common.setMessage(Resource.getString("ScanInfo.Subpicture"));
+				Common.setMessage(streamInfo.getSubpicture());
+
 				Common.setMessage("");
 
 				for (int i = 2; i < pids.length; i++)
@@ -3367,7 +3384,7 @@ public class MainProcess extends Thread {
 			break;
 
 		case CommonParsing.ACTION_TO_TS:
-			streamconverter.init(fparent + "(new).ts", MainBufferSize, action, job_processing.getSplitPart());
+			streamconverter.init(fparent + ".new.ts", MainBufferSize, action, job_processing.getSplitPart());
 			break;
 
 		case CommonParsing.ACTION_FILTER:
@@ -3706,7 +3723,7 @@ public class MainProcess extends Thread {
 					 */
 					if (action == CommonParsing.ACTION_FILTER)
 					{
-						streamconverter.writePacket(job_processing, ts_packet, 0, ts_packetlength);
+						streamconverter.write(job_processing, ts_packet, 0, ts_packetlength, null, next_CUT_BYTEPOSITION, CommonParsing.isInfoScan(), CutpointList);
 						continue loop;
 					}
 
@@ -3979,8 +3996,11 @@ public class MainProcess extends Thread {
 
 							case 0x1BF:
 								Common.setMessage(Resource.getString("parseTS.priv.stream2.ignored", Integer.toHexString(ts_pid).toUpperCase()));
+								//break;
 
-								break;
+								streambuffer.setneeded(false); // skip foll. packs
+
+								continue loop;
 							}
 
 
@@ -4839,7 +4859,7 @@ public class MainProcess extends Thread {
 			break;
 
 		case CommonParsing.ACTION_TO_PVA:
-			streamconverter.init(fparent + "(new).pva", MainBufferSize, action, job_processing.getSplitPart());
+			streamconverter.init(fparent + ".new.pva", MainBufferSize, action, job_processing.getSplitPart());
 			break;
 
 		case CommonParsing.ACTION_TO_TS:
@@ -5187,8 +5207,7 @@ public class MainProcess extends Thread {
 					 */
 					if (action == CommonParsing.ACTION_FILTER)
 					{
-						streamconverter.writePacket(job_processing, pva_packet, 0, pva_packetoffset + pva_payloadlength);
-
+						streamconverter.write(job_processing, pva_packet, 0, pva_packetoffset + pva_payloadlength, null, job_processing.getCutByteposition(), CommonParsing.isInfoScan(), CutpointList);
 						continue loop;
 					}
 
@@ -5752,7 +5771,8 @@ public class MainProcess extends Thread {
 	{
 		Common.updateProgressBar(Resource.getString("audio.progress") + "  " + xInputFile.getName(), 0, 0);
 
-		//yield();
+		boolean Normalize = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_Normalize);
+		boolean DecodeMpgAudio = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_decodeMpgAudio);
 
 		if (audio == null)
 			audio = new Audio();
@@ -5768,9 +5788,10 @@ public class MainProcess extends Thread {
 
 		MpaDecoder.RESET = false;
 
-		MpaDecoder.MAX_VALUE = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_Normalize) ? (Integer.parseInt(Common.getSettings().getProperty(Keys.KEY_AudioPanel_NormalizeValue)) * 32767 / 100) : 32767;
-		MpaDecoder.MULTIPLY = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_Normalize) ? 32767 : 1;
-		MpaDecoder.NORMALIZE = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_Normalize);
+		MpaDecoder.MAX_VALUE = Normalize ? (Integer.parseInt(Common.getSettings().getProperty(Keys.KEY_AudioPanel_NormalizeValue)) * 32767 / 100) : 32767;
+		MpaDecoder.MULTIPLY = Normalize ? 32767 : 1;
+		MpaDecoder.NORMALIZE = Normalize;
+		MpaDecoder.PRESCAN = MpaDecoder.NORMALIZE;
 
 		if (MpaDecoder.MAX_VALUE > 32767)
 		{
@@ -5786,7 +5807,7 @@ public class MainProcess extends Thread {
 		if (MpaConversionMode > 0)
 			Common.setMessage(Resource.getString("audio.convert") + " " + Keys.ITEMS_loslessMpaConversionMode[MpaConversionMode]);
 
-		if (Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_decodeMpgAudio))
+		if (DecodeMpgAudio)
 		{
 			Common.setMessage(Resource.getString("audio.decode"));
 			Common.setMessage("\t" + Keys.ITEMS_resampleAudioMode[Common.getSettings().getIntProperty(Keys.KEY_AudioPanel_resampleAudioMode)]);
@@ -5814,7 +5835,8 @@ public class MainProcess extends Thread {
 			Common.setMessage(" ");
 			Common.setMessage(Resource.getString("audio.restart") + " " + ((CommonParsing.getAudioProcessingFlags()>>>18) - 1));
 
-			//yield();
+			if (DecodeMpgAudio && Normalize)
+				Common.setMessage("-> normalize: multiply factor: " + MpaDecoder.MULTIPLY);
 
 			if ( (0x10000L & CommonParsing.getAudioProcessingFlags()) != 0) 
 				MpaConversionMode = 0;
@@ -6919,9 +6941,14 @@ public class MainProcess extends Thread {
 					/**
 					 * fix VBR & restart processing 
 					 */
-					if ((0xCL & CommonParsing.getAudioProcessingFlags()) != 0 || MpaDecoder.RESET)
+					if (MpaDecoder.RESET)
 						return true; 
 
+					/**
+					 * fix VBR & restart processing 
+					 */
+					if (!MpaDecoder.PRESCAN && (0xCL & CommonParsing.getAudioProcessingFlags()) != 0)
+						return true; 
 
 					if (ptspos[x + 1] != -1 && n > ptspos[x + 1])
 					{
@@ -8036,6 +8063,17 @@ public class MainProcess extends Thread {
 					}
 				}
 
+				/**
+				 * restart decoding after fast peak search
+				 */
+				if (es_streamtype == CommonParsing.MPEG_AUDIO && DecodeMpgAudio && MpaDecoder.PRESCAN && !MpaDecoder.RESET)
+				{
+					MpaDecoder.PRESCAN = false;
+					MpaDecoder.NORMALIZE = false;
+
+					return true;
+				}
+
 				break;
 
 			} // end while bigloop
@@ -8063,7 +8101,7 @@ public class MainProcess extends Thread {
 
 			String[][] pureaudio = {
 				{ ".ac3",".mp1",".mp2",".mp3",".dts" },
-				{ "(new).ac3","(new).mp1","(new).mp2","(new).mp3","(new).dts" }
+				{ ".new.ac3",".new.mp1",".new.mp2",".new.mp3",".new.dts" }
 			};
 
 			if (Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_renameAudio))
@@ -8071,7 +8109,7 @@ public class MainProcess extends Thread {
 				for (int g = 1; g < 4; g++)
 				{
 					pureaudio[0][g] = ".mpa";
-					pureaudio[1][g] = "(new).mpa";
+					pureaudio[1][g] = ".new.mpa";
 				}
 			}
 
@@ -8135,7 +8173,7 @@ public class MainProcess extends Thread {
 			File mp2nameL = new File (fparent + "[L]" + pureaudio[0][2]);
 			File mp2nameR = new File (fparent + "[R]" + pureaudio[0][2]);
 			File dtsname = new File (fparent + pureaudio[isElementaryStream][4]);
-			File wavname = new File (fparent + "(new).wav");
+			File wavname = new File (fparent + ".new.wav");
 
 			/*** make riff ***/
 			if (DecodeMpgAudio && es_streamtype == CommonParsing.MPEG_AUDIO && MpaDecoder.WAVE)
@@ -9638,7 +9676,7 @@ public class MainProcess extends Thread {
 	//	String fchild = collection.getOutputName(xInputFile.getName());
 		String fparent = collection.getOutputNameParent(fchild);
 
-		fparent += isElementaryStream == CommonParsing.ES_TYPE ? "(new)" : "";
+		fparent += isElementaryStream == CommonParsing.ES_TYPE ? ".new" : "";
 
 		String subfile = fparent + ".sup";
 
@@ -10091,7 +10129,7 @@ public class MainProcess extends Thread {
 
 		JobProcessing job_processing = collection.getJobProcessing();
 
-		String pcmfile = fparent + (isElementaryStream == CommonParsing.ES_TYPE ? "(new)": "") + ".wav";
+		String pcmfile = fparent + (isElementaryStream == CommonParsing.ES_TYPE ? ".new": "") + ".wav";
 
 		byte[] parser = new byte[16];
 		byte[] packet = new byte[0xFFFF];
@@ -10313,8 +10351,7 @@ public class MainProcess extends Thread {
 						//yield();
 					}
 
-					for (int a = 0; a < packetlength; a += 2) // intel order
-						Common.changeByteOrder(packet, a, 2);
+					Common.changeByteOrder(packet, 0, packetlength);
 
 					if ((packetlength & 1) != 0)
 						Common.setMessage(Resource.getString("lpcm.msg.error.align"));
@@ -10404,7 +10441,7 @@ public class MainProcess extends Thread {
 		/**
 		 * split part 
 		 */
-		fparent += job_processing.getSplitSize() > 0 ? "(" + job_processing.getSplitPart() + ")" : "(new)" ;
+		fparent += job_processing.getSplitSize() > 0 ? "(" + job_processing.getSplitPart() + ")" : ".new" ;
 
 		boolean CreateM2sIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createM2sIndex);
 		boolean CreateD2vIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);

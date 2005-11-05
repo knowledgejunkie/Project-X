@@ -317,15 +317,23 @@ public class StreamConverter extends Object {
 	/**
 	 * entry point and pre functions
 	 */
-	public void write(JobProcessing job_processing, byte[] pes_packet, StreamDemultiplexer streamdemultiplexer, long cutposition, boolean qinfo, List cutpoints)
+	public void write(JobProcessing job_processing, byte[] pes_packet, StreamDemultiplexer streamdemultiplexer, long cutposition, boolean qinfo, List cutpoints) throws IOException
 	{
-		write(job_processing, pes_packet, 0, streamdemultiplexer, cutposition, qinfo, cutpoints);
+		write(job_processing, pes_packet, 0, pes_packet.length, streamdemultiplexer, cutposition, qinfo, cutpoints);
 	}
 
 	/**
 	 * entry point and pre functions
 	 */
-	public void write(JobProcessing job_processing, byte[] pes_packet, int pes_offset, StreamDemultiplexer streamdemultiplexer, long cutposition, boolean qinfo, List cutpoints)
+	public void write(JobProcessing job_processing, byte[] pes_packet, int pes_offset, StreamDemultiplexer streamdemultiplexer, long cutposition, boolean qinfo, List cutpoints) throws IOException
+	{
+		write(job_processing, pes_packet, pes_offset, pes_packet.length, streamdemultiplexer, cutposition, qinfo, cutpoints);
+	}
+
+	/**
+	 * entry point and pre functions
+	 */
+	public void write(JobProcessing job_processing, byte[] pes_packet, int pes_offset, int pes_packetlength, StreamDemultiplexer streamdemultiplexer, long cutposition, boolean qinfo, List cutpoints) throws IOException
 	{
 		/** 
 		 * cut-off determination
@@ -333,6 +341,15 @@ public class StreamConverter extends Object {
 		if (CutMode == CommonParsing.CUTMODE_BYTE && !qinfo && !CommonParsing.makecut(job_processing, cutposition + 5, cutpoints) )
 		{
 			BrokenLinkFlag = false;
+			return;
+		}
+
+		/** 
+		 * 1:1 copy filter
+		 */
+		if (Action == CommonParsing.ACTION_FILTER)
+		{
+			writePacket(job_processing, pes_packet, pes_offset, pes_packetlength);
 			return;
 		}
 
@@ -382,13 +399,13 @@ public class StreamConverter extends Object {
 	{
 		if (offset < 0 || offset >= packet.length)
 		{
-			Common.setMessage("!> packet writing: index out of bounds, ignore it..");
+			Common.setMessage("!> packet writing: index out of bounds, ignore it.. (" + Packet + ")");
 			return;
 		}
 
 		if (offset + length > packet.length)
 		{
-			Common.setMessage("!> packet writing: length index out of bounds, shortened..");
+			Common.setMessage("!> packet writing: length index out of bounds, shortened.. (" + Packet + ")");
 			length = packet.length - offset;
 		}
 

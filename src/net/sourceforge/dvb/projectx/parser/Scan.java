@@ -801,7 +801,7 @@ public class Scan extends Object {
 	/**
 	 *
 	 */
-	private void PMTcheck(byte[] check, int a)
+	private void readPMT(byte[] check, int a)
 	{ 
 		ByteArrayOutputStream bytecheck = new ByteArrayOutputStream();
 	//	pidlist.clear();
@@ -1240,7 +1240,7 @@ public class Scan extends Object {
 				if ( check[i] != 0x47 || check[i + 188] != 0x47 || check[i + 376] != 0x47 || check[i + 564] != 0x47 || check[i + 752] != 0x47) 
 					continue mpegtscheck;
 
-				PMTcheck(check, i);
+				readPMT(check, i);
 
 				return CommonParsing.TS_TYPE;
 			}

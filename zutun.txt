@@ -151,6 +151,25 @@
 --dd-wave auspacken
 --dts-wav /ac3-wav für cd-pcm format ausgeben (1411,2kbps), 
 --mono zu 3d-stereo bei mpa, als ersatz für single to dual
+== 0.90.1.01
+
+danach
+--fix: laden von cutpoint dateien via cli
+--neu: laden von chapterpoint dateien via cli
+--fix: resample mpadecode setzt bei nicht-48khz dateien falschen header (welche nicht resampled werden)
+--change: zeile coll-info re-ob rausgenommen
+--change: mpadecode, normalize kein zwischenstart mehr, nur am ende
+--fix: lpcm demux, fehler bei byteorder
+--neu: icon für save settings
+--fix: iconifizierte Fenster wurden nicht hervorgeholt
+--autoload panel verdeckt nach add file
+--fix: exception. file action with no file selected
+--9.8 max zu 9.0 mbit geändert
+--fix: loop of 'clear data' msg from pes-demux
+--cut also on pidfilter
+--stds geändert - crc
+--save mit DAR
+--simple relook pre-proc
 
 !-extra einstellungen für coll übernehmen, wird nur gelesen bei mainprocessing, vorbereitet
 !!-auto split mpa, wenn dual detektiert
@@ -160,7 +179,7 @@
 !!-audio.java umbauen als interface, bei ac3 vergleichskriterium dn, sm, cm erweitern
 !!-ac3 bitraten patch mit CRC neu berechnung
 !!-info .00 sek, :00 frame, ;00 dropframes (semikoloon)
-!-h264 ? nur info
+!-h264 ? zzt nur info
 !!-finepass wrapper,humax wrapper,vcd-svcd-image wrapper etc evtl. übergeordnet?
 !!-avi(bmp)film zu .sup
 !!-fixes array für gops verwenden (max 6MB)

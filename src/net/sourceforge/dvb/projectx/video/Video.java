@@ -40,7 +40,14 @@ public class Video extends Object {
 		"59.94fps" , "60fps" , "n.def." , "n.def." , "n.def." , "n.def." , "n.def." , "n.def." , "n.def."
 	};
 
-	private final static int[] framerate_table = { -1, 23976, 24000, 25000, 29970, 30000, 50000, 59940, 60000, -1, -1, -1, -1, -1, -1, -1 };
+	private final static float[] aspectratio_table = { 
+		1.0f, 1.0f, 1.3333f, 1.7778f, 2.21f, 0.8055f, 0.8437f, 0.9375f, 
+		0.9815f, 1.0255f, 1.0695f, 1.125f, 1.1575f, 1.2015f, 1.0f, 1.0f 
+	};
+
+	private final static int[] framerate_table = { 
+		-1, 23976, 24000, 25000, 29970, 30000, 50000, 59940, 60000, -1, -1, -1, -1, -1, -1, -1 
+	};
 
 	/**
 	 * returns aspectratio as string
@@ -50,6 +57,16 @@ public class Video extends Object {
 	public static String getAspectRatio(int index)
 	{
 		return aspectratio_table_strings[index];
+	}
+
+	/**
+	 * returns aspectratio as string
+	 *
+	 * @return
+	 */
+	public static float getAspectRatioValue(int index)
+	{
+		return aspectratio_table[index];
 	}
 
 	/**
