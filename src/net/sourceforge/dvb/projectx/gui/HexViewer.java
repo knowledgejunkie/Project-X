@@ -3,13 +3,13 @@
  *
  * Copyright (c) 2002-2005 by dvb.matt, All Rights Reserved. 
  * 
- * This file is part of X, a free Java based demux utility.
- * X is intended for educational purposes only, as a non-commercial test project.
- * It may not be used otherwise. Most parts are only experimental.
+ * This file is part of ProjectX, a free Java based demux utility.
+ * By the authors, ProjectX is intended for educational purposes only, 
+ * as a non-commercial test project.
  * 
  *
- * This program is free software; you can redistribute it free of charge
- * and/or modify it under the terms of the GNU General Public License as published by
+ * This program is free software; you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
@@ -427,6 +427,9 @@ public class HexViewer extends JFrame {
 		String fill = "0000000000";
 		String text = "";
 
+		text += "  Offset   :  0  1  2  3  4  5  6  7- 8  9  A  B  C  D  E  F  :    Ascii        \n";
+		text += "-----------|--------------------------------------------------|-----------------\n";
+
 		for (int a = 0; a < data.length; a += 16)
 		{
 			String ascii = " : ";
@@ -484,7 +487,7 @@ public class HexViewer extends JFrame {
 	protected void centerDialog()
 	{
 		setLocation(200, 200);
-		setSize(620, 460);
+		setSize(620, 490);
 	}
 
 	/**

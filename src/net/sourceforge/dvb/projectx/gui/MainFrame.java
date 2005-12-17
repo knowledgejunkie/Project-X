@@ -3,13 +3,13 @@
  *
  * Copyright (c) 2001-2005 by dvb.matt, All rights reserved.
  *
- * This file is part of X, a free Java based demux utility.
- * X is intended for educational purposes only, as a non-commercial test project.
- * It may not be used otherwise. Most parts are only experimental.
+ * This file is part of ProjectX, a free Java based demux utility.
+ * By the authors, ProjectX is intended for educational purposes only, 
+ * as a non-commercial test project.
+ * 
  *
- *
- * This program is free software; you can redistribute it free of charge
- * and/or modify it under the terms of the GNU General Public License as published by
+ * This program is free software; you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
@@ -510,7 +510,7 @@ public class MainFrame extends JPanel {
 				{
 					StripRelook stripRelook = new StripRelook();
 
-					Common.setOSDMessage("strip relook data...");
+					Common.setOSDMessage("strip Relook® data...");
 
 					XInputFile[] xif = stripRelook.process(xInputFile.getNewInstance(), collection.getOutputDirectory());
 
@@ -863,7 +863,7 @@ public class MainFrame extends JPanel {
 		JMenuItem menuitem_14 = popup.add(Resource.getString("popup.stripAudio"));
 		menuitem_14.setActionCommand("stripAudio");
 
-		JMenuItem menuitem_15 = popup.add("strip relook to separate pes");
+		JMenuItem menuitem_15 = popup.add("strip Relook® to separate pes");
 		menuitem_15.setActionCommand("stripRelook");
 
 		popup.addSeparator();
@@ -2297,11 +2297,7 @@ public class MainFrame extends JPanel {
 		panel_1.add(memo, BorderLayout.NORTH);
 
 		panel_1.add(Box.createRigidArea(new Dimension(1, 5)));
-//		panel_1.add(Box.createRigidArea(new Dimension(1, 90)));
-		panel_1.add(Box.createRigidArea(new Dimension(1, 36)));
-
-
-		panel_1.add(buildQuickStart());
+		panel_1.add(Box.createRigidArea(new Dimension(1, 54)));
 
 		panel_1.add(buildProcessControlPanel());
 		panel_1.add(buildCollectionControlPanel());
@@ -2314,7 +2310,6 @@ public class MainFrame extends JPanel {
 		 *
 		 */
 		JPanel panel_2 = new JPanel();
-	//	panel_2.setLayout(new BorderLayout());
 		panel_2.setLayout(new BoxLayout(panel_2, BoxLayout.X_AXIS));
 
 		panel_2.add(panel_1, BorderLayout.WEST);
@@ -2328,7 +2323,6 @@ public class MainFrame extends JPanel {
 		 *
 		 */
 		JPanel panel = new JPanel();
-	//	panel.setLayout(new BorderLayout());
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
 		panel.add(panel_2, BorderLayout.CENTER);
@@ -2340,7 +2334,7 @@ public class MainFrame extends JPanel {
 	/**
 	 *
 	 */
-	protected JPanel buildQuickStart()
+	protected JPanel buildProcessControlPanel()
 	{
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -2349,42 +2343,23 @@ public class MainFrame extends JPanel {
 		/**
 		 *
 		 */
-		JButton processwindow = new JButton(Resource.getString("MainPanel.QuickStart"));
-		processwindow.setToolTipText(Resource.getString("MainPanel.QuickStart.Tip"));
-		processwindow.setMnemonic('q');
-		processwindow.setPreferredSize(new Dimension(100, 24));
-		processwindow.setMaximumSize(new Dimension(100, 24));
-		processwindow.setMinimumSize(new Dimension(100, 24));
-		processwindow.addActionListener(new ActionListener() {
+		JButton process = new JButton(Resource.getString("MainPanel.QuickStart"));
+		process.setToolTipText(Resource.getString("MainPanel.QuickStart.Tip"));
+		process.setMnemonic('q');
+		process.setPreferredSize(new Dimension(100, 24));
+		process.setMaximumSize(new Dimension(100, 24));
+		process.setMinimumSize(new Dimension(100, 24));
+		process.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				if (!Common.isRunningProcess())
-				{
-					if (Common.isCollectionListEmpty())
-						return;
-
-					Common.setRunningProcess(true);
-
-					CommonParsing.setPvaPidToExtract(-1);
-
+				if (Common.startProcess())
 					Common.startMainProcess();
-				}
 			}
 		});
 
-		panel.add(processwindow);
+		panel.add(process);
 
-		return panel;
-	}
-
-	/**
-	 *
-	 */
-	protected JPanel buildProcessControlPanel()
-	{
-		JPanel panel = new JPanel();
-		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-		panel.setBorder(BorderFactory.createTitledBorder( BorderFactory.createEtchedBorder(), Resource.getString("ProcessWindow.Title")));
+		panel.add(Box.createRigidArea(new Dimension(1, 5)));
 
 		/**
 		 * process window open
@@ -2393,7 +2368,7 @@ public class MainFrame extends JPanel {
 		processwindow.setPreferredSize(new Dimension(100, 24));
 		processwindow.setMaximumSize(new Dimension(100, 24));
 		processwindow.setMinimumSize(new Dimension(100, 24));
-		processwindow.setToolTipText(Resource.getString("ProcessWindow.Title") + " " + Resource.getString("ProcessWindowPanel.Button"));
+		processwindow.setToolTipText(Resource.getString("MainPanel.Process") + " " + Resource.getString("ProcessWindowPanel.Button"));
 		processwindow.setMnemonic('p');
 		processwindow.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
@@ -2509,6 +2484,9 @@ public class MainFrame extends JPanel {
 				if (index < comboBox_0.getItemCount())
 					comboBox_0.setSelectedIndex(index);
 
+				if (!Common.isCollectionListEmpty() && index >= comboBox_0.getItemCount())
+					comboBox_0.setSelectedIndex(comboBox_0.getItemCount() - 1);
+
 				if (Common.isCollectionListEmpty())
 					updateCollectionPanel(-1);
 			}
@@ -2615,11 +2593,15 @@ public class MainFrame extends JPanel {
 		final JLabel status = new JLabel(Resource.getString("run.status"));
 		status.setToolTipText("status of processing");
 
-		final JLabel settings = new JLabel(CommonGui.loadIcon("save_no.gif"));
+		final JLabel settings = new JLabel(CommonGui.loadIcon("save_yes.gif"));
 		settings.setToolTipText("do or don't save settings on exit");
+		settings.setEnabled(false);
 
 		final JLabel date = new JLabel();
 		final JLabel time = new JLabel();
+
+		final JLabel onlineIcon = new JLabel("OFF");
+		onlineIcon.setToolTipText("WebIF online status");
 
 		final DateFormat date_format = DateFormat.getDateInstance(DateFormat.LONG);
 		final DateFormat time_format = DateFormat.getTimeInstance(DateFormat.LONG);
@@ -2631,6 +2613,7 @@ public class MainFrame extends JPanel {
 			private String StatusString = "";
 			private String DateString = "";
 			private boolean SaveSettings = false;
+			private boolean WebIFisOnline = false;
 
 			public void start()
 			{
@@ -2660,6 +2643,7 @@ public class MainFrame extends JPanel {
 			private void update()
 			{
 				updateStatusLabel();
+				updateWebIFLabel();
 				updateSettingsLabel();
 				updateDateLabel();
 				updateTimeLabel();
@@ -2677,6 +2661,18 @@ public class MainFrame extends JPanel {
 				status.setText(StatusString);
 			}
 
+			private void updateWebIFLabel()
+			{
+				boolean b = Common.isWebServerOnline();
+
+				if (b == WebIFisOnline)
+					return;
+
+				WebIFisOnline = b;
+
+				onlineIcon.setText(WebIFisOnline ? "ON" : "OFF");
+			}
+
 			private void updateSettingsLabel()
 			{
 				boolean b = Common.getSettings().getBooleanProperty(Keys.KEY_SaveSettingsOnExit);
@@ -2686,7 +2682,8 @@ public class MainFrame extends JPanel {
 
 				SaveSettings = b;
 
-				settings.setIcon(CommonGui.loadIcon(SaveSettings ? "save_yes.gif" : "save_no.gif"));
+				settings.setEnabled(SaveSettings);
+			//	settings.setIcon(CommonGui.loadIcon(SaveSettings ? "save_yes.gif" : "save_no.gif"));
 			}
 
 			private void updateDateLabel()
@@ -2716,9 +2713,15 @@ public class MainFrame extends JPanel {
 
 		JPanel status_1 = new JPanel(new BorderLayout());
 		status_1.setBorder(BorderFactory.createLoweredBevelBorder());
-		status_1.setPreferredSize(new Dimension(620, 22));
-		status_1.setMaximumSize(new Dimension(620, 22));
+		status_1.setPreferredSize(new Dimension(590, 22));
+		status_1.setMaximumSize(new Dimension(590, 22));
 		status_1.add(status);
+
+		JPanel status_2 = new JPanel(new BorderLayout());
+		status_2.setBorder(BorderFactory.createLoweredBevelBorder());
+		status_2.setPreferredSize(new Dimension(30, 22));
+		status_2.setMaximumSize(new Dimension(30, 22));
+		status_2.add(onlineIcon);
 
 		JPanel status_3 = new JPanel(new BorderLayout());
 		status_3.setBorder(BorderFactory.createLoweredBevelBorder());
@@ -2741,6 +2744,7 @@ public class MainFrame extends JPanel {
 		JPanel mainStatusPanel = new JPanel();
 		mainStatusPanel.setLayout(new BoxLayout(mainStatusPanel, BoxLayout.X_AXIS));
 		mainStatusPanel.add(status_1);
+		mainStatusPanel.add(status_2);
 		mainStatusPanel.add(status_3);
 		mainStatusPanel.add(status_4);
 		mainStatusPanel.add(status_5);
@@ -2759,70 +2763,12 @@ public class MainFrame extends JPanel {
 		CommonGui.getPicturePanel().setStreamInfo(aXInputFile.getStreamInfo());
 	}
 
-
-
 	/**
 	 * refresh inputfileslist
 	 */
 	public void reloadInputDirectories()
 	{
-		ArrayList arraylist = new ArrayList();
-		ArrayList input_directories = Common.getSettings().getInputDirectories();
-
-		for (int a = 0; a < input_directories.size(); a++)
-		{
-			// Get input files
-			Object item = input_directories.get(a);
-
-			XInputDirectory xInputDirectory = (XInputDirectory)item;
-			XInputFile[] addlist = xInputDirectory.getFiles();
-
-			// Sort them
-			if (addlist.length > 0)
-			{
-				class MyComparator implements Comparator {
-					public int compare(Object o1, Object o2)
-					{
-						return o1.toString().compareTo(o2.toString());
-					}
-				}
-
-				Arrays.sort(addlist, new MyComparator());
-			}
-
-			// Add them to the list
-			for (int b = 0; b < addlist.length; b++)
-				arraylist.add(addlist[b]);
-		}
-
-		try {
-			// Get input files from topfield raw disk access
-			XInputDirectory xInputDirectory = new XInputDirectory(DirType.RAW_DIR);
-			XInputFile[] addlist = xInputDirectory.getFiles();
-
-			// Sort them
-			if (addlist.length > 0)
-			{
-				class MyComparator implements Comparator
-				{
-					public int compare(Object o1, Object o2)
-					{
-						return o1.toString().compareTo(o2.toString());
-					}
-				}
-
-				Arrays.sort(addlist, new MyComparator());
-			}
-
-			// Add them to the list
-			for (int b = 0; b < addlist.length; b++)
-				arraylist.add(addlist[b]);
-
-		} catch (Throwable t) {
-			// Assume no dll available or no hd or no file, so do nothing!
-		}
-
-		updateAutoloadList(arraylist.isEmpty() ? new Object[0] : arraylist.toArray());
+		updateAutoloadList(Common.reloadInputDirectories());
 	}
 
 	/**
@@ -3024,11 +2970,7 @@ public class MainFrame extends JPanel {
 	 */
 	public static void showFrame(boolean b)
 	{
-		if (b)
-			frame.setState(frame.NORMAL);
-
-		else
-			frame.setState(frame.ICONIFIED);
+		frame.setState(b ? frame.NORMAL : frame.ICONIFIED);
 	}
 
 	/**
@@ -3036,7 +2978,17 @@ public class MainFrame extends JPanel {
 	 */
 	public static void showActiveCollection(int index)
 	{
-		comboBox_0.setSelectedIndex(index);
+		if (index >= 0 && index < Common.getCollectionListSize())
+			comboBox_0.setSelectedIndex(index);
+
+		if (Common.isCollectionListEmpty())
+		{
+			Common.setActiveCollection(-1);
+
+			comboBox_0.removeAllItems();
+
+			updateCollectionPanel(-1);
+		}
 	}
 
 	/**

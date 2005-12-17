@@ -1,5 +1,3 @@
-src/net/sourceforge/dvb/projectx/audio/Audio.java
-src/net/sourceforge/dvb/projectx/audio/CRC.java
 src/net/sourceforge/dvb/projectx/audio/MpaConverter.java
 src/net/sourceforge/dvb/projectx/audio/MpaDecoder.java
 src/net/sourceforge/dvb/projectx/audio/RIFFHeader.java
@@ -93,3 +91,11 @@ src/net/sourceforge/dvb/projectx/gui/TextFieldListener.java
 src/net/sourceforge/dvb/projectx/gui/TextFieldKeyListener.java
 src/net/sourceforge/dvb/projectx/gui/UISwitchListener.java
 src/net/sourceforge/dvb/projectx/gui/X_JFileChooser.java
+
+src/net/sourceforge/dvb/projectx/audio/AudioFormat.java
+src/net/sourceforge/dvb/projectx/audio/AudioFormatDTS.java
+src/net/sourceforge/dvb/projectx/audio/AudioFormatAC3.java
+src/net/sourceforge/dvb/projectx/audio/AudioFormatLPCM.java
+src/net/sourceforge/dvb/projectx/audio/AudioFormatWAV.java
+src/net/sourceforge/dvb/projectx/audio/AudioFormatMPA.java
+src/net/sourceforge/dvb/projectx/net/WebInterface.java

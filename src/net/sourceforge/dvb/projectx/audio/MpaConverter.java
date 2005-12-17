@@ -3,16 +3,16 @@
  *
  * Copyright (c) 2002-2005 by dvb.matt, All rights reserved.
  * 
- * This file is part of X, a free Java based demux utility.
- * X is intended for educational purposes only, as a non-commercial test project.
- * It may not be used otherwise. Most parts are only experimental.
+ * This file is part of ProjectX, a free Java based demux utility.
+ * By the authors, ProjectX is intended for educational purposes only, 
+ * as a non-commercial test project.
  * 
  * The part of audio parsing was derived from the MPEG/Audio
  * Software Simulation Group's audio codec in a special modified manner.
  *
  *
- * This program is free software; you can redistribute it free of charge
- * and/or modify it under the terms of the GNU General Public License as published by
+ * This program is free software; you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
@@ -34,6 +34,8 @@
 package net.sourceforge.dvb.projectx.audio;
 
 import java.util.Arrays;
+
+import net.sourceforge.dvb.projectx.audio.AudioFormat;
 
 import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.common.Resource;
@@ -96,12 +98,12 @@ public class MpaConverter extends Object {
 	private int[] BRindex = new int[3];
 	private int Restart = 0;
 	private int error_flag = 0;
-	private Audio Audio;
+	private AudioFormat Audio;
 
 	//init
 	public MpaConverter()
 	{
-		Audio = new Audio();
+		Audio = new AudioFormat(CommonParsing.MPEG_AUDIO);
 		Sizes = MPA_48M1L2;
 		Arrays.sort(Sizes);
 		maxBitSize = Sizes[14];
@@ -133,8 +135,8 @@ public class MpaConverter extends Object {
 		error_flag = 0;
 
 		//secure, but most was already done by X.java
-		if (Audio.MPA_parseHeader(AudioFrame,0)!=1 || Audio.ID!=1 || Audio.Layer!=2 || Audio.Sampling_frequency!=48000 || 
-			Audio.Bitrate<56000 || (Audio.Mode==SINGLE && Audio.Bitrate>192000) || (Audio.Mode!=SINGLE && Audio.Bitrate<112000))
+		if (Audio.parseHeader(AudioFrame, 0) != 1 || Audio.getID() != 1 || Audio.getLayer() != 2 || Audio.getSamplingFrequency() != 48000 || 
+			Audio.getBitrate() < 56000 || (Audio.getMode() == SINGLE && Audio.getBitrate() > 192000) || (Audio.getMode() != SINGLE && Audio.getBitrate() < 112000))
 		{
 			System.arraycopy(AudioFrame,0,newAudioFrames[0],0,AudioFrame.length);
 			System.arraycopy(AudioFrame,0,newAudioFrames[1],0,AudioFrame.length); // copy frame
@@ -147,14 +149,14 @@ public class MpaConverter extends Object {
 		}
 
 		//explicit call necessary, if crc removing is disabled in presettings
-		Audio.MPA_deleteCRC(AudioFrame);
+		Audio.removeCRC(AudioFrame);
 
 		switch(MpaConversionMode)
 		{
 			case SINGLE_TO_3DSTEREO:  //single channel to 3D
 			case SINGLE_TO_STEREO:  //single channel to stereo
 			case SINGLE_TO_JSTEREO:  //single channel to jstereo
-				if (Audio.Channel == 1)
+				if (Audio.getChannel() == 1)
 					newAudioFrames = createByteArrays(makeTwoChannel(createBitArray(AudioFrame), MpaConversionMode, 0));
 
 				else
@@ -163,7 +165,7 @@ public class MpaConverter extends Object {
 				break;
 
 			case SPLIT_INTO_SINGLE: //dual-stereo-jointstereo to 2 x mono
-				if (Audio.Channel == 2)
+				if (Audio.getChannel() == 2)
 					newAudioFrames = createByteArrays(splitTwoChannel(createBitArray(AudioFrame),MpaConversionMode));
 
 				else
@@ -711,8 +713,8 @@ public class MpaConverter extends Object {
 
 		int bound = 32;
 
-		if (Audio.Mode == 1) //source is jointstereo
-			bound=(Audio.Mode_extension + 1) * 4; 
+		if (Audio.getMode() == 1) //source is jointstereo
+			bound=(Audio.getModeExtension() + 1) * 4; 
 
 		if (bound == 32) 
 			bound = Bal_length;

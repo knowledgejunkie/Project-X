@@ -3,13 +3,13 @@
  *
  * Copyright (c) 2001-2005 by dvb.matt, All rights reserved.
  * 
- * This file is part of X, a free Java based demux utility.
- * X is intended for educational purposes only, as a non-commercial test project.
- * It may not be used otherwise. Most parts are only experimental.
+ * This file is part of ProjectX, a free Java based demux utility.
+ * By the authors, ProjectX is intended for educational purposes only, 
+ * as a non-commercial test project.
  * 
  *
- * This program is free software; you can redistribute it free of charge
- * and/or modify it under the terms of the GNU General Public License as published by
+ * This program is free software; you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
@@ -82,8 +82,7 @@ import java.util.TimeZone;
 
 import java.net.URL;
 
-import net.sourceforge.dvb.projectx.audio.Audio;
-import net.sourceforge.dvb.projectx.audio.CRC;
+import net.sourceforge.dvb.projectx.audio.AudioFormat;
 import net.sourceforge.dvb.projectx.audio.MpaConverter;
 import net.sourceforge.dvb.projectx.audio.MpaDecoder;
 import net.sourceforge.dvb.projectx.audio.RIFFHeader;
@@ -129,14 +128,13 @@ import net.sourceforge.dvb.projectx.xinput.StreamInfo;
  */
 public class MainProcess extends Thread {
 
-	private Audio audio;
 	private MpaConverter MPAConverter;
 	private MpaDecoder MPADecoder;
 
-	private static int ERRORCODE = 0;
-	private static int MainBufferSize = 8192000;
+	private int ERRORCODE = 0;
+	private int MainBufferSize = 8192000;
 
-	private static double videotimecount = 0.0;
+	private double videotimecount = 0.0;
 
 	private TS tf = new TS();
 
@@ -214,6 +212,8 @@ public class MainProcess extends Thread {
 				 */
 				for ( ; a < b ; a++, d++)
 				{
+					Common.clearMessageLog();
+
 					// clean up before each collection run
 					System.gc();
 
@@ -471,7 +471,7 @@ public class MainProcess extends Thread {
 			collection.closeDebugLogStream();
 			collection.closeNormalLogStream(Common.getMessageLog());
 
-			Common.clearMessageLog();
+			//Common.clearMessageLog();
 		}
 
 		else
@@ -1095,7 +1095,7 @@ public class MainProcess extends Thread {
 		collection.closeDebugLogStream();
 		collection.closeNormalLogStream(Common.getMessageLog());
 
-		Common.clearMessageLog();
+		//Common.clearMessageLog();
 
 		/**
 		 * delete tempfiles which have been multi-used 
@@ -5085,7 +5085,7 @@ public class MainProcess extends Thread {
 					{
 						in.read(pva_packet, pva_headerlength, overlapnext.length - pva_headerlength);
 
-						for (int i = 256; i >= 0; i--)
+						for (int i = 255; i >= 0; i--)
 						{
 							if (pva_packet[i] != overlapnext[i])
 								break;
@@ -5774,12 +5774,6 @@ public class MainProcess extends Thread {
 		boolean Normalize = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_Normalize);
 		boolean DecodeMpgAudio = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_decodeMpgAudio);
 
-		if (audio == null)
-			audio = new Audio();
-
-		// audio is global
-		audio.initRDSDecoding(Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg7), collection.DebugMode());
-
 		if (MPAConverter == null)
 			MPAConverter = new MpaConverter();
 
@@ -5853,7 +5847,6 @@ public class MainProcess extends Thread {
  	 */
 	private boolean processAudio(JobCollection collection, XInputFile xInputFile, String filename_pts, String filename_type, String videofile_pts, int isElementaryStream, int MpaConversionMode)
 	{
-	//	String fchild = collection.getOutputName(xInputFile.getName());
 		String fchild = isElementaryStream == CommonParsing.ES_TYPE ? collection.getOutputName(xInputFile.getName()) : xInputFile.getName();
 		String fparent = collection.getOutputNameParent(fchild);
 
@@ -5978,7 +5971,6 @@ public class MainProcess extends Thread {
 		int jss = 0;
 		int returncode = 0;
 		int[] layermode2 = { 0,0,0,0 };
-		int es_streamtype = CommonParsing.MPEG_AUDIO; //"mp" std
 
 		final int AC3_AUDIOSTREAM = 0;
 		final int MP3_AUDIOSTREAM = 1;
@@ -5990,15 +5982,30 @@ public class MainProcess extends Thread {
 
 		double time_counter = 0.0;
 
-		IDDBufferedOutputStream audiooutL;
-		IDDBufferedOutputStream audiooutR;
+		int es_streamtype = CommonParsing.MPEG_AUDIO; //"mp" std
 
+		/**
+		 * mp, ac, wa
+		 */
 		if (filename_type.equals("ac")) //means dts, too
 			es_streamtype = CommonParsing.AC3_AUDIO;
+
+		else if (filename_type.equals("dt")) //later, other handling
+			es_streamtype = CommonParsing.DTS_AUDIO;
 
 		else if (filename_type.equals("wa"))
 			es_streamtype = CommonParsing.LPCM_AUDIO;
 
+		IDDBufferedOutputStream audiooutL;
+		IDDBufferedOutputStream audiooutR;
+
+		/**
+		 * pre-init audioparser
+		 */
+		AudioFormat audio = new AudioFormat(es_streamtype);
+
+		// pre-check for toggling ac3<->dts
+		AudioFormat test_audio = new AudioFormat(CommonParsing.DTS_AUDIO);
 
 		try {
 
@@ -6073,7 +6080,6 @@ public class MainProcess extends Thread {
 			if (ptsdata && !vptsdata && isElementaryStream != CommonParsing.ES_TYPE) 
 				Common.setMessage(Resource.getString("audio.msg.adjust.at.ownpts"));
 
-			//yield();
 
 
 			if (ptsdata)
@@ -6136,7 +6142,7 @@ public class MainProcess extends Thread {
 				 *  AC-3/DTS Audio
 				 */
 				readloopdd:
-				while (es_streamtype == CommonParsing.AC3_AUDIO && n < audiosize - 10)
+				while ((es_streamtype == CommonParsing.AC3_AUDIO || es_streamtype == CommonParsing.DTS_AUDIO) && n < audiosize - 10)
 				{
 					Common.updateProgressBar(n, audiosize);
 
@@ -6171,12 +6177,12 @@ public class MainProcess extends Thread {
 					/**
 					 * parse header 
 					 */
-					ERRORCODE = (is_AC3 || !is_DTS) ? audio.AC3_parseHeader(pushback, 0) : 0; 
+					ERRORCODE = (is_AC3 || !is_DTS) ? audio.parseHeader(pushback, 0) : 0; 
 
 					if (ERRORCODE < 1)
 					{ 
 						if (!is_AC3 || is_DTS)
-							ERRORCODE = audio.DTS_parseHeader(pushback, 0); 
+							ERRORCODE = test_audio.parseHeader(pushback, 0); 
 
 						if (ERRORCODE < 1)
 						{ 
@@ -6193,14 +6199,19 @@ public class MainProcess extends Thread {
 
 						is_DTS = true; 
 						is_AC3 = false;
+
+						//set special type
+						audio = new AudioFormat(CommonParsing.DTS_AUDIO);
+						audio.parseHeader(pushback, 0);
 					}
+
 					else
 					{ 
 						is_DTS = false;
 						is_AC3 = true;
 					}
 
-					audiooutL.setWave(CreateDDWave, is_AC3, is_DTS, audio.Bitrate);
+					audiooutL.setWave(CreateDDWave, is_AC3, is_DTS, audio.getBitrate());
 
 					/**
 					 * prepare fo read entire frame 
@@ -6211,8 +6222,8 @@ public class MainProcess extends Thread {
 					/**
 					 * read entire frame 
 					 */
-					frame = new byte[audio.Size];
-					audioin.read(frame, 0, audio.Size);
+					frame = new byte[audio.getSize()];
+					audioin.read(frame, 0, audio.getSize());
 
 					/**
 					 * startfileposition of current frame 
@@ -6222,7 +6233,7 @@ public class MainProcess extends Thread {
 					/**
 					 * expected position for following frame 
 					 */
-					n += audio.Size;
+					n += audio.getSize();
 
 					if (PitchAudio)
 					{  // skip a frame
@@ -6256,7 +6267,7 @@ public class MainProcess extends Thread {
 							miniloop:
 							for (; d < (is_DTS ? 15 : 17); d++)
 							{ //smpte
-								ERRORCODE = is_DTS ? audio.DTS_parseNextHeader(push24, d) : audio.AC3_parseNextHeader(push24, d);
+								ERRORCODE = audio.parseNextHeader(push24, d);
 
 								if (ERRORCODE > 0) 
 									break miniloop; 
@@ -6280,7 +6291,7 @@ public class MainProcess extends Thread {
 						}
 					}
 
-					if (is_AC3 && !is_DTS && ValidateCRC && (ERRORCODE = CRC.checkCRC16ofAC3(frame, 2, audio.Size)) != 0 )
+					if (ValidateCRC && (ERRORCODE = audio.validateCRC(frame, 2, audio.getSize())) != 0 )
 					{
 						Common.setMessage(Resource.getString("audio.msg.crc.error", "" + ERRORCODE) + " " + actframe);
 
@@ -6298,12 +6309,7 @@ public class MainProcess extends Thread {
 					/**
 					 * check for change in frametype 
 					 */ 
-					if (is_DTS) 
-						returncode = audio.DTS_compareHeader(); 
-					else 
-						returncode = audio.AC3_compareHeader(); 
-
-					if (returncode > 0) 
+					if (audio.compareHeader() > 0) 
 						newformat = true; 
 
 					if (frame_counter == 0) 
@@ -6314,7 +6320,7 @@ public class MainProcess extends Thread {
 					/**
 					 * replace not 3/2 with silence ac3 3/2 061i++ 
 					 */
-					if (!is_DTS && ReplaceAc3withSilence && audio.Mode != 7 )
+					if (!is_DTS && ReplaceAc3withSilence && audio.getMode() != 7 )
 					{
 						for (int c = 0; c < Common.getAC3list().size(); c++)
 						{
@@ -6335,7 +6341,7 @@ public class MainProcess extends Thread {
 					/**
 					 * preloop if audio starts later than video, and i must insert 
 					 */
-					if ( (preloop && v>=vptsval.length) || !( preloop && vptsdata && vptsval[v] < timeline - (audio.Time_length / 2.0) ) ) 
+					if ( (preloop && v>=vptsval.length) || !( preloop && vptsdata && vptsval[v] < timeline - (audio.getFrameTimeLength() / 2.0) ) ) 
 						preloop=false;
 
 					else
@@ -6375,7 +6381,7 @@ public class MainProcess extends Thread {
 						/**
 						 * pre inserting
 						 */
-						while (precount < timeline - (audio.Time_length / 2.0))
+						while (precount < timeline - (audio.getFrameTimeLength() / 2.0))
 						{
 							/**
 							 * check if frame write should paused 
@@ -6385,12 +6391,12 @@ public class MainProcess extends Thread {
 								double ms1 = (double) (precount - vptsval[w + 1]);
 								double ms2 = (double) (time_counter - vtime[w + 1]);
 
-								if ((double) Math.abs(ms2) <= audio.Time_length / 2.0 )
+								if ((double) Math.abs(ms2) <= audio.getFrameTimeLength() / 2.0 )
 								{
 									awrite = false;
 									w += 2;
 								}
-								else if ((double) Math.abs(ms1) <= audio.Time_length / 2.0 )
+								else if ((double) Math.abs(ms1) <= audio.getFrameTimeLength() / 2.0 )
 								{
 									awrite = false;
 									w += 2;
@@ -6407,7 +6413,7 @@ public class MainProcess extends Thread {
 								if (Debug) 
 									System.out.println(" ö" + ms3 + "/" + ms4 + "/" + (ms4 - ms3));
 
-								if (!awrite && (double) Math.abs((time_counter - vtime[v]) - (precount - vptsval[v])) <= (double) audio.Time_length / 2.0 )
+								if (!awrite && (double) Math.abs((time_counter - vtime[v]) - (precount - vptsval[v])) <= (double) audio.getFrameTimeLength() / 2.0 )
 								{
 									awrite = true;
 									v += 2;
@@ -6426,7 +6432,7 @@ public class MainProcess extends Thread {
 							 */
 							if ((v < vptsval.length) )
 							{
-								if ((double) Math.abs(vptsval[v] - precount) <= ((double) audio.Time_length / 2.0) )
+								if ((double) Math.abs(vptsval[v] - precount) <= ((double) audio.getFrameTimeLength() / 2.0) )
 								{
 									awrite = true;
 									v += 2;
@@ -6442,7 +6448,7 @@ public class MainProcess extends Thread {
 								/**
 								 * calculate A/V Offset for false 
 								 */
-								if (awrite && (double) Math.abs((time_counter - vtime[v - 2]) - (precount - vptsval[v-2])) > (double) audio.Time_length / 2.0 )
+								if (awrite && (double) Math.abs((time_counter - vtime[v - 2]) - (precount - vptsval[v-2])) > (double) audio.getFrameTimeLength() / 2.0 )
 								{
 									awrite = false;
 									v -= 2;
@@ -6475,16 +6481,16 @@ public class MainProcess extends Thread {
 								/**
 								 * RIFF 
 								 */
-								if (AddRiffToAc3) 
-									riffw[0].AC3RiffData(audio.AC3RiffFormat(frame)); 
+								if (!is_DTS && AddRiffToAc3) 
+									riffw[0].AC3RiffData(audio.parseRiffData(frame)); 
 
 								frame_counter++;
 								cb++;
 								ins[1]++;
-								time_counter += audio.Time_length;
+								time_counter += audio.getFrameTimeLength();
 							}
 
-							precount += audio.Time_length;
+							precount += audio.getFrameTimeLength();
 
 							if (Debug) 
 								System.out.println("(6)audio frames: wri/pre/skip/ins/add " + frame_counter + "/" + cb + "/" + ce + "/" + cc + "/" + cd + "  @ " + Common.formatTime_1((long)(time_counter / 90.0) ) + "  ");
@@ -6496,7 +6502,7 @@ public class MainProcess extends Thread {
 						audioin.unread(frame);
 
 						if (ins[1] > 0)
-							Common.setMessage(Resource.getString("audio.msg.summary.pre-insert", "" + ins[1], FramesToTime((int)ins[1],audio.Time_length)) + " " + Common.formatTime_1(ins[0] / 90L));
+							Common.setMessage(Resource.getString("audio.msg.summary.pre-insert", "" + ins[1], FramesToTime((int)ins[1], audio.getFrameTimeLength())) + " " + Common.formatTime_1(ins[0] / 90L));
 
 						continue readloopdd;
 					} // end if preloop
@@ -6508,7 +6514,7 @@ public class MainProcess extends Thread {
 						vw[0] = v;
 						vw[1] = w;
 
-						awrite = SyncCheck(vw, time_counter, audio.Time_length, timeline, frame_counter, vptsval, vtime, awrite, Debug);
+						awrite = SyncCheck(vw, time_counter, audio.getFrameTimeLength(), timeline, frame_counter, vptsval, vtime, awrite, Debug);
 
 						v = vw[0];
 						w = vw[1];
@@ -6526,7 +6532,7 @@ public class MainProcess extends Thread {
 						Common.getGuiInterface().showExportStatus(Resource.getString("audio.status.pause"));
 
 					if (Debug) 
-						System.out.println(" k)" + timeline + " l)" + (audio.Time_length / 2.0) + " u)" + audio.Size + " m)" + awrite + " n)"+w+" o)"+v+" p)"+n);
+						System.out.println(" k)" + timeline + " l)" + (audio.getFrameTimeLength() / 2.0) + " u)" + audio.getSize() + " m)" + awrite + " n)"+w+" o)"+v+" p)"+n);
 
 					/**
 					 * stop if no more audio needed 
@@ -6543,7 +6549,7 @@ public class MainProcess extends Thread {
 					 */
 					if ((newformat && awrite) || (newformat && !vptsdata))
 					{
-						String hdr = is_DTS ? audio.DTS_displayHeader() : audio.AC3_displayHeader();
+						String hdr = audio.displayHeader();
 
 						if (ModeChangeCount < 100) 
 						{
@@ -6582,7 +6588,7 @@ public class MainProcess extends Thread {
 					/**
 					 * pts for next frame!! 
 					 */
-					timeline += audio.Time_length;
+					timeline += audio.getFrameTimeLength();
 
 					silentFrameBuffer.reset();
 					silentFrameBuffer.write(frame);
@@ -6610,11 +6616,11 @@ public class MainProcess extends Thread {
 							/**
 							 * RIFF 
 							 */
-							if (AddRiffToAc3) 
-								riffw[0].AC3RiffData(audio.AC3RiffFormat(frame)); 
+							if (!is_DTS && AddRiffToAc3) 
+								riffw[0].AC3RiffData(audio.parseRiffData(frame)); 
 
 							frame_counter++;
-							time_counter += audio.Time_length;
+							time_counter += audio.getFrameTimeLength();
 						}
 
 						continue readloopdd;
@@ -6622,7 +6628,7 @@ public class MainProcess extends Thread {
 
 					minSync = 0;
 
-					if ( (double) Math.abs(ptsval[x + 1] - timeline) < (double) audio.Time_length / 2.0 )
+					if ( (double) Math.abs(ptsval[x + 1] - timeline) < (double) audio.getFrameTimeLength() / 2.0 )
 					{
 						timeline = ptsval[x + 1];
 						x++;
@@ -6633,11 +6639,11 @@ public class MainProcess extends Thread {
 							/**
 							 * RIFF 
 							 */
-							if (AddRiffToAc3) 
-								riffw[0].AC3RiffData(audio.AC3RiffFormat(frame)); 
+							if (!is_DTS && AddRiffToAc3) 
+								riffw[0].AC3RiffData(audio.parseRiffData(frame)); 
 
 							frame_counter++;
-							time_counter += audio.Time_length;
+							time_counter += audio.getFrameTimeLength();
 						}
 
 						continue readloopdd;
@@ -6668,17 +6674,17 @@ public class MainProcess extends Thread {
 							/**
 							 * RIFF 
 							 */
-							if (AddRiffToAc3) 
-								riffw[0].AC3RiffData(audio.AC3RiffFormat(frame)); 
+							if (!is_DTS && AddRiffToAc3) 
+								riffw[0].AC3RiffData(audio.parseRiffData(frame)); 
 
 							frame_counter++;
-							time_counter += audio.Time_length;
+							time_counter += audio.getFrameTimeLength();
 
 							if (Debug) 
 								System.out.println("(10)audio frames: wri/pre/skip/ins/add " + frame_counter + "/" + cb + "/" + ce + "/" + cc + "/" + cd + "  @ " + Common.formatTime_1((long)(time_counter / 90.0) ) + "  ");
 						}
 
-						timeline += audio.Time_length;
+						timeline += audio.getFrameTimeLength();
 
 						/**
 						 * insert silence ac3
@@ -6702,20 +6708,20 @@ public class MainProcess extends Thread {
 						long[] ins = { (long)time_counter, 0 };
 
 
-						while (ptsval[x + 1] > (timeline - (audio.Time_length / 2.0)) )
+						while (ptsval[x + 1] > (timeline - (audio.getFrameTimeLength() / 2.0)) )
 						{
 							if (vptsdata && w < vptsval.length)
 							{ 
-								double ms1 = (double) (timeline - audio.Time_length - vptsval[w + 1]);
+								double ms1 = (double) (timeline - audio.getFrameTimeLength() - vptsval[w + 1]);
 								double ms2 = (double) (time_counter - vtime[w + 1]);
 
-								if ((double) Math.abs(ms2) <= audio.Time_length / 2.0 )
+								if ((double) Math.abs(ms2) <= audio.getFrameTimeLength() / 2.0 )
 								{
 									awrite = false;
 									w += 2;
 								}
 
-								else if ((double) Math.abs(ms1) <= audio.Time_length / 2.0 )
+								else if ((double) Math.abs(ms1) <= audio.getFrameTimeLength() / 2.0 )
 								{
 									awrite = false;
 									w += 2;
@@ -6725,9 +6731,9 @@ public class MainProcess extends Thread {
 							if (vptsdata && v < vptsval.length)
 							{
 								if (!awrite && (double) Math.abs((time_counter - vtime[v]) -
-										(timeline - audio.Time_length - vptsval[v]) ) <= (double) audio.Time_length / 2.0 )
+										(timeline - audio.getFrameTimeLength() - vptsval[v]) ) <= (double) audio.getFrameTimeLength() / 2.0 )
 								{
-									double ms1 = (double) (timeline - audio.Time_length - vptsval[v]);
+									double ms1 = (double) (timeline - audio.getFrameTimeLength() - vptsval[v]);
 									double ms2 = (double) (time_counter - vtime[v]);
 
 									Common.getGuiInterface().showAVOffset("" + (int)(ms1 / 90) + "/" + (int)(ms2 / 90) + "/" + (int)((ms2 - ms1) / 90));
@@ -6742,9 +6748,9 @@ public class MainProcess extends Thread {
 
 							if (vptsdata && v < vptsval.length)
 							{
-								if ((double) Math.abs(vptsval[v] - (timeline - audio.Time_length)) <= ((double) audio.Time_length / 2.0) )
+								if ((double) Math.abs(vptsval[v] - (timeline - audio.getFrameTimeLength())) <= ((double) audio.getFrameTimeLength() / 2.0) )
 								{
-									double ms1 = (double) (timeline - audio.Time_length - vptsval[v]);
+									double ms1 = (double) (timeline - audio.getFrameTimeLength() - vptsval[v]);
 									double ms2 = (double) (time_counter - vtime[v]);
 
 									Common.getGuiInterface().showAVOffset("" + (int)(ms1 / 90) + "/" + (int)(ms2 / 90) + "/" + (int)((ms2 - ms1) / 90));
@@ -6757,7 +6763,7 @@ public class MainProcess extends Thread {
 								}
 
 								if (awrite && (double) Math.abs((time_counter - vtime[v - 2]) -
-										(timeline - audio.Time_length - vptsval[v - 2]) ) > (double) audio.Time_length / 2.0 )
+										(timeline - audio.getFrameTimeLength() - vptsval[v - 2]) ) > (double) audio.getFrameTimeLength() / 2.0 )
 								{
 									awrite = false;
 									v -= 2;
@@ -6777,11 +6783,11 @@ public class MainProcess extends Thread {
 								/**
 								 * RIFF 
 								 */
-								if (AddRiffToAc3) 
-									riffw[0].AC3RiffData(audio.AC3RiffFormat(silentFrameBuffer.toByteArray())); 
+								if (!is_DTS && AddRiffToAc3) 
+									riffw[0].AC3RiffData(audio.parseRiffData(silentFrameBuffer.toByteArray())); 
 
 								frame_counter++;
-								time_counter += audio.Time_length;
+								time_counter += audio.getFrameTimeLength();
 								cc++;
 								ins[1]++;
 							}
@@ -6793,15 +6799,15 @@ public class MainProcess extends Thread {
 								System.out.println(" x" + ((x < ptspos.length - 1) ? x + "/" + ptsval[x + 1] + "/" + ptspos[x + 1] : "-"));
 							}
 
-							timeline += audio.Time_length;
+							timeline += audio.getFrameTimeLength();
 						} // end while
 
-						timeline -= audio.Time_length;
+						timeline -= audio.getFrameTimeLength();
 						insertSilenceLoop = false;
 						x++;
 
 						if (ins[1] > 0)
-							Common.setMessage(Resource.getString("audio.msg.summary.insert", "" + ins[1], FramesToTime((int)ins[1],audio.Time_length)) + " " + Common.formatTime_1(ins[0] / 90L));
+							Common.setMessage(Resource.getString("audio.msg.summary.insert", "" + ins[1], FramesToTime((int)ins[1], audio.getFrameTimeLength())) + " " + Common.formatTime_1(ins[0] / 90L));
 
 						/**
 						 * reset PTS after inserting
@@ -6811,7 +6817,7 @@ public class MainProcess extends Thread {
 						continue readloopdd;
 					} // end if insertSilenceLoop
 
-					if ( (actframe + audio.Size) >= audiosize ) 
+					if ( (actframe + audio.getSize()) >= audiosize ) 
 						break readloopdd;
 
 				}  // end while
@@ -6819,9 +6825,9 @@ public class MainProcess extends Thread {
 				/**
 				 * add frames at the end 
 				 */
-				if (es_streamtype == CommonParsing.AC3_AUDIO && AddFrames && vptsdata && awrite && (w < vptsval.length))
+				if ((es_streamtype == CommonParsing.AC3_AUDIO || es_streamtype == CommonParsing.DTS_AUDIO) && AddFrames && vptsdata && awrite && (w < vptsval.length))
 				{
-					timeline += audio.Time_length;
+					timeline += audio.getFrameTimeLength();
 					addf[0] = (long) time_counter;
 
 					/**
@@ -6845,28 +6851,28 @@ public class MainProcess extends Thread {
 
 					while ( w < vptsval.length )
 					{
-						while (vtime[w + 1] > time_counter && (double) Math.abs(vtime[w + 1] - time_counter) > (double) audio.Time_length / 2.0)
+						while (vtime[w + 1] > time_counter && (double) Math.abs(vtime[w + 1] - time_counter) > (double) audio.getFrameTimeLength() / 2.0)
 						{
 							silentFrameBuffer.writeTo(audiooutL);
 
 							/**
 							 * RIFF 
 							 */
-							if (AddRiffToAc3) 
-								riffw[0].AC3RiffData(audio.AC3RiffFormat(silentFrameBuffer.toByteArray())); 
+							if (!is_DTS && AddRiffToAc3) 
+								riffw[0].AC3RiffData(audio.parseRiffData(silentFrameBuffer.toByteArray())); 
 
 							Common.getGuiInterface().showExportStatus(Resource.getString("audio.status.add")); 
 
 							frame_counter++;
-							time_counter += audio.Time_length;
-							timeline += audio.Time_length;
+							time_counter += audio.getFrameTimeLength();
+							timeline += audio.getFrameTimeLength();
 							cd++;
 							addf[1]++;
 
 							if (Debug)
 							{ 
 								System.out.println("(9)audio frames: wri/pre/skip/ins/add " + frame_counter + "/" + cb + "/" + ce + "/" + cc + "/" + cd + "  @ " + Common.formatTime_1((long)(time_counter / 90.0f) ));
-								System.out.print(" t)" + (long)(timeline - audio.Time_length) + " w)" + w);
+								System.out.print(" t)" + (long)(timeline - audio.getFrameTimeLength()) + " w)" + w);
 							}
 						}
 
@@ -6874,13 +6880,13 @@ public class MainProcess extends Thread {
 					}
 
 					w -= 2;
-					timeline -= audio.Time_length;
+					timeline -= audio.getFrameTimeLength();
 
 					if (Debug) 
 						System.out.println(" eot_video:" + (vptsval[w + 1] / 90) + "ms, eot_audio:" + (timeline / 90) + "ms ");
 				}
 
-
+// mpa start
 				/**
 				 * init FFT/window for mpa decoding for 1 file
 				 */
@@ -6908,6 +6914,9 @@ public class MainProcess extends Thread {
 							audiooutR.write(MpaDecoder.AIFF);
 					}
 				}
+
+				if (es_streamtype == CommonParsing.MPEG_AUDIO)  // audio is global
+					audio.setAncillaryDataDecoder(Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg7), collection.DebugMode());
 
 				/**
 				 *  MPEG1+2 Audio Layer 1,2,3
@@ -6965,7 +6974,7 @@ public class MainProcess extends Thread {
 					/**
 					 * parse header 
 					 */
-					if ((ERRORCODE = audio.MPA_parseHeader(pushmpa, 0)) < 1)
+					if ((ERRORCODE = audio.parseHeader(pushmpa, 0)) < 1)
 					{
 						audioin.unread(pushmpa, 1, 3);
 
@@ -6987,7 +6996,7 @@ public class MainProcess extends Thread {
 					/**
 					 * read entire frame 
 					 */
-					frame = new byte[audio.Size];
+					frame = new byte[audio.getSize()];
 
 					audioin.read(frame, 0, frame.length);
 
@@ -7003,7 +7012,7 @@ public class MainProcess extends Thread {
 					/**
 					 * expected position for following frame 
 					 */
-					n += audio.Size;
+					n += audio.getSize();
 
 					/**
 					 * pitch 
@@ -7027,8 +7036,8 @@ public class MainProcess extends Thread {
 						copyframe[0] = new byte[frame.length];
 						System.arraycopy(frame, 0, copyframe[0], 0, frame.length);
 
-						if (audio.Layer > 1 && ClearCRC) 
-							audio.MPA_deleteCRC(copyframe[0]);
+						if (ClearCRC) 
+							audio.removeCRC(copyframe[0]);
 					}
 
 					/** 
@@ -7047,7 +7056,7 @@ public class MainProcess extends Thread {
 						{
 							audioin.read(pushmpa, 0, 4);
 
-							ERRORCODE = audio.MPA_parseNextHeader(pushmpa, 0);
+							ERRORCODE = audio.parseNextHeader(pushmpa, 0);
 
 							audioin.unread(pushmpa);
 
@@ -7060,10 +7069,10 @@ public class MainProcess extends Thread {
 							}
 						}
 
-						layertype = audio.Layer;
+						layertype = audio.getLayer();
 					}
 
-					if (ValidateCRC && (ERRORCODE = CRC.checkCRC16ofMPA(audio, frame)) != 0 )
+					if (ValidateCRC && (ERRORCODE = audio.validateCRC(frame, 0, audio.getSize())) != 0 )
 					{
 						Common.setMessage(Resource.getString("audio.msg.crc.error", "") + " " + actframe);
 
@@ -7083,7 +7092,7 @@ public class MainProcess extends Thread {
 					/**
 					 * check for change in frametype 
 					 */
-					if ((returncode = audio.MPA_compareHeader()) > 0)
+					if ((returncode = audio.compareHeader()) > 0)
 					{
 						newformat = true;
 
@@ -7099,6 +7108,8 @@ public class MainProcess extends Thread {
 
 					audio.saveHeader();
 
+					audio.decodeAncillaryData(frame);
+
 					// timeline ist hier aktuelle audiopts
 
 					Common.setFps(frame_counter);
@@ -7107,19 +7118,19 @@ public class MainProcess extends Thread {
 					 * message 
 					 */
 					if (Debug) 
-						System.out.println(" k)" +timeline +" l)" + (audio.Time_length / 2.0) + " m)" + awrite + " n)" + w + " o)" + v + " p)" + n);
+						System.out.println(" k)" +timeline +" l)" + (audio.getFrameTimeLength() / 2.0) + " m)" + awrite + " n)" + w + " o)" + v + " p)" + n);
 
 
 					/**
 					 * preloop if audio starts later than video, and i must insert 
 					 */
-					if ( (preloop && vptsdata && v >= vptsval.length) || !( preloop && vptsdata && vptsval[v] < timeline - (audio.Time_length / 2.0) ) ) 
+					if ( (preloop && vptsdata && v >= vptsval.length) || !( preloop && vptsdata && vptsval[v] < timeline - (audio.getFrameTimeLength() / 2.0) ) ) 
 						preloop = false;
 
 					else
 					{
-						silent_Frame[0] = new byte[audio.Size_base];	//silence without padd, std
-						silent_Frame[1] = new byte[audio.Size];		//silence with padd for 22.05, 44.1
+						silent_Frame[0] = new byte[audio.getSizeBase()];	//silence without padd, std
+						silent_Frame[1] = new byte[audio.getSize()];		//silence with padd for 22.05, 44.1
 
 						for (int a = 0; a < 2; a++)
 						{
@@ -7132,7 +7143,7 @@ public class MainProcess extends Thread {
 						long precount=vptsval[v];
 						long[] ins = { (long)time_counter, 0 };
 
-						while ( precount < timeline- (audio.Time_length / 2.0) )
+						while ( precount < timeline- (audio.getFrameTimeLength() / 2.0) )
 						{  //better for RTS
 							/**
 							 * check if frame write should paused 
@@ -7142,12 +7153,12 @@ public class MainProcess extends Thread {
 								double ms1 = (double) (precount - vptsval[w + 1]);
 								double ms2 = (double) (time_counter - vtime[w + 1]);
 
-								if ( (double) Math.abs(ms2) <= audio.Time_length / 2.0 )
+								if ( (double) Math.abs(ms2) <= audio.getFrameTimeLength() / 2.0 )
 								{
 									awrite = false;
 									w += 2;
 								}
-								else if ((double) Math.abs(ms1) <= audio.Time_length / 2.0 )
+								else if ((double) Math.abs(ms1) <= audio.getFrameTimeLength() / 2.0 )
 								{
 									awrite = false;
 									w += 2;
@@ -7166,7 +7177,7 @@ public class MainProcess extends Thread {
 									System.out.println(" ö" + ms3 + "/" + ms4 + "/" + (ms4 - ms3));
 
 								if (!awrite && (double) Math.abs((time_counter - vtime[v]) -
-										(precount - vptsval[v]) ) <= (double)audio.Time_length / 2.0 )
+										(precount - vptsval[v]) ) <= (double)audio.getFrameTimeLength() / 2.0 )
 								{
 									awrite = true;
 									v += 2;
@@ -7186,7 +7197,7 @@ public class MainProcess extends Thread {
 							 */
 							if (v < vptsval.length)
 							{
-								if ((double) Math.abs(vptsval[v] - precount) <= (double) audio.Time_length / 2.0)
+								if ((double) Math.abs(vptsval[v] - precount) <= (double) audio.getFrameTimeLength() / 2.0)
 								{
 									awrite = true;
 									v += 2;
@@ -7204,7 +7215,7 @@ public class MainProcess extends Thread {
 								 * calculate A/V Offset for false 
 								 */
 								if (awrite && Math.abs((time_counter - vtime[v - 2]) -
-										(precount - vptsval[v - 2]) ) > audio.Time_length / 2.0 )
+										(precount - vptsval[v - 2]) ) > audio.getFrameTimeLength() / 2.0 )
 								{
 									awrite = false;
 									v -= 2;
@@ -7235,13 +7246,14 @@ public class MainProcess extends Thread {
 							{
 								if (FillGapsWithLastFrame)
 								{		// copy last frame
-									if (audio.Layer > 0 && DecodeMpgAudio)
+									if (audio.getLayer() > 0 && DecodeMpgAudio)
 									{
 										audiooutL.write(MpaDecoder.decodeArray(copyframe[0]));
 
 										if (MpaConversionMode >= 4) 
 											audiooutR.write(MpaDecoder.get2ndArray());
 									}
+
 									else if (MpaConversionMode > 0)
 									{
 										newframes = MPAConverter.modifyframe(copyframe[0], MpaConversionMode); 
@@ -7255,12 +7267,13 @@ public class MainProcess extends Thread {
 										 */
 										if (AddRiffToMpgAudio || AddRiffToMpgAudioL3) 
 										{
-											riffw[0].RiffData(audio.RiffFormat(newframes[0])); 
+											riffw[0].RiffData(audio.parseRiffData(newframes[0])); 
 
 											if (MpaConversionMode >= 4) 
-												riffw[1].RiffData(audio.RiffFormat(newframes[1]));
+												riffw[1].RiffData(audio.parseRiffData(newframes[1]));
 										}
 									}
+
 									else
 									{
 										audiooutL.write(copyframe[0]); 
@@ -7269,7 +7282,7 @@ public class MainProcess extends Thread {
 										 * RIFF
 										 */
 										if (AddRiffToMpgAudio || AddRiffToMpgAudioL3) 
-											riffw[0].RiffData(audio.RiffFormat(copyframe[0]));
+											riffw[0].RiffData(audio.parseRiffData(copyframe[0]));
 									}
 								}
 								else
@@ -7277,7 +7290,7 @@ public class MainProcess extends Thread {
 									//if (padding_counter==padding) padding_counter=0;	//reset padd count
 									//else if (samplerate==0) padding_counter++;		//count padding
 
-									if (audio.Layer > 0 && DecodeMpgAudio)
+									if (audio.getLayer() > 0 && DecodeMpgAudio)
 									{ 
 										audiooutL.write(MpaDecoder.decodeArray(silent_Frame[(padding_counter > 0) ? 0 : 1]));
 
@@ -7297,10 +7310,10 @@ public class MainProcess extends Thread {
 										 */
 										if (AddRiffToMpgAudio || AddRiffToMpgAudioL3) 
 										{  
-											riffw[0].RiffData(audio.RiffFormat(newframes[0])); 
+											riffw[0].RiffData(audio.parseRiffData(newframes[0])); 
 
 											if (MpaConversionMode >= 4) 
-												riffw[1].RiffData(audio.RiffFormat(newframes[1]));
+												riffw[1].RiffData(audio.parseRiffData(newframes[1]));
 										}
 									}
 									else
@@ -7311,17 +7324,17 @@ public class MainProcess extends Thread {
 										 * RIFF
 										 */
 										if (AddRiffToMpgAudio || AddRiffToMpgAudioL3) 
-											riffw[0].RiffData(audio.RiffFormat(silent_Frame[(padding_counter > 0) ? 0 : 1]));
+											riffw[0].RiffData(audio.parseRiffData(silent_Frame[(padding_counter > 0) ? 0 : 1]));
 									}
 								}
 
 								frame_counter++;
-								time_counter += audio.Time_length;
+								time_counter += audio.getFrameTimeLength();
 								cb++;
 								ins[1]++;
 							}
 
-							precount += audio.Time_length;
+							precount += audio.getFrameTimeLength();
 
 							if (Debug) 
 								System.out.println("(5)audio frames: wri/pre/skip/ins/add " + frame_counter + "/" + cb + "/" + ce + "/" + cc + "/" + cd + "  @ " + Common.formatTime_1((long)(time_counter / 90.0f) ));
@@ -7332,7 +7345,7 @@ public class MainProcess extends Thread {
 						audioin.unread(frame);
 
 						if (ins[1] > 0)
-							Common.setMessage(Resource.getString("audio.msg.summary.pre-insert", "" + ins[1], FramesToTime((int)ins[1],audio.Time_length)) + " " + Common.formatTime_1(ins[0] / 90L));
+							Common.setMessage(Resource.getString("audio.msg.summary.pre-insert", "" + ins[1], FramesToTime((int)ins[1], audio.getFrameTimeLength())) + " " + Common.formatTime_1(ins[0] / 90L));
 
 						continue readloop;
 					} 
@@ -7346,7 +7359,7 @@ public class MainProcess extends Thread {
 						vw[0] = v;
 						vw[1] = w;
 
-						awrite = SyncCheck(vw, time_counter, audio.Time_length, timeline, frame_counter, vptsval, vtime, awrite, Debug);
+						awrite = SyncCheck(vw, time_counter, audio.getFrameTimeLength(), timeline, frame_counter, vptsval, vtime, awrite, Debug);
 
 						v = vw[0];
 						w = vw[1];
@@ -7381,17 +7394,17 @@ public class MainProcess extends Thread {
 						{
 							String str = Common.formatTime_1((long)(time_counter / 90.0f));
 
-							Common.setMessage(Resource.getString("audio.msg.source", audio.MPA_displayHeader()) + " " + str);
+							Common.setMessage(Resource.getString("audio.msg.source", audio.displayHeader()) + " " + str);
 
 							if (Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createChapters))
-								job_processing.getChapters().addChapter(str, audio.MPA_displayHeader());
+								job_processing.getChapters().addChapter(str, audio.displayHeader());
 						}
 
 						else if (ModeChangeCount == 100) 
 							Common.setMessage(Resource.getString("audio.msg.source.max"));
 
 						else if (Debug) 
-							System.out.println("=> src_audio: "+audio.MPA_displayHeader() + " @ " + Common.formatTime_1((long)(time_counter / 90.0f)));
+							System.out.println("=> src_audio: "+audio.displayHeader() + " @ " + Common.formatTime_1((long)(time_counter / 90.0f)));
 
 						ModeChangeCount++;
 						newformat = false;
@@ -7411,19 +7424,13 @@ public class MainProcess extends Thread {
 					/**
 					 * pts for next frame!! 
 					 */
-					timeline += audio.Time_length;
+					timeline += audio.getFrameTimeLength();
 
 					/**
 					 * remove CRC 
 					 */
-					if (audio.Layer > 1 && ClearCRC) 
-						audio.MPA_deleteCRC(frame);
-
-					/**
-					 * RDS test
-					 */
-					if (audio.Layer == 2) 
-						audio.testRDS(frame);
+					if (ClearCRC) 
+						audio.removeCRC(frame);
 
 					/**
 					 * copy frame header 
@@ -7460,7 +7467,7 @@ public class MainProcess extends Thread {
 						if (vptsdata && !awrite) 
 							continue readloop;
 
-						if (audio.Layer > 0 && DecodeMpgAudio) 
+						if (audio.getLayer() > 0 && DecodeMpgAudio) 
 						{
 							audiooutL.write(MpaDecoder.decodeArray(frame));
 
@@ -7480,10 +7487,10 @@ public class MainProcess extends Thread {
 							 */
 							if (AddRiffToMpgAudio || AddRiffToMpgAudioL3) 
 							{  
-								riffw[0].RiffData(audio.RiffFormat(newframes[0])); 
+								riffw[0].RiffData(audio.parseRiffData(newframes[0])); 
 
 								if (MpaConversionMode >= 4) 
-									riffw[1].RiffData(audio.RiffFormat(newframes[1]));
+									riffw[1].RiffData(audio.parseRiffData(newframes[1]));
 							}
 						}
 						else
@@ -7494,11 +7501,11 @@ public class MainProcess extends Thread {
 							 * RIFF 
 							 */
 							if (AddRiffToMpgAudio || AddRiffToMpgAudioL3) 
-								riffw[0].RiffData(audio.RiffFormat(frame)); 
+								riffw[0].RiffData(audio.parseRiffData(frame)); 
 						}
 
 						frame_counter++;
-						time_counter += audio.Time_length;
+						time_counter += audio.getFrameTimeLength();
 
 						continue readloop;
 					}
@@ -7508,7 +7515,7 @@ public class MainProcess extends Thread {
 					/**
 					 * frame is on pes packet corner 
 					 */
-					if ((double) Math.abs(ptsval[x + 1] - timeline) < (double) audio.Time_length / 2.0 )
+					if ((double) Math.abs(ptsval[x + 1] - timeline) < (double) audio.getFrameTimeLength() / 2.0 )
 					{
 						timeline = ptsval[x + 1];
 						x++;
@@ -7516,7 +7523,7 @@ public class MainProcess extends Thread {
 						if (vptsdata && !awrite) 
 							continue readloop;
 
-						if (audio.Layer > 0 && DecodeMpgAudio)
+						if (audio.getLayer() > 0 && DecodeMpgAudio)
 						{
 							audiooutL.write(MpaDecoder.decodeArray(frame));
 
@@ -7536,10 +7543,10 @@ public class MainProcess extends Thread {
 							 */
 							if (AddRiffToMpgAudio || AddRiffToMpgAudioL3) 
 							{
-								riffw[0].RiffData(audio.RiffFormat(newframes[0])); 
+								riffw[0].RiffData(audio.parseRiffData(newframes[0])); 
 
 								if (MpaConversionMode >= 4) 
-									riffw[1].RiffData(audio.RiffFormat(newframes[1]));
+									riffw[1].RiffData(audio.parseRiffData(newframes[1]));
 							}
 						}
 						else
@@ -7550,11 +7557,11 @@ public class MainProcess extends Thread {
 							 * RIFF 
 							 */
 							if (AddRiffToMpgAudio || AddRiffToMpgAudioL3) 
-								riffw[0].RiffData(audio.RiffFormat(frame)); 
+								riffw[0].RiffData(audio.parseRiffData(frame)); 
 						}
 
 						frame_counter++;
-						time_counter += audio.Time_length;
+						time_counter += audio.getFrameTimeLength();
 
 						continue readloop;
 					}
@@ -7574,8 +7581,8 @@ public class MainProcess extends Thread {
 
 					if (insertSilenceLoop)
 					{
-						silent_Frame[0] = new byte[audio.Size_base];	//silence without padd, std
-						silent_Frame[1] = new byte[audio.Size];		//silence with padd for 22.05, 44.1
+						silent_Frame[0] = new byte[audio.getSizeBase()];	//silence without padd, std
+						silent_Frame[1] = new byte[audio.getSize()];		//silence with padd for 22.05, 44.1
 
 						for (int a = 0; a < 2; a++)
 						{
@@ -7588,19 +7595,19 @@ public class MainProcess extends Thread {
 						long[] ins = { (long)time_counter, 0 };
 		
 						// solange nächster ptsval minus nächster framebeginn  ist größer der halben framezeit, füge stille ein
-						while (ptsval[x + 1] > (timeline - (audio.Time_length / 2.0)))
+						while (ptsval[x + 1] > (timeline - (audio.getFrameTimeLength() / 2.0)))
 						{
 							if (vptsdata && w < vptsval.length)
 							{ 
-								double ms1 = (double) (timeline - audio.Time_length - vptsval[w + 1]);
+								double ms1 = (double) (timeline - audio.getFrameTimeLength() - vptsval[w + 1]);
 								double ms2 = (double) (time_counter - vtime[w + 1]);
 
-								if ((double) Math.abs(ms2) <= audio.Time_length / 2.0)
+								if ((double) Math.abs(ms2) <= audio.getFrameTimeLength() / 2.0)
 								{
 									awrite = false;
 									w += 2;
 								}
-								else if ((double) Math.abs(ms1) <= audio.Time_length / 2.0)
+								else if ((double) Math.abs(ms1) <= audio.getFrameTimeLength() / 2.0)
 								{
 									awrite = false;
 									w += 2;
@@ -7610,9 +7617,9 @@ public class MainProcess extends Thread {
 							if (vptsdata && v < vptsval.length)
 							{
 								if (!awrite && (double) Math.abs((time_counter - vtime[v]) -
-									(timeline - audio.Time_length - vptsval[v]) ) <= (double) audio.Time_length / 2.0 )
+									(timeline - audio.getFrameTimeLength() - vptsval[v]) ) <= (double) audio.getFrameTimeLength() / 2.0 )
 								{
-									double ms1 = (double) (timeline - audio.Time_length - vptsval[v]);
+									double ms1 = (double) (timeline - audio.getFrameTimeLength() - vptsval[v]);
 									double ms2 = (double) (time_counter - vtime[v]);
 
 									Common.getGuiInterface().showAVOffset("" + (int)(ms1 / 90) + "/" + (int)(ms2 / 90) + "/" + (int)((ms2 - ms1) / 90));
@@ -7627,9 +7634,9 @@ public class MainProcess extends Thread {
 
 							if (vptsdata && v < vptsval.length)
 							{
-								if ((double) Math.abs(vptsval[v] - (timeline - audio.Time_length)) <= ((double) audio.Time_length / 2.0) )
+								if ((double) Math.abs(vptsval[v] - (timeline - audio.getFrameTimeLength())) <= ((double) audio.getFrameTimeLength() / 2.0) )
 								{
-									double ms1 = (double) (timeline - audio.Time_length - vptsval[v]);
+									double ms1 = (double) (timeline - audio.getFrameTimeLength() - vptsval[v]);
 									double ms2 = (double) (time_counter - vtime[v]);
 
 									Common.getGuiInterface().showAVOffset("" + (int)(ms1 / 90) + "/" + (int)(ms2 / 90) + "/" + (int)((ms2 - ms1) / 90));
@@ -7642,7 +7649,7 @@ public class MainProcess extends Thread {
 								}
 
 								if (awrite && (double) Math.abs((time_counter - vtime[v - 2]) -
-									(timeline - audio.Time_length - vptsval[v - 2]) ) > (double) audio.Time_length / 2.0 )
+									(timeline - audio.getFrameTimeLength() - vptsval[v - 2]) ) > (double) audio.getFrameTimeLength() / 2.0 )
 								{
 									awrite = false;
 									v -= 2;
@@ -7662,7 +7669,7 @@ public class MainProcess extends Thread {
 							{
 								if (FillGapsWithLastFrame)
 								{
-									if (audio.Layer > 0 && DecodeMpgAudio)
+									if (audio.getLayer() > 0 && DecodeMpgAudio)
 									{
 										audiooutL.write(MpaDecoder.decodeArray(copyframe[0]));
 
@@ -7682,10 +7689,10 @@ public class MainProcess extends Thread {
 										 */
 										if (AddRiffToMpgAudio || AddRiffToMpgAudioL3) 
 										{ 
-											riffw[0].RiffData(audio.RiffFormat(newframes[0])); 
+											riffw[0].RiffData(audio.parseRiffData(newframes[0])); 
 
 											if (MpaConversionMode >= 4) 
-												riffw[1].RiffData(audio.RiffFormat(newframes[1]));
+												riffw[1].RiffData(audio.parseRiffData(newframes[1]));
 										}
 									}
 									else
@@ -7696,7 +7703,7 @@ public class MainProcess extends Thread {
 										 * RIFF 
 										 */
 										if (AddRiffToMpgAudio || AddRiffToMpgAudioL3) 
-											riffw[0].RiffData(audio.RiffFormat(copyframe[0]));
+											riffw[0].RiffData(audio.parseRiffData(copyframe[0]));
 									}
 								}
 								else
@@ -7704,7 +7711,7 @@ public class MainProcess extends Thread {
 									//if (padding_counter==padding) padding_counter=0;	//reset padd count
 									//else if (samplerate==0) padding_counter++;		//count padding
 
-									if (audio.Layer > 0 && DecodeMpgAudio)
+									if (audio.getLayer() > 0 && DecodeMpgAudio)
 									{
 										audiooutL.write(MpaDecoder.decodeArray(silent_Frame[(padding_counter > 0) ? 0 : 1]));
 
@@ -7724,10 +7731,10 @@ public class MainProcess extends Thread {
 										 */
 										if (AddRiffToMpgAudio || AddRiffToMpgAudioL3) 
 										{  
-											riffw[0].RiffData(audio.RiffFormat(newframes[0])); 
+											riffw[0].RiffData(audio.parseRiffData(newframes[0])); 
 
 											if (MpaConversionMode >= 4) 
-												riffw[1].RiffData(audio.RiffFormat(newframes[1]));
+												riffw[1].RiffData(audio.parseRiffData(newframes[1]));
 										}
 									}
 									else
@@ -7738,12 +7745,12 @@ public class MainProcess extends Thread {
 										 * RIFF 
 										 */
 										if (AddRiffToMpgAudio || AddRiffToMpgAudioL3) 
-											riffw[0].RiffData(audio.RiffFormat(silent_Frame[(padding_counter > 0) ? 0 : 1])); 
+											riffw[0].RiffData(audio.parseRiffData(silent_Frame[(padding_counter > 0) ? 0 : 1])); 
 									}
 								}
 
 								frame_counter++;
-								time_counter += audio.Time_length;
+								time_counter += audio.getFrameTimeLength();
 								cc++;
 								ins[1]++;
 							}
@@ -7755,15 +7762,15 @@ public class MainProcess extends Thread {
 								System.out.println(" x" + ((x < ptspos.length - 1) ? x + "/" + ptsval[x + 1] + "/" + ptspos[x + 1] : "-"));
 							}
 
-							timeline += audio.Time_length;
+							timeline += audio.getFrameTimeLength();
 						} // end while
 
-						timeline -= audio.Time_length;
+						timeline -= audio.getFrameTimeLength();
 						insertSilenceLoop = false;
 						x++;
 
 						if (ins[1] > 0) 
-							Common.setMessage(Resource.getString("audio.msg.summary.insert", "" + ins[1], FramesToTime((int)ins[1],audio.Time_length)) + " " + Common.formatTime_1(ins[0] / 90L));
+							Common.setMessage(Resource.getString("audio.msg.summary.insert", "" + ins[1], FramesToTime((int)ins[1], audio.getFrameTimeLength())) + " " + Common.formatTime_1(ins[0] / 90L));
 
 						/**
 						 * reset PTS after inserting
@@ -7773,7 +7780,7 @@ public class MainProcess extends Thread {
 						continue readloop;
 					}
 
-					if ( (actframe + audio.Size) >= audiosize ) 
+					if ( (actframe + audio.getSize()) >= audiosize ) 
 						break readloop; 
 				}  // end while
 
@@ -7785,11 +7792,11 @@ public class MainProcess extends Thread {
 				 */
 				if (es_streamtype == CommonParsing.MPEG_AUDIO && AddFrames && vptsdata && awrite && (w < vptsval.length))
 				{
-					timeline += audio.Time_length;
+					timeline += audio.getFrameTimeLength();
 					addf[0] = (long) time_counter;
 
-					silent_Frame[0] = new byte[audio.Size_base];	//silence without padd, std
-					silent_Frame[1] = new byte[audio.Size];		//silence with padd for 22.05, 44.1
+					silent_Frame[0] = new byte[audio.getSizeBase()];	//silence without padd, std
+					silent_Frame[1] = new byte[audio.getSize()];		//silence with padd for 22.05, 44.1
 
 					for (int a = 0; a < 2; a++)
 					{
@@ -7803,11 +7810,11 @@ public class MainProcess extends Thread {
 					while (w < vptsval.length)
 					{
 						while ( vtime[w + 1] > time_counter && 
-							(double) Math.abs(vtime[w + 1] - time_counter) > (double) audio.Time_length / 2.0 )
+							(double) Math.abs(vtime[w + 1] - time_counter) > (double) audio.getFrameTimeLength() / 2.0 )
 						{
 							if (FillGapsWithLastFrame)
 							{				//add_copy prev. frame
-								if (audio.Layer > 0 && DecodeMpgAudio) 
+								if (audio.getLayer() > 0 && DecodeMpgAudio) 
 								{ 
 									audiooutL.write(MpaDecoder.decodeArray(copyframe[0]));
 
@@ -7827,10 +7834,10 @@ public class MainProcess extends Thread {
 									 */
 									if (AddRiffToMpgAudio || AddRiffToMpgAudioL3) 
 									{ 
-										riffw[0].RiffData(audio.RiffFormat(newframes[0])); 
+										riffw[0].RiffData(audio.parseRiffData(newframes[0])); 
 
 										if (MpaConversionMode >= 4) 
-											riffw[1].RiffData(audio.RiffFormat(newframes[1]));
+											riffw[1].RiffData(audio.parseRiffData(newframes[1]));
 									}
 								}
 								else
@@ -7841,7 +7848,7 @@ public class MainProcess extends Thread {
 									 * RIFF 
 									 */
 									if (AddRiffToMpgAudio || AddRiffToMpgAudioL3) 
-										riffw[0].RiffData(audio.RiffFormat(copyframe[0]));
+										riffw[0].RiffData(audio.parseRiffData(copyframe[0]));
 								}
 							}
 							else
@@ -7849,7 +7856,7 @@ public class MainProcess extends Thread {
 								//if (padding_counter==padding) padding_counter=0;	//reset padd count
 								//else if (samplerate==0) padding_counter++;		//count padding
 
-								if (audio.Layer > 0 && DecodeMpgAudio)
+								if (audio.getLayer() > 0 && DecodeMpgAudio)
 								{
 									audiooutL.write(MpaDecoder.decodeArray(silent_Frame[(padding_counter > 0) ? 0 : 1]));
 
@@ -7869,10 +7876,10 @@ public class MainProcess extends Thread {
 									 */
 									if (AddRiffToMpgAudio || AddRiffToMpgAudioL3) 
 									{
-										riffw[0].RiffData(audio.RiffFormat(newframes[0])); 
+										riffw[0].RiffData(audio.parseRiffData(newframes[0])); 
 
 										if (MpaConversionMode >= 4) 
-											riffw[1].RiffData(audio.RiffFormat(newframes[1]));
+											riffw[1].RiffData(audio.parseRiffData(newframes[1]));
 									}
 								}
 								else
@@ -7883,22 +7890,22 @@ public class MainProcess extends Thread {
 									 * RIFF 
 									 */
 									if (AddRiffToMpgAudio || AddRiffToMpgAudioL3) 
-										riffw[0].RiffData(audio.RiffFormat(silent_Frame[(padding_counter > 0) ? 0 : 1]));
+										riffw[0].RiffData(audio.parseRiffData(silent_Frame[(padding_counter > 0) ? 0 : 1]));
 								}
 							}
 
-							timeline += audio.Time_length;
+							timeline += audio.getFrameTimeLength();
 							cd++;
 							frame_counter++;
 							addf[1]++;
-							time_counter += audio.Time_length;
+							time_counter += audio.getFrameTimeLength();
 
 							Common.getGuiInterface().showExportStatus(Resource.getString("audio.status.add")); 
 
 							if (Debug)
 							{
 								System.out.println("(4)audio frames: wri/pre/skip/ins/add " + frame_counter + "/" + cb + "/" + ce + "/" + cc + "/" + cd + "  @ " + Common.formatTime_1((long)(time_counter / 90.0f) ));
-								System.out.print(" t)" + (long)(timeline - audio.Time_length) + " w)" + w);
+								System.out.print(" t)" + (long)(timeline - audio.getFrameTimeLength()) + " w)" + w);
 							}
 						}
 
@@ -7906,7 +7913,7 @@ public class MainProcess extends Thread {
 					}
 
 					w -= 2;
-					timeline -= audio.Time_length;
+					timeline -= audio.getFrameTimeLength();
 
 					if (Debug) 
 						System.out.println(" eot_video:" + (vptsval[w + 1] / 90) + "ms, eot_audio:" + ((timeline) / 90) + "ms  ");
@@ -7923,15 +7930,15 @@ public class MainProcess extends Thread {
 
 					audioin.read(frame);
 
-					audio.WAV_parseHeader(frame, 0);
+					audio.parseHeader(frame, 0);
 
-					audioin.unread(frame, audio.Emphasis, 1000 - audio.Emphasis);
+					audioin.unread(frame, audio.getEmphasis(), 1000 - audio.getEmphasis());
 
-					Common.setMessage(Resource.getString("audio.msg.source", audio.WAV_saveAnddisplayHeader()) + " " + Common.formatTime_1((long)(time_counter / 90.0f)));
+					Common.setMessage(Resource.getString("audio.msg.source", audio.saveAndDisplayHeader()) + " " + Common.formatTime_1((long)(time_counter / 90.0f)));
 					layertype = WAV_AUDIOSTREAM;
 
-					n = audio.Emphasis; //start of pcm data
-					long pcm_end_pos = audio.Emphasis + audio.Size_base; //whole sample data size
+					n = audio.getEmphasis(); //start of pcm data
+					long pcm_end_pos = audio.getEmphasis() + audio.getSizeBase(); //whole sample data size
 
 					timeline = ptsval[0];
 
@@ -7943,7 +7950,7 @@ public class MainProcess extends Thread {
 					long skip_pts;
 
 					int sample_size;
-					int read_size = 960000 / audio.Mode;
+					int read_size = 960000 / audio.getMode();
 
 					// Size/8 * Channel = bytes per sample
 					// 16bit/8 * 2  = 4
@@ -7969,7 +7976,7 @@ public class MainProcess extends Thread {
 							if (vptsdata && vptsval[a] < timeline)  //jump back (not yet) or insert silent samples
 							{
 								sample_pts = vptsval[a + 1] > timeline ? timeline - vptsval[a] : vptsval[a + 1] - vptsval[a];
-								sample_bytes = (long)Math.round(1.0 * audio.Sampling_frequency * sample_pts / 90000.0) * audio.Mode;
+								sample_bytes = (long)Math.round(1.0 * audio.getSamplingFrequency() * sample_pts / 90000.0) * audio.getMode();
 
 								if (Debug)
 									System.out.println("a " + sample_pts + "/" + sample_bytes + "/" + n + "/" + timeline);
@@ -7984,14 +7991,14 @@ public class MainProcess extends Thread {
 								}
 
 								time_counter += sample_pts;
-								frame_counter += (sample_bytes / audio.Mode);
+								frame_counter += (sample_bytes / audio.getMode());
 
 								Common.setFps(frame_counter);
 
 								if (vptsval[a + 1] > timeline)
 								{
 									sample_pts = vptsval[a + 1] - timeline;
-									sample_bytes = (long) Math.round(1.0 * audio.Sampling_frequency * sample_pts / 90000.0) * audio.Mode;
+									sample_bytes = (long) Math.round(1.0 * audio.getSamplingFrequency() * sample_pts / 90000.0) * audio.getMode();
 
 									if (Debug)
 										System.out.println("b " + sample_pts + "/" + sample_bytes + "/" + n + "/" + timeline);
@@ -8011,16 +8018,16 @@ public class MainProcess extends Thread {
 									n += sample_bytes;
 									timeline += sample_pts;
 									time_counter += sample_pts;
-									frame_counter += (sample_bytes / audio.Mode);
+									frame_counter += (sample_bytes / audio.getMode());
 								}
 							}
 							else
 							{
 								skip_pts = vptsdata ? vptsval[a] - timeline : 0;
-								skip_bytes = (long)Math.round(1.0 * audio.Sampling_frequency * skip_pts / 90000.0) * audio.Mode;
+								skip_bytes = (long)Math.round(1.0 * audio.getSamplingFrequency() * skip_pts / 90000.0) * audio.getMode();
 
-								sample_pts = vptsdata ? vptsval[a + 1] - vptsval[a] : (long)(1.0 * (audio.Size_base / audio.Mode) / audio.Sampling_frequency * 90000.0);
-								sample_bytes = (long) Math.round(1.0 * audio.Sampling_frequency * sample_pts / 90000.0) * audio.Mode;
+								sample_pts = vptsdata ? vptsval[a + 1] - vptsval[a] : (long)(1.0 * (audio.getSizeBase() / audio.getMode()) / audio.getSamplingFrequency() * 90000.0);
+								sample_bytes = (long) Math.round(1.0 * audio.getSamplingFrequency() * sample_pts / 90000.0) * audio.getMode();
 
 								for (long skip_pos = 0; skip_pos < skip_bytes; )
 									skip_pos += audioin.skip(skip_bytes - skip_pos);
@@ -8045,7 +8052,7 @@ public class MainProcess extends Thread {
 								n += sample_bytes;
 								timeline += (skip_pts + sample_pts);
 								time_counter += sample_pts;
-								frame_counter += (sample_bytes / audio.Mode);
+								frame_counter += (sample_bytes / audio.getMode());
 							}
 
 							if (Debug)
@@ -8064,7 +8071,7 @@ public class MainProcess extends Thread {
 				}
 
 				/**
-				 * restart decoding after fast peak search
+				 * restart decoding after a peak search
 				 */
 				if (es_streamtype == CommonParsing.MPEG_AUDIO && DecodeMpgAudio && MpaDecoder.PRESCAN && !MpaDecoder.RESET)
 				{
@@ -8080,7 +8087,7 @@ public class MainProcess extends Thread {
 
 
 			if (addf[1] > 0)
-				Common.setMessage(Resource.getString("audio.msg.summary.add", "" + addf[1], FramesToTime((int)addf[1],audio.Time_length)) + " " + Common.formatTime_1(addf[0] / 90L));
+				Common.setMessage(Resource.getString("audio.msg.summary.add", "" + addf[1], FramesToTime((int)addf[1], audio.getFrameTimeLength())) + " " + Common.formatTime_1(addf[0] / 90L));
 
 			Common.getGuiInterface().showExportStatus(Resource.getString("audio.status.finish")); 
 
@@ -8113,7 +8120,7 @@ public class MainProcess extends Thread {
 				}
 			}
 
-			if (DecodeMpgAudio && audio.Layer > 1)
+			if (DecodeMpgAudio && audio.getLayer() > 1)
 			{
 				if (MpaDecoder.WAVE)
 				{
@@ -8178,7 +8185,7 @@ public class MainProcess extends Thread {
 			/*** make riff ***/
 			if (DecodeMpgAudio && es_streamtype == CommonParsing.MPEG_AUDIO && MpaDecoder.WAVE)
 			{
-				if (audio.Layer > 1)
+				if (audio.getLayer() > 1)
 				{
 					MpaDecoder.fillRIFF(newnameL);
 
@@ -8196,7 +8203,7 @@ public class MainProcess extends Thread {
 
 			else if (DecodeMpgAudio && es_streamtype == CommonParsing.MPEG_AUDIO && AddAiffHeader)
 			{
-				if (audio.Layer > 1)
+				if (audio.getLayer() > 1)
 				{
 					MpaDecoder.fillAiff(newnameL,(long)(time_counter / 90.0f));
 
@@ -10158,9 +10165,7 @@ public class MainProcess extends Thread {
 		int packetlength = 0;
 		int parserlength = parser.length;
 
-		Audio LPCM_Audio = new Audio();
-
-		//System.gc();
+		AudioFormat LPCM_Audio = new AudioFormat(CommonParsing.LPCM_AUDIO);
 
 		try {
 
@@ -10234,9 +10239,7 @@ public class MainProcess extends Thread {
 			while (count < startPoint)
 				count += in.skip(startPoint - count);
 
-			//yield();
-
-			out.write( LPCM_Audio.getRiffHeader()); //wav header
+			out.write(LPCM_Audio.getRiffHeader()); //wav header
 
 			readloop:
 			while ( count < size )
@@ -10300,10 +10303,10 @@ public class MainProcess extends Thread {
 				if (debug)
 					System.out.println(" " + (count - packetlength) + "/ " + packetlength + "/ " + source_pts);
 
-				if (LPCM_Audio.LPCM_parseHeader(parser, 10) < 0)
+				if (LPCM_Audio.parseHeader(parser, 10) < 0)
 					continue readloop;
 
-				if (LPCM_Audio.LPCM_compareHeader() > 0 || samples == 0 )
+				if (LPCM_Audio.compareHeader() > 0 || samples == 0 )
 					newformat = true;
 
 				LPCM_Audio.saveHeader();
@@ -10340,7 +10343,7 @@ public class MainProcess extends Thread {
 					if (newformat)
 					{
 						if (ModeChangeCount < 100) 
-							Common.setMessage(Resource.getString("lpcm.msg.source", LPCM_Audio.LPCM_displayHeader()) + " " + Common.formatTime_1( (long)(new_pts / 90.0f)));
+							Common.setMessage(Resource.getString("lpcm.msg.source", LPCM_Audio.displayHeader()) + " " + Common.formatTime_1( (long)(new_pts / 90.0f)));
 
 						else if (ModeChangeCount == 100) 
 							Common.setMessage(Resource.getString("lpcm.msg.source.max"));

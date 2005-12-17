@@ -3,13 +3,13 @@
  *
  * Copyright (c) 2002-2005 by dvb.matt, All Rights Reserved. 
  * 
- * This file is part of X, a free Java based demux utility.
- * X is intended for educational purposes only, as a non-commercial test project.
- * It may not be used otherwise. Most parts are only experimental.
- *  
+ * This file is part of ProjectX, a free Java based demux utility.
+ * By the authors, ProjectX is intended for educational purposes only, 
+ * as a non-commercial test project.
+ * 
  *
- * This program is free software; you can redistribute it free of charge
- * and/or modify it under the terms of the GNU General Public License as published by
+ * This program is free software; you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
@@ -36,7 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import net.sourceforge.dvb.projectx.audio.CRC;
+//import net.sourceforge.dvb.projectx.audio.CRC;
 import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.subtitle.Teletext;
@@ -249,7 +249,7 @@ public class TS {
 
 		pmtout.reset();
 		pmtout.write(newpmt);
-		pmtout.write(CRC.generateCRC32(newpmt, 1)); 
+		pmtout.write(generateCRC32(newpmt, 1)); 
 
 		newpmt = pmtout.toByteArray();
 
@@ -579,6 +579,47 @@ public class TS {
 		}
 
 		return header;
+	}
+
+	private static byte[] generateCRC32(byte[] data, int offset)
+	{
+		// x^32 + x^26 + x^23 + x^22 + x^16 + x^12 + x^11 + x^10 + x^8 + x^7 + x^5 + x^4 + x^2 + x + 1
+		int[] g = { 1,1,1,0,1,1,0,1,1,0,1,1,1,0,0,0,1,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,1 }; 
+
+		int[] shift_reg = new int[32];
+		long crc = 0;
+		byte[] crc32 = new byte[4];
+
+		// Initialize shift register's to '1'
+		Arrays.fill(shift_reg, 1);
+
+		// Calculate nr of data bits, summa of bits
+		int nr_bits = (data.length - offset) * 8;
+
+		for (int bit_count = 0, bit_in_byte = 0, data_bit; bit_count < nr_bits; bit_count++)
+		{
+			// Fetch bit from bitstream
+			data_bit = (data[offset] & 0x80>>>(bit_in_byte++)) != 0 ? 1 : 0;
+
+			if ((bit_in_byte &= 7) == 0)
+				offset++;
+
+			// Perform the shift and modula 2 addition
+			data_bit ^= shift_reg[31];
+
+			for (int i = 31; i > 0; i--)
+				shift_reg[i] = g[i]==1 ? (shift_reg[i - 1] ^ data_bit) : shift_reg[i - 1];
+
+			shift_reg[0] = data_bit;
+		}
+
+		for (int i = 0; i < 32; i++)
+			crc = ((crc << 1) | (shift_reg[31 - i]));
+
+		for (int i = 0; i < 4; i++) 
+			crc32[i] = (byte)(0xFF & (crc >>>((3 - i) * 8)));
+
+		return crc32;
 	}
 
 }

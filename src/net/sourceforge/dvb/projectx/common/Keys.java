@@ -3,13 +3,13 @@
  *
  * Copyright (c) 2005 by dvb.matt, All rights reserved.
  * 
- * This file is part of X, a free Java based demux utility.
- * X is intended for educational purposes only, as a non-commercial test project.
- * It may not be used otherwise. Most parts are only experimental.
+ * This file is part of ProjectX, a free Java based demux utility.
+ * By the authors, ProjectX is intended for educational purposes only, 
+ * as a non-commercial test project.
  * 
  *
- * This program is free software; you can redistribute it free of charge
- * and/or modify it under the terms of the GNU General Public License as published by
+ * This program is free software; you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
@@ -201,6 +201,10 @@ public class Keys extends Object {
 
 	public final static String[] KEY_killFtpClient = { "FtpPanel.killFtpClient", "0" }; //cbox[80] !!
 	public final static String[] KEY_useFtpServerResume = { "FtpPanel.useFtpServerResume", "1" };
+	public final static String[] KEY_autostartWebServer = { "NetPanel.autostartWebServer", "0" };
+	public final static String[] KEY_WebServerPort = { "NetPanel.WebServerPort", "-1" };
+	public final static String[] KEY_WebServerAccess = { "NetPanel.WebServerAccess", "" };
+
 
 	/**
 	 * VideoPanel
@@ -420,7 +424,7 @@ public class Keys extends Object {
 			"PES (incl. MPEG Video)",
 			"MPEG-1 PS/SS (PES Container)",
 			"MPEG-2 PS/SS (PES Container)",
-			"PVA (PES Container of TT)",
+			"PVA (PES Container of TT®)",
 			"TS (generic PES Container)",
 			"PES (MPEG Audio first)",
 			"PES (private stream 1 first)",

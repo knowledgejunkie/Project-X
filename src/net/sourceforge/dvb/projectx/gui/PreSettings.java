@@ -3,13 +3,13 @@
  *
  * Copyright (c) 2005 by dvb.matt, All Rights Reserved. 
  * 
- * This file is part of X, a free Java based demux utility.
- * X is intended for educational purposes only, as a non-commercial test project.
- * It may not be used otherwise. Most parts are only experimental.
+ * This file is part of ProjectX, a free Java based demux utility.
+ * By the authors, ProjectX is intended for educational purposes only, 
+ * as a non-commercial test project.
  * 
  *
- * This program is free software; you can redistribute it free of charge
- * and/or modify it under the terms of the GNU General Public License as published by
+ * This program is free software; you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
@@ -197,7 +197,7 @@ public class PreSettings extends JFrame {
 		logtab.addTab( Resource.getString("TabPanel.AudioPanel"), buildAudioPanel());
 		logtab.addTab( Resource.getString("TabPanel.SubtitlePanel"), buildSubtitlePanel());
 		logtab.addTab( Resource.getString("TabPanel.ExternPanel"), buildExternPanel());
-		logtab.addTab( Resource.getString("TabPanel.FtpPanel"), buildFtpPanel());
+		logtab.addTab( Resource.getString("TabPanel.NetPanel"), buildNetPanel());
 		logtab.addTab( Resource.getString("TabPanel.PostCommandsPanel"), buildPostCommandsPanel());
 
 		logtab.setSelectedIndex(0);
@@ -1345,7 +1345,7 @@ public class PreSettings extends JFrame {
 	/**
 	 *
 	 */
-	protected JPanel buildFtpPanel()
+	protected JPanel buildNetPanel()
 	{
 		JPanel panel = new JPanel();
 		panel.setLayout( new GridLayout(1, 2) );
@@ -1359,12 +1359,13 @@ public class PreSettings extends JFrame {
 		 */
 		String[][] objects = {
 			Keys.KEY_killFtpClient,
-			Keys.KEY_useFtpServerResume
+			Keys.KEY_useFtpServerResume,
+			Keys.KEY_autostartWebServer
 		};
 
 		JCheckBox[] box = new JCheckBox[objects.length];
 
-		for (int i = 0; i < objects.length; i++)
+		for (int i = 0; i < 2; i++)
 		{
 			box[i] = new JCheckBox(Resource.getString(objects[i][0]));
 			box[i].setPreferredSize(new Dimension(270, 20));
@@ -1402,10 +1403,103 @@ public class PreSettings extends JFrame {
 
 		panel_1.add(ftpPanel);
 
-
 		panel.add(panel_1);
 
-		return buildHeadPanel(panel, Resource.getString("TabPanel.FtpPanel"));
+
+		JPanel panel_2 = new JPanel();
+		panel_2.setLayout( new ColumnLayout() );
+		panel_2.setBorder( BorderFactory.createTitledBorder(Resource.getString("NetPanel.Title")) );
+
+		/**
+		 *
+		 */
+		for (int i = 2; i < objects.length; i++)
+		{
+			box[i] = new JCheckBox(Resource.getString(objects[i][0]));
+			box[i].setPreferredSize(new Dimension(270, 20));
+			box[i].setMaximumSize(new Dimension(270, 20));
+			box[i].setToolTipText(Resource.getString(objects[i][0] + Keys.KEY_Tip));
+			box[i].setActionCommand(objects[i][0]);
+			box[i].setSelected(Common.getSettings().getBooleanProperty(objects[i]));
+			box[i].addActionListener(_CheckBoxListener);
+
+			panel_2.add(box[i]);
+		}
+
+		panel_2.add(Box.createRigidArea(new Dimension(1, 5)));
+
+		/**
+		 *
+		 */
+		JPanel netPanel = new JPanel();
+		netPanel.setLayout(new BoxLayout(netPanel, BoxLayout.X_AXIS));
+
+		JLabel label_2 = new JLabel ("Port:");
+		label_2.setPreferredSize(new Dimension(100, 20));
+		label_2.setMaximumSize(new Dimension(100, 20));
+		netPanel.add(label_2);
+
+		JTextField port = new JTextField(Common.getSettings().getProperty(Keys.KEY_WebServerPort));
+		port.setPreferredSize(new Dimension(160, 20));
+		port.setMaximumSize(new Dimension(160, 20));
+		port.setToolTipText(Resource.getString(Keys.KEY_WebServerPort[0] + Keys.KEY_Tip));
+		port.setActionCommand(Keys.KEY_WebServerPort[0]);
+		port.addActionListener(_TextFieldListener);
+		port.addKeyListener(_TextFieldKeyListener);
+		netPanel.add(port);
+
+		panel_2.add(netPanel);
+
+		/**
+		 *
+		 */
+		JPanel netPanel2 = new JPanel();
+		netPanel2.setLayout(new BoxLayout(netPanel2, BoxLayout.X_AXIS));
+
+		JLabel label_3 = new JLabel("Keyword:");
+		label_3.setPreferredSize(new Dimension(100, 20));
+		label_3.setMaximumSize(new Dimension(100, 20));
+		label_3.setToolTipText("mustn't be empty");
+		netPanel2.add(label_3);
+
+		JTextField access = new JTextField(Common.getSettings().getProperty(Keys.KEY_WebServerAccess));
+		access.setPreferredSize(new Dimension(160, 20));
+		access.setMaximumSize(new Dimension(160, 20));
+		access.setToolTipText(Resource.getString(Keys.KEY_WebServerAccess[0] + Keys.KEY_Tip));
+		access.setActionCommand(Keys.KEY_WebServerAccess[0]);
+		access.addActionListener(_TextFieldListener);
+		access.addKeyListener(_TextFieldKeyListener);
+		netPanel2.add(access);
+
+		panel_2.add(netPanel2);
+
+		JButton button_1 = new JButton("re-/start WebIF");
+		button_1.setPreferredSize(new Dimension(120, 22));
+		button_1.setMaximumSize(new Dimension(120, 22));
+		button_1.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				Common.startWebServer();
+			}
+		});
+
+		JButton button_2 = new JButton("stop WebIF");
+		button_2.setPreferredSize(new Dimension(120, 22));
+		button_2.setMaximumSize(new Dimension(120, 22));
+		button_2.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				Common.stopWebServer();
+			}
+		});
+
+		panel_2.add(button_1);
+		panel_2.add(button_2);
+
+		panel.add(panel_2);
+
+
+		return buildHeadPanel(panel, Resource.getString("TabPanel.NetPanel"));
 	}
 
 	/**

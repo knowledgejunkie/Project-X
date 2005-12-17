@@ -29,10 +29,11 @@
  */
 
 /*
- * This file is part of X, a free Java based demux utility.
- * X is intended for educational purposes only, as a non-commercial test project.
- * It may not be used otherwise. Most parts are only experimental.
- *  
+ * This file is part of ProjectX, a free Java based demux utility.
+ * By the authors, ProjectX is intended for educational purposes only, 
+ * as a non-commercial test project.
+ * 
+ *
  */
 
 package net.sourceforge.dvb.projectx.gui;

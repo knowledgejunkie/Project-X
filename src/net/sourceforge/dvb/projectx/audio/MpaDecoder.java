@@ -3,19 +3,19 @@
  *
  * Copyright (c) 2003-2005 by dvb.matt, All Rights Reserved. 
  * 
- * This file is part of X, a free Java based demux utility.
- * X is intended for educational purposes only, as a non-commercial test project.
- * It may not be used otherwise. Most parts are only experimental.
- * 
+ * This file is part of ProjectX, a free Java based demux utility.
+ * By the authors, ProjectX is intended for educational purposes only, 
+ * as a non-commercial test project.
  *
  * The mostly part of audio decoding was derived from the MPEG/Audio
  * Software Simulation Group's audio codec.
  *
  * simple resampling, amplifying and others added.
- * now decoding MPEG Layer1,2
+ * now decoding MPEG Layer 1 + 2
  *
- * This program is free software; you can redistribute it free of charge
- * and/or modify it under the terms of the GNU General Public License as published by
+ *
+ * This program is free software; you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *

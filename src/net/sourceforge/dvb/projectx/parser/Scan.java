@@ -3,13 +3,13 @@
  *
  * Copyright (c) 2002-2005 by dvb.matt, All Rights Reserved. 
  * 
- * This file is part of X, a free Java based demux utility.
- * X is intended for educational purposes only, as a non-commercial test project.
- * It may not be used otherwise. Most parts are only experimental.
+ * This file is part of ProjectX, a free Java based demux utility.
+ * By the authors, ProjectX is intended for educational purposes only, 
+ * as a non-commercial test project.
  * 
  *
- * This program is free software; you can redistribute it free of charge
- * and/or modify it under the terms of the GNU General Public License as published by
+ * This program is free software; you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
@@ -34,7 +34,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
-import net.sourceforge.dvb.projectx.audio.Audio;
+import net.sourceforge.dvb.projectx.audio.AudioFormat;
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.video.Video;
@@ -71,7 +71,7 @@ public class Scan extends Object {
 	private ArrayList ttx_streams;
 	private ArrayList pic_streams;
 
-	private Audio Audio = new Audio();
+	private AudioFormat Audio = new AudioFormat();
 
 	/**
 	 *
@@ -215,7 +215,7 @@ public class Scan extends Object {
 	 */
 	private String getAudioTime(long len)
 	{
-		return Common.formatTime_1((len * 8000) / Audio.Bitrate);
+		return Common.formatTime_1((len * 8000) / Audio.getBitrate());
 	}
 
 	/**
@@ -234,20 +234,22 @@ public class Scan extends Object {
 	 */
 	private int AC3Audio(byte[] check)
 	{
+		Audio.setNewType(CommonParsing.AC3_AUDIO);
+
 		audiocheck:
 		for (int a=0; a<10000; a++)
 		{
-			if (Audio.AC3_parseHeader(check,a) < 0)
+			if (Audio.parseHeader(check, a) < 0)
 				continue audiocheck;
 
-			for (int b=0; b < 17; b++)
+			for (int b = 0; b < 17; b++)
 			{
-				if (Audio.AC3_parseNextHeader(check,a+Audio.Size+b) == 1)
+				if (Audio.parseNextHeader(check, a + Audio.getSize() + b) == 1)
 				{
-					if ( (0xFF & check[a+Audio.Size]) > 0x3f || (0xFF & check[a+Audio.Size])==0 ) //smpte
+					if ( (0xFF & check[a + Audio.getSize()]) > 0x3f || (0xFF & check[a + Audio.getSize()]) == 0 ) //smpte
 						continue audiocheck;
 
-					audio_streams.add(Audio.AC3_saveAnddisplayHeader());
+					audio_streams.add(Audio.saveAndDisplayHeader());
 
 					return 1;
 				}
@@ -261,20 +263,22 @@ public class Scan extends Object {
 	/* Added by R One, 2003/12/18. */
 	private void DTSAudio(byte[] check)
 	{ 
+		Audio.setNewType(CommonParsing.DTS_AUDIO);
+
 		audiocheck: 
 		for (int i = 0; i < 10000; i++)
 		{ 
-			if (Audio.DTS_parseHeader(check, i) < 0) 
+			if (Audio.parseHeader(check, i) < 0) 
 				continue audiocheck; 
 
 			for (int j = 0; j < 15; j++)
 			{ 
-				if (Audio.DTS_parseNextHeader(check, i + Audio.Size + j) == 1)
+				if (Audio.parseNextHeader(check, i + Audio.getSize() + j) == 1)
 				{ 
-					if ( (0xFF & check[i + Audio.Size]) > 0x7F || (0xFF & check[i + Audio.Size]) == 0 ) //smpte 
+					if ( (0xFF & check[i + Audio.getSize()]) > 0x7F || (0xFF & check[i + Audio.getSize()]) == 0 ) //smpte 
 						continue audiocheck; 
 
-					audio_streams.add(Audio.DTS_saveAnddisplayHeader()); 
+					audio_streams.add(Audio.saveAndDisplayHeader()); 
 
 					return; 
 				} 
@@ -287,16 +291,18 @@ public class Scan extends Object {
 	 */
 	private void MPEGAudio(byte[] check)
 	{ 
+		Audio.setNewType(CommonParsing.MPEG_AUDIO);
+
 		audiocheck:
-		for (int a=0; a < 10000; a++)
+		for (int a = 0; a < 10000; a++)
 		{
-			if (Audio.MPA_parseHeader(check, a) < 0)
+			if (Audio.parseHeader(check, a) < 0)
 				continue audiocheck;
 
-			if (Audio.MPA_parseNextHeader(check, a + Audio.Size) < 0)
+			if (Audio.parseNextHeader(check, a + Audio.getSize()) < 0)
 				continue audiocheck;
 
-			audio_streams.add(Audio.MPA_saveAnddisplayHeader());
+			audio_streams.add(Audio.saveAndDisplayHeader());
 
 			return;
 		}
@@ -1150,24 +1156,27 @@ public class Scan extends Object {
 
 			aXInputFile.getNewInstance().randomAccessSingleRead(check, position);
 
+			Audio.setNewType(CommonParsing.WAV_AUDIO);
+
 			riffcheck:
 			for (int i = 0; i < bs0; i++)  //compressed as AC3,MPEG is currently better detected as ES-not RIFF
 			{
-				int ERRORCODE = Audio.WAV_parseHeader(check, i);
+				int ERRORCODE = Audio.parseHeader(check, i);
 
 				if (ERRORCODE > -1)
 				{
 					Audio.saveHeader();
+
 					if (more)
 					{ 
-						audio_streams.add(Audio.WAV_displayHeader());
+						audio_streams.add(Audio.displayHeader());
 						playtime = getAudioTime(size); 
 					} 
 
 					if (ERRORCODE > 0)
 						return CommonParsing.ES_RIFF_TYPE;
 
-					else if (Audio.lMode_extension > 1)
+					else if (Audio.getLastModeExtension() > 1)
 						break riffcheck;
 
 					else
@@ -1375,24 +1384,26 @@ public class Scan extends Object {
 				}
 			}
 
+			Audio.setNewType(CommonParsing.DTS_AUDIO);
+
 			//ES audio
 			audiocheck:
 			for (int i = 0; i < bs0; i++)
 			{
 				/* DTS stuff taken from the VideoLAN project. */ 
 				/* Added by R One, 2003/12/18. */ 
-				if (Audio.DTS_parseHeader(check, i) > 0)
+				if (Audio.parseHeader(check, i) > 0)
 				{ 
 					for (int b = 0; b < 15; b++)
 					{ 
-						if (Audio.DTS_parseNextHeader(check, i + Audio.Size + b) == 1)
+						if (Audio.parseNextHeader(check, i + Audio.getSize() + b) == 1)
 						{ 
-							if ( (0xFF & check[i + Audio.Size]) > 0x7F || (0xFF & check[i + Audio.Size]) == 0 ) //smpte 
+							if ( (0xFF & check[i + Audio.getSize()]) > 0x7F || (0xFF & check[i + Audio.getSize()]) == 0 ) //smpte 
 								continue audiocheck; 
 
 							if (more)
 							{ 
-								audio_streams.add(Audio.DTS_saveAnddisplayHeader());
+								audio_streams.add(Audio.saveAndDisplayHeader());
 								playtime = getAudioTime(size); 
 							} 
 
@@ -1407,26 +1418,32 @@ public class Scan extends Object {
 					if (Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_allowSpaces))
 					{
 						if (more) 
-							audio_streams.add(Audio.DTS_saveAnddisplayHeader());
+							audio_streams.add(Audio.saveAndDisplayHeader());
 
 						playtime = getAudioTime(size); 
 
 						return CommonParsing.ES_DTS_TYPE;
 					}
 				}
+			}
 
-				else if (Audio.AC3_parseHeader(check, i) > 0)
+			Audio.setNewType(CommonParsing.AC3_AUDIO);
+
+			audiocheck:
+			for (int i = 0; i < bs0; i++)
+			{
+				if (Audio.parseHeader(check, i) > 0)
 				{ 
 					for (int b = 0; b < 17; b++)
 					{
-						if (Audio.AC3_parseNextHeader(check, i + Audio.Size + b) == 1)
+						if (Audio.parseNextHeader(check, i + Audio.getSize() + b) == 1)
 						{
-							if ( (0xFF & check[i + Audio.Size]) > 0x3F || (0xFF & check[i + Audio.Size]) == 0 ) //smpte
+							if ( (0xFF & check[i + Audio.getSize()]) > 0x3F || (0xFF & check[i + Audio.getSize()]) == 0 ) //smpte
 								continue audiocheck;
 
 							if (more)
 							{
-								audio_streams.add(Audio.AC3_saveAnddisplayHeader());
+								audio_streams.add(Audio.saveAndDisplayHeader());
 								playtime = getAudioTime(size);
 							}
 
@@ -1441,22 +1458,28 @@ public class Scan extends Object {
 					if (Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_allowSpaces))
 					{
 						if (more) 
-							audio_streams.add(Audio.AC3_saveAnddisplayHeader());
+							audio_streams.add(Audio.saveAndDisplayHeader());
 
 						playtime = getAudioTime(size); 
 
 						return CommonParsing.ES_AC3_TYPE;
 					}
 				}
+			}
 
-				else if (Audio.MPA_parseHeader(check, i) > 0)
+			Audio.setNewType(CommonParsing.MPEG_AUDIO);
+
+			audiocheck:
+			for (int i = 0; i < bs0; i++)
+			{
+				if (Audio.parseHeader(check, i) > 0)
 				{
-					if (!Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_allowSpaces) && Audio.MPA_parseNextHeader(check, i + Audio.Size) < 0) 
+					if (!Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_allowSpaces) && Audio.parseNextHeader(check, i + Audio.getSize()) < 0) 
 						continue audiocheck;
 
 					if (more)
 					{
-						audio_streams.add(Audio.MPA_saveAnddisplayHeader());
+						audio_streams.add(Audio.saveAndDisplayHeader());
 						playtime = getAudioTime(size);
 					}
 

@@ -3,13 +3,13 @@
  *
  * Copyright (c) 2005 by dvb.matt, All Rights Reserved. 
  * 
- * This file is part of X, a free Java based demux utility.
- * X is intended for educational purposes only, as a non-commercial test project.
- * It may not be used otherwise. Most parts are only experimental.
+ * This file is part of ProjectX, a free Java based demux utility.
+ * By the authors, ProjectX is intended for educational purposes only, 
+ * as a non-commercial test project.
  * 
  *
- * This program is free software; you can redistribute it free of charge
- * and/or modify it under the terms of the GNU General Public License as published by
+ * This program is free software; you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
@@ -100,6 +100,12 @@ public class Start extends Object {
 			/**
 			 * don't change the order!!
 			 */
+
+			/**
+			 * get version switch
+			 */
+			if (getBooleanSwitch("-version"))
+				System.out.println("Version: " + Common.getVersionName() + "/" + Common.getVersionDate());
 
 			System.out.println("Reading GUI-Switch...");
 
@@ -220,14 +226,14 @@ public class Start extends Object {
 			if (help)
 				Common.exitApplication(0);
 
-			System.out.println("Reading CLI Switches...");
-
 			System.out.println("Loading Basic Classes...");
 
 			/**
 			 * load main stuff
 			 */
 			Common.init(); // access after the keys has been loaded!, separate to userinterface later
+
+			System.out.println("Reading CLI Switches...");
 
 			/**
 			 * read cli switches
@@ -258,25 +264,31 @@ public class Start extends Object {
 			 */
 			Common.loadAC3(); 
 
-			Common.clearMessageLog();
+			//Common.clearMessageLog();
+
+			if (Common.getSettings().getBooleanProperty(Keys.KEY_autostartWebServer))
+				Common.startWebServer();
 
 			/**
 			 * starts CL processing
 			 */
 			if (!showGUI)
 			{
-				if (Common.isCollectionListEmpty())
+				if (!Common.getSettings().getBooleanProperty(Keys.KEY_autostartWebServer))
 				{
-					System.out.println("Error: No Collection to Process ...");
-					Common.exitApplication(2);
+					if (Common.isCollectionListEmpty())
+					{
+						System.out.println("Error: No Collection to Process ...");
+						Common.exitApplication(2);
+					}
+
+					System.out.println("Starting Collection Process...");
+
+					Common.setRunningCLI(true);
+					Common.setRunningProcess(true);
+
+					Common.startMainProcess();
 				}
-
-				System.out.println("Starting Collection Process...");
-
-				Common.setRunningCLI(true);
-				Common.setRunningProcess(true);
-
-				Common.startMainProcess();
 			}
 
 			else
@@ -410,6 +422,12 @@ public class Start extends Object {
 			 */
 			if (getBooleanSwitch("-saveini"))
 				Common.getSettings().setProperty(Keys.KEY_SaveSettingsOnExit[0], "1");
+
+			/**
+			 * web if
+			 */
+			if (getBooleanSwitch("-webif"))
+				Common.getSettings().setProperty(Keys.KEY_autostartWebServer[0], "1");
 
 			/**
 			 * action type

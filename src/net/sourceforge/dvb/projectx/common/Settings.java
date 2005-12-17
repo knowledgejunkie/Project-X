@@ -3,13 +3,13 @@
  *
  * Copyright (c) 2005
  * 
- * This file is part of X, a free Java based demux utility.
- * X is intended for educational purposes only, as a non-commercial test project.
- * It may not be used otherwise. Most parts are only experimental.
+ * This file is part of ProjectX, a free Java based demux utility.
+ * By the authors, ProjectX is intended for educational purposes only, 
+ * as a non-commercial test project.
  * 
  *
- * This program is free software; you can redistribute it free of charge
- * and/or modify it under the terms of the GNU General Public License as published by
+ * This program is free software; you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
@@ -31,6 +31,7 @@
 package net.sourceforge.dvb.projectx.common;
 
 import java.io.BufferedReader;
+import	java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -107,7 +108,7 @@ public class Settings extends Object {
 	 */
 	public byte[] storeProperties() throws IOException
 	{
-		java.io.ByteArrayOutputStream os = new java.io.ByteArrayOutputStream();
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
 		props.store(os, null);
 
 		return os.toByteArray();

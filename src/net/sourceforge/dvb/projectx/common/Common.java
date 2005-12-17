@@ -3,13 +3,13 @@
  *
  * Copyright (c) 2004-2005 by dvb.matt, All Rights Reserved.
  * 
- * This file is part of X, a free Java based demux utility.
- * X is intended for educational purposes only, as a non-commercial test project.
- * It may not be used otherwise. Most parts are only experimental.
- *  
+ * This file is part of ProjectX, a free Java based demux utility.
+ * By the authors, ProjectX is intended for educational purposes only, 
+ * as a non-commercial test project.
+ * 
  *
- * This program is free software; you can redistribute it free of charge
- * and/or modify it under the terms of the GNU General Public License as published by
+ * This program is free software; you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
@@ -36,16 +36,20 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+
 import java.net.URL;
 import java.net.URLConnection;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.StringTokenizer;
-import java.text.NumberFormat;
-
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.Comparator;
+
+import java.text.NumberFormat;
 
 import java.io.StringWriter;
 import java.io.PrintWriter;
@@ -53,7 +57,7 @@ import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
-import net.sourceforge.dvb.projectx.audio.Audio;
+import net.sourceforge.dvb.projectx.audio.AudioFormat;
 
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Keys;
@@ -72,7 +76,9 @@ import	net.sourceforge.dvb.projectx.video.MpvDecoder;
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
 import net.sourceforge.dvb.projectx.xinput.XInputDirectory;
 import net.sourceforge.dvb.projectx.xinput.topfield_raw.RawInterface;
+import net.sourceforge.dvb.projectx.xinput.DirType;
 
+import net.sourceforge.dvb.projectx.net.WebInterface;
 
 /**
  *
@@ -80,8 +86,8 @@ import net.sourceforge.dvb.projectx.xinput.topfield_raw.RawInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90.2.00";
-	private static String version_date = "05.11.2005";
+	private static String version_name = "ProjectX 0.90.2.01_beta";
+	private static String version_date = "17.12.2005";
 
 	private static String line_separator = System.getProperty("line.separator");
 
@@ -139,6 +145,8 @@ public final class Common extends Object {
 	private static Scan scan = null;
 
 	private static MpvDecoder mpvdecoder = null;
+
+	private static WebInterface webserver = null;
 
 	/**
 	 * carries all new collection classes
@@ -229,6 +237,41 @@ public final class Common extends Object {
 	/**
 	 * 
 	 */
+	public static void startWebServer()
+	{
+		if (webserver == null)
+			webserver = new WebInterface();
+
+		stopWebServer();
+
+		webserver.start();
+	}
+
+	/**
+	 * 
+	 */
+	public static void stopWebServer()
+	{
+		if (webserver == null)
+			return;
+
+		webserver.stop();
+	}
+
+	/**
+	 * 
+	 */
+	public static boolean isWebServerOnline()
+	{
+		if (webserver != null && webserver.isOnline())
+			return true;
+
+		return false;
+	}
+
+	/**
+	 * 
+	 */
 	public static void prepareGui(boolean b)
 	{
 		showGUI = b;
@@ -284,9 +327,43 @@ public final class Common extends Object {
 	/**
 	 * 
 	 */
+	public static boolean startProcess()
+	{
+		boolean b = true;
+
+		if (isRunningProcess())
+			return !b;
+
+		if (isCollectionListEmpty())
+			return !b;
+
+		setRunningProcess(b);
+
+		CommonParsing.setPvaPidToExtract(-1);
+
+		return b;
+	}
+
+	/**
+	 * 
+	 */
 	public static void startMainProcess()
 	{
 		new MainProcess().start();
+	}
+
+	/**
+	 * 
+	 */
+	public static void breakMainProcess()
+	{
+		if (!isRunningProcess())
+			return;
+
+		setMessage(Resource.getString("golistener.msg.cancelled"), true, 0xE0E0FF);
+
+		CommonParsing.setProcessPausing(false);
+		CommonParsing.setProcessCancelled(true);
 	}
 
 	/**
@@ -427,6 +504,14 @@ public final class Common extends Object {
 			Resource.getString("version.info"),
 			Resource.getString("version.user") + System.getProperty("user.name")
 		};
+	}
+
+	/**
+	 * 
+	 */
+	public static String getDateAndTime()
+	{
+		return (DateFormat.getDateInstance(DateFormat.LONG).format(new Date()) + "    " + DateFormat.getTimeInstance(DateFormat.LONG).format(new Date()));
 	}
 
 	/**
@@ -773,7 +858,7 @@ public final class Common extends Object {
 	 */
 	public static void loadAC3() 
 	{
-		Audio audio = new Audio();
+		AudioFormat audio = new AudioFormat(CommonParsing.AC3_AUDIO);
 		AC3list.clear();
 
 		try {
@@ -788,32 +873,34 @@ public final class Common extends Object {
 				int bytesRead = -1;
 
 				while ((bytesRead = bis.read(buff, 0, buff.length)) != -1)
-				{
 					bao.write(buff, 0, bytesRead);
-				}
 				
 				byte[] check = bao.toByteArray();
 			
 				setMessage(Resource.getString("ac3.msg.loading.start"));
 			
-				int a=0, frame_counter=0;
+				int a = 0, frame_counter = 0;
 
 				while (a < check.length) 
 				{
-					audio.AC3_parseHeader(check,a);
-					setMessage("(" + frame_counter + ") " + audio.AC3_saveAnddisplayHeader());
+					audio.parseHeader(check, a);
+					setMessage("(" + frame_counter + ") " + audio.saveAndDisplayHeader());
 
-					byte[] ac3data = new byte[audio.Size];
-					System.arraycopy(check,a,ac3data,0,audio.Size);
+					byte[] ac3data = new byte[audio.getSize()];
+
+					System.arraycopy(check, a, ac3data, 0, audio.getSize());
+
 					AC3list.add(ac3data);
+
 					a += audio.Size;
 					frame_counter++;
 				}
+
 				check = null;
 			}
-		} 
-		catch (IOException e5) 
-		{ 
+
+		} catch (IOException e5) { 
+
 			setExceptionMessage(e5); 
 			AC3list.clear();
 		}
@@ -1234,7 +1321,7 @@ public final class Common extends Object {
 		List list = new ArrayList();
 
 		list.add("Java Environment");
-		list.add(DateFormat.getDateInstance(DateFormat.FULL).format(new Date()) + "    " + DateFormat.getTimeInstance(DateFormat.FULL).format(new Date()));
+		list.add(getDateAndTime());
 		list.add(Resource.getString("javaev.java.version") + "\t" + System.getProperty("java.version"));
 		list.add(Resource.getString("javaev.java.vendor") + "\t" + System.getProperty("java.vendor"));
 		list.add(Resource.getString("javaev.java.home") + "\t" + System.getProperty("java.home"));
@@ -1319,6 +1406,14 @@ public final class Common extends Object {
 	public static void showSplitPart(int value)
 	{
 		SplitPart = value;
+	}
+
+	/**
+	 * progress
+	 */
+	public static int getProcessedPercent()
+	{
+		return ProcessedPercent;
 	}
 
 	/**
@@ -1463,6 +1558,70 @@ public final class Common extends Object {
 	{
 		if (getGuiInterface() != null)
 			getGuiInterface().addCollectionAtEnd();
+	}
+
+	/**
+	 * refresh inputfileslist
+	 */
+	public static Object[] reloadInputDirectories()
+	{
+		ArrayList arraylist = new ArrayList();
+		ArrayList input_directories = Common.getSettings().getInputDirectories();
+
+		for (int a = 0; a < input_directories.size(); a++)
+		{
+			// Get input files
+			Object item = input_directories.get(a);
+
+			XInputDirectory xInputDirectory = (XInputDirectory)item;
+			XInputFile[] addlist = xInputDirectory.getFiles();
+
+			// Sort them
+			if (addlist.length > 0)
+			{
+				class MyComparator implements Comparator {
+					public int compare(Object o1, Object o2)
+					{
+						return o1.toString().compareTo(o2.toString());
+					}
+				}
+
+				Arrays.sort(addlist, new MyComparator());
+			}
+
+			// Add them to the list
+			for (int b = 0; b < addlist.length; b++)
+				arraylist.add(addlist[b]);
+		}
+
+		try {
+			// Get input files from topfield raw disk access
+			XInputDirectory xInputDirectory = new XInputDirectory(DirType.RAW_DIR);
+			XInputFile[] addlist = xInputDirectory.getFiles();
+
+			// Sort them
+			if (addlist.length > 0)
+			{
+				class MyComparator implements Comparator
+				{
+					public int compare(Object o1, Object o2)
+					{
+						return o1.toString().compareTo(o2.toString());
+					}
+				}
+
+				Arrays.sort(addlist, new MyComparator());
+			}
+
+			// Add them to the list
+			for (int b = 0; b < addlist.length; b++)
+				arraylist.add(addlist[b]);
+
+		} catch (Throwable t) {
+			// Assume no dll available or no hd or no file, so do nothing!
+		}
+
+		return (arraylist.isEmpty() ? new Object[0] : arraylist.toArray());
 	}
 
 }
