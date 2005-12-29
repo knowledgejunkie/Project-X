@@ -69,6 +69,11 @@ public final class VBI extends Object {
 
 		int pes_id = 0xFF & pes_packet[3 + pes_packetoffset];
 		int pes_packetlength = (0xFF & pes_packet[4 + pes_packetoffset])<<8 | (0xFF & pes_packet[5 + pes_packetoffset]);
+		int pes_mpeg_flag = 0xC0 & pes_packet[6 + pes_packetoffset];
+
+		if (pes_mpeg_flag != 0x80 && pes_mpeg_flag != 0x40) // neither mpeg2 nor mpeg1
+			return;
+
 		int pes_extensionlength = 0xFF & pes_packet[8 + pes_packetoffset];
 		boolean pts_flag = (0x80 & pes_packet[7 + pes_packetoffset]) != 0;
 

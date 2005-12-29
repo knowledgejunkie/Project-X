@@ -103,6 +103,7 @@ public class XInputFileImpl implements XInputFileIF {
 	public String toString() {
 
 		return file.getAbsolutePath();
+	//	return (file.getAbsolutePath() + " (" + Common.formatNumber(length()) + " bytes)");
 	}
 
 

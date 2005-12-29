@@ -86,8 +86,8 @@ import net.sourceforge.dvb.projectx.net.WebInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90.2.01_beta";
-	private static String version_date = "17.12.2005";
+	private static String version_name = "ProjectX 0.90.2.02_beta";
+	private static String version_date = "29.12.2005";
 
 	private static String line_separator = System.getProperty("line.separator");
 
@@ -126,6 +126,7 @@ public final class Common extends Object {
 	private static DateFormat time_format_1 = new SimpleDateFormat("HH:mm:ss.SSS");
 	private static DateFormat time_format_2 = new SimpleDateFormat("HH:mm:ss:SSS");
 	private static DateFormat time_format_3 = new SimpleDateFormat("dd.MM.yy  HH:mm");
+	private static DateFormat time_format_4 = new SimpleDateFormat("HH:mm:ss");
 
 	private static byte temp_byte;
 
@@ -147,6 +148,10 @@ public final class Common extends Object {
 	private static MpvDecoder mpvdecoder = null;
 
 	private static WebInterface webserver = null;
+
+	private static MainProcess mainprocess = null;
+
+	private static long ProcessTime = 0;
 
 	/**
 	 * carries all new collection classes
@@ -347,9 +352,18 @@ public final class Common extends Object {
 	/**
 	 * 
 	 */
+	public static boolean waitingMainProcess()
+	{
+		return (mainprocess != null ? mainprocess.pause() : false);
+	}
+
+	/**
+	 * 
+	 */
 	public static void startMainProcess()
 	{
-		new MainProcess().start();
+		mainprocess = new MainProcess();
+		mainprocess.start();
 	}
 
 	/**
@@ -417,6 +431,26 @@ public final class Common extends Object {
 	public static boolean isRunningCLI()
 	{
 		return runningCLI;
+	}
+
+
+	/**
+	 *
+	 */
+	public static void setProcessTime(long val)
+	{
+		ProcessTime = val;
+	}
+
+	/**
+	 *
+	 */
+	public static long getProcessTime()
+	{
+		if (!isRunningProcess() || ProcessTime <= 0)
+			return 0L;
+
+		return (System.currentTimeMillis() - ProcessTime);
 	}
 
 	/**
@@ -750,6 +784,15 @@ public final class Common extends Object {
 	{
 		//time_format_3.setTimeZone(TimeZone.getTimeZone("GMT+0:00"));
 		return time_format_3.format(new Date(time_value));
+	}
+
+	/**
+	 *
+	 */
+	public static String formatTime_4(long time_value)
+	{
+		time_format_4.setTimeZone(TimeZone.getTimeZone("GMT+0:00"));
+		return time_format_4.format(new Date(time_value));
 	}
 
 	/**
@@ -1573,7 +1616,7 @@ public final class Common extends Object {
 			// Get input files
 			Object item = input_directories.get(a);
 
-			XInputDirectory xInputDirectory = (XInputDirectory)item;
+			XInputDirectory xInputDirectory = (XInputDirectory) item;
 			XInputFile[] addlist = xInputDirectory.getFiles();
 
 			// Sort them

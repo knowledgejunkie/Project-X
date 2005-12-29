@@ -571,6 +571,10 @@ public class StreamDemultiplexer extends Object {
 
 				if (lastPTS != pts)
 				{
+					if ((es_streamtype == CommonParsing.MPEG_AUDIO || es_streamtype == CommonParsing.AC3_AUDIO || es_streamtype == CommonParsing.DTS_AUDIO || es_streamtype == CommonParsing.LPCM_AUDIO)
+							&& lastPTS != -1 && Math.abs(lastPTS - pts) > 100000)
+						Common.setMessage("!> ID 0x" + Integer.toHexString(pes_ID).toUpperCase() + " (sub 0x" + Integer.toHexString(subid).toUpperCase() + ") packet# " + pack + ", big PTS difference: new " + pts + ", old " + lastPTS);
+
 					pts_log.writeLong(pts);
 					pts_log.writeLong(target_position);
 				}
@@ -648,7 +652,8 @@ public class StreamDemultiplexer extends Object {
 			/**
 			 * DVB subs adaption, prevent lost packets
 			 */
-			else if (es_streamtype == CommonParsing.SUBPICTURE && CommonParsing.nextBits(pes_packet, (offset + pes_extensionlength) * 8, 16) == 0xF)
+			else if (es_streamtype == CommonParsing.SUBPICTURE && pes_isAligned && CommonParsing.nextBits(pes_packet, (offset + pes_extensionlength) * 8, 16) == 0xF)
+		//	else if (es_streamtype == CommonParsing.SUBPICTURE && CommonParsing.nextBits(pes_packet, (offset + pes_extensionlength) * 8, 16) == 0xF)
 			{
 				CommonParsing.setValue(subpicture_header, 2, 8, CommonParsing.BYTEREORDERING, 0);
 

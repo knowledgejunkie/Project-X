@@ -857,7 +857,7 @@ public class StreamConverter extends Object {
 					countID = newID - 0x9C; 
 				}
 
-				CommonParsing.setValue(PvaPacketHeader, 2, 1, !CommonParsing.BYTEREORDERING, countID);
+				CommonParsing.setValue(PvaPacketHeader, 2, 1, !CommonParsing.BYTEREORDERING, newID);
 				CommonParsing.setValue(PvaPacketHeader, 3, 1, !CommonParsing.BYTEREORDERING, 0xFF & PacketCounter[countID]);
 				CommonParsing.setValue(PvaPacketHeader, 5, 1, !CommonParsing.BYTEREORDERING, 0x10);
 

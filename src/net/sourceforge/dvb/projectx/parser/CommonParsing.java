@@ -60,6 +60,9 @@ public class CommonParsing extends Object {
 	public final static int PRIMARY_PES_PARSER   = 1;
 	public final static int TS_PARSER            = 2;
 	public final static int PVA_PARSER           = 3;
+	public final static int ES_VIDEO_PARSER      = 4;
+	public final static int ES_AUDIO_PARSER      = 5;
+	public final static int ES_SUBPICTURE_PARSER = 6;
 
 	public final static int Unsupported   = 0;	//	"unsupported"
 	public final static int PES_AV_TYPE   = 1;	//	"PES (Video/Audio/TTX)"
@@ -618,6 +621,18 @@ public class CommonParsing extends Object {
 		} catch (IOException e) {
 
 			Common.setExceptionMessage(e);
+		}
+	}
+
+	/**
+	 * split reset
+	 */
+	public static void resetSplitMode(JobProcessing job_processing, String vptslog)
+	{
+		if ( vptslog.equals("-1") && job_processing.getSplitSize() > 0 )
+		{ 
+			job_processing.setSplitSize(0);
+			Common.setMessage(Resource.getString("splitreset.novideo"));
 		}
 	}
 

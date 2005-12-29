@@ -29,9 +29,14 @@ package net.sourceforge.dvb.projectx.xinput.file;
 import java.io.File;
 import java.io.FileFilter;
 
+import java.util.ArrayList;
+
 import net.sourceforge.dvb.projectx.xinput.DirType;
 import net.sourceforge.dvb.projectx.xinput.XInputDirectoryIF;
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
+
+import net.sourceforge.dvb.projectx.common.Common;
+import net.sourceforge.dvb.projectx.common.Keys;
 
 public class XInputDirectoryImpl implements XInputDirectoryIF {
 
@@ -174,7 +179,7 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 	 */
 	public XInputFile[] getFiles() {
 
-		XInputFile[] xInputFiles = null;
+		ArrayList list = new ArrayList();
 
 		class MyFileFilter implements FileFilter {
 
@@ -182,14 +187,60 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 				return pathname.isFile();
 			}
 		}
+
 		File[] files = file.listFiles(new MyFileFilter());
-		xInputFiles = new XInputFile[files.length];
-		for (int i = 0; i < files.length; i++) {
-			xInputFiles[i] = new XInputFile(files[i]);
+
+		for (int i = 0; i < files.length; i++)
+			list.add(files[i]);
+
+		if (Common.getSettings().getBooleanProperty(Keys.KEY_InputDirectoriesDepth))
+			getDirectories(file, list);  // depth 1
+
+		XInputFile[] xInputFiles = new XInputFile[list.size()];
+
+		for (int i = 0; i < xInputFiles.length; i++) {
+			xInputFiles[i] = new XInputFile((File) list.get(i));
 		}
 
 		return xInputFiles;
 	}
+
+	/**
+	 * 
+	 */
+	private void getDirectories(File dir, ArrayList list)
+	{
+		class MyFileFilter implements FileFilter {
+
+			public boolean accept(File pathname)
+			{
+				return pathname.isFile();
+			}
+		}
+
+		class MyDirFilter implements FileFilter {
+
+			public boolean accept(File pathname)
+			{
+				return pathname.isDirectory();
+			}
+		}
+
+		File[] dirs = dir.listFiles(new MyDirFilter());
+		File[] files;
+
+		for (int i = 0; i < dirs.length; i++)
+		{
+			files = dirs[i].listFiles(new MyFileFilter());
+
+			for (int j = 0; j < files.length; j++)
+				list.add(files[j]);
+
+			getDirectories(dirs[i], list); // depth 2
+		}
+	}
+
+
 
 	/**
 	 * Test if directory data is valid.

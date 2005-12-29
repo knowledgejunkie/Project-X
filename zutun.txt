@@ -178,6 +178,16 @@ danach:
 --cli [-version]
 --audio.java umbauen als interface-superclass und eignen formatklassen, bei ac3 vergleichskriterium dn, sm, cm erweitern
 --einfaches WebInterface, manuell oder autostart [-webif] via cli oder gui
+--cutview panel index speichern
+--id zuweisung bei zu pva falsche variable
+--vbi flag anpassung
+--streamparser + prozesse in klassen getrennt, später optimierung
+--ac3 crc check optimiert (>10mal schneller)
+--misdeutung bei subpicture demux
+--falsche pts-prüfung bei cell-id wechsel in mehr als 1 vob segmenten
+--autoload, optionale subfolder expansion
+--ttx special page termination (some dvb-t fi ttx)
+
 
 !-extra einstellungen für coll übernehmen, wird nur gelesen bei mainprocessing, vorbereitet
 !!-auto split mpa, wenn dual detektiert

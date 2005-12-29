@@ -7,9 +7,11 @@
  * By the authors, ProjectX is intended for educational purposes only, 
  * as a non-commercial test project.
  * 
- * The part of audio parsing was derived from the MPEG/Audio
- * Software Simulation Group's audio codec and ATSC A/52 in a special modified manner.
+ * The part of audio parsing was derived from
+ * ATSC A/52 in a special modified manner.
  *
+ * crc computing derived from:
+ * The simplest AC3 encoder, Copyright (c) 2000 Fabrice Bellard. 
  *
  * This program is free software; you can redistribute it and/or modify 
  * it under the terms of the GNU General Public License as published by
@@ -36,14 +38,20 @@ public class AudioFormatAC3 extends AudioFormat {
 	public AudioFormatAC3()
 	{
 		super();
+
+		ac3_crc_init();
 	}
+
+	private int CRC16_POLY = 0x18005; //((1 << 0) | (1 << 2) | (1 << 15) | (1 << 16));
+
+	private int[] crc_table = new int[256];
 
 	private int[] ac3_frequency_index = { 48000, 44100, 32000, 0 };
 	
 	private int[] ac3_bitrate_index =  { 
-		32000,40000,48000,56000,64000,80000,96000,
-		112000,128000,160000,192000,224000,256000,
-		320000,384000,448000,512000,576000,640000,
+		32000, 40000, 48000, 56000, 64000, 80000, 96000,
+		112000, 128000, 160000, 192000, 224000, 256000,
+		320000, 384000, 448000, 512000, 576000, 640000,
 		0,0,0,0,0,0,0,0,0,0,0,0,0  // (fix4)
 	};
 	
@@ -60,14 +68,14 @@ public class AudioFormatAC3 extends AudioFormat {
 	private String[] acmod = { "1+1", "1/0", "2/0", "3/0", "2/1", "3/1", "2/2", "3/2" };
 	private String[][] lfe = {{ ".0", ".1" },{ "", "lfe" }};
 
-	private int[] ac3_channels = { 	2, 1, 2, 3, 3, 4, 4, 5 };
+	private int[] ac3_channels = { 2, 1, 2, 3, 3, 4, 4, 5 };
 	
 	/**
 	 * parse ac3 Header 
 	 */
 	public int parseHeader(byte[] frame, int pos)
 	{
-		if ( (0xFF & frame[pos]) != 0xB || (0xFF & frame[pos+1]) != 0x77 ) 
+		if ( (0xFF & frame[pos]) != 0x0B || (0xFF & frame[pos + 1]) != 0x77 ) 
 			return -1;
 	
 		ID = 0;
@@ -76,48 +84,48 @@ public class AudioFormatAC3 extends AudioFormat {
 
 		Protection_bit = 0 ^ 1;
 
-		if ( (Sampling_frequency = ac3_frequency_index[3 & frame[pos+4]>>>6]) < 1) 
+		if ((Sampling_frequency = ac3_frequency_index[3 & frame[pos + 4]>>>6]) < 1) 
 			return -4;
 
-		if ( (Bitrate = ac3_bitrate_index[0x1F & frame[pos+4]>>>1]) < 1) 
+		if ((Bitrate = ac3_bitrate_index[0x1F & frame[pos + 4]>>>1]) < 1) 
 			return -3;
 	
-		Layer = 7 & frame[pos+5];       //bsmod
-		Padding_bit = 1 & frame[pos+4];
-		Mode = 7 & frame[pos+6]>>>5;
+		Layer = 7 & frame[pos + 5];       //bsmod
+		Padding_bit = 1 & frame[pos + 4];
+		Mode = 7 & frame[pos + 6]>>>5;
 		Mode_extension = 0;
 	
-		int mode = (0xFF & frame[pos+6])<<8 | (0xFF & frame[pos+7]);
+		int mode = (0xFF & frame[pos + 6])<<8 | (0xFF & frame[pos + 7]);
 		int skip=0;
 
-		if ( (Mode & 1) > 0 && Mode != 1)  // cmix
+		if ((Mode & 1) > 0 && Mode != 1)  // cmix
 		{
-			Emphasis = 1 + (3 & frame[pos+6]>>>3);
+			Emphasis = 1 + (3 & frame[pos + 6]>>>3);
 			skip++;
 		}
 
-		if ( (Mode & 4) > 0) //surmix
+		if ((Mode & 4) > 0) //surmix
 		{
-			Private_bit = 1 + (3 & frame[pos+6]>>>(skip > 0 ? 1 : 3));
+			Private_bit = 1 + (3 & frame[pos + 6]>>>(skip > 0 ? 1 : 3));
 			skip++;
 		}
 
-		if ( Mode == 2 )
+		if (Mode == 2)
 		{
-		        Mode_extension |= 6 & mode>>>(10 - (2 * skip));  //DS
+	        Mode_extension |= 6 & mode>>>(10 - (2 * skip));  //DS
 			skip++;
 		}
 
 		if (skip < 4)
 		{
-		        Mode_extension |= 1 & mode>>>(12 - (2 * skip)); //lfe
+	        Mode_extension |= 1 & mode>>>(12 - (2 * skip)); //lfe
 			Original = 0x1F & mode>>>(7 - (2 * skip)); //dialnorm
 		}
 	
 		Channel = ac3_channels[Mode] + (1 & Mode_extension);
 		Copyright = 0;
 		Time_length = 138240000.0 / Sampling_frequency;
-		Size = (Size_base = ac3_size_table[3 & frame[pos+4]>>>6][0x1F & frame[pos+4]>>>1]) + Padding_bit * 2;
+		Size = (Size_base = ac3_size_table[3 & frame[pos + 4]>>>6][0x1F & frame[pos + 4]>>>1]) + Padding_bit * 2;
 
 		return 1;
 	}
@@ -237,54 +245,150 @@ public class AudioFormatAC3 extends AudioFormat {
 	/**
 	 * validate crc16 1 + 2
 	 */
-	public int validateCRC(byte[] frame, int offset, int len)
+	public int validateCRC(byte[] frame, int offset, int frame_size)
 	{
-		int[] g = { 1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1 }; // x^16 + x^15 + x^2 + 1
+		// frame_size is BYTE
+		int words = frame_size>>>1; //to word
+		int frame_size_58 = 2* ((words>>>1) + (words>>>3)); //frame_size_58
 
-		int[] shift_reg = new int[16];
-		int crc = 0;
-		int crc1 = 0;
-		int nr_bits = (len - offset) * 8;
+		int crc = -1;
 
-		int words = len>>>1; //to word
-		int crc1_len = (words>>>1) + (words>>>3);
+		//crc1
+		if ((crc = ac3_crc(frame, 2, frame_size_58, 0)) != 0)
+			return 1;
 
-		crc1_len <<= 4; //from word to bit
-		crc1_len -= (offset<<3); // exclude byte offset
-
-		for (int bit_count = 0, bit_in_byte = 0, data_bit; bit_count < nr_bits; bit_count++)
-		{
-			if (bit_count == crc1_len)
-			{
-				crc1 = 0;
-				for (int i = 0; i < 16; i++)
-					crc1 = ((crc1 << 1) | (shift_reg[15 - i]));
-
-				if (crc1 != 0)
-					return 1;
-			}
-
-			data_bit = (frame[offset] & 0x80>>>(bit_in_byte++)) != 0 ? 1 : 0;
-
-			if ((bit_in_byte &= 7) == 0)
-				offset++;
-
-			data_bit ^= shift_reg[15];
-
-			for (int i = 15; i > 0; i--)
-				shift_reg[i] = g[i]==1 ? (shift_reg[i-1] ^ data_bit) : shift_reg[i-1];
-
-			shift_reg[0] = data_bit;
-		}
-
-		for (int i=0; i<16; i++)
-			crc = ((crc << 1) | (shift_reg[15-i]));
-
-		if (crc != 0)
+		//crc2
+		if ((crc = ac3_crc(frame, frame_size_58, frame_size, crc)) != 0)
 			return 2;
 
-		else
-			return 0;
+		return 0;
+	}
+
+	/**
+	 *
+	 */
+	public byte[] editFrame(byte[] frame, int framesize, int mode)
+	{
+		if (mode == 1)
+		{
+			setChannelFlags(frame);
+		//	computeCRC(frame, framesize);
+		}
+
+		return frame;
+	}
+
+	/**
+	 * 3+2 channels, note the following bits will be dispointed and the frame is corrupted
+	 */
+	private void setChannelFlags(byte[] frame)
+	{
+		frame[6] = (byte)((0xF & frame[6]) | 0xE0);
+	}
+
+	/**
+	 * compute crc16 1 + 2
+	 */
+	private void computeCRC(byte[] frame, int frame_size)
+	{
+		// frame_size is WORD
+		frame_size >>>= 1; //to word
+
+		int frame_size_58 = (frame_size>>>1) + (frame_size>>>3);
+
+		int crc1 = -1;
+		int crc2 = -1;
+		int crc_inv = -1;
+
+		crc1 = ac3_crc(frame, 4, 2 * frame_size_58, 0);
+
+		crc_inv = pow_poly((CRC16_POLY >>> 1), (16 * frame_size_58) - 16, CRC16_POLY);
+
+		//crc1
+		crc1 = mul_poly(crc_inv, crc1, CRC16_POLY);
+		frame[2] = (byte)(0xFF & (crc1 >> 8));
+		frame[3] = (byte)(0xFF & crc1);
+
+		//crc2
+		crc2 = ac3_crc(frame, 2 * frame_size_58, (2 * frame_size) - 2, 0);
+		frame[(2* frame_size) - 2] = (byte)(0xFF & (crc2 >> 8));
+		frame[(2* frame_size) - 1] = (byte)(0xFF & crc2);
+	}
+
+	/**
+	 * ac3 crc init table
+	 */
+	private void ac3_crc_init()
+	{
+		for (int n = 0, c, k; n < 256; n++)
+		{
+			c = n << 8;
+
+			for (k = 0; k < 8; k++)
+			{
+				if ((c & (1 << 15)) != 0) 
+					c = ((c << 1) & 0xFFFF) ^ (CRC16_POLY & 0xFFFF);
+
+				else
+					c = c << 1;
+			}
+
+			crc_table[n] = c;
+		}
+	}
+
+	/**
+	 * ac3 crc
+	 */
+	private int ac3_crc(byte[] data, int offs, int len, int crc)
+	{
+		int i;
+
+		for (i = offs; i < len; i++)
+			crc = (crc_table[(0xFF & data[i]) ^ (crc >> 8)] ^ (crc << 8)) & 0xFFFF;
+
+		return crc;
+	}
+
+	/**
+	 * crc poly
+	 */
+	private int mul_poly(int a, int b, int poly)
+	{
+		int c = 0;
+
+		while (a > 0)
+		{
+			if ((a & 1) > 0)
+				c ^= b;
+
+			a = a >>> 1;
+			b = b << 1;
+
+			if ((b & (1 << 16)) > 0)
+				b ^= poly;
+		}
+
+		return c;
+	}
+
+	/**
+	 * crc poly
+	 */
+	private int pow_poly(int a, int n, int poly)
+	{
+		int r = 1;
+
+		while (n > 0)
+		{
+			if ((n & 1) > 0)
+				r = mul_poly(r, a, poly);
+
+			a = mul_poly(a, a, poly);
+			n >>>= 1;
+		}
+
+		return r;
 	}
 
 	/**

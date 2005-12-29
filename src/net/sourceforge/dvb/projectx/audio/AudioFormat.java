@@ -368,6 +368,14 @@ public class AudioFormat extends Object {
 	/**
 	 *
 	 */
+	public byte[] editFrame(byte[] frame, int framesize, int mode)
+	{
+		return (impl == null ? frame : impl.editFrame(frame, framesize, mode));
+	}
+		
+	/**
+	 *
+	 */
 	public void removeCRC(byte[] frame)
 	{
 		if (impl != null)

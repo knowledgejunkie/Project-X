@@ -1050,8 +1050,9 @@ public class PreSettings extends JFrame {
 			Keys.KEY_SubtitlePanel_decodeMegaradio,
 			Keys.KEY_SubtitlePanel_decodeHiddenRows,
 			Keys.KEY_SubtitlePanel_rebuildPTS,
-			Keys.KEY_SubtitlePanel_keepOriginalTimcode,
+			Keys.KEY_SubtitlePanel_keepOriginalTimecode,
 			Keys.KEY_SubtitlePanel_exportTextAsUnicode,
+			Keys.KEY_SubtitlePanel_specialTermination,
 			Keys.KEY_SubtitlePanel_useTextOutline
 		};
 
@@ -1073,6 +1074,7 @@ public class PreSettings extends JFrame {
 		panel_0.add(box[2]);
 		panel_0.add(box[3]);
 		panel_0.add(box[4]);
+		panel_0.add(box[5]);
 
 		panel_0.add(Box.createRigidArea(new Dimension(1, 10)));
 
@@ -1177,7 +1179,7 @@ public class PreSettings extends JFrame {
 
 		panel_1.add(new JLabel(Resource.getString("SubtitlePanel.Title.Teletext")));
 
-		panel_1.add(box[5]);
+		panel_1.add(box[6]);
 
 		JPanel panel_1_2 = new JPanel();
 		panel_1_2.setLayout(new BoxLayout(panel_1_2, BoxLayout.X_AXIS));
@@ -1219,7 +1221,7 @@ public class PreSettings extends JFrame {
 
 		panel_1.add(panel_1_3);
 
-		panel_1.add(Box.createRigidArea(new Dimension(1, 10)));
+		panel_1.add(Box.createRigidArea(new Dimension(1, 20)));
 
 		JLabel color_model = new JLabel(Resource.getString("SubtitlePanel.Colormodel"));
 		color_model.setToolTipText(Resource.getString("SubtitlePanel.Colormodel.Tip"));

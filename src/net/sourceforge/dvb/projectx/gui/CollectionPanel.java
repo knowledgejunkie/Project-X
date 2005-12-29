@@ -651,7 +651,20 @@ public class CollectionPanel extends JPanel {
 		tabbedPane.addTab("Settings", buildPanel_1());
 		tabbedPane.addTab("CutViews", buildPanel_2());
 
-		tabbedPane.setSelectedIndex(1);
+		final String[] object = Keys.KEY_OptionPanelIndex;
+
+		int index = Common.getSettings().getIntProperty(object);
+
+		if (index >= 0 && index < tabbedPane.getTabCount())
+			tabbedPane.setSelectedIndex(index);
+
+		tabbedPane.addMouseListener(new MouseAdapter()
+		{
+			public void mouseClicked(MouseEvent e)
+			{
+				Common.getSettings().setProperty(object[0], String.valueOf(tabbedPane.getSelectedIndex()));
+			}
+		});
 
 		panel.add(tabbedPane, BorderLayout.CENTER);
 

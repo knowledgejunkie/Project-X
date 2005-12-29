@@ -142,6 +142,8 @@ public class XInputFile implements XInputFileIF {
 			if (debug) System.out.println("No matching FileType found or file doesn't exist");
 			if (debug)
 					System.out.println("Leave XInputFile.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
+
+			Common.setExceptionMessage(e);
 			throw new IllegalArgumentException("No matching FileType found or file doesn't exist");
 		}
 	}

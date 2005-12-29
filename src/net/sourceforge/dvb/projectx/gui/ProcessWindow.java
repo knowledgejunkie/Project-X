@@ -131,7 +131,7 @@ public class ProcessWindow extends JFrame {
 		JPanel container = new JPanel();
 		container.setLayout(new BorderLayout());
 
-		setBounds(200, 100, 680, 480);
+		setBounds(200, 100, 740, 480);
 
 		buildMenu();
 
@@ -635,6 +635,35 @@ public class ProcessWindow extends JFrame {
 		panel.add(panel_3);
 
 
+		/**
+		 *
+		 */
+		final JLabel TimeLabel = new JLabel();
+		TimeLabel.setToolTipText("process time elapsed");
+
+		final JLabel ErrorLabel = new JLabel();
+		ErrorLabel.setToolTipText("warnings/error counter");
+
+		JPanel status_8 = new JPanel(new BorderLayout());
+		status_8.setBorder(BorderFactory.createLoweredBevelBorder());
+		status_8.setPreferredSize(new Dimension(60, 18));
+		status_8.setMaximumSize(new Dimension(60, 18));
+		status_8.add(TimeLabel);
+
+		JPanel status_9 = new JPanel(new BorderLayout());
+		status_9.setBorder(BorderFactory.createLoweredBevelBorder());
+		status_9.setPreferredSize(new Dimension(60, 18));
+		status_9.setMaximumSize(new Dimension(60, 18));
+		status_9.add(ErrorLabel);
+
+		JPanel panel_4 = new JPanel();
+		panel_4.setLayout(new BoxLayout(panel_4, BoxLayout.Y_AXIS));
+		panel_4.add(status_8);
+		panel_4.add(status_9);
+
+		panel.add(panel_4);
+
+
 		class Clock implements Runnable {
 			private Thread clockThread = null;
 
@@ -674,6 +703,7 @@ public class ProcessWindow extends JFrame {
 				updateDataTroughputLabel();
 				updateExportedSizeLabel();
 				updateCollectionLabel();
+				updateTimeLabel();
 			}
 
 			private void updateFpsLabel()
@@ -714,6 +744,12 @@ public class ProcessWindow extends JFrame {
 					collLabel.setText("Collection: " + (val < 0 ? "-" : String.valueOf(val)));
 
 				last_coll = val;
+			}
+
+			private void updateTimeLabel()
+			{
+				TimeLabel.setText(Common.formatTime_4(Common.getProcessTime()));
+				ErrorLabel.setText(String.valueOf(Common.getErrorCount()));
 			}
 
 			public void stop()

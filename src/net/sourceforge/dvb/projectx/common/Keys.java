@@ -38,6 +38,7 @@ public class Keys extends Object {
 	public final static String[] KEY_Agreement = { "Application.Agreement", "0" }; //rbutton[1]
 	public final static String[] KEY_ActiveDirectory = { "Application.ActiveDirectory", "" }; 
 	public final static String[] KEY_LookAndFeel = { "Application.LookAndFeel", "" };
+	public final static String[] KEY_InputDirectoriesDepth = { "Application.InputDirectoriesDepth", "0" };
 	public final static String KEY_InputDirectories = "Application.InputDirectories.";
 	public final static String KEY_OutputDirectories = "Application.OutputDirectories.";
 	public final static String[] KEY_OutputDirectory = { "Application.OutputDirectory", "" };
@@ -141,7 +142,7 @@ public class Keys extends Object {
 	public final static String[] KEY_ScanBuffer = { "OptionPanel.ScanBuffer", "1024000" }; //combobox[37]
 	public final static String[] KEY_PreviewBuffer = { "OptionPanel.PreviewBuffer", "1024000" }; //combobox[38]
 	public final static String[] KEY_holdStreamInfoOnOSD = { "OptionPanel.holdStreamInfoOnOSD", "0" };
-
+	public final static String[] KEY_OptionPanelIndex = { "OptionPanel.PanelIndex", "1" };
 
 	/**
 	 * SpecialPanel
@@ -239,7 +240,7 @@ public class Keys extends Object {
 	public final static String[] KEY_SubtitlePanel_decodeMegaradio = { "SubtitlePanel.decodeMegaradio", "0" }; //cbox[17] 
 	public final static String[] KEY_SubtitlePanel_decodeHiddenRows = { "SubtitlePanel.decodeHiddenRows", "0" }; //cbox[22] 
 	public final static String[] KEY_SubtitlePanel_rebuildPTS = { "SubtitlePanel.rebuildPTS", "0" }; //cbox[62] !!
-	public final static String[] KEY_SubtitlePanel_keepOriginalTimcode = { "SubtitlePanel.keepOriginalTimcode", "0" }; //cbox[67] 
+	public final static String[] KEY_SubtitlePanel_keepOriginalTimecode = { "SubtitlePanel.keepOriginalTimecode", "0" }; //cbox[67] 
 	public final static String[] KEY_SubtitlePanel_exportTextAsUnicode = { "SubtitlePanel.exportTextAsUnicode", "0" };
 	public final static String[] KEY_SubtitlePanel_useTextOutline = { "SubtitlePanel.useTextOutline", "1" }; //cbox[79] !!
 	public final static String[] KEY_SubtitlePanel_Format_SUP_Values = { "SubtitlePanel.Format.SUP.Values", "26;10;32;80;560;720;576;-1;4;3;1" }; 
@@ -256,6 +257,8 @@ public class Keys extends Object {
 	public final static String[] KEY_SubtitleExportFormat = { "SubtitlePanel.SubtitleExportFormat", "SUB" };
 	public final static String[] KEY_SubtitleExportFormat_2 = { "SubtitlePanel.SubtitleExportFormat_2", "null" };
 	public final static String[] KEY_SubpictureColorModel = { "SubtitlePanel.SubpictureColorModel", "(0) 4 colors" };
+//test
+	public final static String[] KEY_SubtitlePanel_specialTermination = { "SubtitlePanel.specialTermination", "0" };
 
 	public static Object[] ITEMS_TtxLanguagePair = { 
 		"auto", "basic latin", "polish", "turkish", "cro,slo,rum", "est,lit,rus",

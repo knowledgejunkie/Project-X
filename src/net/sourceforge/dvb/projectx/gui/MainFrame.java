@@ -1955,6 +1955,42 @@ public class MainFrame extends JPanel {
 			}
 		});
 
+		JMenu fileMenu = new JMenu();
+		CommonGui.localize(fileMenu, "Common.File");
+
+		JMenuItem closemenu = new JMenuItem();
+		CommonGui.localize(closemenu, "Common.Close");
+		closemenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, ActionEvent.ALT_MASK));
+		closemenu.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				closeAutoloadPanel();
+			}
+		});
+
+		fileMenu.add(closemenu);
+
+
+		JMenu editMenu = new JMenu();
+		CommonGui.localize(editMenu, "Common.Edit");
+
+		JCheckBoxMenuItem subdir = new JCheckBoxMenuItem(Resource.getString(Keys.KEY_InputDirectoriesDepth[0]));
+		subdir.setToolTipText(Resource.getString(Keys.KEY_InputDirectoriesDepth[0]) + Keys.KEY_Tip);
+		subdir.setActionCommand(Keys.KEY_InputDirectoriesDepth[0]);
+		subdir.setState(Common.getSettings().getBooleanProperty(Keys.KEY_InputDirectoriesDepth));
+		subdir.addActionListener(_BoxListener);
+
+		editMenu.add(subdir);
+
+		/**
+		 *
+		 */
+		JMenuBar menuBar = new JMenuBar();
+		menuBar.add(fileMenu);
+		menuBar.add(editMenu);
+		autoload.setJMenuBar(menuBar);
+
+
 		JPanel bb = new JPanel();
 		bb.setLayout( new ColumnLayout() );
 
@@ -2274,7 +2310,7 @@ public class MainFrame extends JPanel {
 
 		UIManager.addPropertyChangeListener(new UISwitchListener(control_2));
 
-		autoload.setBounds(200, 200, 700, 300);
+		autoload.setBounds(200, 200, 700, 350);
 	}
 
 	/**
@@ -2713,8 +2749,8 @@ public class MainFrame extends JPanel {
 
 		JPanel status_1 = new JPanel(new BorderLayout());
 		status_1.setBorder(BorderFactory.createLoweredBevelBorder());
-		status_1.setPreferredSize(new Dimension(590, 22));
-		status_1.setMaximumSize(new Dimension(590, 22));
+		status_1.setPreferredSize(new Dimension(580, 22));
+		status_1.setMaximumSize(new Dimension(580, 22));
 		status_1.add(status);
 
 		JPanel status_2 = new JPanel(new BorderLayout());

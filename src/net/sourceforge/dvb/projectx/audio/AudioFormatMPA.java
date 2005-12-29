@@ -311,67 +311,6 @@ public class AudioFormatMPA extends AudioFormat {
 		Private_bit = 0;
 	}
 
-
-	/**
-	 * mpa riff header stuff
-	 */
-	private final int[] rpadding = { 0, 1, 1, 4 };
-	private final int[] rlayer = { 0, 4, 2, 1 };
-	private final int[][] rsample = { 
-		{ 22050, 24000, 16000, 0 }, 
-		{ 44100, 48000, 32000, 0 } 
-	};
-	private final int[] rmode = { 1, 2, 4, 8 };
-	private final int[] rchnl = { 2, 2, 2, 1 };
-	private final int[] rmext = { 1, 2, 4, 8 };
-	private final int[] remph = { 1, 2, 3, 4 };
-	private final int[][][] rbitrate = {
-		{ {  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
-		{  0,8000,16000,24000,32000,40000,48000,56000,64000,80000,96000,112000,128000,144000,160000,0  },
-		{  0,8000,16000,24000,32000,40000,48000,56000,64000,80000,96000,112000,128000,144000,160000,0  },
-		{  0,32000,48000,56000,64000,80000,96000,112000,128000,144000,160000,176000,192000,224000,256000,0 } },
-		{ {  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
-		{  0,32000,40000,48000,56000,64000,80000,96000,112000,128000,160000,192000,224000,256000,320000,0  },
-		{  0,32000,48000,56000,64000,80000,96000,112000,128000,160000,192000,224000,256000,320000,384000,0  },
-		{  0,32000,64000,96000,128000,160000,192000,224000,256000,288000,320000,352000,384000,416000,448000,0 } }
-	};
-
-
-	/**
-	 * riffdata from mpeg audio
-	 * awaiting a frame byte array, only the header is used
-	 */
-	public int[] parseRiffData(byte[] rh)
-	{
-		int[] riffdata = new int[10];
-
-		// fwHeadFlags
-		riffdata[0] = (8 & rh[1])<<1 | (1 & rh[1])<<3 | (4 & rh[3]) | (8 & rh[3])>>>2 | (1 & rh[2]);
-		// fwHeadLayer
-		riffdata[1] = rlayer[(6 & rh[1])>>>1];
-		// nSamplesPerSec
-		riffdata[2] = rsample[(8 & rh[1])>>>3][(0xC & rh[2])>>>2];
-		// fwHeadMode
-		riffdata[3] = rmode[(0xC0 & rh[3])>>>6];
-		// nChannels
-		riffdata[4] = rchnl[(0xC0 & rh[3])>>>6];
-		// fwHeadModeExt
-		riffdata[5] = rmext[(0x30 & rh[3])>>>4];
-		// dwHeadBitrate
-		riffdata[6] = rbitrate[(8 & rh[1])>>>3][(6 & rh[1])>>>1][(0xF0 & rh[2])>>>4];
-		// wHeadEmphasis
-		riffdata[7] = remph[(3 & rh[3])];
-		// nBlockAlign
-		riffdata[8] = riffdata[1] == 1 ? 4 * (12 * riffdata[6] / riffdata[2]) :  144 * riffdata[6] / riffdata[2];
-		riffdata[8] /= ( (8 & rh[1]) == 0 && (6 & rh[1]) == 1 ) ? 2 : 1 ;
-
-		if ((2 & rh[2]) != 0) 
-			riffdata[8] += rpadding[(6 & rh[1])>>>1];
-
-		return riffdata;
-	}
-
-
 	/**
 	 * 
 	 */
@@ -403,7 +342,7 @@ public class AudioFormatMPA extends AudioFormat {
 			int table_alloc[][];
 			int allocation[][] = new int[32][2];
 
-			if (super.ID==1)
+			if (ID==1)
 			{
 				if (Sblimit > 20)
 				{
@@ -497,6 +436,67 @@ public class AudioFormatMPA extends AudioFormat {
 
 		return Val;
 	}
+
+
+	/**
+	 * mpa riff header stuff
+	 */
+	private final int[] rpadding = { 0, 1, 1, 4 };
+	private final int[] rlayer = { 0, 4, 2, 1 };
+	private final int[][] rsample = { 
+		{ 22050, 24000, 16000, 0 }, 
+		{ 44100, 48000, 32000, 0 } 
+	};
+	private final int[] rmode = { 1, 2, 4, 8 };
+	private final int[] rchnl = { 2, 2, 2, 1 };
+	private final int[] rmext = { 1, 2, 4, 8 };
+	private final int[] remph = { 1, 2, 3, 4 };
+	private final int[][][] rbitrate = {
+		{ {  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
+		{  0,8000,16000,24000,32000,40000,48000,56000,64000,80000,96000,112000,128000,144000,160000,0  },
+		{  0,8000,16000,24000,32000,40000,48000,56000,64000,80000,96000,112000,128000,144000,160000,0  },
+		{  0,32000,48000,56000,64000,80000,96000,112000,128000,144000,160000,176000,192000,224000,256000,0 } },
+		{ {  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
+		{  0,32000,40000,48000,56000,64000,80000,96000,112000,128000,160000,192000,224000,256000,320000,0  },
+		{  0,32000,48000,56000,64000,80000,96000,112000,128000,160000,192000,224000,256000,320000,384000,0  },
+		{  0,32000,64000,96000,128000,160000,192000,224000,256000,288000,320000,352000,384000,416000,448000,0 } }
+	};
+
+
+	/**
+	 * riffdata from mpeg audio
+	 * awaiting a frame byte array, only the header is used
+	 */
+	public int[] parseRiffData(byte[] rh)
+	{
+		int[] riffdata = new int[10];
+
+		// fwHeadFlags
+		riffdata[0] = (8 & rh[1])<<1 | (1 & rh[1])<<3 | (4 & rh[3]) | (8 & rh[3])>>>2 | (1 & rh[2]);
+		// fwHeadLayer
+		riffdata[1] = rlayer[(6 & rh[1])>>>1];
+		// nSamplesPerSec
+		riffdata[2] = rsample[(8 & rh[1])>>>3][(0xC & rh[2])>>>2];
+		// fwHeadMode
+		riffdata[3] = rmode[(0xC0 & rh[3])>>>6];
+		// nChannels
+		riffdata[4] = rchnl[(0xC0 & rh[3])>>>6];
+		// fwHeadModeExt
+		riffdata[5] = rmext[(0x30 & rh[3])>>>4];
+		// dwHeadBitrate
+		riffdata[6] = rbitrate[(8 & rh[1])>>>3][(6 & rh[1])>>>1][(0xF0 & rh[2])>>>4];
+		// wHeadEmphasis
+		riffdata[7] = remph[(3 & rh[3])];
+		// nBlockAlign
+		riffdata[8] = riffdata[1] == 1 ? 4 * (12 * riffdata[6] / riffdata[2]) :  144 * riffdata[6] / riffdata[2];
+		riffdata[8] /= ( (8 & rh[1]) == 0 && (6 & rh[1]) == 1 ) ? 2 : 1 ;
+
+		if ((2 & rh[2]) != 0) 
+			riffdata[8] += rpadding[(6 & rh[1])>>>1];
+
+		return riffdata;
+	}
+
 
 	/**
 	 * RDS-Test, cant find any similars to RDS, I-RDS, RBDS i.e. group/block coding
