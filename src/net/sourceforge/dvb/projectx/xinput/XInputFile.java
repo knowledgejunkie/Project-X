@@ -75,7 +75,10 @@ public class XInputFile implements XInputFileIF {
 			constructorParameter = impl.getConstructorParameter();
 
 		XInputFile xif = new XInputFile(constructorParameter);
-//
+
+		if (xif.getImpl() == null)
+			return null;
+
 		/**
 		 * copy already parsed streaminfo
 		 */
@@ -143,8 +146,9 @@ public class XInputFile implements XInputFileIF {
 			if (debug)
 					System.out.println("Leave XInputFile.retrieveImplementation(Class[] parameterTypes, Object[] parameterValues)");
 
+			//throw new IllegalArgumentException("No matching FileType found or file doesn't exist");
+			Common.setErrorMessage("No matching FileType found or file doesn't exist: '" + parameterValues[0] + "'");
 			Common.setExceptionMessage(e);
-			throw new IllegalArgumentException("No matching FileType found or file doesn't exist");
 		}
 	}
 
@@ -539,12 +543,21 @@ public class XInputFile implements XInputFileIF {
 		return s;
 	}
 
+	/*
+	 * 
+	 */
+	public XInputFileIF getImpl()
+	{
+		return impl;
+	}
+
 	/**
 	 *
 	 */
 	public void setStreamInfo(StreamInfo _streamInfo)
 	{
-		impl.setStreamInfo(_streamInfo);
+		if (impl != null)
+			impl.setStreamInfo(_streamInfo);
 	}
 
 	/**
@@ -552,7 +565,7 @@ public class XInputFile implements XInputFileIF {
 	 */
 	public StreamInfo getStreamInfo()
 	{
-		return impl.getStreamInfo();
+		return (impl != null ? impl.getStreamInfo() : null);
 	}
 
 }

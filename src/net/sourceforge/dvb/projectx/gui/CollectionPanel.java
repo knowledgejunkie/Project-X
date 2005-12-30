@@ -680,6 +680,7 @@ public class CollectionPanel extends JPanel {
 		panel.setLayout (new ColumnLayout());
 
 		String[][] objects = {
+			Keys.KEY_Preview_disable,
 			Keys.KEY_Preview_fastDecode,
 			Keys.KEY_Preview_LiveUpdate,
 			Keys.KEY_Preview_AllGops,
@@ -700,7 +701,7 @@ public class CollectionPanel extends JPanel {
 			box[i].addActionListener(_CheckBoxListener);
 		}
 
-		for (int i = 0; i < 3; i++)
+		for (int i = 0; i < 4; i++)
 			panel.add(box[i]);
 
 		panel.add(Box.createRigidArea(new Dimension(1, 4)));
@@ -714,9 +715,9 @@ public class CollectionPanel extends JPanel {
 		JPanel CL2 = new JPanel();
 		CL2.setLayout(new BoxLayout(CL2, BoxLayout.X_AXIS));
 
-		box[3].setPreferredSize(new Dimension(110, 20));
-		box[3].setMaximumSize(new Dimension(110, 20));
-		CL2.add(box[3]);  
+		box[4].setPreferredSize(new Dimension(110, 20));
+		box[4].setMaximumSize(new Dimension(110, 20));
+		CL2.add(box[4]);  
 
 
 		JComboBox combobox_34 = new JComboBox(Keys.ITEMS_ExportHorizontalResolution);
@@ -738,9 +739,9 @@ public class CollectionPanel extends JPanel {
 		JPanel CL3 = new JPanel();
 		CL3.setLayout(new BoxLayout(CL3, BoxLayout.X_AXIS));
 
-		box[4].setPreferredSize(new Dimension(80, 20));
-		box[4].setMaximumSize(new Dimension(80, 20));
-		CL3.add(box[4]);  
+		box[5].setPreferredSize(new Dimension(80, 20));
+		box[5].setMaximumSize(new Dimension(80, 20));
+		CL3.add(box[5]);  
 
 		JComboBox combobox_24 = new JComboBox(Keys.ITEMS_ExportDAR);
 		combobox_24.setMaximumRowCount(7);
@@ -779,8 +780,8 @@ public class CollectionPanel extends JPanel {
 		CL4.add(new JLabel("=>"));
 
 		JScrollPane scrollList = new JScrollPane();
-		scrollList.setPreferredSize(new Dimension(80, 110));
-		scrollList.setMaximumSize(new Dimension(80, 110));
+		scrollList.setPreferredSize(new Dimension(80, 100));
+		scrollList.setMaximumSize(new Dimension(80, 100));
 		scrollList.setViewportView(includeList);
 		CL4.add(scrollList);
 
@@ -1678,10 +1679,16 @@ public class CollectionPanel extends JPanel {
 		int size = input_files.size();
 		int primaryFilesCount = 1;
 
+		if (Common.getSettings().getBooleanProperty(Keys.KEY_Preview_disable))
+			size = 0;
+
 		filesearch:
 		for (int a = 0, b = -1, type = -1; a < size; a++)
 		{
 			XInputFile xInputFile = ((XInputFile) input_files.get(a)).getNewInstance();
+
+			if (xInputFile == null)
+				continue;
 
 			if (xInputFile.getStreamInfo() == null)
 				Common.getScanClass().getStreamInfo(xInputFile); //note: is a new instance

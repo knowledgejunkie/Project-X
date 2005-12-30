@@ -188,6 +188,7 @@ danach:
 --autoload, optionale subfolder expansion
 --ttx special page termination (some dvb-t fi ttx)
 --fehlermeldung wenn datei im hintergrund entfernt wurde
+--vorschau abschalbar
 
 !-extra einstellungen für coll übernehmen, wird nur gelesen bei mainprocessing, vorbereitet
 !!-auto split mpa, wenn dual detektiert

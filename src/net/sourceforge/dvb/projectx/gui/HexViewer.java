@@ -463,7 +463,7 @@ public class HexViewer extends JFrame {
 
 		if ((xinputFile == null) || !(xinputFile.equals(aXInputFile)))
 		{
-			xinputFile = aXInputFile.getNewInstance();
+			xinputFile = aXInputFile;
 
 			HexArea.setText("");
 			slider.setMaximum((int)(filelen / 16));

@@ -296,6 +296,7 @@ public class Keys extends Object {
 
 	public static Object[] ITEMS_resampleAudioMode = null;
 
+	public final static String[] KEY_Preview_disable = { "CollectionPanel.Preview.disable", "0" }; 
 	public final static String[] KEY_Preview_fastDecode = { "CollectionPanel.Preview.fastDecode", "0" }; //rbutton[10] 
 	public final static String[] KEY_Preview_LiveUpdate = { "CollectionPanel.Preview.LiveUpdate", "1" }; //rbutton[16] 
 	public final static String[] KEY_Preview_AllGops = { "CollectionPanel.Preview.AllGops", "0" }; //rbutton[6] 

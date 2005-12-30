@@ -418,9 +418,9 @@ public class MainFrame extends JPanel {
 
 				JobCollection collection = Common.getCollection();
 
-				XInputFile xInputFile = (XInputFile) collection.getInputFile(index);
+				XInputFile xInputFile = ((XInputFile) collection.getInputFile(index)).getNewInstance();
 
-				if (xInputFile.exists())
+				if (xInputFile != null && xInputFile.exists())
 					new HexViewer().view(xInputFile);
 			}
 
@@ -436,15 +436,15 @@ public class MainFrame extends JPanel {
 
 				JobCollection collection = Common.getCollection();
 
-				XInputFile xInputFile = (XInputFile) collection.getInputFile(index);
+				XInputFile xInputFile = ((XInputFile) collection.getInputFile(index)).getNewInstance();
 
-				if (xInputFile.exists() && CommonGui.getUserConfirmation("really process '" + xInputFile.getName() + "' ?"))
+				if (xInputFile != null && xInputFile.exists() && CommonGui.getUserConfirmation("really process '" + xInputFile.getName() + "' ?"))
 				{
 					HpFix hpfix = new HpFix();
 
 					Common.setOSDMessage("fixing wrong Hp Ac3 File...");
 
-					xInputFile = hpfix.process(xInputFile.getNewInstance());
+					xInputFile = hpfix.process(xInputFile);
 
 					collection.removeInputFile(index);
 
@@ -470,15 +470,15 @@ public class MainFrame extends JPanel {
 
 				JobCollection collection = Common.getCollection();
 
-				XInputFile xInputFile = (XInputFile) collection.getInputFile(index);
+				XInputFile xInputFile = ((XInputFile) collection.getInputFile(index)).getNewInstance();
 
-				if (xInputFile.exists() && xInputFile.getStreamInfo().getStreamType() == CommonParsing.ES_RIFF_TYPE && CommonGui.getUserConfirmation("really process '" + xInputFile.getName() + "' ?"))
+				if (xInputFile != null && xInputFile.exists() && xInputFile.getStreamInfo().getStreamType() == CommonParsing.ES_RIFF_TYPE && CommonGui.getUserConfirmation("really process '" + xInputFile.getName() + "' ?"))
 				{
 					StripAudio stripAudio = new StripAudio();
 
 					Common.setOSDMessage("strip audio data...");
 
-					xInputFile = stripAudio.process(xInputFile.getNewInstance());
+					xInputFile = stripAudio.process(xInputFile);
 
 					collection.removeInputFile(index);
 
@@ -504,15 +504,15 @@ public class MainFrame extends JPanel {
 
 				JobCollection collection = Common.getCollection();
 
-				XInputFile xInputFile = (XInputFile) collection.getInputFile(index);
+				XInputFile xInputFile = ((XInputFile) collection.getInputFile(index)).getNewInstance();
 
-				if (xInputFile.exists() && xInputFile.getStreamInfo().getStreamType() == CommonParsing.PES_AV_TYPE && CommonGui.getUserConfirmation("really process '" + xInputFile.getName() + "' ?"))
+				if (xInputFile != null && xInputFile.exists() && xInputFile.getStreamInfo().getStreamType() == CommonParsing.PES_AV_TYPE && CommonGui.getUserConfirmation("really process '" + xInputFile.getName() + "' ?"))
 				{
 					StripRelook stripRelook = new StripRelook();
 
 					Common.setOSDMessage("strip Relook® data...");
 
-					XInputFile[] xif = stripRelook.process(xInputFile.getNewInstance(), collection.getOutputDirectory());
+					XInputFile[] xif = stripRelook.process(xInputFile, collection.getOutputDirectory());
 
 					collection.removeInputFile(index);
 

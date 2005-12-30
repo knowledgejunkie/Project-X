@@ -732,6 +732,9 @@ public class MainProcess extends Thread {
 		{
 			xInputFile = ((XInputFile) input_files.get(a)).getNewInstance();
 
+			if (xInputFile == null)
+				continue;
+
 			if (xInputFile.getStreamInfo() == null)  // should already be set
 				Common.getScanClass().getStreamInfo(xInputFile);
 

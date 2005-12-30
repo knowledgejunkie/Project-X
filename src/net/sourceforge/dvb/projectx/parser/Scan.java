@@ -1154,7 +1154,15 @@ public class Scan extends Object {
 
 			size = aXInputFile.length();
 
-			aXInputFile.getNewInstance().randomAccessSingleRead(check, position);
+			XInputFile aXif = aXInputFile.getNewInstance();
+
+			if (aXif == null)
+			{
+				check = null;
+				return CommonParsing.Unsupported;
+			}
+
+			aXif.randomAccessSingleRead(check, position);
 
 			Audio.setNewType(CommonParsing.WAV_AUDIO);
 

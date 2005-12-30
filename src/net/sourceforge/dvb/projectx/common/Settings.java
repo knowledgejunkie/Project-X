@@ -279,7 +279,7 @@ public class Settings extends Object {
 	 */
 	public void removeInputDirectory(int index)
 	{
-		if (index < 0 || input_directories.size() < index - 1)
+		if (index < 0 || input_directories.isEmpty() || input_directories.size() <= index)
 			return;
 
 		input_directories.remove(index);

@@ -122,6 +122,9 @@ public class StreamParserBase extends Object {
 
 				XInputFile aXinputFile = ((XInputFile) collection.getInputFile(file_number)).getNewInstance();
 
+				if (aXinputFile == null)
+					return -1L;
+
 				data = new byte[buffersize];
 
 				aXinputFile.randomAccessSingleRead(data, startPoint);
