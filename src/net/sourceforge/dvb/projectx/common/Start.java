@@ -289,6 +289,9 @@ public class Start extends Object {
 
 					Common.startMainProcess();
 				}
+
+				else
+					System.out.println("Starting WebIF...");
 			}
 
 			else
