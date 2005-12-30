@@ -173,7 +173,6 @@ public final class VBI extends Object {
 				(0xFF & packet[offs + 11])<<8 | 
 				(0xFF & packet[offs + 12]);
 
-
 		switch (0x1F & vps_data>>>16)
 		{ 
 			case 0x1C:
@@ -199,7 +198,7 @@ public final class VBI extends Object {
 						formatString(0x3F & (vps_data>>>10)) + "  ";
 		}
 
-		vps_status += vps_sound_mode[(3 & packet[5]>>>6)] + " " + 
+		vps_status += vps_sound_mode[(3 & packet[offs + 3]>>>6)] + " " + 
 				Integer.toHexString(0xF & vps_data>>>6).toUpperCase() + " " + 
 				Integer.toHexString(0x3F & vps_data).toUpperCase();
 
