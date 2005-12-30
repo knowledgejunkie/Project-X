@@ -187,7 +187,7 @@ danach:
 --falsche pts-prüfung bei cell-id wechsel in mehr als 1 vob segmenten
 --autoload, optionale subfolder expansion
 --ttx special page termination (some dvb-t fi ttx)
-
+--fehlermeldung wenn datei im hintergrund entfernt wurde
 
 !-extra einstellungen für coll übernehmen, wird nur gelesen bei mainprocessing, vorbereitet
 !!-auto split mpa, wenn dual detektiert
