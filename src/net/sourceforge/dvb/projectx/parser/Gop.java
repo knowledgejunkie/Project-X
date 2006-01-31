@@ -1,7 +1,7 @@
 /*
  * @(#)Gop
  *
- * Copyright (c) 2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2006 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -42,6 +42,7 @@ import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Keys;
 import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.common.JobProcessing;
+import net.sourceforge.dvb.projectx.common.JobCollection;
 
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
 import net.sourceforge.dvb.projectx.video.Video;
@@ -91,43 +92,43 @@ public class Gop extends Object {
 
 	private JobProcessing job_processing;
 
-	public Gop()
+	public Gop(JobCollection collection)
 	{
-		getSettings();
+		getSettings(collection);
 	}
 
-	private void getSettings()
+	private void getSettings(JobCollection collection)
 	{
-		Debug = Common.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
-		CreateD2vIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
-		SplitProjectFile = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
-		AddSequenceHeader = Common.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_addSequenceHeader);
-		Message_3 = Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg3);
-		AddSequenceDisplayExension = Common.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_addSde);
-		PatchToProgressive = Common.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_patchToProgressive); 
-		PatchToInterlaced = Common.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_patchToInterlaced); 
-		ToggleFieldorder = Common.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_toggleFieldorder);
-		ClearCDF = Common.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_clearCDF);
-		Save1stFrameOfGop = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_save1stFrameOfGop);
-		Preview_AllGops = Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops);
-		Preview_fastDecode = Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode);
-		TrimPts = Common.getSettings().getBooleanProperty(Keys.KEY_Video_trimPts);
-		IgnoreErrors = Common.getSettings().getBooleanProperty(Keys.KEY_Video_ignoreErrors);
-		OptionDAR = Common.getSettings().getBooleanProperty(Keys.KEY_OptionDAR);
-		OptionHorizontalResolution = Common.getSettings().getBooleanProperty(Keys.KEY_OptionHorizontalResolution);
-		WriteVideo = Common.getSettings().getBooleanProperty(Keys.KEY_WriteOptions_writeVideo);
-		InsertEndcode = Common.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_insertEndcode);
-		DumpDroppedGop = Common.getSettings().getBooleanProperty(Keys.KEY_dumpDroppedGop);
+		Debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
+		CreateD2vIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
+		SplitProjectFile = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
+		AddSequenceHeader = collection.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_addSequenceHeader);
+		Message_3 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg3);
+		AddSequenceDisplayExension = collection.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_addSde);
+		PatchToProgressive = collection.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_patchToProgressive); 
+		PatchToInterlaced = collection.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_patchToInterlaced); 
+		ToggleFieldorder = collection.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_toggleFieldorder);
+		ClearCDF = collection.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_clearCDF);
+		Save1stFrameOfGop = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_save1stFrameOfGop);
+		Preview_AllGops = collection.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops);
+		Preview_fastDecode = collection.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode);
+		TrimPts = collection.getSettings().getBooleanProperty(Keys.KEY_Video_trimPts);
+		IgnoreErrors = collection.getSettings().getBooleanProperty(Keys.KEY_Video_ignoreErrors);
+		OptionDAR = collection.getSettings().getBooleanProperty(Keys.KEY_OptionDAR);
+		OptionHorizontalResolution = collection.getSettings().getBooleanProperty(Keys.KEY_OptionHorizontalResolution);
+		WriteVideo = collection.getSettings().getBooleanProperty(Keys.KEY_WriteOptions_writeVideo);
+		InsertEndcode = collection.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_insertEndcode);
+		DumpDroppedGop = collection.getSettings().getBooleanProperty(Keys.KEY_dumpDroppedGop);
 
-		ChangeBitrateInAllSequences = Common.getSettings().getIntProperty(Keys.KEY_ChangeBitrateInAllSequences);
-		ChangeVbvDelay = Common.getSettings().getIntProperty(Keys.KEY_ChangeVbvDelay);
-		CutMode = Common.getSettings().getIntProperty(Keys.KEY_CutMode);
-		ExportDAR = Common.getSettings().getIntProperty(Keys.KEY_ExportDAR);
-		ChangeAspectRatio = Common.getSettings().getIntProperty(Keys.KEY_ChangeAspectRatio);
-		ChangeVbvBuffer = Common.getSettings().getIntProperty(Keys.KEY_ChangeVbvBuffer);
+		ChangeBitrateInAllSequences = collection.getSettings().getIntProperty(Keys.KEY_ChangeBitrateInAllSequences);
+		ChangeVbvDelay = collection.getSettings().getIntProperty(Keys.KEY_ChangeVbvDelay);
+		CutMode = collection.getSettings().getIntProperty(Keys.KEY_CutMode);
+		ExportDAR = collection.getSettings().getIntProperty(Keys.KEY_ExportDAR);
+		ChangeAspectRatio = collection.getSettings().getIntProperty(Keys.KEY_ChangeAspectRatio);
+		ChangeVbvBuffer = collection.getSettings().getIntProperty(Keys.KEY_ChangeVbvBuffer);
 
-		ExportHorizontalResolution = Common.getSettings().getProperty(Keys.KEY_ExportHorizontalResolution);
-		SDE_Value = Common.getSettings().getProperty(Keys.KEY_VideoPanel_SdeValue);
+		ExportHorizontalResolution = collection.getSettings().getProperty(Keys.KEY_ExportHorizontalResolution);
+		SDE_Value = collection.getSettings().getProperty(Keys.KEY_VideoPanel_SdeValue);
 	}
 
 
@@ -513,7 +514,7 @@ public class Gop extends Object {
 				/**
 				 * action on next found startcode
 				 */
-				if (pD_marker > -1 && Common.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_clearCDF))
+				if (pD_marker > -1 && ClearCDF)
 				{
 					Arrays.fill( gop, pD_marker, s, (byte)0); //clear privare data on behalf of cdf flag setting
 
@@ -1236,24 +1237,28 @@ public class Gop extends Object {
 					job_processing.getProjectFileD2V().addGOP(job_processing.getProjectFileExportLength(), newframes);
 
 					/**
-					 * if write is enabled, write gop
+					 * add SEC on a change of basic data
 					 */
-					if (WriteVideo)
-					{ 
-						/**
-						 * add SEC on a change of basic data
-						 */
-						if (format_changed && InsertEndcode)
+					if (format_changed && InsertEndcode)
+					{
+						if (WriteVideo)
 						{
 							video_sequence.write(Video.getSequenceEndCode());
 
 							job_processing.countMediaFilesExportLength(+4);
 							job_processing.countAllMediaFilesExportLength(+4);
 							job_processing.countProjectFileExportLength(+4);
-
-							job_processing.addCellTime(String.valueOf(job_processing.getExportedVideoFrameNumber()));
 						}
 
+						job_processing.addCellTime(String.valueOf(job_processing.getExportedVideoFrameNumber()));
+						Common.setMessage("-> save ChapterFrameIndex: " + job_processing.getExportedVideoFrameNumber());
+					}
+
+					/**
+					 * if write is enabled, write gop
+					 */
+					if (WriteVideo)
+					{ 
 						/**
 						 * add SDE, mpeg2 only
 						 */
@@ -1277,13 +1282,13 @@ public class Gop extends Object {
 
 						job_processing.countMediaFilesExportLength(gop.length);
 
-						if (ChapterpointList.indexOf(String.valueOf(cutposition)) >= 0)
-						{
-							job_processing.addCellTime(String.valueOf(job_processing.getExportedVideoFrameNumber()));
-							Common.setMessage("-> save ChapterFrameIndex: " + job_processing.getExportedVideoFrameNumber());
-						}
-
 						doExport = true;
+					}
+
+					if (ChapterpointList.indexOf(String.valueOf(cutposition)) >= 0)
+					{
+						job_processing.addCellTime(String.valueOf(job_processing.getExportedVideoFrameNumber()));
+						Common.setMessage("-> save ChapterFrameIndex: " + job_processing.getExportedVideoFrameNumber());
 					}
 
 					job_processing.countProjectFileExportLength(gop.length);

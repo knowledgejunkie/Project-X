@@ -1,7 +1,7 @@
 /*
  * @(#)PicturePanel
  * 
- * Copyright (c) 2003-2005 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2003-2006 by dvb.matt, All Rights Reserved. 
  *
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -290,13 +290,18 @@ public class PicturePanel extends JPanel {
 		g.setColor(Color.black);
 		g.fillRect(0, 0, 600, 600);
 
-		g.drawImage(image, 0, 0, this);
+		g.setColor(new Color(0, 35, 110));
+		g.fillRect(0, 290, 514, 340);
+
+		paintOutline(g);
+
+		g.drawImage(image, 2, 2, this);
 
 		g.setFont(font_1);
 
 		g.setColor(Color.white);
-		g.drawString(Common.getMpvDecoderClass().getInfo_1(), 36, 301);
-		g.drawString(Common.getMpvDecoderClass().getInfo_2(), 36, 316);
+		g.drawString(Common.getMpvDecoderClass().getInfo_1(), 36, 303);
+		g.drawString(Common.getMpvDecoderClass().getInfo_2(), 36, 317);
 
 		paintWSSInfo(g);
 		paintErrorInfo(g);
@@ -311,6 +316,30 @@ public class PicturePanel extends JPanel {
 		paintFileInfo(g);
 
 		paintCollectionNumber(g);
+	}
+
+	/**
+	 * paint 
+	 */
+	private void paintOutline(Graphics g)
+	{
+		Color line_1 = new Color(191, 191, 191);
+		Color line_2 = new Color(255, 255, 255);
+		Color line_3 = new Color(151, 151, 151);
+
+		g.setColor(line_3);
+		g.drawLine(1, 1, 514, 1);
+		g.drawLine(1, 1, 1, 400);
+
+		g.setColor(line_1);
+		g.drawLine(2, 290, 514, 290);
+		g.drawLine(514, 2, 514, 400);
+
+		g.setColor(line_2);
+		g.drawLine(0, 0, 515, 0);
+		g.drawLine(0, 0, 0, 400);
+		g.drawLine(0, 291, 515, 291);
+		g.drawLine(515, 0, 515, 400);
 	}
 
 	/**
@@ -637,7 +666,7 @@ public class PicturePanel extends JPanel {
 		if (!isSubpictureAvailable)
 			return;
 
-		g.drawImage(SubpictureImage, 64, 0, this);
+		g.drawImage(SubpictureImage, 66, 2, this);
 	}
 
 	/**

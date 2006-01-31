@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParser
  *
- * Copyright (c) 2005 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2006 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -102,15 +102,15 @@ public class StreamParserPVA extends StreamParserBase {
 		 */
 		fparent += job_processing.getSplitSize() > 0 ? "(" + job_processing.getSplitPart() + ")" : "" ;
 
-		boolean Message_1 = Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg1);
-		boolean Message_2 = Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
-		boolean ConformAudioCheck = Common.getSettings().getBooleanProperty(Keys.KEY_PVA_Audio);
-		boolean Debug = collection.DebugMode();
-		boolean OverlapCheck = Common.getSettings().getBooleanProperty(Keys.KEY_PVA_FileOverlap);
-		boolean Concatenate = Common.getSettings().getBooleanProperty(Keys.KEY_Input_concatenateForeignRecords);
-		boolean CreateD2vIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
-		boolean SplitProjectFile = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
-		boolean Overlap = Common.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
+		boolean Message_1 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg1);
+		boolean Message_2 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
+		boolean ConformAudioCheck = collection.getSettings().getBooleanProperty(Keys.KEY_PVA_Audio);
+		boolean Debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
+		boolean OverlapCheck = collection.getSettings().getBooleanProperty(Keys.KEY_PVA_FileOverlap);
+		boolean Concatenate = collection.getSettings().getBooleanProperty(Keys.KEY_Input_concatenateForeignRecords);
+		boolean CreateD2vIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
+		boolean SplitProjectFile = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
+		boolean Overlap = collection.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
 
 		boolean containsPts = false;
 		boolean ende = false;
@@ -127,8 +127,8 @@ public class StreamParserPVA extends StreamParserBase {
 		byte[] new_pes_packetheader = { 0, 0, 1, (byte)0xE0, 0, 0, (byte)0x80, 0, 0 };
 		byte[] new_pes_packetheader_and_pts = { 0, 0, 1, (byte)0xE0, 0, 0, (byte)0x80, (byte)0x80, 5, 0, 0, 0, 0, 0 };
 
-		int Infoscan_Value = Integer.parseInt(Common.getSettings().getProperty(Keys.KEY_ExportPanel_Infoscan_Value));
-		int CutMode = Common.getSettings().getIntProperty(Keys.KEY_CutMode);
+		int Infoscan_Value = Integer.parseInt(collection.getSettings().getProperty(Keys.KEY_ExportPanel_Infoscan_Value));
+		int CutMode = collection.getSettings().getIntProperty(Keys.KEY_CutMode);
 		int pva_pid;
 		int ptsflag;
 		int pva_packetoffset;
@@ -153,7 +153,7 @@ public class StreamParserPVA extends StreamParserBase {
 		long base;
 		long startPoint = 0;
 		long starts[] = new long[collection.getPrimaryInputFileSegments()];
-		long Overlap_Value = 1048576L * (Common.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1);
+		long Overlap_Value = 1048576L * (collection.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1);
 		long qexit;
 
 	
@@ -486,7 +486,7 @@ public class StreamParserPVA extends StreamParserBase {
 					clv[5]++;
 
 					if (Debug) 
-						System.out.print("\r" + Resource.getString("parsePVA.packs") + clv[5] + " " + ((count * 100 / size)) + "% " + count);
+						System.out.println(Resource.getString("parsePVA.packs") + clv[5] + " /pid " + pva_pid + " @ " + ((count * 100 / size)) + "% " + count);
 
 					count += pva_headerlength;
 

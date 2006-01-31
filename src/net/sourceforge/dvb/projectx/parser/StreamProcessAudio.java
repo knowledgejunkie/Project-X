@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParser
  *
- * Copyright (c) 2005 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2006 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -91,8 +91,8 @@ public class StreamProcessAudio extends StreamProcessBase {
 	{
 		Common.updateProgressBar(Resource.getString("audio.progress") + "  " + xInputFile.getName(), 0, 0);
 
-		boolean Normalize = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_Normalize);
-		boolean DecodeMpgAudio = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_decodeMpgAudio);
+		boolean Normalize = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_Normalize);
+		boolean DecodeMpgAudio = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_decodeMpgAudio);
 
 		if (MPAConverter == null)
 			MPAConverter = new MpaConverter();
@@ -102,7 +102,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 		MpaDecoder.RESET = false;
 
-		MpaDecoder.MAX_VALUE = Normalize ? (Integer.parseInt(Common.getSettings().getProperty(Keys.KEY_AudioPanel_NormalizeValue)) * 32767 / 100) : 32767;
+		MpaDecoder.MAX_VALUE = Normalize ? (Integer.parseInt(collection.getSettings().getProperty(Keys.KEY_AudioPanel_NormalizeValue)) * 32767 / 100) : 32767;
 		MpaDecoder.MULTIPLY = Normalize ? 32767 : 1;
 		MpaDecoder.NORMALIZE = Normalize;
 		MpaDecoder.PRESCAN = MpaDecoder.NORMALIZE;
@@ -116,7 +116,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 		/**
 		 * messages
 		 */
-		int MpaConversionMode = Common.getSettings().getIntProperty(Keys.KEY_AudioPanel_loslessMpaConversionMode);
+		int MpaConversionMode = collection.getSettings().getIntProperty(Keys.KEY_AudioPanel_loslessMpaConversionMode);
 
 		if (MpaConversionMode > 0)
 			Common.setMessage(Resource.getString("audio.convert") + " " + Keys.ITEMS_loslessMpaConversionMode[MpaConversionMode]);
@@ -124,21 +124,21 @@ public class StreamProcessAudio extends StreamProcessBase {
 		if (DecodeMpgAudio)
 		{
 			Common.setMessage(Resource.getString("audio.decode"));
-			Common.setMessage("\t" + Keys.ITEMS_resampleAudioMode[Common.getSettings().getIntProperty(Keys.KEY_AudioPanel_resampleAudioMode)]);
+			Common.setMessage("\t" + Keys.ITEMS_resampleAudioMode[collection.getSettings().getIntProperty(Keys.KEY_AudioPanel_resampleAudioMode)]);
 
 			if (Normalize)
 				Common.setMessage("\t" + Resource.getString(Keys.KEY_AudioPanel_Normalize[0]) + " " + (100 * MpaDecoder.MAX_VALUE / 32767) + "%");
 
-			if (Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_Downmix))
+			if (collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_Downmix))
 				Common.setMessage("\t" + Resource.getString(Keys.KEY_AudioPanel_Downmix[0]));
 	
-			if (Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_changeByteorder))
+			if (collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_changeByteorder))
 				Common.setMessage("\t" + Resource.getString(Keys.KEY_AudioPanel_changeByteorder[0]));
 
-			if (Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addRiffHeader))
+			if (collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addRiffHeader))
 				Common.setMessage("\t" + Resource.getString(Keys.KEY_AudioPanel_addRiffHeader[0]));
 
-			if (Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addAiffHeader))
+			if (collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addAiffHeader))
 				Common.setMessage("\t" + Resource.getString(Keys.KEY_AudioPanel_addAiffHeader[0]));
 		}
 
@@ -184,27 +184,28 @@ public class StreamProcessAudio extends StreamProcessBase {
 		String newnameL = fparent + ".$mpL$";
 		String newnameR = fparent + ".$mpR$";
 
-		boolean CreateM2sIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createM2sIndex);
-		boolean AddRiffToMpgAudioL3 = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addRiffToMpgAudioL3);
-		boolean AddRiffToMpgAudio = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addRiffToMpgAudio);
-		boolean AddRiffToAc3 = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addRiffToAc3);
-		boolean Message_2 = Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
-		boolean PitchAudio = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_pitchAudio);
-		boolean AllowSpaces = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_allowSpaces);
-		boolean ValidateCRC = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_validateCRC);
-		boolean ReplaceAc3withSilence = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_replaceAc3withSilence);
-		boolean Patch1stAc3Header = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_patch1stAc3Header);
-		boolean FillGapsWithLastFrame = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_fillGapsWithLastFrame);
-		boolean LimitPts = Common.getSettings().getBooleanProperty(Keys.KEY_Audio_limitPts);
-		boolean AddFrames = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addFrames);
-		boolean DownMix = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_Downmix);
-		boolean ChangeByteorder = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_changeByteorder);
-		boolean AddRiffHeader = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addRiffHeader);
-		boolean AddAiffHeader = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addAiffHeader);
-		boolean DecodeMpgAudio = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_decodeMpgAudio);
-		boolean ClearCRC = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_clearCRC);
-		boolean IgnoreErrors = Common.getSettings().getBooleanProperty(Keys.KEY_Audio_ignoreErrors);
-		boolean CreateDDWave = Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_createDDWave);
+		boolean Debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
+		boolean CreateM2sIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createM2sIndex);
+		boolean AddRiffToMpgAudioL3 = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addRiffToMpgAudioL3);
+		boolean AddRiffToMpgAudio = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addRiffToMpgAudio);
+		boolean AddRiffToAc3 = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addRiffToAc3);
+		boolean Message_2 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
+		boolean PitchAudio = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_pitchAudio);
+		boolean AllowSpaces = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_allowSpaces);
+		boolean ValidateCRC = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_validateCRC);
+		boolean ReplaceAc3withSilence = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_replaceAc3withSilence);
+		boolean Patch1stAc3Header = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_patch1stAc3Header);
+		boolean FillGapsWithLastFrame = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_fillGapsWithLastFrame);
+		boolean LimitPts = collection.getSettings().getBooleanProperty(Keys.KEY_Audio_limitPts);
+		boolean AddFrames = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addFrames);
+		boolean DownMix = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_Downmix);
+		boolean ChangeByteorder = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_changeByteorder);
+		boolean AddRiffHeader = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addRiffHeader);
+		boolean AddAiffHeader = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addAiffHeader);
+		boolean DecodeMpgAudio = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_decodeMpgAudio);
+		boolean ClearCRC = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_clearCRC);
+		boolean IgnoreErrors = collection.getSettings().getBooleanProperty(Keys.KEY_Audio_ignoreErrors);
+		boolean CreateDDWave = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_createDDWave);
 
 		/**
 		 * messages
@@ -240,8 +241,8 @@ public class StreamProcessAudio extends StreamProcessBase {
 			Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_createDDWave[0]));
 
 
-		int ResampleAudioMode = Common.getSettings().getIntProperty(Keys.KEY_AudioPanel_resampleAudioMode);
-		int PitchValue = Integer.parseInt(Common.getSettings().getProperty(Keys.KEY_AudioPanel_PitchValue));
+		int ResampleAudioMode = collection.getSettings().getIntProperty(Keys.KEY_AudioPanel_resampleAudioMode);
+		int PitchValue = Integer.parseInt(collection.getSettings().getProperty(Keys.KEY_AudioPanel_PitchValue));
 
 		boolean ptsdata = false;
 		boolean vptsdata = false;
@@ -249,7 +250,6 @@ public class StreamProcessAudio extends StreamProcessBase {
 		boolean awrite = false;
 		boolean preloop = true;
 		boolean newformat = true;
-		boolean Debug = collection.DebugMode();
 		boolean missing_syncword = false;
 		boolean is_DTS = false;
 		boolean is_AC3 = false;
@@ -884,7 +884,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 							Common.setMessage(Resource.getString("audio.msg.source", hdr) + " " + str);
 
-							if (Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createChapters))
+							if (collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createChapters))
 								job_processing.getChapters().addChapter(str, hdr);
 						}
 
@@ -1244,7 +1244,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 				}
 
 				if (es_streamtype == CommonParsing.MPEG_AUDIO)  // audio is global
-					audio.setAncillaryDataDecoder(Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg7), collection.DebugMode());
+					audio.setAncillaryDataDecoder(collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg7), collection.DebugMode());
 
 				/**
 				 *  MPEG1+2 Audio Layer 1,2,3
@@ -1724,7 +1724,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 							Common.setMessage(Resource.getString("audio.msg.source", audio.displayHeader()) + " " + str);
 
-							if (Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createChapters))
+							if (collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createChapters))
 								job_processing.getChapters().addChapter(str, audio.displayHeader());
 						}
 
@@ -2439,7 +2439,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 				{ ".new.ac3",".new.mp1",".new.mp2",".new.mp3",".new.dts" }
 			};
 
-			if (Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_renameAudio))
+			if (collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_renameAudio))
 			{
 				for (int g = 1; g < 4; g++)
 				{

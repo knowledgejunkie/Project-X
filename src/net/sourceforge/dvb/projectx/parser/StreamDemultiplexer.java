@@ -1,7 +1,7 @@
 /*
  * @(#)StreamDemultiplexer
  *
- * Copyright (c) 2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2006 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -482,6 +482,10 @@ public class StreamDemultiplexer extends Object {
 			case 0xA:
 				break;
 
+			case 0:
+				if (pes_isAligned && subid == 0x09)
+					break;
+
 			default:
 				if (pes_streamtype != CommonParsing.MPEG2PS_TYPE)
 					subid = 0;
@@ -613,6 +617,13 @@ public class StreamDemultiplexer extends Object {
 				pes_payloadlength -= 1; 
 			}
 
+			if (subid == 0x09)
+			{
+				offset += 4; 
+				pes_payloadlength -= 4; 
+			}
+
+
 			if (pes_payloadlength <= 0)
 				return;
 
@@ -666,7 +677,12 @@ public class StreamDemultiplexer extends Object {
 				target_position += 3;
 			}
 
-			target_position += writePacket(pes_packet, offset + pes_extensionlength, pes_payloadlength);
+			if (subid == 0x09)
+				for (int i = 0; i < pes_payloadlength; i += 3)
+					target_position += writePacket(pes_packet, offset + pes_extensionlength + i, 2);
+
+			else
+				target_position += writePacket(pes_packet, offset + pes_extensionlength, pes_payloadlength);
 
 		} catch (IOException e) { 
 

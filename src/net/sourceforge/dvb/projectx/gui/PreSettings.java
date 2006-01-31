@@ -1,7 +1,7 @@
 /*
  * @(#)PreSettings.java
  *
- * Copyright (c) 2005 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2005-2006 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -1052,11 +1052,12 @@ public class PreSettings extends JFrame {
 			Keys.KEY_SubtitlePanel_rebuildPTS,
 			Keys.KEY_SubtitlePanel_keepOriginalTimecode,
 			Keys.KEY_SubtitlePanel_exportTextAsUnicode,
-			Keys.KEY_SubtitlePanel_specialTermination,
-			Keys.KEY_SubtitlePanel_useTextOutline
+			Keys.KEY_SubtitlePanel_exportTextAsUTF8,
+			Keys.KEY_SubtitlePanel_useTextOutline,
+			Keys.KEY_SubtitlePanel_specialTermination
 		};
 
-		JCheckBox[] box = new JCheckBox[objects.length];
+		final JCheckBox[] box = new JCheckBox[objects.length];
 
 		for (int i = 0; i < objects.length; i++)
 		{
@@ -1076,6 +1077,33 @@ public class PreSettings extends JFrame {
 		panel_0.add(box[4]);
 		panel_0.add(box[5]);
 
+		//toggle action
+		ActionListener al = new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				JCheckBox checkBox = (JCheckBox)e.getSource();
+				String str = checkBox.getActionCommand();
+
+				if (str.equals(Keys.KEY_SubtitlePanel_exportTextAsUnicode[0]) && checkBox.isSelected())
+				{
+					box[5].setSelected(false);
+					Common.getSettings().setBooleanProperty(Keys.KEY_SubtitlePanel_exportTextAsUTF8[0], false);
+					return;
+				}
+
+				else if (str.equals(Keys.KEY_SubtitlePanel_exportTextAsUTF8[0]) && checkBox.isSelected())
+				{
+					box[4].setSelected(false);
+					Common.getSettings().setBooleanProperty(Keys.KEY_SubtitlePanel_exportTextAsUnicode[0], false);
+					return;
+				}
+			}
+		};
+	
+		box[4].addActionListener(al);
+		box[5].addActionListener(al);
+
+
 		panel_0.add(Box.createRigidArea(new Dimension(1, 10)));
 
 		JLabel page_decode = new JLabel(Resource.getString("SubtitlePanel.TtxPages"));
@@ -1094,7 +1122,9 @@ public class PreSettings extends JFrame {
 			Keys.KEY_SubtitlePanel_TtxPage3,
 			Keys.KEY_SubtitlePanel_TtxPage4,
 			Keys.KEY_SubtitlePanel_TtxPage5,
-			Keys.KEY_SubtitlePanel_TtxPage6
+			Keys.KEY_SubtitlePanel_TtxPage6,
+			Keys.KEY_SubtitlePanel_TtxPage7,
+			Keys.KEY_SubtitlePanel_TtxPage8
 		};
 
 		Object[] pagenumber = { "null", "149", "150", "199", "299", "599", "691", "692", "693", "694", "699", "777", "779", "784", "785", "786", "881", "882", "884", "885", "886", "887", "888", "889" };
@@ -1102,14 +1132,14 @@ public class PreSettings extends JFrame {
 		for (int i = 0; i < keys.length; i++)
 		{
 			JComboBox combobox = new JComboBox(pagenumber);
-			combobox.setPreferredSize(new Dimension(73, 22));
-			combobox.setMaximumSize(new Dimension(73, 22));
+			combobox.setPreferredSize(new Dimension(64, 22));
+			combobox.setMaximumSize(new Dimension(64, 22));
 			combobox.setEditable(true);
 			combobox.setActionCommand(keys[i][0]);
 			combobox.setSelectedItem(Common.getSettings().getProperty(keys[i]));
 			combobox.addActionListener(_ComboBoxItemListener);
 
-			if (i < 3)
+			if (i < 4)
 				panel_0_1.add(combobox);
 			else
 				panel_0_2.add(combobox);
@@ -1165,7 +1195,6 @@ public class PreSettings extends JFrame {
 		export_format_2.setActionCommand(Keys.KEY_SubtitleExportFormat_2[0]);
 		export_format_2.setSelectedItem(Common.getSettings().getProperty(Keys.KEY_SubtitleExportFormat_2));
 		export_format_2.addActionListener(_ComboBoxItemListener);
-		export_format_2.setEnabled(false);
 		panel_0_5.add(export_format_2);
 	
 		panel_0.add(panel_0_5);
@@ -1221,7 +1250,7 @@ public class PreSettings extends JFrame {
 
 		panel_1.add(panel_1_3);
 
-		panel_1.add(Box.createRigidArea(new Dimension(1, 20)));
+		panel_1.add(Box.createRigidArea(new Dimension(1, 15)));
 
 		JLabel color_model = new JLabel(Resource.getString("SubtitlePanel.Colormodel"));
 		color_model.setToolTipText(Resource.getString("SubtitlePanel.Colormodel.Tip"));
@@ -1252,6 +1281,52 @@ public class PreSettings extends JFrame {
 		panel_2_1.add(page_id);
 
 		panel_1.add(panel_2_1);
+
+		panel_1.add(Box.createRigidArea(new Dimension(1, 10)));
+		panel_1.add(new JLabel(Resource.getString("SubtitlePanel.Title")));
+
+		JPanel panel_2_2 = new JPanel();
+		panel_2_2.setLayout(new BoxLayout(panel_2_2, BoxLayout.X_AXIS));
+		panel_2_2.setToolTipText(Resource.getString("SubtitlePanel.ChangeDisplay.Tip"));
+
+		JLabel label_2_2_1 = new JLabel(Resource.getString("SubtitlePanel.ChangeDisplay"));
+		label_2_2_1.setPreferredSize(new Dimension(140, 22));
+		label_2_2_1.setMaximumSize(new Dimension(140, 22));
+		panel_2_2.add(label_2_2_1);
+
+		JComboBox display_mode = new JComboBox(Keys.ITEMS_SubtitleChangeDisplay);
+		display_mode.setPreferredSize(new Dimension(120, 22));
+		display_mode.setMaximumSize(new Dimension(120, 22));
+		display_mode.setActionCommand(Keys.KEY_SubtitleChangeDisplay[0]);
+		display_mode.setSelectedIndex(Common.getSettings().getIntProperty(Keys.KEY_SubtitleChangeDisplay));
+		display_mode.addActionListener(_ComboBoxIndexListener);
+		panel_2_2.add(display_mode);
+	
+		panel_1.add(panel_2_2);
+
+		JPanel panel_2_3 = new JPanel();
+		panel_2_3.setLayout(new BoxLayout(panel_2_3, BoxLayout.X_AXIS));
+		panel_2_3.setToolTipText(Resource.getString("SubtitlePanel.MovePosition.Tip"));
+
+		JLabel label_2_3_1 = new JLabel(Resource.getString("SubtitlePanel.MovePosition"));
+		label_2_3_1.setPreferredSize(new Dimension(140, 22));
+		label_2_3_1.setMaximumSize(new Dimension(140, 22));
+		panel_2_3.add(label_2_3_1);
+
+		JTextField position_values = new JTextField(Common.getSettings().getProperty(Keys.KEY_SubtitleMovePosition_Value));
+		position_values.setPreferredSize(new Dimension(120, 22));
+		position_values.setMaximumSize(new Dimension(120, 22));
+		position_values.setEditable(true);
+		position_values.setActionCommand(Keys.KEY_SubtitleMovePosition_Value[0]);
+		position_values.addActionListener(_TextFieldListener);
+		position_values.addKeyListener(_TextFieldKeyListener);
+		panel_2_3.add(position_values);
+	
+		panel_1.add(panel_2_3);
+
+		panel_1.add(Box.createRigidArea(new Dimension(1, 10)));
+		panel_1.add(new JLabel("Test:"));
+		panel_1.add(box[7]);
 
 		teletext.add(panel_1);
 

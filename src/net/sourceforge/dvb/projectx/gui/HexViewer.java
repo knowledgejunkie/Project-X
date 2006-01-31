@@ -54,6 +54,7 @@ import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
 
 import net.sourceforge.dvb.projectx.gui.CommonGui;
+import net.sourceforge.dvb.projectx.gui.ColumnLayout;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -68,7 +69,7 @@ public class HexViewer extends JFrame {
 	private JTextField Field, Field1, from, fsize;
 	private JScrollPane scroll;
 	private JViewport viewport;
-	private JLabel flen, hexn;
+	private JLabel flen, hexn, decn;
 	private JSlider slider;
 	private JFileChooser chooser;
 
@@ -103,7 +104,7 @@ public class HexViewer extends JFrame {
 		scroll = new JScrollPane();
 		HexArea = new JTextArea();
 		HexArea.setFont(new Font("Courier New", Font.PLAIN, 12));
-		HexArea.setEditable(true);
+		HexArea.setEditable(false);
 		HexArea.setRows(24);
 		HexArea.setTabSize(12);
 
@@ -135,20 +136,35 @@ public class HexViewer extends JFrame {
 		Field1.setMaximumSize(new Dimension(100,25));
 		Field1.setEditable(true);
 
+		decn = new JLabel("= dec: ");
+		decn.setPreferredSize(new Dimension(120,25));
+		decn.setMaximumSize(new Dimension(120,25));
+
 		JPanel container = new JPanel();
 		container.setLayout( new BorderLayout() );
 
+		JPanel menu_1 = new JPanel();
+		menu_1.setLayout( new BoxLayout(menu_1, BoxLayout.X_AXIS ));
+		menu_1.setToolTipText(Resource.getString("hexviewer.jumpto_tip"));
+		menu_1.add(new JLabel(Resource.getString("hexviewer.jumptodec")));
+		menu_1.add(Field);
+		menu_1.add(hexn);
+
+		JPanel menu_2 = new JPanel();
+		menu_2.setLayout( new BoxLayout(menu_2, BoxLayout.X_AXIS ));
+		menu_2.setToolTipText(Resource.getString("hexviewer.jumpto_tip"));
+		menu_2.add(new JLabel(Resource.getString("hexviewer.jumptohex")));
+		menu_2.add(Field1);
+		menu_2.add(decn);
+
 		JPanel menu = new JPanel();
-		menu.setLayout( new BoxLayout(menu,BoxLayout.X_AXIS ));
-		menu.setToolTipText(Resource.getString("hexviewer.jumpto_tip"));
-		menu.add(new JLabel(Resource.getString("hexviewer.jumptodec")));
-		menu.add(Field);
-		menu.add(hexn);
-		menu.add(new JLabel(Resource.getString("hexviewer.jumptohex")));
-		menu.add(Field1);
+		menu.setLayout( new ColumnLayout());
 
 		flen = new JLabel(Resource.getString("hexviewer.filesize"));
 		menu.add(flen);
+		menu.add(menu_1);
+		menu.add(menu_2);
+
 
 		Field.addActionListener(new ActionListener()
 		{
@@ -158,7 +174,7 @@ public class HexViewer extends JFrame {
 				{
 					if (!Field.getText().equals(""))
 					{
-						hexn.setText("= hex: "+Long.toHexString(Long.parseLong(Field.getText())).toUpperCase());
+						hexn.setText("= hex: " + Long.toHexString(Long.parseLong(Field.getText())).toUpperCase());
 						slider.setValue((int)(Long.parseLong(Field.getText()) / 16));
 					}
 				} 
@@ -175,6 +191,7 @@ public class HexViewer extends JFrame {
 				{
 					if (!Field1.getText().equals(""))
 					{
+						decn.setText("= dec: " + Long.parseLong(Field1.getText(), 16));
 						slider.setValue((int)(Long.parseLong(Field1.getText(), 16) / 16));
 					}
 				} 
@@ -187,10 +204,6 @@ public class HexViewer extends JFrame {
 		JPanel grid = new JPanel();
 		grid.setLayout( new GridLayout(1,1) );
 		grid.add(scroll);
-
-		JPanel menu2 = new JPanel();
-		menu2.setLayout( new BoxLayout(menu2,BoxLayout.X_AXIS ));
-		menu2.setToolTipText(Resource.getString("hexviewer.extract_tip"));
 
 		from = new JTextField("0");
 		from.setPreferredSize(new Dimension(100,25));
@@ -223,13 +236,17 @@ public class HexViewer extends JFrame {
 			}
 		});
 
+		JPanel menu2 = new JPanel();
+		menu2.setLayout( new BoxLayout(menu2, BoxLayout.X_AXIS ));
+		menu2.setToolTipText(Resource.getString("hexviewer.extract_tip"));
+
 		menu2.add(extract);
 		menu2.add(from);
 		menu2.add(new JLabel(Resource.getString("hexviewer.to") + ": (hex.)"));
 		menu2.add(fsize);
 
 		JPanel menu3 = new JPanel();
-		menu3.setLayout( new GridLayout(2,1));
+		menu3.setLayout( new ColumnLayout());
 		menu3.add(menu);
 		menu3.add(menu2);
 
@@ -476,7 +493,7 @@ public class HexViewer extends JFrame {
 		}
 
 		setTitle(Resource.getString("hexviewer.file") + ": " + xinputFile);
-		flen.setText(Resource.getString("hexviewer.filesize") + ": " + filelen + " b.");
+		flen.setText(Resource.getString("hexviewer.filesize") + ":  " + Common.formatNumber(filelen) + " bytes");
 
 		show();
 	}
@@ -486,8 +503,8 @@ public class HexViewer extends JFrame {
 	 */
 	protected void centerDialog()
 	{
-		setLocation(200, 200);
-		setSize(620, 490);
+		setLocation(150, 150);
+		setSize(620, 530);
 	}
 
 	/**

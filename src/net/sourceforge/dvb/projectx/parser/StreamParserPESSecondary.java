@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParser
  *
- * Copyright (c) 2005 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2006 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -76,7 +76,7 @@ public class StreamParserPESSecondary extends StreamParserBase {
 		String fchild = collection.getOutputName(aXInputFile.getName());
 		String fparent = collection.getOutputNameParent(fchild);
 
-		if (Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_appendExtension))
+		if (collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_appendExtension))
 			fparent = collection.getOutputDirectory() + collection.getFileSeparator() + fchild;
 
 		JobProcessing job_processing = collection.getJobProcessing();
@@ -122,11 +122,11 @@ public class StreamParserPESSecondary extends StreamParserBase {
 		}
 
 
-		boolean Message_2 = Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
-		boolean Debug = collection.DebugMode();
-		boolean SimpleMPG = Common.getSettings().getBooleanProperty(Keys.KEY_simpleMPG);
-		boolean GetEnclosedPackets = Common.getSettings().getBooleanProperty(Keys.KEY_Input_getEnclosedPackets);
-		boolean IgnoreScrambledPackets = Common.getSettings().getBooleanProperty(Keys.KEY_TS_ignoreScrambled);
+		boolean Message_2 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
+		boolean Debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
+		boolean SimpleMPG = collection.getSettings().getBooleanProperty(Keys.KEY_simpleMPG);
+		boolean GetEnclosedPackets = collection.getSettings().getBooleanProperty(Keys.KEY_Input_getEnclosedPackets);
+		boolean IgnoreScrambledPackets = collection.getSettings().getBooleanProperty(Keys.KEY_TS_ignoreScrambled);
 
 		boolean isTeletext = false;
 		boolean missing_startcode = false;
@@ -184,7 +184,7 @@ public class StreamParserPESSecondary extends StreamParserBase {
 
 			Common.updateProgressBar(Resource.getString("parseSecondaryPES.demux.pes") + " " + aXInputFile.getName(), 0, 0);
 
-			qexit = count + (0x100000L * Integer.parseInt(Common.getSettings().getProperty(Keys.KEY_ExportPanel_Infoscan_Value)));
+			qexit = count + (0x100000L * Integer.parseInt(collection.getSettings().getProperty(Keys.KEY_ExportPanel_Infoscan_Value)));
 
 			bigloop:
 			while (true)

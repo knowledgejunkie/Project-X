@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParser
  *
- * Copyright (c) 2005 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2006 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -58,6 +58,17 @@ import net.sourceforge.dvb.projectx.parser.StreamProcess;
  */
 public class StreamParserTS extends StreamParserBase {
 
+	StreamBuffer streambuffer;
+	StreamDemultiplexer streamdemultiplexer;
+	StreamConverter streamconverter;
+
+	ArrayList usedPIDs;
+	List demuxList;
+	List TSPidlist;
+
+	boolean CreateD2vIndex;
+	boolean SplitProjectFile;
+
 	/**
 	 * 
 	 */
@@ -83,20 +94,20 @@ public class StreamParserTS extends StreamParserBase {
 
 		vptslog = "-1"; //fix
 
-		boolean Message_1 = Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg1);
-		boolean Message_2 = Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
-		boolean Debug = collection.DebugMode();
-		boolean JoinPackets = Common.getSettings().getBooleanProperty(Keys.KEY_TS_joinPackets);
-		boolean HumaxAdaption = Common.getSettings().getBooleanProperty(Keys.KEY_TS_HumaxAdaption);
-		boolean FinepassAdaption = Common.getSettings().getBooleanProperty(Keys.KEY_TS_FinepassAdaption);
-		boolean GetEnclosedPackets = Common.getSettings().getBooleanProperty(Keys.KEY_Input_getEnclosedPackets);
-		boolean IgnoreScrambledPackets = Common.getSettings().getBooleanProperty(Keys.KEY_TS_ignoreScrambled);
-		boolean PcrCounter = Common.getSettings().getBooleanProperty(Keys.KEY_Conversion_PcrCounter);
-		boolean BlindSearch = Common.getSettings().getBooleanProperty(Keys.KEY_TS_blindSearch);
-		boolean CreateD2vIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
-		boolean SplitProjectFile = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
-		boolean UseAutoPidFilter = Common.getSettings().getBooleanProperty(Keys.KEY_useAutoPidFilter);
-		boolean Overlap = Common.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
+		boolean Message_1 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg1);
+		boolean Message_2 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
+		boolean Debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
+		boolean JoinPackets = collection.getSettings().getBooleanProperty(Keys.KEY_TS_joinPackets);
+		boolean HumaxAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_HumaxAdaption);
+		boolean FinepassAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_FinepassAdaption);
+		boolean GetEnclosedPackets = collection.getSettings().getBooleanProperty(Keys.KEY_Input_getEnclosedPackets);
+		boolean IgnoreScrambledPackets = collection.getSettings().getBooleanProperty(Keys.KEY_TS_ignoreScrambled);
+		boolean PcrCounter = collection.getSettings().getBooleanProperty(Keys.KEY_Conversion_PcrCounter);
+		boolean BlindSearch = collection.getSettings().getBooleanProperty(Keys.KEY_TS_blindSearch);
+		CreateD2vIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
+		SplitProjectFile = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
+		boolean UseAutoPidFilter = collection.getSettings().getBooleanProperty(Keys.KEY_useAutoPidFilter);
+		boolean Overlap = collection.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
 
 		boolean ts_isIncomplete = false;
 		boolean ts_startunit = false;
@@ -115,8 +126,8 @@ public class StreamParserTS extends StreamParserBase {
 		byte[] pes_packet;
 		byte[] hav_chunk = { 0x5B, 0x48, 0x4F, 0x4A, 0x49, 0x4E, 0x20, 0x41 }; //'[HOJIN A'
 
-		int Infoscan_Value = Integer.parseInt(Common.getSettings().getProperty(Keys.KEY_ExportPanel_Infoscan_Value));
-		int CutMode = Common.getSettings().getIntProperty(Keys.KEY_CutMode);
+		int Infoscan_Value = Integer.parseInt(collection.getSettings().getProperty(Keys.KEY_ExportPanel_Infoscan_Value));
+		int CutMode = collection.getSettings().getIntProperty(Keys.KEY_CutMode);
 		int ts_pid;
 		int ts_scrambling = 0;
 		int ts_adaptionfield = 0;
@@ -148,18 +159,16 @@ public class StreamParserTS extends StreamParserBase {
 		long base;
 		long startPoint = 0;
 		long starts[] = new long[collection.getPrimaryInputFileSegments()];
-		long Overlap_Value = 1048576L * (Common.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1);
+		long Overlap_Value = 1048576L * (collection.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1);
 		long qexit;
 
 
-		StreamBuffer streambuffer = null;
-		StreamDemultiplexer streamdemultiplexer = null;
-		StreamConverter streamconverter = new StreamConverter();
+		streamconverter = new StreamConverter();
 
-		ArrayList usedPIDs = new ArrayList();
+		usedPIDs = new ArrayList();
 
-		List demuxList = job_processing.getTSDemuxList();
-		List TSPidlist = job_processing.getTSPidList();
+		demuxList = job_processing.getTSDemuxList();
+		TSPidlist = job_processing.getTSPidList();
 
 		/**
 		 * re-read old streams, for next split part
@@ -716,6 +725,12 @@ public class StreamParserTS extends StreamParserBase {
 					{
 						if (streambuffer.isneeded() && streambuffer.isStarted())
 							streambuffer.writeData(ts_packet, 4 + ts_adaptionfieldlength, 184 - ts_adaptionfieldlength);
+
+						if (streambuffer.getDataSize() > 6000000)
+						{
+							Common.setMessage("!> 0x" + Integer.toHexString(streambuffer.getPID()).toUpperCase() + ", buffered packet exceed maximum size, flushed...");
+							streambuffer.reset();
+						}
 					}
 
 					else
@@ -864,6 +879,9 @@ public class StreamParserTS extends StreamParserBase {
 								if (action != CommonParsing.ACTION_DEMUX && !isTeletext) 
 									type += " " + Resource.getString("idtype.mapped.to") + Integer.toHexString(newID[CommonParsing.AC3_AUDIO] - 1).toUpperCase();
 
+								if (action != CommonParsing.ACTION_DEMUX && isTeletext) 
+									type += " " + Resource.getString("idtype.mapped.to") + Integer.toHexString(newID[CommonParsing.TELETEXT] - 1).toUpperCase();
+
 								break;
 
 							case 0x1BF:
@@ -994,7 +1012,7 @@ public class StreamParserTS extends StreamParserBase {
 								}
 
 								type += " (" + (count - 188) + " #" + packet + ") ";  // pos + packno
-								Common.setMessage("--> PID 0x" + Integer.toHexString(ts_pid).toUpperCase() + " " + type + Resource.getString("parseTS.ignored"));
+								Common.setMessage("!> PID 0x" + Integer.toHexString(ts_pid).toUpperCase() + " " + type + Resource.getString("parseTS.ignored"));
 
 								if (!BlindSearch || type.indexOf("pay") == -1)
 									streambuffer.setneeded(false);
@@ -1179,123 +1197,9 @@ public class StreamParserTS extends StreamParserBase {
 				streamconverter.close(job_processing, CommonParsing.isInfoScan());
 
 			else
-			{
-				for (int i = 0, NumberOfVideostreams = 0; i < demuxList.size(); i++)
-				{
-					streamdemultiplexer = (StreamDemultiplexer) demuxList.get(i);
+				vptslog = demultiplexStreams(collection, job_processing, vptslog);
 
-					if (streamdemultiplexer.getType() == CommonParsing.MPEG_VIDEO)
-					{ 
-						/**
-						 * accept only first video
-						 */
-						if (NumberOfVideostreams > 0)
-						{
-							Common.setMessage("!> further videostream found (PID 0x" + Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase() + ") -> ignored");
-							continue;
-						}
-
-						/**
-						 * d2v project 
-						 */
-						if (CreateD2vIndex || SplitProjectFile)
-							job_processing.getProjectFileD2V().write(job_processing.getProjectFileExportLength(), job_processing.getExportedVideoFrameNumber());
-
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("video.msg.summary") + " " + job_processing.getExportedVideoFrameNumber() + "/ " + clv[0] + "/ " + clv[1] + "/ " + clv[2] + "/ " + clv[3] + "/ " + clv[4]);
-
-						vptslog = streamdemultiplexer.closeVideo(job_processing, collection.getOutputDirectory() + collection.getFileSeparator());
-
-						NumberOfVideostreams++;
-					}
-				} 
-
-				//System.gc();
-
-				int[] stream_number = new int[10];
-
-				for (int i = 0, es_streamtype; i < demuxList.size(); i++)
-				{
-					streamdemultiplexer = (StreamDemultiplexer) demuxList.get(i);
-					es_streamtype = streamdemultiplexer.getType();
-
-					if (es_streamtype == CommonParsing.MPEG_VIDEO) 
-						continue;
-
-					String[] values = streamdemultiplexer.close(job_processing, vptslog);
-
-					if (values[0].equals("")) 
-					{
-						Common.setMessage(Resource.getString("parseTS.msg.noexport", Integer.toHexString(0xFF & streamdemultiplexer.getID()).toUpperCase(), Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase()));
-						continue;
-					}
-
-					String newfile = values[3] + (stream_number[es_streamtype] > 0 ? ("[" + stream_number[es_streamtype] + "]") : "") + "." + values[2];
-
-					Common.renameTo(values[0], newfile);
-
-					values[0] = newfile;
-					values[3] = vptslog;
-
-					switch (es_streamtype)
-					{
-					case CommonParsing.AC3_AUDIO:
-					case CommonParsing.DTS_AUDIO:
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("parseTS.ac3.audio") + Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase());
-
-						new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-						break;
-
-					case CommonParsing.TELETEXT:
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("parseTS.teletext.onpid") + Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase()+" (SubID 0x"+Integer.toHexString(streamdemultiplexer.subID()).toUpperCase() + ")");
-
-						new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-						break;
-
-					case CommonParsing.MPEG_AUDIO: 
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("parseTS.mpeg.audio", Integer.toHexString(0xFF & streamdemultiplexer.getID()).toUpperCase(), Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase()));
-
-						new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-						break;
-
-					case CommonParsing.LPCM_AUDIO:
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("parseTS.lpcm.audio") + Integer.toHexString(streamdemultiplexer.subID()).toUpperCase() + ")");
-
-						new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-						break;
-
-					case CommonParsing.SUBPICTURE:
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("parseTS.subpicture") + Integer.toHexString(streamdemultiplexer.subID()).toUpperCase() + ")");
-
-						new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-						break;
-					}
-
-					stream_number[es_streamtype]++;
-
-					new File(newfile).delete();
-					new File(values[1]).delete();
-				}
-			}
-
-
-			/**
-			 * on InfoScan load usable PIDs in pidlist, if list was empty 
-			 */
-			if (CommonParsing.isInfoScan() && collection.getPIDCount() == 0)
-			{
-				collection.addPID(usedPIDs.toArray());
-
-				Common.setActiveCollection(Common.getProcessedCollection());
-
-				/* update pid list of an opened panel */
-				Common.getGuiInterface().updateCollectionPanel(Common.getActiveCollection());
-			}
+			loadUsablePids(collection);
 
 		} catch (IOException e2) { 
 
@@ -1305,4 +1209,130 @@ public class StreamParserTS extends StreamParserBase {
 		return vptslog;
 	}
 
+	/**
+	 * 
+	 */
+	private String demultiplexStreams(JobCollection collection, JobProcessing job_processing, String vptslog)
+	{
+		for (int i = 0, NumberOfVideostreams = 0; i < demuxList.size(); i++)
+		{
+			streamdemultiplexer = (StreamDemultiplexer) demuxList.get(i);
+
+			if (streamdemultiplexer.getType() == CommonParsing.MPEG_VIDEO)
+			{ 
+				/**
+				 * accept only first video
+				 */
+				if (NumberOfVideostreams > 0)
+				{
+					Common.setMessage("!> further videostream found (PID 0x" + Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase() + ") -> ignored");
+					continue;
+				}
+
+				/**
+				 * d2v project 
+				 */
+				if (CreateD2vIndex || SplitProjectFile)
+					job_processing.getProjectFileD2V().write(job_processing.getProjectFileExportLength(), job_processing.getExportedVideoFrameNumber());
+
+				int[] clv = job_processing.getStatusVariables();
+
+				Common.setMessage("");
+				Common.setMessage(Resource.getString("video.msg.summary") + " " + job_processing.getExportedVideoFrameNumber() + "/ " + clv[0] + "/ " + clv[1] + "/ " + clv[2] + "/ " + clv[3] + "/ " + clv[4]);
+
+				vptslog = streamdemultiplexer.closeVideo(job_processing, collection.getOutputDirectory() + collection.getFileSeparator());
+
+				NumberOfVideostreams++;
+			}
+		} 
+
+
+		int[] stream_number = new int[10];
+
+		for (int i = 0, es_streamtype; i < demuxList.size(); i++)
+		{
+			streamdemultiplexer = (StreamDemultiplexer) demuxList.get(i);
+			es_streamtype = streamdemultiplexer.getType();
+
+			if (es_streamtype == CommonParsing.MPEG_VIDEO) 
+				continue;
+
+			String[] values = streamdemultiplexer.close(job_processing, vptslog);
+
+			if (values[0].equals("")) 
+			{
+				Common.setMessage(Resource.getString("parseTS.msg.noexport", Integer.toHexString(0xFF & streamdemultiplexer.getID()).toUpperCase(), Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase()));
+				continue;
+			}
+
+			String newfile = values[3] + (stream_number[es_streamtype] > 0 ? ("[" + stream_number[es_streamtype] + "]") : "") + "." + values[2];
+
+			Common.renameTo(values[0], newfile);
+
+			values[0] = newfile;
+			values[3] = vptslog;
+
+			switch (es_streamtype)
+			{
+			case CommonParsing.AC3_AUDIO:
+			case CommonParsing.DTS_AUDIO:
+				Common.setMessage("");
+				Common.setMessage(Resource.getString("parseTS.ac3.audio") + Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase());
+
+				new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
+				break;
+
+			case CommonParsing.TELETEXT:
+				Common.setMessage("");
+				Common.setMessage(Resource.getString("parseTS.teletext.onpid") + Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase() + " (SubID 0x"+Integer.toHexString(streamdemultiplexer.subID()).toUpperCase() + ")");
+
+				new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
+				break;
+
+			case CommonParsing.MPEG_AUDIO: 
+				Common.setMessage("");
+				Common.setMessage(Resource.getString("parseTS.mpeg.audio", Integer.toHexString(0xFF & streamdemultiplexer.getID()).toUpperCase(), Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase()));
+
+				new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
+				break;
+
+			case CommonParsing.LPCM_AUDIO:
+				Common.setMessage("");
+				Common.setMessage(Resource.getString("parseTS.lpcm.audio") + Integer.toHexString(streamdemultiplexer.subID()).toUpperCase() + ")");
+
+				new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
+				break;
+
+			case CommonParsing.SUBPICTURE:
+				Common.setMessage("");
+				Common.setMessage(Resource.getString("parseTS.subpicture") + Integer.toHexString(streamdemultiplexer.subID()).toUpperCase() + ")");
+
+				new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
+				break;
+			}
+
+			stream_number[es_streamtype]++;
+
+			new File(newfile).delete();
+			new File(values[1]).delete();
+		}
+
+		return vptslog;
+	}
+
+	/**
+	 * on InfoScan load usable PIDs in pidlist, if list was empty 
+	 */
+	private void loadUsablePids(JobCollection collection)
+	{
+		if (CommonParsing.isInfoScan() && collection.getPIDCount() == 0)
+		{
+			collection.addPID(usedPIDs.toArray());
+
+			Common.setActiveCollection(Common.getProcessedCollection());
+
+			/* update pid list of an opened panel */
+			Common.getGuiInterface().updateCollectionPanel(Common.getActiveCollection());
+		}
+	}
 }

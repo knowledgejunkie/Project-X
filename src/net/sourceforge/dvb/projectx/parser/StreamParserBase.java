@@ -108,10 +108,10 @@ public class StreamParserBase extends Object {
 		long pts = 0;
 
 		int position = 0;
-		int buffersize = Integer.parseInt(Common.getSettings().getProperty(Keys.KEY_ScanBuffer));
+		int buffersize = Integer.parseInt(collection.getSettings().getProperty(Keys.KEY_ScanBuffer));
 		int pes_ID;
 
-		boolean PVA_Audio = Common.getSettings().getBooleanProperty(Keys.KEY_PVA_Audio);
+		boolean PVA_Audio = collection.getSettings().getBooleanProperty(Keys.KEY_PVA_Audio);
 		boolean containsPts;
 
 		lastpts &= 0xFFFFFFFFL; //ignore bit33 of lastpts
@@ -305,7 +305,7 @@ public class StreamParserBase extends Object {
 		{  // need global offset?
 			pts &= 0xFFFFFFFFL;
 
-			String str = Common.getSettings().getProperty(Keys.KEY_PtsShift_Value);
+			String str = collection.getSettings().getProperty(Keys.KEY_PtsShift_Value);
 
 			if (str.equals("auto"))
 			{ 
@@ -317,9 +317,9 @@ public class StreamParserBase extends Object {
 
 			else if (!str.equals("0"))
 			{ 
-				Common.setMessage(Resource.getString("nextfile.shift.manual", Common.getSettings().getProperty(Keys.KEY_PtsShift_Value)));
+				Common.setMessage(Resource.getString("nextfile.shift.manual", collection.getSettings().getProperty(Keys.KEY_PtsShift_Value)));
 
-				return ((long)(Double.parseDouble(Common.getSettings().getProperty(Keys.KEY_PtsShift_Value)) * 324000000L));
+				return ((long)(Double.parseDouble(collection.getSettings().getProperty(Keys.KEY_PtsShift_Value)) * 324000000L));
 			}
 
 			else 

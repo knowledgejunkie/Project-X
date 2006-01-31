@@ -1,7 +1,7 @@
 /*
  * @(#)CutView
  *
- * Copyright (c) 2005 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2005-2006 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -87,7 +87,7 @@ public class CutView extends JPanel {
 		source_bottom.setAnimated(true);
 		image_bottom = createImage(source_bottom);
 
-		BackgroundColor = new Color(0, 45, 120);
+		BackgroundColor = new Color(0, 35, 110);
 		RedColor = new Color(255, 100, 100);
 
 		font = new Font("Tahoma", Font.PLAIN, 14);

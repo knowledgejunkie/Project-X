@@ -1,7 +1,7 @@
 /*
  * @(#)UnicodeWriter.java 
  *
- * Copyright (c) 2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2006 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -41,6 +41,10 @@ public class UnicodeWriter extends Object {
 	private PrintWriter out2;
 
 	private boolean useUnicode = false;
+	private boolean useUTF8 = false;
+
+	private short mask_1 = ~0x7F;
+	private short mask_2 = ~0x7FF;
 
 	/**
 	 *
@@ -51,9 +55,11 @@ public class UnicodeWriter extends Object {
 	/**
 	 *
 	 */
-	public UnicodeWriter(ByteArrayOutputStream _out, boolean _useUnicode)
+	public UnicodeWriter(ByteArrayOutputStream _out, boolean _useUTF16, boolean _useUTF8)
 	{
-		useUnicode = _useUnicode;
+		useUnicode = (_useUTF16 || _useUTF8); //UTF16 standard
+
+		useUTF8 = _useUTF8;
 
 		if (useUnicode)
 			out1 = new DataOutputStream(_out);
@@ -91,19 +97,43 @@ public class UnicodeWriter extends Object {
 	 */
 	public void print(String str) throws IOException
 	{
-		if (useUnicode)
+		if (!useUnicode)
 		{
-			/**
-			 * mark file as big endian unicode
-			 */
-			if (out1.size() == 0)
-				out1.writeChar(0xFEFF);
-
-			out1.writeChars(str);
+			out2.print(str);
+			return;
 		}
 
-		else
-			out2.print(str);
+		// UTF8
+		if (useUTF8)
+		{
+			char[] chars = str.toCharArray();
+
+			for (int i = 0, j = chars.length; i < j; i++)
+			{
+				if ((mask_1 & chars[i]) == 0) //0xxxxxxx - 0000-007F
+					out1.writeByte(chars[i]);
+
+				else if ((mask_2 & chars[i]) == 0) //110xxxxx 10xxxxxx - 0080-07FF
+					out1.writeShort(0xC080 | (0x1F00 & chars[i]<<2) | (0x3F & chars[i]));
+
+				else //1110xxxx 10xxxxxx 10xxxxxx - 0800-FFFF
+				{
+					out1.writeByte(0xE0 | (0xF0000 & chars[i]<<4));
+					out1.writeShort(0x8080 | (0x3F00 & chars[i]<<2) | (0x3F & chars[i]));
+				}
+			}
+
+			return;
+		}
+
+		// UTF16
+		/**
+		 * mark file as big endian unicode
+		 */
+		if (out1.size() == 0)
+			out1.writeChar(0xFEFF);
+
+		out1.writeChars(str);
 	}
 
 	/**

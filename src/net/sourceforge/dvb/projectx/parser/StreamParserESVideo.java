@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParser
  *
- * Copyright (c) 2005 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2006 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -33,6 +33,8 @@ import java.io.PushbackInputStream;
 import java.io.FileOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 
 import java.util.Arrays;
 import java.util.List;
@@ -88,14 +90,15 @@ public class StreamParserESVideo extends StreamParserBase {
 		 */
 		fparent += job_processing.getSplitSize() > 0 ? "(" + job_processing.getSplitPart() + ")" : ".new" ;
 
-		boolean CreateM2sIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createM2sIndex);
-		boolean CreateD2vIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
-		boolean SplitProjectFile = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
-		boolean WriteVideo = Common.getSettings().getBooleanProperty(Keys.KEY_WriteOptions_writeVideo);
-		boolean AddSequenceEndcode = Common.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_addEndcode);
-		boolean RenameVideo = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_renameVideo);
-		boolean Debug = collection.DebugMode();
-		boolean Overlap = Common.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
+		boolean CreateM2sIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createM2sIndex);
+		boolean CreateD2vIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
+		boolean SplitProjectFile = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
+		boolean WriteVideo = collection.getSettings().getBooleanProperty(Keys.KEY_WriteOptions_writeVideo);
+		boolean AddSequenceEndcode = collection.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_addEndcode);
+		boolean RenameVideo = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_renameVideo);
+		boolean Debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
+		boolean Overlap = collection.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
+		boolean CreateCellTimes = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createCellTimes);
 
 		boolean first = true;
 		boolean doWrite = true;
@@ -110,9 +113,9 @@ public class StreamParserESVideo extends StreamParserBase {
 		long pos = 0;
 		long pts = 0;
 		long startPoint = 0;
-		long Overlap_Value = 1048576L * (Common.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1);
+		long Overlap_Value = 1048576L * (collection.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1);
 
-		int CutMode =  Common.getSettings().getIntProperty(Keys.KEY_CutMode);
+		int CutMode =  collection.getSettings().getIntProperty(Keys.KEY_CutMode);
 		int[] MPGVideotype = { 0 };
 		int load = MainBufferSize / 2;
 		int mark;
@@ -492,6 +495,32 @@ public class StreamParserESVideo extends StreamParserBase {
 
 				else
 					vstream.deleteIdd();
+			}
+
+			List cell = job_processing.getCellTimes();
+			String workouts = collection.getOutputDirectory() + collection.getFileSeparator();
+
+			/**
+			 * celltimes.txt 
+			 */
+			if (CreateCellTimes && !cell.isEmpty())
+			{
+				BufferedWriter cellout = new BufferedWriter(new FileWriter(workouts + "CellTimes.txt"));
+
+				for (int i = 0; i < cell.size(); i++)
+				{
+					cellout.write(cell.get(i).toString());
+					cellout.newLine();
+				}
+
+				cellout.close();
+
+				Common.setMessage(Resource.getString("demux.msg.celltimes", workouts));
+
+				long fl = new File(workouts + "CellTimes.txt").length();
+
+				job_processing.countMediaFilesExportLength(fl);
+				job_processing.countAllMediaFilesExportLength(fl);
 			}
 
 		} catch (IOException e) {

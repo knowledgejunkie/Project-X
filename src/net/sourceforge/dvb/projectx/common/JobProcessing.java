@@ -39,6 +39,7 @@ import java.io.FileOutputStream;
 
 import net.sourceforge.dvb.projectx.common.Keys;
 import net.sourceforge.dvb.projectx.common.Resource;
+import net.sourceforge.dvb.projectx.common.JobCollection;
 
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
 
@@ -111,18 +112,18 @@ public class JobProcessing extends Object {
 	/**
 	 *
 	 */
-	public JobProcessing(boolean b, String str)
+	public JobProcessing(JobCollection collection, boolean b, String str)
 	{
 		runningFromCLI = b;
 		savedOutputDirectory = str;
 
-		startProcessing();
+		startProcessing(collection);
 	}
 
 	/**
 	 * init the process and all variables
 	 */
-	private void startProcessing()
+	private void startProcessing(JobCollection collection)
 	{
 		TSPidlist = new ArrayList();
 		PVAPidlist = new ArrayList();
@@ -135,7 +136,7 @@ public class JobProcessing extends Object {
 		CellTimesList = new ArrayList();
 		clv = new int[10];
 
-		gop = new Gop();
+		gop = new Gop(collection);
 		gop_array = new GopArray();
 		d2v = new D2V();
 		chapters = new Chapters();

@@ -1,7 +1,7 @@
 /*
  * @(#)MainProcess
  *
- * Copyright (c) 2001-2005 by dvb.matt, All rights reserved.
+ * Copyright (c) 2001-2006 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -181,8 +181,6 @@ public class MainProcess extends Thread {
 				Common.setMessage("");
 			}
 
-			//yield();
-
 			int a = 0;
 			int b = 0;
 			int d = 0;
@@ -192,9 +190,6 @@ public class MainProcess extends Thread {
 			 */
 			if (CommonParsing.getPvaPidToExtract() == -1)
 			{
-				Common.setMessage(DateFormat.getDateInstance(DateFormat.FULL).format(new Date()) + "  " + DateFormat.getTimeInstance(DateFormat.FULL).format(new Date()));
-				Common.setMessage(Common.getVersionName() + " (" + Common.getVersionDate() + ")");
-
 				if (Common.getSettings().getBooleanProperty(Keys.KEY_useAllCollections)) 
 					b = Common.getCollectionListSize();
 
@@ -204,8 +199,8 @@ public class MainProcess extends Thread {
 					b = a + 1;
 				}
 
-				Common.setMessage("");
 				Common.setMessage(Resource.getString("run.session.infos"));
+				Common.setMessage("");
 
 				String str;
 
@@ -216,8 +211,14 @@ public class MainProcess extends Thread {
 				{
 					Common.clearMessageLog();
 
+					Common.setMessage(DateFormat.getDateInstance(DateFormat.FULL).format(new Date()) + "  " + DateFormat.getTimeInstance(DateFormat.FULL).format(new Date()));
+					Common.setMessage(Common.getVersionName() + " (" + Common.getVersionDate() + ")");
+
 					// clean up before each collection run
 					System.gc();
+
+					if (a >= Common.getCollectionListSize())
+						continue;
 
 					Common.setProcessedCollection(a);
 
@@ -462,8 +463,6 @@ public class MainProcess extends Thread {
 		CommonParsing.setProcessPausing(false);
 		CommonParsing.setProcessCancelled(false);
 
-		//yield();
-
 		CommonParsing.setInfoScan(false);
 
 		if (stop_on_error)
@@ -472,8 +471,6 @@ public class MainProcess extends Thread {
 
 			collection.closeDebugLogStream();
 			collection.closeNormalLogStream(Common.getMessageLog());
-
-			//Common.clearMessageLog();
 		}
 
 		else

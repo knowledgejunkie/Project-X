@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParser
  *
- * Copyright (c) 2005 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2006 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -83,16 +83,16 @@ public class StreamParserPESPrimary extends StreamParserBase {
 		 */
 		fparent += job_processing.getSplitSize() > 0 ? "(" + job_processing.getSplitPart() + ")" : "" ;
 
-		boolean Message_2 = Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
-		boolean Debug = collection.DebugMode();
-		boolean SimpleMPG = Common.getSettings().getBooleanProperty(Keys.KEY_simpleMPG);
-		boolean GetEnclosedPackets = Common.getSettings().getBooleanProperty(Keys.KEY_Input_getEnclosedPackets);
-		boolean IgnoreScrambledPackets = Common.getSettings().getBooleanProperty(Keys.KEY_TS_ignoreScrambled);
-		boolean PreviewAllGops = Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops);
-		boolean DumpDroppedGop = Common.getSettings().getBooleanProperty(Keys.KEY_dumpDroppedGop);
-		boolean CreateD2vIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
-		boolean SplitProjectFile = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
-		boolean Overlap = Common.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
+		boolean Message_2 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
+		boolean Debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
+		boolean SimpleMPG = collection.getSettings().getBooleanProperty(Keys.KEY_simpleMPG);
+		boolean GetEnclosedPackets = collection.getSettings().getBooleanProperty(Keys.KEY_Input_getEnclosedPackets);
+		boolean IgnoreScrambledPackets = collection.getSettings().getBooleanProperty(Keys.KEY_TS_ignoreScrambled);
+		boolean PreviewAllGops = collection.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops);
+		boolean DumpDroppedGop = collection.getSettings().getBooleanProperty(Keys.KEY_dumpDroppedGop);
+		boolean CreateD2vIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
+		boolean SplitProjectFile = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
+		boolean Overlap = collection.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
 
 		boolean isTeletext = false;
 		boolean missing_startcode = false;
@@ -107,8 +107,8 @@ public class StreamParserPESPrimary extends StreamParserBase {
 		boolean ende = false;
 		boolean foundObject;
 
-		int Infoscan_Value = Integer.parseInt(Common.getSettings().getProperty(Keys.KEY_ExportPanel_Infoscan_Value));
-		int CutMode = Common.getSettings().getIntProperty(Keys.KEY_CutMode);
+		int Infoscan_Value = Integer.parseInt(collection.getSettings().getProperty(Keys.KEY_ExportPanel_Infoscan_Value));
+		int CutMode = collection.getSettings().getIntProperty(Keys.KEY_CutMode);
 		int pes_streamtype = _pes_streamtype;
 		int pes_payloadlength;
 		int pes_packetlength;
@@ -143,7 +143,7 @@ public class StreamParserPESPrimary extends StreamParserBase {
 		long lastpts = 0;
 		long startPoint = 0;
 		long starts[] = new long[collection.getPrimaryInputFileSegments()];
-		long Overlap_Value = 1048576L * (Common.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1);
+		long Overlap_Value = 1048576L * (collection.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1);
 
 		vptslog = "-1"; //fix
 
@@ -495,7 +495,7 @@ public class StreamParserPESPrimary extends StreamParserBase {
 								{
 									Common.setMessage(Resource.getString("parsePrimaryPES.split.cellids", "" + vobid, "" + cellid, "" + count, "" + clv[6], "" + job_processing.getExportedVideoFrameNumber()));
 
-									if (Common.getSettings().getBooleanProperty(Keys.KEY_VOB_resetPts))
+									if (collection.getSettings().getBooleanProperty(Keys.KEY_VOB_resetPts))
 									{
 										ptsoffset = nextFilePTS(collection, CommonParsing.PRIMARY_PES_PARSER, pes_streamtype, lastpts, job_processing.getFileNumber(), (count - base));
 
@@ -1070,7 +1070,7 @@ public class StreamParserPESPrimary extends StreamParserBase {
 					in.close();
 					//System.gc();
 
-					if (Common.getSettings().getBooleanProperty(Keys.KEY_Input_concatenateForeignRecords) && action == CommonParsing.ACTION_DEMUX)
+					if (collection.getSettings().getBooleanProperty(Keys.KEY_Input_concatenateForeignRecords) && action == CommonParsing.ACTION_DEMUX)
 					{
 						ptsoffset = nextFilePTS(collection, CommonParsing.PRIMARY_PES_PARSER, pes_streamtype, lastpts, job_processing.getFileNumber() + 1);
 
@@ -1166,7 +1166,7 @@ public class StreamParserPESPrimary extends StreamParserBase {
 					streamdemultiplexer = (StreamDemultiplexer) demuxList.get(i);
 					es_streamtype = streamdemultiplexer.getType();
 
-					if (es_streamtype ==CommonParsing.MPEG_VIDEO) 
+					if (es_streamtype == CommonParsing.MPEG_VIDEO) 
 						continue;
 
 					String[] values = streamdemultiplexer.close(job_processing, vptslog);

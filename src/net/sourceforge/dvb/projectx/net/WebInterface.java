@@ -254,6 +254,8 @@ public class WebInterface implements Runnable {
 			"</PRE></BODY></HTML>";
 
 		return str;
+
+		//	"<META HTTP-EQUIV=\"REFRESH\" CONTENT=\"5\">\n" +
 	}
 
 	/**

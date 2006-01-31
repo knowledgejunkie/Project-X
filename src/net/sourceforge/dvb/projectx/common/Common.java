@@ -1,7 +1,7 @@
 /*
  * @(#)Common.java - carries various stuff, the center class
  *
- * Copyright (c) 2004-2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2004-2006 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -86,8 +86,8 @@ import net.sourceforge.dvb.projectx.net.WebInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90.3.00";
-	private static String version_date = "31.12.2005";
+	private static String version_name = "ProjectX 0.90.3.01";
+	private static String version_date = "31.01.2006";
 
 	private static String line_separator = System.getProperty("line.separator");
 
@@ -1134,7 +1134,7 @@ public final class Common extends Object {
 		 * show error messge
 		 */
 		setMessage("");
-		setMessage("!> an error has occured..  (please inform the autors at 'forum.dvbtechnics.info')");
+		setMessage("!> an error has occured..  (please inform the authors at 'forum.dvbtechnics.info')");
 		setMessage(str, true, 0xFFE0E0);
 	}
 

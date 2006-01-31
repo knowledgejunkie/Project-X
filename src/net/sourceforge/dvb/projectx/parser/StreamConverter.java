@@ -1,7 +1,7 @@
 /*
  * @(#)StreamConverter
  *
- * Copyright (c) 2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2006 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -476,10 +476,10 @@ public class StreamConverter extends Object {
 				break;
 
 			case CommonParsing.TELETEXT:
-				if (!ExportNonVideo || (0xFF & newID) > 0x1F)
+				if (!ExportNonVideo || (0x7F & newID) > 0x1F)
 					return;   // not more than 16 streams
 
-				CommonParsing.setPES_SubIdField(pes_packet, pes_offset, pes_headerlength, pes_extensionlength, newID);
+				CommonParsing.setPES_SubIdField(pes_packet, pes_offset, pes_headerlength, pes_extensionlength, newID - 0x80);
 
 				break;
 
@@ -668,12 +668,13 @@ public class StreamConverter extends Object {
 						continue;
 					}
 
-					picture_type = 7 & pes_packet[i + 5]>>>3 ;
+					picture_type = 7 & pes_packet[i + 5]>>>3;
 
 					/**
 					 * is I or P-Frame
 					 */
-					if (picture_type == CommonParsing.FRAME_I_TYPE || picture_type == CommonParsing.FRAME_P_TYPE)
+				//	if (picture_type == CommonParsing.FRAME_I_TYPE || picture_type == CommonParsing.FRAME_P_TYPE)
+					if (picture_type == CommonParsing.FRAME_I_TYPE)
 					{
 						SCR_Value = CommonParsing.getPTSfromBytes(pes_packet, pes_headerlength + pes_offset);
 
@@ -974,7 +975,6 @@ public class StreamConverter extends Object {
 				if (es_streamtype != CommonParsing.MPEG_VIDEO && !ContainsVideo && MustStartWithVideo) 
 					return; // must start with video  
 
-
 			if (es_streamtype == CommonParsing.AC3_AUDIO || es_streamtype == CommonParsing.DTS_AUDIO)
 			{
 				if (pes_streamtype == CommonParsing.MPEG2PS_TYPE)
@@ -982,7 +982,8 @@ public class StreamConverter extends Object {
 					// skip substream-header
 					offset = pes_headerlength + pes_extensionlength + 4;
 
-					System.arraycopy(pes_packet, pes_headerlength + pes_extensionlength + pes_offset, pes_packet, offset + pes_offset, pes_packetlength - offset);
+				//	System.arraycopy(pes_packet, pes_headerlength + pes_extensionlength + pes_offset, pes_packet, offset + pes_offset, pes_packetlength - offset);
+					System.arraycopy(pes_packet, offset + pes_offset, pes_packet, pes_headerlength + pes_extensionlength + pes_offset, pes_packetlength - offset);
 
 					pes_payloadlength -= 4;
 					pes_packetlength -= 4;
@@ -1003,17 +1004,18 @@ public class StreamConverter extends Object {
 					break;
 			}
 
-			if (a == IDs.size()) //ändern
+			if (a == IDs.size()) //make adaptions of 1st paket
 			{
 				int newID2 = newID;
 
-				if (newID2 < 0x90) 
+				//sort the id's for PMT table, MPV has highest prior.
+				if (newID2 < 0x90) //AC3 DTS SUP
 					newID2 |= 0x200;
 
-				if (newID2 < 0xC0) 
+				if (newID2 < 0xC0) //TTX PCM
 					newID2 |= 0x300;
 
-				if (newID2 < 0xE0) 
+				if (newID2 < 0xE0) //MPA
 					newID2 |= 0x100;
 
 				if (!qinfo)
@@ -1037,6 +1039,7 @@ public class StreamConverter extends Object {
 
 			if (es_streamtype == CommonParsing.MPEG_VIDEO) 
 				CommonParsing.setPES_LengthField(pes_packet, pes_offset, 0);
+
 
 			/** 
 			 * add TS header
@@ -1105,7 +1108,8 @@ public class StreamConverter extends Object {
 						/**
 						 * is I or P-Frame
 						 */
-						if (picture_type == CommonParsing.FRAME_I_TYPE || picture_type == CommonParsing.FRAME_P_TYPE)
+						//if (picture_type == CommonParsing.FRAME_I_TYPE || picture_type == CommonParsing.FRAME_P_TYPE)
+						if (picture_type == CommonParsing.FRAME_I_TYPE)
 						{
 							pcr = true; 
 							ContainsVideo = true; 

@@ -538,9 +538,7 @@ public class CommonParsing extends Object {
 		int pes_extensionlength = getPES_ExtensionLengthField(pes_packet, pes_offset);
 
 		int offset = pes_headerlength + pes_extensionlength;
-		int i;
-		int j;
-		int k;
+		int i, j, k;
 
 		boolean found = false;
 

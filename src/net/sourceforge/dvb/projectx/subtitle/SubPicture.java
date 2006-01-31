@@ -1,7 +1,7 @@
 /*
  * @(#)SUBPICTURE.java - creates SUP file to use as DVD subtitles
  *
- * Copyright (c) 2003-2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2003-2006 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -53,6 +53,8 @@ import java.util.StringTokenizer;
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Keys;
 import net.sourceforge.dvb.projectx.common.Common;
+
+import net.sourceforge.dvb.projectx.parser.CommonParsing;
 
 
 public class Subpicture extends Object {
@@ -209,6 +211,11 @@ public class Subpicture extends Object {
 	private boolean read_from_Image = false;
 	private boolean global_error = false;
 
+	private int X_Offset = 0;
+	private int Y_Offset = 0;
+	private int DisplayMode = 0;
+
+
 	public DVBSubpicture dvb = new DVBSubpicture();
 
 	/**
@@ -281,17 +288,20 @@ public class Subpicture extends Object {
 	{
 		long in_time = 0;
 
-		for (int a=0; a<4; a++) // in_pts
-			in_time |= (0xFF & tmp[a+2])<<(a*8);
+		for (int a = 0; a < 4; a++) // in_pts, from offs 2
+			in_time |= (0xFF & tmp[a + 2])<<(a * 8);
 
 		//long difference = (long)Math.round((out_time - in_time) / 1100.0); // 900.0, should be 1024, not 1000
 		long difference = 1L + ((out_time - in_time) / 1024);
 
 		int tp = (0xFF & tmp[12])<<8 | (0xFF & tmp[13]);
-		tmp[34+tp] = (byte)(0xFF & difference>>>8);
-		tmp[35+tp] = (byte)(0xFF & difference);
+		tmp[34 + tp] = (byte)(0xFF & difference>>>8);
+		tmp[35 + tp] = (byte)(0xFF & difference);
 
 		Common.getGuiInterface().setSubpictureTitle(" / " + Resource.getString("subpicture.in_time") + ": " + Common.formatTime_1(in_time / 90) + " " + Resource.getString("subpicture.duration") + ": " + Common.formatTime_1((out_time - in_time) / 90) );
+
+	//	if (debug)
+	//		System.out.println("in " + in_time + "/out " + out_time + "/d1 " + (out_time - in_time) + "/90 " + ((out_time - in_time)/90) + "/d2 " + difference);
 
 		return tmp;
 	}
@@ -752,8 +762,8 @@ public class Subpicture extends Object {
 		return option[8];
 	}
 
-	/*** set user data ("Font pointsize; Backgr. Alpha value; Yoffset; Xoffset; Screenwidth"); **/
-	public int set(String nm, String values)
+	/*** set user packet ("Font pointsize; Backgr. Alpha value; Yoffset; Xoffset; Screenwidth"); **/
+	public int[] set(String nm, String values)
 	{
 		resetUserColorTable();
 
@@ -774,7 +784,9 @@ public class Subpicture extends Object {
 		font = new Font(nm, option[10] == 0 ? Font.PLAIN : Font.BOLD, option[0]);
 		font_std = new Font("Tahoma", Font.PLAIN, 14); //DM01032004 081.6 int18 add
 
-		return option[7];
+		int[] ret_val = { option[2], option[7] };
+
+		return ret_val;
 	}
 
 	/**
@@ -854,12 +866,48 @@ public class Subpicture extends Object {
 	/**
 	 *
 	 */
+	private void Set_Bits(byte buf[], int BPos[], int N, int Val)
+	{
+		int Pos = BPos[1]>>>3;
+		int BitOffs = BPos[1] & 7;
+
+		if (Pos >= buf.length || BitOffs + N >= (BPos[1] & ~7) + 32)
+		{
+			global_error = true;
+		}
+
+		else
+		{
+			int NoOfBytes = 1 + ((BitOffs + N - 1)>>>3);
+			int NoOfBits = NoOfBytes<<3;
+
+			int tmp_value = CommonParsing.getIntValue(buf, Pos, NoOfBytes, !CommonParsing.BYTEREORDERING);
+
+			int mask = (-1)>>>(32 - N);
+			int k = NoOfBits - N - BitOffs;
+
+			mask <<= k;
+			Val <<= k;
+
+			tmp_value &= ~mask;
+			tmp_value |= (Val & mask);
+
+			CommonParsing.setValue(buf, Pos, NoOfBytes, !CommonParsing.BYTEREORDERING, tmp_value);
+		}
+
+		BPos[1] += N;
+		BPos[0] = BPos[1]>>>3;
+	}
+
+	/**
+	 *
+	 */
 	private int Get_Bits(byte buf[], int BPos[], int N)
 	{
 		int Pos, Val;
 		Pos = BPos[1]>>>3;
 
-		if (Pos >= buf.length - 4)
+		if (Pos >= buf.length)
 		{
 			global_error = true;
 			BPos[1] += N;
@@ -867,10 +915,16 @@ public class Subpicture extends Object {
 			return 0;
 		}
 
-		Val =(0xFF & buf[Pos])<<24 |
-			(0xFF & buf[Pos + 1])<<16 |
-			(0xFF & buf[Pos + 2])<<8 |
-			(0xFF & buf[Pos + 3]);
+		Val =  (0xFF & buf[Pos++])<<24;
+
+		if (Pos < buf.length)
+			Val |= (0xFF & buf[Pos++])<<16;
+
+		if (Pos < buf.length)
+			Val |= (0xFF & buf[Pos++])<<8;
+
+		if (Pos < buf.length)
+			Val |= (0xFF & buf[Pos]);
 
 		Val <<= BPos[1] & 7;
 		Val >>>= 32-N;
@@ -889,16 +943,22 @@ public class Subpicture extends Object {
 		int Pos, Val;
 		Pos = BPos[1]>>>3;
 
-		if (Pos >= buf.length - 4)
+		if (Pos >= buf.length)
 		{
 			global_error = true;
 			return 0;
 		}
 
-		Val =(0xFF & buf[Pos])<<24 |
-			(0xFF & buf[Pos + 1])<<16 |
-			(0xFF & buf[Pos + 2])<<8 |
-			(0xFF & buf[Pos + 3]);
+		Val =  (0xFF & buf[Pos++])<<24;
+
+		if (Pos < buf.length)
+			Val |= (0xFF & buf[Pos++])<<16;
+
+		if (Pos < buf.length)
+			Val |= (0xFF & buf[Pos++])<<8;
+
+		if (Pos < buf.length)
+			Val |= (0xFF & buf[Pos]);
 
 		Val <<= BPos[1] & 7;
 		Val >>>= 32 - N;
@@ -952,12 +1012,31 @@ public class Subpicture extends Object {
 	public void reset()
 	{
 		isforced_status = 0;
+		set_XY_Offset(0, 0);
+		setDisplayMode(0);
+	}
+
+	/**
+	 * modify X,Y Position
+	 */
+	public void set_XY_Offset(int x_value, int y_value)
+	{
+		X_Offset = x_value;
+		Y_Offset = y_value;
+	}
+
+	/**
+	 * modify force display flag
+	 */
+	public void setDisplayMode(int value)
+	{
+		DisplayMode = value;
 	}
 
 	/**
 	 *
 	 */
-	public int decode_picture(byte packet[], int off, boolean decode, Object obj)
+	public int decode_picture(byte[] packet, int off, boolean decode, Object obj)
 	{
 		return decode_picture(packet, off, decode, obj, 0, false, true);
 	}
@@ -965,29 +1044,30 @@ public class Subpicture extends Object {
 	/**
 	 *
 	 */
-	public int decode_picture(byte packet[], int off, boolean decode, Object obj, long pts, boolean save, boolean visible)
+	public int decode_picture(byte[] packet, int off, boolean decode, Object obj, long pts, boolean save, boolean visible)
 	{
 		read_from_Image = false;
 		global_error = false;
 
 		boolean simple_picture = false;
 		int picture_length = packet.length;
-		byte data[] = new byte[picture_length +4];
-		System.arraycopy(packet, 0, data, 0, picture_length);
 
 		int BPos[] = { off, off<<3 }; //BytePos, BitPos
 		int position[] = new int[4];
 		int start_pos[] = new int[3];
 		int print_colors[] = new int[4];
 
-		if (BPos[0] > picture_length-4)
+		if (BPos[0] > picture_length)
 			return -4;
 
-		int packetlength = Get_Bits(data, BPos, 16); // required pack length
+		int packetlength = Get_Bits(packet, BPos, 16); // required pack length
 
-		if (Show_Bits(data, BPos, 24) == 0xF) // DVB subpicture: 8bit padding 0x00 + 8bit subtitle_stream_id 0x00 + start of subtitle segment 0x0F
+		if (Show_Bits(packet, BPos, 24) == 0xF) // DVB subpicture: 8bit padding 0x00 + 8bit subtitle_stream_id 0x00 + start of subtitle segment 0x0F
 		{
 			big.setFont(font_std);
+
+			byte[] data = new byte[picture_length + 4];
+			System.arraycopy(packet, 0, data, 0, picture_length);
 
 			int ret = dvb.decodeDVBSubpicture(data, BPos, big, bimg, pts, save, visible);
 
@@ -1000,10 +1080,10 @@ public class Subpicture extends Object {
 		if (BPos[0] + packetlength != picture_length + 2)
 			return -5;
 
-		start_pos[2] = Get_Bits(data, BPos, 16) - 2;
+		start_pos[2] = Get_Bits(packet, BPos, 16) - 2;
 		Flush_Bits(BPos, start_pos[2]<<3); // jump to sections chunk
 
-		int playtime_pos = Get_Bits(data, BPos, 16);  //fixed pos, so it must follow the 1st ctrl sequ,
+		int playtime_pos = Get_Bits(packet, BPos, 16);  //fixed pos, so it must follow the 1st ctrl sequ,
 
 		if (playtime_pos == start_pos[2] + 2)
 		{
@@ -1012,43 +1092,105 @@ public class Subpicture extends Object {
 			Common.setMessage(Resource.getString("subpicture.msg2"));
 		}
 		else
-			start_pos[2] += off+2;
+			start_pos[2] += off + 2;
 
 		int color_table[] = getColorTable(0);
 
 		while (BPos[0] < off + playtime_pos)  // read sections chunk
 		{
-			int cmd_switch = Get_Bits(data, BPos, 8);
+			int cmd_switch = Show_Bits(packet, BPos, 8); // show at first, to enable editing
+
 			switch(cmd_switch)
 			{
-			case 0: // force display
+			case 0: // force display flag
 				isforced_status = (isforced_status & 5) != 5 ? 4 : 5;
+
+				if (DisplayMode == 2) //set normal
+					Set_Bits(packet, BPos, 8, 1);
+
+				else
+					Flush_Bits(BPos, 8);
+
 				break;
-			case 1: // start display
+
+			case 1: // start display flag, normal
 				isforced_status = (isforced_status & 3) != 3 ? 2 : 3;
+
+				if (DisplayMode == 1) //set forced
+					Set_Bits(packet, BPos, 8, 0);
+
+				else
+					Flush_Bits(BPos, 8);
+
 				break;
-			case 2: // stop display
+
+			case 2: // stop display flag
 			case 0xFF: // end of ctrl sequ.
+				Flush_Bits(BPos, 8);
 				break;
+
 			case 3: // 4 color links
-				for (int b=0; b<4; b++)
-					print_colors[3 - b] |= (color_table[Get_Bits(data, BPos, 4)] & 0xFFFFFF);
+				Flush_Bits(BPos, 8);
+
+				for (int b = 0; b < 4; b++)
+					print_colors[3 - b] |= (color_table[Get_Bits(packet, BPos, 4)] & 0xFFFFFF);
+
 				break;
+
 			case 4: // alpha blending
-				for (int b=0; b<4; b++)
-					print_colors[3 - b] |= (0x11 * (0xF ^ Get_Bits(data, BPos, 4)))<<24;
+				Flush_Bits(BPos, 8);
+
+				for (int b = 0; b < 4; b++)
+					print_colors[3 - b] |= (0x11 * (0xF ^ Get_Bits(packet, BPos, 4)))<<24;
+
 				break;
+
 			case 5: // x,y pos.
-				for (int b=0; b<4; b++)
-					position[b] = Get_Bits(data, BPos, 12);
+				Flush_Bits(BPos, 8);
+
+				if (X_Offset != 0) //move X-pos
+				{
+					position[0] = Show_Bits(packet, BPos, 12) + X_Offset; //X-links
+					Set_Bits(packet, BPos, 12, position[0]); //X-links
+
+					position[1] = Show_Bits(packet, BPos, 12) + X_Offset; //X-rechts
+					Set_Bits(packet, BPos, 12, position[1]); //X-rechts
+				}
+				else
+				{
+					position[0] = Get_Bits(packet, BPos, 12); //X-links
+					position[1] = Get_Bits(packet, BPos, 12); //X-rechts
+				}
+
+				if (Y_Offset != 0) //move Y-pos
+				{
+					position[2] = Show_Bits(packet, BPos, 12) + Y_Offset; //Y-oben
+					Set_Bits(packet, BPos, 12, position[2]); //Y-oben
+
+					position[3] = Show_Bits(packet, BPos, 12) + Y_Offset; //Y-unten
+					Set_Bits(packet, BPos, 12, position[3]); //Y-unten
+				}
+				else
+				{
+					position[2] = Get_Bits(packet, BPos, 12); //X-links
+					position[3] = Get_Bits(packet, BPos, 12); //X-rechts
+				}
+
 				break;
+
 			case 6: // pos. of decode_start of a field
-				for (int b=0; b<2; b++)
-					start_pos[b] = Get_Bits(data, BPos, 16);
+				Flush_Bits(BPos, 8);
+
+				for (int b = 0; b < 2; b++)
+					start_pos[b] = Get_Bits(packet, BPos, 16);
+
 				break;
+
 			case 7: // extra alpha + color area definition
-				Get_Bits(data, BPos, 16);
+				Flush_Bits(BPos, 8);
+				Flush_Bits(BPos, 16);
 				break;
+
 			default:
 				Common.setMessage(Resource.getString("subpicture.msg3") + ": " + cmd_switch);
 			}
@@ -1061,11 +1203,11 @@ public class Subpicture extends Object {
 
 		if (!simple_picture)
 		{
-			playtime = Get_Bits(data, BPos, 16);
-			if (playtime_pos != Get_Bits(data, BPos, 16))
+			playtime = Get_Bits(packet, BPos, 16);
+			if (playtime_pos != Get_Bits(packet, BPos, 16))
 				return -7;
 
-			if (Get_Bits(data, BPos, 8) != 2)
+			if (Get_Bits(packet, BPos, 8) != 2)
 				return -8;
 
 			Flush_Bits( BPos, ((BPos[0] & 1) != 1) ? 16 : 8 );
@@ -1103,22 +1245,22 @@ public class Subpicture extends Object {
 
 			while (BPos[0] < start_pos[b+1]) // stop at pos_marker
 			{
-				if ((Val = Get_Bits(data, BPos, 4)) > 3) //4..F (0..3 never encodable)
+				if ((Val = Get_Bits(packet, BPos, 4)) > 3) //4..F (0..3 never encodable)
 				{
 					big.setColor(new Color(print_colors[Val & 3]));
 					big.drawLine(x1, y1, (x1 += Val>>>2), y1);
 				}
-				else if ((Val = Val<<4 | Get_Bits(data, BPos, 4)) > 0xF) //10..3F
+				else if ((Val = Val<<4 | Get_Bits(packet, BPos, 4)) > 0xF) //10..3F
 				{
 					big.setColor(new Color(print_colors[Val & 3]));
 					big.drawLine(x1, y1, (x1 += Val>>>2), y1);
 				}
-				else if ((Val = Val<<4 | Get_Bits(data, BPos, 4)) > 0x3F) //40..FF
+				else if ((Val = Val<<4 | Get_Bits(packet, BPos, 4)) > 0x3F) //40..FF
 				{
 					big.setColor(new Color(print_colors[Val & 3]));
 					big.drawLine(x1, y1, (x1 += Val>>>2), y1);
 				}
-				else if ((Val = Val<<4 | Get_Bits(data, BPos, 4)) > 0) //100..3FF
+				else if ((Val = Val<<4 | Get_Bits(packet, BPos, 4)) > 0) //100..3FF
 				{
 					big.setColor(new Color(print_colors[Val & 3]));
 					big.drawLine(x1, y1, (x1 += Val>>>2), y1);

@@ -242,6 +242,7 @@ public class Keys extends Object {
 	public final static String[] KEY_SubtitlePanel_rebuildPTS = { "SubtitlePanel.rebuildPTS", "0" }; //cbox[62] !!
 	public final static String[] KEY_SubtitlePanel_keepOriginalTimecode = { "SubtitlePanel.keepOriginalTimecode", "0" }; //cbox[67] 
 	public final static String[] KEY_SubtitlePanel_exportTextAsUnicode = { "SubtitlePanel.exportTextAsUnicode", "0" };
+	public final static String[] KEY_SubtitlePanel_exportTextAsUTF8 = { "SubtitlePanel.exportTextAsUTF8", "0" };
 	public final static String[] KEY_SubtitlePanel_useTextOutline = { "SubtitlePanel.useTextOutline", "1" }; //cbox[79] !!
 	public final static String[] KEY_SubtitlePanel_Format_SUP_Values = { "SubtitlePanel.Format.SUP.Values", "26;10;32;80;560;720;576;-1;4;3;1" }; 
 	public final static String[] KEY_SubtitlePanel_PageId_Value = { "SubtitlePanel.PageId.Value", "" }; 
@@ -252,13 +253,18 @@ public class Keys extends Object {
 	public final static String[] KEY_SubtitlePanel_TtxPage4 = { "SubtitlePanel.TtxPage4", "null" }; //combobox[31]
 	public final static String[] KEY_SubtitlePanel_TtxPage5 = { "SubtitlePanel.TtxPage5", "null" }; //combobox[32]
 	public final static String[] KEY_SubtitlePanel_TtxPage6 = { "SubtitlePanel.TtxPage6", "null" }; //combobox[33]
+	public final static String[] KEY_SubtitlePanel_TtxPage7 = { "SubtitlePanel.TtxPage7", "null" }; //combobox[33]
+	public final static String[] KEY_SubtitlePanel_TtxPage8 = { "SubtitlePanel.TtxPage8", "null" }; //combobox[33]
 	public final static String[] KEY_TtxLanguagePair = { "SubtitlePanel.TtxLanguagePair", "0" }; //combobox[18], index
 	public final static String[] KEY_SubtitleFont = { "SubtitlePanel.SubtitleFont", "Tahoma" }; //combobox[26], item
 	public final static String[] KEY_SubtitleExportFormat = { "SubtitlePanel.SubtitleExportFormat", "SUB" };
 	public final static String[] KEY_SubtitleExportFormat_2 = { "SubtitlePanel.SubtitleExportFormat_2", "null" };
 	public final static String[] KEY_SubpictureColorModel = { "SubtitlePanel.SubpictureColorModel", "(0) 4 colors" };
+	public final static String[] KEY_SubtitleChangeDisplay = { "SubtitlePanel.ChangeDisplay", "0" };
+	public final static String[] KEY_SubtitleMovePosition_Value = { "SubtitlePanel.MovePosition.Value", "" };
+
 //test
-	public final static String[] KEY_SubtitlePanel_specialTermination = { "SubtitlePanel.specialTermination", "0" };
+	public final static String[] KEY_SubtitlePanel_specialTermination = { "SubtitlePanel.specialTermination", "1" };
 
 	public static Object[] ITEMS_TtxLanguagePair = { 
 		"auto", "basic latin", "polish", "turkish", "cro,slo,rum", "est,lit,rus",
@@ -266,6 +272,8 @@ public class Keys extends Object {
 	};
 
 	public static Object[] ITEMS_SubtitleExportFormat = null;
+	public static Object[] ITEMS_SubtitleChangeDisplay = null;
+
 
 	public final static String[] KEY_AudioPanel_decodeMpgAudio = { "AudioPanel.decodeMpgAudio", "0" }; //cbox[50] 
 	public final static String[] KEY_AudioPanel_validateCRC = { "AudioPanel.validateCRC", "1" }; //cbox[68] 
@@ -422,6 +430,11 @@ public class Keys extends Object {
 			Resource.getString("SubtitlePanel.Format.Free"), "SC", "SUB", "SRT", "STL", "SSA", "SON", "SUP", "null"
 		};
 		this.ITEMS_SubtitleExportFormat = ITEMS_SubtitleExportFormat;
+
+		Object[] ITEMS_SubtitleChangeDisplay = {
+			"no change", "all forced", "all not forced"
+		};
+		this.ITEMS_SubtitleChangeDisplay = ITEMS_SubtitleChangeDisplay;
 
 		Object[] ITEMS_FileTypes = {
 			Resource.getString("scan.unsupported"),

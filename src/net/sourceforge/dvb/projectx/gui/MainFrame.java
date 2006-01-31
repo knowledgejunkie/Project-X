@@ -497,39 +497,15 @@ public class MainFrame extends JPanel {
 			 */
 			else if (actName.equals("stripRelook"))
 			{
-				int index = tableView.getSelectedRow();
+				stripRelook(0);
+			}
 
-				if (index < 0 || tableView.getValueAt(index, 0) == null)
-					return;
-
-				JobCollection collection = Common.getCollection();
-
-				XInputFile xInputFile = ((XInputFile) collection.getInputFile(index)).getNewInstance();
-
-				if (xInputFile != null && xInputFile.exists() && xInputFile.getStreamInfo().getStreamType() == CommonParsing.PES_AV_TYPE && CommonGui.getUserConfirmation("really process '" + xInputFile.getName() + "' ?"))
-				{
-					StripRelook stripRelook = new StripRelook();
-
-					Common.setOSDMessage("strip Relook® data...");
-
-					XInputFile[] xif = stripRelook.process(xInputFile, collection.getOutputDirectory());
-
-					collection.removeInputFile(index);
-
-					if (xif != null)
-					{
-						if (xif[0] != null)
-							collection.addInputFile(index, xif[0]);
-
-						if (xif[1] != null)
-							collection.addInputFile(index + 1, xif[1]);
-					}
-
-					updateCollectionTable(collection.getCollectionAsTable());
-					updateCollectionPanel(Common.getActiveCollection());
-
-					tableView.clearSelection();
-				}
+			/**
+			 *
+			 */
+			else if (actName.equals("stripRelook1"))
+			{
+				stripRelook(1);
 			}
 
 			/**
@@ -723,6 +699,46 @@ public class MainFrame extends JPanel {
 				return;
 			}
 		}
+
+		/**
+		 *
+		 */
+		private void stripRelook(int type)
+		{
+			int index = tableView.getSelectedRow();
+
+			if (index < 0 || tableView.getValueAt(index, 0) == null)
+				return;
+
+			JobCollection collection = Common.getCollection();
+
+			XInputFile xInputFile = ((XInputFile) collection.getInputFile(index)).getNewInstance();
+
+			if (xInputFile != null && xInputFile.exists() && xInputFile.getStreamInfo().getStreamType() == CommonParsing.PES_AV_TYPE && CommonGui.getUserConfirmation("really process '" + xInputFile.getName() + "' ?"))
+			{
+				StripRelook stripRelook = new StripRelook(type);
+
+				Common.setOSDMessage("strip Relook® data, type " + type + "...");
+
+				XInputFile[] xif = stripRelook.process(xInputFile, collection.getOutputDirectory());
+
+				collection.removeInputFile(index);
+
+				if (xif != null)
+				{
+					for (int i = 0, j = index; i < xif.length; i++)
+					{
+						if (xif[i] != null)
+							collection.addInputFile(j++, xif[i]);
+					}
+				}
+
+				updateCollectionTable(collection.getCollectionAsTable());
+				updateCollectionPanel(Common.getActiveCollection());
+
+				tableView.clearSelection();
+			}
+		}
 	};
 
 
@@ -863,8 +879,11 @@ public class MainFrame extends JPanel {
 		JMenuItem menuitem_14 = popup.add(Resource.getString("popup.stripAudio"));
 		menuitem_14.setActionCommand("stripAudio");
 
-		JMenuItem menuitem_15 = popup.add("strip Relook® to separate pes");
+		JMenuItem menuitem_15 = popup.add("strip Relook® type 0 to separate pes..");
 		menuitem_15.setActionCommand("stripRelook");
+
+		JMenuItem menuitem_16 = popup.add("strip Relook® type 1 to separate pes..");
+		menuitem_16.setActionCommand("stripRelook1");
 
 		popup.addSeparator();
 
@@ -934,6 +953,7 @@ public class MainFrame extends JPanel {
 		menuitem_12.addActionListener(_MenuListener);
 		menuitem_14.addActionListener(_MenuListener);
 		menuitem_15.addActionListener(_MenuListener);
+		menuitem_16.addActionListener(_MenuListener);
 	}
 
 	/**
@@ -1472,10 +1492,10 @@ public class MainFrame extends JPanel {
 					if (elements == null)
 						return;
 
-					for (int i = 1; i < 11; i++)
+					for (int i = 1; i < 12; i++)
 						elements[i].getComponent().setEnabled(row >= 0);
 
-					for (int i = 11; i < elements.length; i++)
+					for (int i = 12; i < elements.length; i++)
 						elements[i].getComponent().setEnabled(index >= 0);
 
 					popup.show(tableView, e.getX(), e.getY() - popup.getHeight());
@@ -1901,7 +1921,7 @@ public class MainFrame extends JPanel {
 
 
 		/**
-		 * table + putput dir's
+		 * table + output dir's
 		 */
 		JPanel control_1 = new JPanel(new BorderLayout());
 		control_1.setAlignmentX(CENTER_ALIGNMENT);
@@ -2365,6 +2385,21 @@ public class MainFrame extends JPanel {
 		panel.add(buildFilePanel(), BorderLayout.SOUTH);
 
 		return panel;
+	}
+
+
+	/**
+	 *
+	 */
+	protected javax.swing.JRootPane buildFilePanel1()
+	{
+		javax.swing.JRootPane pane = new javax.swing.JRootPane();
+
+		//javax.swing.JLayeredPane pane = new javax.swing.JLayeredPane();
+
+		pane.getContentPane().add(buildFilePanel());
+
+		return pane;
 	}
 
 	/**

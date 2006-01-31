@@ -1,7 +1,7 @@
 /*
  * @(#)JobCollection.java - all about a collection
  *
- * Copyright (c) 2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2006 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -159,7 +159,7 @@ public class JobCollection extends Object {
 	{
 		progress_status = true;
 
-		job_processing = new JobProcessing(b, getOutputDirectory());
+		job_processing = new JobProcessing(this, b, getOutputDirectory());
 	}
 
 	/**

@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParser
  *
- * Copyright (c) 2005 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2006 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -43,6 +43,7 @@ import java.util.Hashtable;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.Enumeration;
+import java.util.StringTokenizer;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -88,6 +89,34 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 		Resource.getString("subpicture.msg.error9")
 	};
 
+	private String Extension = ".new";
+
+	private boolean debug;
+	private boolean KeepOriginalTimecode;
+	private boolean UseAdditionalOffset;
+	private boolean ShowSubpictureWindow;
+	private boolean Message_2;
+
+	private int AdditionalOffset_Value;
+
+	private int X_Offset = 0;
+	private int Y_Offset = 0;
+	private int DisplayMode = 0;
+
+	private String SubpictureColorModel;
+	private String PageId_Value;
+	private String SubtitleExportFormat;
+
+	/**
+	 * 
+	 */
+	public StreamProcessSubpicture(String extension)
+	{
+		super();
+
+		Extension = extension;
+	}
+
 	/**
 	 * 
 	 */
@@ -95,7 +124,64 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 	{
 		super();
 
+		get_XY_Offset(collection, isElementaryStream);
+		getDisplayMode(collection, isElementaryStream);
+
 		processStream(collection, xInputFile, filename_pts, filename_type, videofile_pts, isElementaryStream);
+	}
+
+	/**
+	 * set new X with or without offset
+	 */
+	public void set_XY_Offset(int x_value, int y_value)
+	{
+		X_Offset = x_value;
+		Y_Offset = y_value;
+	}
+
+	/**
+	 * set new X with or without offset
+	 */
+	private void get_XY_Offset(JobCollection collection, int isElementaryStream)
+	{
+		//if (isElementaryStream != CommonParsing.ES_TYPE)
+		//	return;
+
+		StringTokenizer st = new StringTokenizer(collection.getSettings().getProperty(Keys.KEY_SubtitleMovePosition_Value), ",");
+		int a = 0;
+		int[] values = new int[2];
+
+		while (st.hasMoreTokens() && a < values.length)
+		{
+			try {
+				values[a] = Integer.parseInt(st.nextToken());
+
+			} catch (Exception e) {}
+
+			a++;
+		}
+
+		X_Offset = values[0];
+		Y_Offset = values[1];
+	}
+
+	/**
+	 * set new display to be forced or not
+	 */
+	private void getDisplayMode(JobCollection collection, int isElementaryStream)
+	{
+		//if (isElementaryStream != CommonParsing.ES_TYPE)
+		//	return;
+
+		DisplayMode = collection.getSettings().getIntProperty(Keys.KEY_SubtitleChangeDisplay);
+	}
+
+	/**
+	 * decoding subpicture stream
+	 */
+	public void processStream(JobCollection collection, XInputFile xInputFile, int isElementaryStream)
+	{
+		processStream(collection, xInputFile, "-1", "sp", "-1", isElementaryStream);
 	}
 
 	/**
@@ -110,7 +196,7 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 		String fchild = isElementaryStream == CommonParsing.ES_TYPE ? collection.getOutputName(xInputFile.getName()) : xInputFile.getName();
 		String fparent = collection.getOutputNameParent(fchild);
 
-		fparent += isElementaryStream == CommonParsing.ES_TYPE ? ".new" : "";
+		fparent += isElementaryStream == CommonParsing.ES_TYPE ? Extension : "";
 
 		String subfile = fparent + ".sup";
 
@@ -140,17 +226,18 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 		boolean write = false;
 		boolean missing_syncword = false;
 		boolean DVBpicture = false;
-		boolean debug = collection.DebugMode();
-		boolean KeepOriginalTimecode = Common.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_keepOriginalTimecode);
-		boolean UseAdditionalOffset = Common.getSettings().getBooleanProperty(Keys.KEY_additionalOffset);
-		boolean ShowSubpictureWindow = Common.getSettings().getBooleanProperty(Keys.KEY_showSubpictureWindow);
-		boolean Message_2 = Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
 
-		int AdditionalOffset_Value = Common.getSettings().getIntProperty(Keys.KEY_ExportPanel_additionalOffset_Value);
+		debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
+		KeepOriginalTimecode = isElementaryStream == CommonParsing.ES_TYPE ? true : collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_keepOriginalTimecode);
+		UseAdditionalOffset = collection.getSettings().getBooleanProperty(Keys.KEY_additionalOffset);
+		ShowSubpictureWindow = collection.getSettings().getBooleanProperty(Keys.KEY_showSubpictureWindow);
+		Message_2 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
 
-		String SubpictureColorModel = Common.getSettings().getProperty(Keys.KEY_SubpictureColorModel);
-		String PageId_Value = Common.getSettings().getProperty(Keys.KEY_SubtitlePanel_PageId_Value);
-		String SubtitleExportFormat = Common.getSettings().getProperty(Keys.KEY_SubtitleExportFormat);
+		AdditionalOffset_Value = collection.getSettings().getIntProperty(Keys.KEY_ExportPanel_additionalOffset_Value);
+
+		SubpictureColorModel = collection.getSettings().getProperty(Keys.KEY_SubpictureColorModel);
+		PageId_Value = collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_PageId_Value);
+		SubtitleExportFormat = collection.getSettings().getProperty(Keys.KEY_SubtitleExportFormat);
 
 		try {
 			if (ShowSubpictureWindow)
@@ -184,6 +271,19 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 			PrintStream print_out = new PrintStream(out);
 
 			Common.setMessage(Resource.getString("subpicture.msg.tmpfile", xInputFile.getName(), "" + size));
+
+			// SUP with changed settings
+			if (export_type == 0)
+			{
+				subpicture.set_XY_Offset(X_Offset, Y_Offset);
+				subpicture.setDisplayMode(DisplayMode);
+			}
+
+			if (X_Offset != 0 || Y_Offset != 0)
+				Common.setMessage("-> move source picture position: X " + X_Offset + ", Y " + Y_Offset);
+
+			if (DisplayMode != 0)
+				Common.setMessage("-> set new picture display mode: " + Keys.ITEMS_SubtitleChangeDisplay[DisplayMode]);
 
 			Common.updateProgressBar(Resource.getString("subpicture.progress") + " " + xInputFile.getName(), 0, 0);
 
@@ -322,14 +422,17 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 				if (filename_pts.equals("-1"))
 					source_pts += pts_offset;
 
-				if (first_pts == -1)
-					first_pts = source_pts;
-
-				if (source_pts == pts_offset)
+			//	if (source_pts == pts_offset) // first pts would be 0, ever
+				if (source_pts == pts_offset && first_pts != -1)
 					source_pts = last_pts;
 
 				else
 					last_pts = source_pts;
+
+				//remember pts of 1st packet
+				if (first_pts == -1)
+					first_pts = source_pts;
+
 
 				if (debug)
 					System.out.println(" " + (count - packetlength) + "/ " + packetlength + "/ " + source_pts);
@@ -365,7 +468,7 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 				new_pts = source_pts - time_difference;
 
 				if ((display_time = subpicture.decode_picture(packet, 10, Common.getGuiInterface().isSubpictureVisible(), job_processing.getStatusStrings(), new_pts, write, Common.getGuiInterface().isSubpictureVisible())) < -2)
-					Common.setMessage(Resource.getString("subpicture.msg.error", subdecode_errors[Math.abs((int)display_time)], "" + (count - packetlength)));
+					Common.setMessage(Resource.getString("subpicture.msg.error", subdecode_errors[Math.abs((int)display_time)], String.valueOf(count - packetlength)));
 
 				if (debug)
 					System.out.println("PTS: source " + Common.formatTime_1(source_pts / 90) + "(" + source_pts + ")" + " /new " + Common.formatTime_1(new_pts / 90) + "(" + new_pts + ")" + " / write: " + write + " / dec.state: " + display_time);

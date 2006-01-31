@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParser
  *
- * Copyright (c) 2005 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2006 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -109,8 +109,8 @@ public class StreamProcessLPCMAudio extends StreamProcessBase {
 		boolean write = false;
 		boolean missing_syncword = false;
 		boolean newformat = false;
-		boolean debug = collection.DebugMode();
-		boolean message_2 = Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
+		boolean debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
+		boolean message_2 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
 
 		int samples = 0;
 		int x = 0;
