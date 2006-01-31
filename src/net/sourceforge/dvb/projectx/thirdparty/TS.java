@@ -1,7 +1,7 @@
 /*
  * @(#)TS.java - constants to create TS packets
  *
- * Copyright (c) 2002-2005 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2002-2006 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -89,7 +89,7 @@ public class TS {
 
 	//introduced by 'catapult' 09082004
 	private static byte[] TF5000header = {
-		// HEADER 14 bytes
+		// HEADER 14 bytes, start at 0
 		0x54, 0x46, 0x72, 0x63,  // Id "TFrc" *
 		0x50, 0,                 // Version  *
 		0, 0,                    // Reserved *
@@ -97,7 +97,7 @@ public class TS {
 		0, 0xa,                  // Service number in channel list (Does not matter in playback)
 		0, 0,                    // Service type 0:TV 1:Radio
 
-		// SERVICE_INFO 38 bytes starts at 15
+		// SERVICE_INFO 38 bytes starts at 14
 		0, 0, 1, 0x30,           //  Reserved and Tuner (Does not matter in playback) (Tuner 1+2 flagged)
 		1, 2,                    //  Service ID of TS stream 
 		1, 0,                    //  PID number of PMT TS packet
@@ -105,9 +105,9 @@ public class TS {
 		0, (byte)0xe0,           //  PID number of Video TS packet  
 		0, (byte)0xc0,           //  PID number of Audio TS packet, MPA as std
 
-		0x4D,0x79,0x20,0x70,0x65,0x72,0x73,0x6F,0x6E,0x61,0x6C,0x20,0x54,0x56,0x20,0x43,0x68,0x61,0x6E,0x6E,0x65,0x6C,0,0, // File Name
+		0x50, 0x72, 0x69, 0x76, 0x61, 0x74, 0x65, 0x20, 0x52, 0x65, 0x63, 0x6F, 0x72, 0x64, 0x69, 0x6E, 0x67, 0, 0, 0, 0, 0, 0, 0, // Service Name
 
-		// TP_INFO 16 bytes starts at 53
+		// TP_INFO 16 bytes starts at 52
 		0,                       //  Satelite Index
 		8, 7, 0,                 //  Polarity and Reserved (Does not matter in playback)
 		0x6b, 0x6c, 0, 1,        //  Frequency  (Does not matter in playback)
@@ -115,8 +115,8 @@ public class TS {
 		1, 1,                    //  Transport Stream Id (Does not matter in playback)
 		0, 0, 0, 0,              //  Reserved *
 
-		// EVT_INFO 160 bytes starts at 69
-		(byte)0xCD, 0x39,       //  Reserved *
+		// EVT_INFO 160 bytes starts at 68
+		(byte)0x80, 0x02,       //  Reserved *
 		0, 0,                   //  Duration in Minutes
 		0, 0x3c, 4, 4,          //  Event Id
 		84, 69,                 //  Modified Julian date start time
@@ -133,7 +133,7 @@ public class TS {
 
 		// Event text
 
-		// EXT_EVT_INFO 1088 bytes starts at 229 
+		// EXT_EVT_INFO 1088 bytes starts at 228 
 		// Extended Event text
 
 	};
@@ -527,10 +527,24 @@ public class TS {
 
 		datum.setTime(new Date(event[1]));
 
-		ts.seek(0x4c);
+		ts.seek(0x4C);
 		ts.writeShort((short)event[3]);
 		ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
 		ts.writeByte((byte)datum.get(Calendar.MINUTE));   
+
+		String eventname = new File(name).getName();
+
+		if (eventname.length() > 128)
+			eventname = eventname.substring(0, 128);
+
+		ts.seek(0x55);
+		ts.writeUTF(eventname);
+
+		ts.seek(0x56);
+		int val = ts.read();
+
+		ts.seek(0x55);
+		ts.writeShort(val<<8);
 
 		ts.close();
 	}

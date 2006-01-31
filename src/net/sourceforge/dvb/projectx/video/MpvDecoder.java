@@ -29,7 +29,7 @@
 /*
  * @(#)MpvDecoder.java - still Picture Decoder
  * 
- * Copyright (c) 2003-2005 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2003-2006 by dvb.matt, All Rights Reserved. 
  *
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -2161,27 +2161,45 @@ public void motion_compensation(int MBA[], int macroblock_type[], int motion_typ
 	//if ((macroblock_type[0] & MACROBLOCK_INTRA)<1)
 		//form_predictions(bx, by, macroblock_type, motion_type, PMV, motion_vertical_field_select, dmvector);
 
-	//DM08022004 081.6 int16 changed
-	/* copy or add block data into picture */
-	for (comp=0; comp<block_count; comp++)	{
-		/* ISO/IEC 13818-2 section Annex A: inverse DCT */
 
-//
-		if (IDCTSseNative.isLibraryLoaded())
+	if (IDCTSseNative.isLibraryLoaded())
+	{
+		/* copy or add block data into picture */
+		for (comp=0; comp<block_count; comp++)
+		{
+			/* ISO/IEC 13818-2 section Annex A: inverse DCT */
 			idctsse.referenceIDCT(block[comp]);
 
-		else if (IDCTRefNative.isLibraryLoaded())
-			idct.referenceIDCT(block[comp]);
-
-		else
-			IDCT_reference(block[comp], FAST ? 1 : 8);
-//
-
-
-		/* ISO/IEC 13818-2 section 7.6.8: Adding prediction and coefficient data */
-		Add_Block(comp, bx, by, dct_type, (macroblock_type[0] & MACROBLOCK_INTRA)==0);
+			/* ISO/IEC 13818-2 section 7.6.8: Adding prediction and coefficient data */
+			Add_Block(comp, bx, by, dct_type, (macroblock_type[0] & MACROBLOCK_INTRA)==0);
+		}
 	}
 
+	else if (IDCTRefNative.isLibraryLoaded())
+	{
+		/* copy or add block data into picture */
+		for (comp=0; comp<block_count; comp++)
+		{
+			/* ISO/IEC 13818-2 section Annex A: inverse DCT */
+			idct.referenceIDCT(block[comp]);
+
+			/* ISO/IEC 13818-2 section 7.6.8: Adding prediction and coefficient data */
+			Add_Block(comp, bx, by, dct_type, (macroblock_type[0] & MACROBLOCK_INTRA)==0);
+		}
+	}
+
+	else
+	{
+		/* copy or add block data into picture */
+		for (comp=0; comp<block_count; comp++)
+		{
+			/* ISO/IEC 13818-2 section Annex A: inverse DCT */
+			IDCT_reference(block[comp], FAST ? 1 : 8);
+
+			/* ISO/IEC 13818-2 section 7.6.8: Adding prediction and coefficient data */
+			Add_Block(comp, bx, by, dct_type, (macroblock_type[0] & MACROBLOCK_INTRA)==0);
+		}
+	}
 }
 
 /*  Perform IEEE 1180 reference (64-bit floating point, separable 8x1
