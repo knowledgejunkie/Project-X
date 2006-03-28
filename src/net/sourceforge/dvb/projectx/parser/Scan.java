@@ -90,6 +90,14 @@ public class Scan extends Object {
  	 */
 	public void getStreamInfo(XInputFile aXInputFile)
 	{
+		getStreamInfo(aXInputFile, -1);
+	}
+
+	/**
+	 * show ScanInfos
+ 	 */
+	public void getStreamInfo(XInputFile aXInputFile, int assigned_streamtype)
+	{
 		long length = aXInputFile.length();
 
 		String _name = getName(aXInputFile);
@@ -105,7 +113,7 @@ public class Scan extends Object {
 				streamInfo = new StreamInfo();
 
 			// type must be first when scanning
-			streamInfo.setStreamInfo(aXInputFile.getFileType().getName(), getType(aXInputFile), _name, _location, _date, _size, getPlaytime(), getVideo(), getAudio(), getText(), getPics());
+			streamInfo.setStreamInfo(aXInputFile.getFileType().getName(), getType(aXInputFile, assigned_streamtype), _name, _location, _date, _size, getPlaytime(), getVideo(), getAudio(), getText(), getPics());
 
 			streamInfo.setStreamType(filetype, addInfo);
 			streamInfo.setPIDs(getPIDs());
@@ -120,9 +128,9 @@ public class Scan extends Object {
 	/**
 	 *
 	 */
-	private String getType(XInputFile aXInputFile)
+	private String getType(XInputFile aXInputFile, int assigned_streamtype)
 	{ 
-		filetype = testFile(aXInputFile, true);
+		filetype = testFile(aXInputFile, true, assigned_streamtype);
 
 		return (Keys.ITEMS_FileTypes[filetype].toString() + addInfo); 
 	}
@@ -812,20 +820,36 @@ public class Scan extends Object {
 		ByteArrayOutputStream bytecheck = new ByteArrayOutputStream();
 	//	pidlist.clear();
 
+		boolean ts_start = false;
+
 		tscheck:
-		for ( ; a < check.length - 1000; a++)
+		for (int adaptfield, pmtpid, offset; a < check.length - 1000; a++)
 		{
 			if ( check[a] != 0x47 || check[a + 188] != 0x47 || check[a + 376] != 0x47 ) 
 				continue tscheck;
 
-			if ( (0x30 & check[a + 3]) != 0x10 || check[a + 4] != 0 || check[a + 5] != 2 || (0xF0 & check[a + 6]) != 0xB0 )
+			if ((0x40 & check[a + 1]) == 0) // start
+				continue tscheck;
+
+			if ((0xC0 & check[a + 3]) != 0) // scrambling
+				continue tscheck;
+
+			adaptfield = (0x30 & check[a + 3])>>>4;
+
+			if ((adaptfield & 1) == 0) // adapt - no payload
+				continue tscheck;
+
+			offset = adaptfield == 3 ? 1 + (0xFF & check[a + 4]) : 0; //adaptlength
+
+			if (check[a + offset + 4] != 0 || check[a + offset + 5] != 2 || (0xF0 & check[a + offset + 6]) != 0xB0)
 			{ 
 				a += 187; 
 				continue tscheck; 
 			}
 
-			bytecheck.write(check, a + 4, 184);
-			int pmtpid = (0x1F & check[a + 1])<<8 | (0xFF & check[a + 2]);
+			bytecheck.write(check, a + 4 + offset, 184 - offset);
+
+			pmtpid = (0x1F & check[a + 1])<<8 | (0xFF & check[a + 2]);
 
 			if ( bytecheck.size() < 188 )
 			{ 
@@ -837,13 +861,26 @@ public class Scan extends Object {
 					if ( check[a] != 0x47 || check[a + 188] != 0x47 || check[a + 376] != 0x47 ) 
 						continue addpack;
 
-					if ( ((0x1F & check[a + 1])<<8 | (0xFF & check[a + 2])) != pmtpid || (0x40 & check[a + 1]) != 0 || (0x30 & check[a + 3]) != 0x10 )
+					if ((0x40 & check[a + 1]) != 0) // start
+						continue addpack;
+
+					if ((0xC0 & check[a + 3]) != 0) // scrambling
+						continue addpack;
+
+					adaptfield = (0x30 & check[a + 3])>>>4;
+
+					if ((adaptfield & 1) == 0) // adapt - no payload
+						continue addpack;
+
+					offset = adaptfield == 3 ? 1 + (0xFF & check[a + 4]) : 0; //adaptlength
+
+					if ( ((0x1F & check[a + 1])<<8 | (0xFF & check[a + 2])) != pmtpid )
 					{ 
 						a += 187; 
 						continue addpack; 
 					}
 
-					bytecheck.write(check, a + 4, 184);
+					bytecheck.write(check, a + 4 + offset, 184 - offset);
 
 					if ( bytecheck.size() > 188 ) 
 						break addpack;
@@ -1106,23 +1143,23 @@ public class Scan extends Object {
 	/**
 	 *
 	 */
-	private int testFile(XInputFile aXInputFile, boolean more)
+	private int testFile(XInputFile aXInputFile, boolean more, int assigned_streamtype)
 	{
 		long len = aXInputFile.length();
 
-		int ret = testFile(aXInputFile, more, 0);
+		int ret = testFile(aXInputFile, more, 0, assigned_streamtype);
 
 		if (ret != 0)
 			return ret;
 
 		// if type is not yet detected, try it again on a later position (10% of length)
-		return testFile(aXInputFile, more, len / 10);
+		return testFile(aXInputFile, more, len / 10, assigned_streamtype);
 	}
 
 	/**
 	 *
 	 */
-	private int testFile(XInputFile aXInputFile, boolean more, long position)
+	private int testFile(XInputFile aXInputFile, boolean more, long position, int assigned_streamtype)
 	{
 		video_streams.clear();
 		audio_streams.clear();
@@ -1134,7 +1171,6 @@ public class Scan extends Object {
 		playtime = "";
 		hasVideo = false; 
 
-		boolean nullpacket = false;
 		long size = 0;
 		int buffersize = Integer.parseInt(Common.getSettings().getProperty(Keys.KEY_ScanBuffer));
 
@@ -1148,6 +1184,7 @@ public class Scan extends Object {
 		int bs4 = buffersize - 65536;
 
 		byte[] check = new byte[buffersize];
+
 		ByteArrayOutputStream bytecheck = new ByteArrayOutputStream();
 
 		try {
@@ -1164,342 +1201,74 @@ public class Scan extends Object {
 
 			aXif.randomAccessSingleRead(check, position);
 
-			Audio.setNewType(CommonParsing.WAV_AUDIO);
+			int returncode = -1;
+			int[] mapping = { -1, -1, 5, 4, 4, 3, 2, 6, 6, 10, 9, 8, 8, 7, 7, 0, 0, 1 };
+			int streamtype = mapping[assigned_streamtype + 1];
 
-			riffcheck:
-			for (int i = 0; i < bs0; i++)  //compressed as AC3,MPEG is currently better detected as ES-not RIFF
+			scanloop:
+			for (int index = streamtype; returncode < CommonParsing.Unsupported; index++)
 			{
-				int ERRORCODE = Audio.parseHeader(check, i);
-
-				if (ERRORCODE > -1)
+				switch (index)
 				{
-					Audio.saveHeader();
+				case -1:
+					break;
 
-					if (more)
-					{ 
-						audio_streams.add(Audio.displayHeader());
-						playtime = getAudioTime(size); 
-					} 
+				case 0:
+					returncode = scanRiffAudio(check, bs0, more, size);
+					break;
 
-					if (ERRORCODE > 0)
-						return CommonParsing.ES_RIFF_TYPE;
+				case 1:
+					returncode = scanSubpicture(check, bs0, more);
+					break;
 
-					else if (Audio.getLastModeExtension() > 1)
-						break riffcheck;
+				case 2:
+					returncode = scanTS(check, bs4, more);
+					break;
 
-					else
-						return CommonParsing.ES_cRIFF_TYPE;
+				case 3:
+					returncode = scanPVA(check, bs1, more);
+					break;
+
+				case 4:
+					returncode = scanMpg12(check, bs2, bs1, more);
+					break;
+
+				case 5:
+					returncode = scanPrimaryPES(check, bs4, bs3, more);
+					break;
+
+				case 6:
+					returncode = scanSecondaryPES(check, bs2, bs3, more);
+					break;
+
+				case 7:
+					returncode = scanDtsAudio(check, bs1, more, size);
+					break;
+
+				case 8:
+					returncode = scanAc3Audio(check, bs1, more, size);
+					break;
+
+				case 9:
+					returncode = scanMpgAudio(check, bs1, more, size);
+					break;
+
+				case 10:
+					returncode = scanMpgVideo(check, bs3, more);
+					break;
+
+				default:
+					break scanloop;
 				}
+
+				if (assigned_streamtype != -1)
+					returncode = assigned_streamtype;
 			}
 
-			supcheck:
-			for (int i = 0; i < bs0; i++) 
-			{
-				if (check[i] != 0x53 || check[i + 1]!=0x50)
-					continue supcheck;
+			check = null;
 
-				int supframe_size = (0xFF & check[i + 10])<<8 | (0xFF & check[i + 11]);
-				int supframe_link = (0xFF & check[i + 12])<<8 | (0xFF & check[i + 13]);
-				int supframe_check = (0xFF & check[i + 12 + supframe_link])<<8 | (0xFF & check[i + 13 + supframe_link]);
-				int supframe_check2 = (0xFF & check[i + 36 + supframe_link])<<8 | (0xFF & check[i + 37 + supframe_link]);
-
-				if (supframe_link == supframe_check - 24 && supframe_check == supframe_check2)
-				{
-					if (more)
-					{
-						int b = i + 14 + supframe_link, c = b + 24, d, xa, xe, ya, ye;
-						for (d = b; d < c; d++)
-						{
-							switch(0xFF & check[d])
-							{
-							case 1:
-								d++;
-								continue;
-
-							case 2:
-								d += 24;
-								continue;
-
-							case 3:
-							case 4:
-								d += 2;
-								continue;
-
-							case 6:
-								d += 4;
-								continue;
-
-							case 5:
-								xa= (0xFF & check[++d])<<4 | (0xF0 & check[++d])>>>4;
-								xe= (0xF & check[d])<<8 | (0xFF & check[++d]);
-								ya= (0xFF & check[++d])<<4 | (0xF0 & check[++d])>>>4;
-								ye= (0xF & check[d])<<8 | (0xFF & check[++d]);
-
-								pic_streams.add("up.left x" + xa + ",y" + ya + " @ size " + (xe - xa + 1) + "*" + (ye - ya + 1));
-							}
-							break;
-						}
-
-						byte packet[] = new byte[10 + supframe_size];
-						System.arraycopy(check, i, packet, 0, 10 + supframe_size);
-
-					//  shows first found subpicture scaled on OSD
-						Common.getSubpictureClass().decode_picture(packet, 10, true, new String[2]);
-					}
-
-					return CommonParsing.ES_SUP_TYPE;
-				}
-			}
-
-			mpegtscheck:
-			for (int i = 0; i < bs4; i++) 
-			{ 
-				if ( check[i] != 0x47 || check[i + 188] != 0x47 || check[i + 376] != 0x47 || check[i + 564] != 0x47 || check[i + 752] != 0x47) 
-					continue mpegtscheck;
-
-				readPMT(check, i);
-
-				return CommonParsing.TS_TYPE;
-			}
-
-			pvacheck:
-			for (int i = 0; i < bs1; i++)
-			{
-				if ( check[i] != 0x41 || check[i + 1] != 0x56 || check[i + 4] != 0x55 ) 
-					continue pvacheck;
-
-				int next = i + 8 + ((0xFF & check[i + 6])<<8 | (0xFF & check[i + 7]));
-
-				if ( check[next] != 0x41 || check[next + 1] != 0x56 || check[next + 4] != 0x55 ) 
-					continue pvacheck;
-
-				else
-				{
-					if (more) 
-						loadPVA(check, i);
-
-					return CommonParsing.PVA_TYPE;
-				}
-			}
-
-			mpgcheck:
-			for (int i = 0, j, flag, returncode; i < bs2; i++)
-			{
-				if ((returncode = CommonParsing.validateStartcode(check, i)) < 0 || CommonParsing.getPES_IdField(check, i) != CommonParsing.PACK_START_CODE)
-				{
-					i += (returncode < 0 ? -returncode : 4) - 1;
-					continue mpgcheck;
-				}
-
-				flag = 0xC0 & check[i + 4];
-
-				if (flag == 0)
-				{ 
-					j = i + 12;
-
-					if (CommonParsing.validateStartcode(check, j) < 0 || CommonParsing.getPES_IdField(check, j) < CommonParsing.SEQUENCE_HEADER_CODE)
-						continue mpgcheck;
-
-					if (more) 
-						loadMPG2(check, i, false, true, nullpacket, bs1); 
-
-					return CommonParsing.MPEG1PS_TYPE;
-				}
-
-				else if (flag == 0x40 )
-				{
-					j = i + 14 + (7 & check[i + 13]);
-
-					if (CommonParsing.validateStartcode(check, j) < 0 || CommonParsing.getPES_IdField(check, j) < CommonParsing.SEQUENCE_HEADER_CODE)
-						continue mpgcheck;
-
-					if (more) 
-						loadMPG2(check, i, Common.getSettings().getBooleanProperty(Keys.KEY_simpleMPG), false, nullpacket, bs1); 
-
-					return CommonParsing.MPEG2PS_TYPE;
-				}
-			}
-
-			vdrcheck:
-			for (int i = 0, returncode; i < bs4; i++)
-			{
-				if ((returncode = CommonParsing.validateStartcode(check, i)) < 0 || (0xF0 & CommonParsing.getPES_IdField(check, i)) != 0xE0)
-				{
-					i += (returncode < 0 ? -returncode : 4) - 1;
-					continue vdrcheck;
-				}
-
-				int next = i + 6 + CommonParsing.getPES_LengthField(check, i);
-
-				if ( (next == i + 6) && (0xC0 & check[i + 6]) == 0x80 && (0xC0 & check[i + 8]) == 0)
-				{ 
-					addInfo = " !!(VPacketLengthField is 0)"; 
-					next = i; 
-					nullpacket = true; 
-				}
-
-				if (CommonParsing.validateStartcode(check, next) < 0)
-					continue vdrcheck;
-
-				else
-				{
-					if (more) 
-						loadMPG2(check, i, !Common.getSettings().getBooleanProperty(Keys.KEY_enhancedPES), false, nullpacket, bs3); 
-
-					return CommonParsing.PES_AV_TYPE;
-				}
-			}
-
-			rawcheck:
-			for (int i = 0, returncode; i < bs2; i++)
-			{
-				if ((returncode = CommonParsing.validateStartcode(check, i)) < 0)
-				{
-					i += (-returncode) - 1;
-					continue rawcheck;
-				}
-
-				if ( (0xE0 & check[i + 3]) == 0xC0 || (0xFF & check[i + 3]) == 0xBD )
-				{
-					int next = i + 6 + CommonParsing.getPES_LengthField(check, i);
-
-					if (CommonParsing.validateStartcode(check, next) < 0)
-						continue rawcheck;
-
-					if ( (0xE0 & check[i + 3]) == 0xC0 && (0xE0 & check[i + 3]) == (0xE0 & check[next + 3]) )
-					{
-						if (more)
-							loadMPG2(check, i, true, false, nullpacket, bs3); 
-
-						return CommonParsing.PES_MPA_TYPE;
-					}
-
-					else if ( (0xFF & check[i + 3]) == 0xBD && check[i + 3] == check[next + 3] )
-					{
-						if (more)
-						{
-							if (check[i + 8] == 0x24 && (0xF0 & check[i + 9 + 0x24])>>>4 == 1)
-							{
-								addInfo = " (TTX)";
-								ttx_streams.add("SubID 0x" + Integer.toHexString((0xFF & check[i + 9 + 0x24])).toUpperCase());
-							}
-							else
-								loadMPG2(check, i, true, false, nullpacket, bs3);
-						}
-
-						return CommonParsing.PES_PS1_TYPE;
-					}
-				}
-			}
-
-			Audio.setNewType(CommonParsing.DTS_AUDIO);
-
-			//ES audio
-			audiocheck:
-			for (int i = 0; i < bs0; i++)
-			{
-				/* DTS stuff taken from the VideoLAN project. */ 
-				/* Added by R One, 2003/12/18. */ 
-				if (Audio.parseHeader(check, i) > 0)
-				{ 
-					for (int b = 0; b < 15; b++)
-					{ 
-						if (Audio.parseNextHeader(check, i + Audio.getSize() + b) == 1)
-						{ 
-							if ( (0xFF & check[i + Audio.getSize()]) > 0x7F || (0xFF & check[i + Audio.getSize()]) == 0 ) //smpte 
-								continue audiocheck; 
-
-							if (more)
-							{ 
-								audio_streams.add(Audio.saveAndDisplayHeader());
-								playtime = getAudioTime(size); 
-							} 
-
-							if (b == 0) 
-								return CommonParsing.ES_DTS_TYPE; 
-
-							else 
-								return CommonParsing.ES_DTS_A_TYPE;
-						} 
-					} 
-
-					if (Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_allowSpaces))
-					{
-						if (more) 
-							audio_streams.add(Audio.saveAndDisplayHeader());
-
-						playtime = getAudioTime(size); 
-
-						return CommonParsing.ES_DTS_TYPE;
-					}
-				}
-			}
-
-			Audio.setNewType(CommonParsing.AC3_AUDIO);
-
-			audiocheck:
-			for (int i = 0; i < bs0; i++)
-			{
-				if (Audio.parseHeader(check, i) > 0)
-				{ 
-					for (int b = 0; b < 17; b++)
-					{
-						if (Audio.parseNextHeader(check, i + Audio.getSize() + b) == 1)
-						{
-							if ( (0xFF & check[i + Audio.getSize()]) > 0x3F || (0xFF & check[i + Audio.getSize()]) == 0 ) //smpte
-								continue audiocheck;
-
-							if (more)
-							{
-								audio_streams.add(Audio.saveAndDisplayHeader());
-								playtime = getAudioTime(size);
-							}
-
-							if (b == 0)
-								return CommonParsing.ES_AC3_TYPE;
-
-							else 
-								return CommonParsing.ES_AC3_A_TYPE;
-						}
-					}
-
-					if (Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_allowSpaces))
-					{
-						if (more) 
-							audio_streams.add(Audio.saveAndDisplayHeader());
-
-						playtime = getAudioTime(size); 
-
-						return CommonParsing.ES_AC3_TYPE;
-					}
-				}
-			}
-
-			Audio.setNewType(CommonParsing.MPEG_AUDIO);
-
-			audiocheck:
-			for (int i = 0; i < bs0; i++)
-			{
-				if (Audio.parseHeader(check, i) > 0)
-				{
-					if (!Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_allowSpaces) && Audio.parseNextHeader(check, i + Audio.getSize()) < 0) 
-						continue audiocheck;
-
-					if (more)
-					{
-						audio_streams.add(Audio.saveAndDisplayHeader());
-						playtime = getAudioTime(size);
-					}
-
-					return CommonParsing.ES_MPA_TYPE;
-				}
-			}
-
-
-			mpvcheck:
-			if (checkVid(check, bs3))
-				return CommonParsing.ES_MPV_TYPE;
-
+			if (returncode > 0)
+				return returncode;
 
 		} catch (Exception e) {
 
@@ -1508,9 +1277,439 @@ public class Scan extends Object {
 		}
 
 		check = null;
-		//System.gc();
 
 		return CommonParsing.Unsupported;
+	}
+
+	/**
+	 *
+	 */
+	private int scanRiffAudio(byte[] check, int buffersize, boolean more, long size) throws Exception
+	{
+		Audio.setNewType(CommonParsing.WAV_AUDIO);
+
+		riffcheck:
+		for (int i = 0, ERRORCODE; i < buffersize; i++)  //compressed as AC3,MPEG is currently better detected as ES-not RIFF
+		{
+			ERRORCODE = Audio.parseHeader(check, i);
+
+			if (ERRORCODE > -1)
+			{
+				Audio.saveHeader();
+
+				if (more)
+				{ 
+					audio_streams.add(Audio.displayHeader());
+					playtime = getAudioTime(size); 
+				} 
+
+				if (ERRORCODE > 0)
+					return CommonParsing.ES_RIFF_TYPE;
+
+				else if (Audio.getLastModeExtension() > 1)
+					break riffcheck;
+
+				else
+					return CommonParsing.ES_cRIFF_TYPE;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 *
+	 */
+	private int scanSubpicture(byte[] check, int buffersize, boolean more) throws Exception
+	{
+		supcheck:
+		for (int i = 0, supframe_size, supframe_link, supframe_check, supframe_check2; i < buffersize; i++) 
+		{
+			if (check[i] != 0x53 || check[i + 1]!=0x50)
+				continue supcheck;
+
+			supframe_size = (0xFF & check[i + 10])<<8 | (0xFF & check[i + 11]);
+			supframe_link = (0xFF & check[i + 12])<<8 | (0xFF & check[i + 13]);
+			supframe_check = (0xFF & check[i + 12 + supframe_link])<<8 | (0xFF & check[i + 13 + supframe_link]);
+			supframe_check2 = (0xFF & check[i + 36 + supframe_link])<<8 | (0xFF & check[i + 37 + supframe_link]);
+
+			if (supframe_link == supframe_check - 24 && supframe_check == supframe_check2)
+			{
+				if (more)
+				{
+					int b = i + 14 + supframe_link, c = b + 24, d, xa, xe, ya, ye;
+
+					for (d = b; d < c; d++)
+					{
+						switch(0xFF & check[d])
+						{
+						case 1:
+							d++;
+							continue;
+
+						case 2:
+							d += 24;
+							continue;
+
+						case 3:
+						case 4:
+							d += 2;
+							continue;
+
+						case 6:
+							d += 4;
+							continue;
+
+						case 5:
+							xa= (0xFF & check[++d])<<4 | (0xF0 & check[++d])>>>4;
+							xe= (0xF & check[d])<<8 | (0xFF & check[++d]);
+							ya= (0xFF & check[++d])<<4 | (0xF0 & check[++d])>>>4;
+							ye= (0xF & check[d])<<8 | (0xFF & check[++d]);
+
+							pic_streams.add("up.left x" + xa + ",y" + ya + " @ size " + (xe - xa + 1) + "*" + (ye - ya + 1));
+						}
+						break;
+					}
+
+					byte packet[] = new byte[10 + supframe_size];
+
+					System.arraycopy(check, i, packet, 0, 10 + supframe_size);
+
+				//  shows first found subpicture scaled on OSD
+					Common.getSubpictureClass().decode_picture(packet, 10, true, new String[2]);
+				}
+
+				return CommonParsing.ES_SUP_TYPE;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 *
+	 */
+	private int scanTS(byte[] check, int buffersize, boolean more) throws Exception
+	{
+		mpegtscheck:
+		for (int i = 0; i < buffersize; i++) 
+		{ 
+			if ( check[i] != 0x47 || check[i + 188] != 0x47 || check[i + 376] != 0x47 || check[i + 564] != 0x47 || check[i + 752] != 0x47) 
+				continue mpegtscheck;
+
+			readPMT(check, i);
+
+			return CommonParsing.TS_TYPE;
+		}
+
+		return -1;
+	}
+
+	/**
+	 *
+	 */
+	private int scanPVA(byte[] check, int buffersize, boolean more) throws Exception
+	{
+		pvacheck:
+		for (int i = 0; i < buffersize; i++)
+		{
+			if ( check[i] != 0x41 || check[i + 1] != 0x56 || check[i + 4] != 0x55 ) 
+				continue pvacheck;
+
+			int next = i + 8 + ((0xFF & check[i + 6])<<8 | (0xFF & check[i + 7]));
+
+			if ( check[next] != 0x41 || check[next + 1] != 0x56 || check[next + 4] != 0x55 ) 
+				continue pvacheck;
+
+			else
+			{
+				if (more) 
+					loadPVA(check, i);
+
+				return CommonParsing.PVA_TYPE;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 *
+	 */
+	private int scanMpg12(byte[] check, int buffersize_1, int buffersize_2, boolean more) throws Exception
+	{
+		boolean nullpacket = false;
+
+		mpgcheck:
+		for (int i = 0, j, flag, returncode; i < buffersize_1; i++)
+		{
+			if ((returncode = CommonParsing.validateStartcode(check, i)) < 0 || CommonParsing.getPES_IdField(check, i) != CommonParsing.PACK_START_CODE)
+			{
+				i += (returncode < 0 ? -returncode : 4) - 1;
+				continue mpgcheck;
+			}
+
+			flag = 0xC0 & check[i + 4];
+
+			if (flag == 0)
+			{ 
+				j = i + 12;
+
+				if (CommonParsing.validateStartcode(check, j) < 0 || CommonParsing.getPES_IdField(check, j) < CommonParsing.SEQUENCE_HEADER_CODE)
+					continue mpgcheck;
+
+				if (more) 
+					loadMPG2(check, i, false, true, nullpacket, buffersize_2); 
+
+				return CommonParsing.MPEG1PS_TYPE;
+			}
+
+			else if (flag == 0x40 )
+			{
+				j = i + 14 + (7 & check[i + 13]);
+
+				if (CommonParsing.validateStartcode(check, j) < 0 || CommonParsing.getPES_IdField(check, j) < CommonParsing.SEQUENCE_HEADER_CODE)
+					continue mpgcheck;
+
+				if (more) 
+					loadMPG2(check, i, Common.getSettings().getBooleanProperty(Keys.KEY_simpleMPG), false, nullpacket, buffersize_2); 
+
+				return CommonParsing.MPEG2PS_TYPE;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 *
+	 */
+	private int scanPrimaryPES(byte[] check, int buffersize_1, int buffersize_2, boolean more) throws Exception
+	{
+		boolean nullpacket = false;
+
+		vdrcheck:
+		for (int i = 0, returncode; i < buffersize_1; i++)
+		{
+			if ((returncode = CommonParsing.validateStartcode(check, i)) < 0 || (0xF0 & CommonParsing.getPES_IdField(check, i)) != 0xE0)
+			{
+				i += (returncode < 0 ? -returncode : 4) - 1;
+				continue vdrcheck;
+			}
+
+			int next = i + 6 + CommonParsing.getPES_LengthField(check, i);
+
+			if ( (next == i + 6) && (0xC0 & check[i + 6]) == 0x80 && (0xC0 & check[i + 8]) == 0)
+			{ 
+				addInfo = " !!(VPacketLengthField is 0)"; 
+				next = i; 
+				nullpacket = true; 
+			}
+
+			if (CommonParsing.validateStartcode(check, next) < 0)
+				continue vdrcheck;
+
+			else
+			{
+				if (more) 
+					loadMPG2(check, i, !Common.getSettings().getBooleanProperty(Keys.KEY_enhancedPES), false, nullpacket, buffersize_2); 
+
+				return CommonParsing.PES_AV_TYPE;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 *
+	 */
+	private int scanSecondaryPES(byte[] check, int buffersize_1, int buffersize_2, boolean more) throws Exception
+	{
+		boolean nullpacket = false;
+
+		rawcheck:
+		for (int i = 0, returncode; i < buffersize_1; i++)
+		{
+			if ((returncode = CommonParsing.validateStartcode(check, i)) < 0)
+			{
+				i += (-returncode) - 1;
+				continue rawcheck;
+			}
+
+			if ( (0xE0 & check[i + 3]) == 0xC0 || (0xFF & check[i + 3]) == 0xBD )
+			{
+				int next = i + 6 + CommonParsing.getPES_LengthField(check, i);
+
+				if (CommonParsing.validateStartcode(check, next) < 0)
+					continue rawcheck;
+
+				if ( (0xE0 & check[i + 3]) == 0xC0 && (0xE0 & check[i + 3]) == (0xE0 & check[next + 3]) )
+				{
+					if (more)
+						loadMPG2(check, i, true, false, nullpacket, buffersize_2); 
+
+					return CommonParsing.PES_MPA_TYPE;
+				}
+
+				else if ( (0xFF & check[i + 3]) == 0xBD && check[i + 3] == check[next + 3] )
+				{
+					if (more)
+					{
+						if (check[i + 8] == 0x24 && (0xF0 & check[i + 9 + 0x24])>>>4 == 1)
+						{
+							addInfo = " (TTX)";
+							ttx_streams.add("SubID 0x" + Integer.toHexString((0xFF & check[i + 9 + 0x24])).toUpperCase());
+						}
+
+						else
+							loadMPG2(check, i, true, false, nullpacket, buffersize_2);
+					}
+
+					return CommonParsing.PES_PS1_TYPE;
+				}
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 *
+	 */
+	private int scanDtsAudio(byte[] check, int buffersize, boolean more, long size) throws Exception
+	{
+		Audio.setNewType(CommonParsing.DTS_AUDIO);
+
+		audiocheck:
+		for (int i = 0; i < buffersize; i++)
+		{
+			/* DTS stuff taken from the VideoLAN project. */ 
+			/* Added by R One, 2003/12/18. */ 
+			if (Audio.parseHeader(check, i) < 1)
+				continue;
+
+			for (int b = 0; b < 15; b++)
+			{ 
+				if (Audio.parseNextHeader(check, i + Audio.getSize() + b) != 1)
+					continue;
+
+				if ( (0xFF & check[i + Audio.getSize()]) > 0x7F || (0xFF & check[i + Audio.getSize()]) == 0 ) //smpte 
+					continue audiocheck; 
+
+				if (more)
+				{ 
+					audio_streams.add(Audio.saveAndDisplayHeader());
+					playtime = getAudioTime(size); 
+				} 
+
+				if (b == 0) 
+					return CommonParsing.ES_DTS_TYPE; 
+
+				else 
+					return CommonParsing.ES_DTS_A_TYPE;
+			} 
+
+			if (Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_allowSpaces))
+			{
+				if (more) 
+					audio_streams.add(Audio.saveAndDisplayHeader());
+
+				playtime = getAudioTime(size); 
+
+				return CommonParsing.ES_DTS_TYPE;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 *
+	 */
+	private int scanAc3Audio(byte[] check, int buffersize, boolean more, long size) throws Exception
+	{
+		Audio.setNewType(CommonParsing.AC3_AUDIO);
+
+		audiocheck:
+		for (int i = 0; i < buffersize; i++)
+		{
+			if (Audio.parseHeader(check, i) < 1)
+				continue;
+
+			for (int b = 0; b < 17; b++)
+			{
+				if (Audio.parseNextHeader(check, i + Audio.getSize() + b) != 1)
+					continue;
+
+				if ( (0xFF & check[i + Audio.getSize()]) > 0x3F || (0xFF & check[i + Audio.getSize()]) == 0 ) //smpte
+					continue audiocheck;
+
+				if (more)
+				{
+					audio_streams.add(Audio.saveAndDisplayHeader());
+					playtime = getAudioTime(size);
+				}
+
+				if (b == 0)
+					return CommonParsing.ES_AC3_TYPE;
+
+				else 
+					return CommonParsing.ES_AC3_A_TYPE;
+			}
+
+			if (Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_allowSpaces))
+			{
+				if (more) 
+					audio_streams.add(Audio.saveAndDisplayHeader());
+
+				playtime = getAudioTime(size); 
+
+				return CommonParsing.ES_AC3_TYPE;
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 *
+	 */
+	private int scanMpgAudio(byte[] check, int buffersize, boolean more, long size) throws Exception
+	{
+		Audio.setNewType(CommonParsing.MPEG_AUDIO);
+
+		audiocheck:
+		for (int i = 0; i < buffersize; i++)
+		{
+			if (Audio.parseHeader(check, i) < 1)
+				continue;
+
+			if (!Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_allowSpaces) && Audio.parseNextHeader(check, i + Audio.getSize()) < 0) 
+				continue audiocheck;
+
+			if (more)
+			{
+				audio_streams.add(Audio.saveAndDisplayHeader());
+				playtime = getAudioTime(size);
+			}
+
+			return CommonParsing.ES_MPA_TYPE;
+		}
+
+		return -1;
+	}
+
+	/**
+	 *
+	 */
+	private int scanMpgVideo(byte[] check, int buffersize, boolean more) throws Exception
+	{
+		mpvcheck:
+		if (checkVid(check, buffersize))
+			return CommonParsing.ES_MPV_TYPE;
+
+		return -1;
 	}
 
 

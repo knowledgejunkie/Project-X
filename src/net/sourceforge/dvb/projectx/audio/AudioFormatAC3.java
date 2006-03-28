@@ -182,7 +182,7 @@ public class AudioFormatAC3 extends AudioFormat {
 			nOriginal = 0x1F & mode>>>(7 - (2 * skip)); //dialnorm
 		}
 	
-		nChannel = ac3_channels[Mode] + (1 & nMode_extension);
+		nChannel = ac3_channels[nMode] + (1 & nMode_extension);
 		nCopyright = 0;
 		nTime_length = 138240000.0 / nSampling_frequency;
 		nSize = (nSize_base = ac3_size_table[3 & frame[pos+4]>>>6][5 & frame[pos+4]>>>1]) + nPadding_bit * 2;

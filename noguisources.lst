@@ -16,6 +16,7 @@ src/net/sourceforge/dvb/projectx/common/Keys.java
 src/net/sourceforge/dvb/projectx/common/Resource.java
 src/net/sourceforge/dvb/projectx/common/Settings.java
 src/net/sourceforge/dvb/projectx/common/Start.java
+src/net/sourceforge/dvb/projectx/io/BitWalker.java
 src/net/sourceforge/dvb/projectx/io/IDDBufferedOutputStream.java
 src/net/sourceforge/dvb/projectx/io/RawFile.java
 src/net/sourceforge/dvb/projectx/io/StandardBuffer.java

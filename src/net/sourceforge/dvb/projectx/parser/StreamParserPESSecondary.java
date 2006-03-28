@@ -422,7 +422,7 @@ public class StreamParserPESSecondary extends StreamParserBase {
 					/**
 					 * vdr_dvbsub determination
 					 */
-					pes_extension2_id = CommonParsing.getExtension2_Id(pes_packet, pes_headerlength, pes_payloadlength, pesID, pes_isMpeg2);
+					pes_extension2_id = CommonParsing.getExtension2_Id(pes_packet, pes_headerlength, pes_payloadlength, pesID, pes_isMpeg2, count - pes_packetlength);
 
 					isTeletext = false;
 					subID = 0;

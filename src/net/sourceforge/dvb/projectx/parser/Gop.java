@@ -135,9 +135,9 @@ public class Gop extends Object {
 	/**
 	 * gop dropp
 	 */
-	private void messageDropError(byte[] gop, byte[] pts, int maxtref, int frame, int gop_number, int frame_number, long startpts, long lastpts, String dumpname)
+	private void messageDropError(byte[] gop, byte[] pts, int maxtref, int frame, int gop_number, int frame_number, long startpts, long lastpts, String dumpname, int errorcode)
 	{
-		Common.setMessage(Resource.getString("video.msg.error.gop.drop", String.valueOf(gop_number - 1), Common.formatTime_1(startpts / 90L), String.valueOf(startpts)));
+		Common.setMessage(Resource.getString("video.msg.error.gop.drop", String.valueOf(gop_number - 1), Common.formatTime_1(startpts / 90L), String.valueOf(startpts)) + ", errorcode: " + Integer.toHexString(errorcode).toUpperCase());
 		Common.setMessage(Resource.getString("video.msg.error.gop.diff", String.valueOf(maxtref + 1) + "/" + (frame + 1), String.valueOf((lastpts - startpts) / 90)) + " " + Common.formatTime_1((long)(frame_number * (double)(CommonParsing.getVideoFramerate() / 90.0f) )));
 
 		/**
@@ -188,6 +188,7 @@ public class Gop extends Object {
 	public void goptest(JobProcessing job_processing, IDDBufferedOutputStream video_sequence, byte[] gop, byte[] pts, DataOutputStream log, String dumpname, int[] MPGVideotype, List CutpointList, List ChapterpointList, boolean doWrite)
 	{
 		int[] clv = job_processing.getStatusVariables();
+		int ErrorCode = 0;
 
 		String[] VBASIC = job_processing.getStatusStrings();
 
@@ -433,8 +434,9 @@ public class Gop extends Object {
 				if (_h_reso == 0 || _v_reso == 0 || d == 0 || _dar == 0 || _dar > 13)
 				{
 					clv[4]++;
+					ErrorCode |= 0x80;
 
-					messageDropError(gop, pts, maxtref, frame, clv[6], job_processing.getExportedVideoFrameNumber(), startpts, lastpts, dumpname);
+					messageDropError(gop, pts, maxtref, frame, clv[6], job_processing.getExportedVideoFrameNumber(), startpts, lastpts, dumpname, ErrorCode);
 
 					job_processing.setSequenceHeader(false);
 
@@ -682,6 +684,7 @@ public class Gop extends Object {
 					{
 						Common.setMessage(Resource.getString("video.msg.error.frame.wrong", "" + frametype) + " " + tref);
 						error = true;
+						ErrorCode |= 1;
 					}
 
 					newPics.add(String.valueOf(tref<<4 | frametype));
@@ -922,6 +925,7 @@ public class Gop extends Object {
 			{
 				Common.setMessage(Resource.getString("video.msg.error.frame.not", String.valueOf(clv[6] - 1)));
 				error = true;
+				ErrorCode |= 2;
 			}
 
 			/**
@@ -937,6 +941,7 @@ public class Gop extends Object {
 				if (Tref < 0 || Tref > Pics.length - 1 || newTref[Tref] != -1)
 				{
 					error = true;
+					ErrorCode |= 4;
 					break;
 				}
 
@@ -945,7 +950,10 @@ public class Gop extends Object {
 
 			for (int i = 0; !error && i < newTref.length; i++)
 				if (newTref[i] == -1)
+				{
 					error = true;
+					ErrorCode |= 8;
+				}
 
 
 			/**
@@ -965,6 +973,7 @@ public class Gop extends Object {
 			{
 				Common.setMessage(Resource.getString("video.msg.error.pts.early", String.valueOf(clv[6] - 1), String.valueOf(job_processing.getLastGopPts())));
 				error = true;
+				ErrorCode |= 0x10;
 			}
 
 			/**
@@ -983,7 +992,10 @@ public class Gop extends Object {
 			 * error, if pts diff. between frames > half of a frame
 			 */
 			if (maxtref != frame || Math.abs(lastpts - startpts) > 2000)
+			{
 				error = true;
+				ErrorCode |= 0x20;
+			}
 
 			/**
 			 * ignore v-errors 
@@ -999,7 +1011,10 @@ public class Gop extends Object {
 			 * error, if gop on mp@ml is too big
 			 */
 			if (Integer.parseInt(VBASIC[0]) <= 720 && gop.length > 2750000)
+			{
 				error = true;
+				ErrorCode |= 0x40;
+			}
 
 			/** 
 			 * return last orig pts for plain mpv
@@ -1007,14 +1022,14 @@ public class Gop extends Object {
 			job_processing.setLastSimplifiedPts(startpts + (long)(trefcheck * CommonParsing.getVideoFramerate()) + (long)((maxtref - trefcheck + 1) * CommonParsing.getVideoFramerate()));
 
 			/** 
-			 * meassage error
+			 * message error
 			 */
 			if (error)
 			{
 				job_processing.setExportedVideoFrameNumber(lastframes);
 				clv[4]++;
 
-				messageDropError(gop, pts, maxtref, frame, clv[6], job_processing.getExportedVideoFrameNumber(), startpts, lastpts, dumpname);
+				messageDropError(gop, pts, maxtref, frame, clv[6], job_processing.getExportedVideoFrameNumber(), startpts, lastpts, dumpname, ErrorCode);
 			}
 
 			else

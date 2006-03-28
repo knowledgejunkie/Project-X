@@ -771,6 +771,7 @@ public class PreSettings extends JFrame {
 			Keys.KEY_ExternPanel_renameVideo,
 			Keys.KEY_ExternPanel_appendExtension,
 			Keys.KEY_ExternPanel_createM2sIndex,
+            Keys.KEY_ExternPanel_createInfoIndex,
 			Keys.KEY_ExternPanel_createD2vIndex,
 			Keys.KEY_ExternPanel_createDgiIndex,
 			Keys.KEY_ExternPanel_splitProjectFile
@@ -788,7 +789,7 @@ public class PreSettings extends JFrame {
 			box[i].setSelected(Common.getSettings().getBooleanProperty(objects[i]));
 			box[i].addActionListener(_CheckBoxListener);
 
-			if (i == 9)
+			if (i == 10)
 				box[i].setEnabled(false);
 		}
 
@@ -812,10 +813,16 @@ public class PreSettings extends JFrame {
 
 		video3Panel.add(Box.createRigidArea(new Dimension(1, 10)));
 
+        video3Panel.add(new JLabel(Resource.getString("ExternPanel.createInfoLabel")));
+
+        video3Panel.add(box[8]);
+
+        video3Panel.add(Box.createRigidArea(new Dimension(1, 10)));
+
 		video3Panel.add(new JLabel(Resource.getString("ExternPanel.createD2vIndex")));
 
 		// right grid
-		for (int i = 8; i < objects.length; i++)
+		for (int i = 9; i < objects.length; i++)
 			video3Panel.add(box[i]);
 
 		JTextField d2v_splitsize = new JTextField(Common.getSettings().getProperty(Keys.KEY_ExternPanel_ProjectFileSplitSize));
@@ -862,12 +869,14 @@ public class PreSettings extends JFrame {
 		conversion_selection.addActionListener(_ComboBoxIndexListener);
 		audio0.add(conversion_selection);
 
-		audio0.add(new JLabel(" "));
+		//audio0.add(new JLabel(" "));
+		audio0.add(Box.createRigidArea(new Dimension(1, 20)));
 
 		String[][] objects = {
 			Keys.KEY_AudioPanel_decodeMpgAudio,
 			Keys.KEY_AudioPanel_Normalize,
 			Keys.KEY_AudioPanel_Downmix,
+			Keys.KEY_AudioPanel_fadeInOut,
 			Keys.KEY_AudioPanel_changeByteorder,
 			Keys.KEY_AudioPanel_addRiffHeader,
 			Keys.KEY_AudioPanel_addAiffHeader,
@@ -951,7 +960,7 @@ public class PreSettings extends JFrame {
 
 		audio0.add(audio5);
 
-		for (int i = 2; i < 6; i++)
+		for (int i = 2; i < 7; i++)
 			audio0.add(box[i]);
 
 
@@ -963,22 +972,22 @@ public class PreSettings extends JFrame {
 
 				if (str.equals(Keys.KEY_AudioPanel_changeByteorder[0]) && Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addAiffHeader))
 				{
-					box[3].setSelected(true);
+					box[4].setSelected(true);
 					Common.getSettings().setBooleanProperty(Keys.KEY_AudioPanel_changeByteorder[0], true);
 					return;
 				}
 
 				else if (str.equals(Keys.KEY_AudioPanel_addRiffHeader[0]) && checkBox.isSelected())
 				{
-					box[5].setSelected(false);
+					box[6].setSelected(false);
 					Common.getSettings().setBooleanProperty(Keys.KEY_AudioPanel_addAiffHeader[0], false);
 					return;
 				}
 
 				else if (str.equals(Keys.KEY_AudioPanel_addAiffHeader[0]) && checkBox.isSelected())
 				{
-					box[3].setSelected(true);
-					box[4].setSelected(false);
+					box[4].setSelected(true);
+					box[5].setSelected(false);
 					Common.getSettings().setBooleanProperty(Keys.KEY_AudioPanel_changeByteorder[0], true);
 					Common.getSettings().setBooleanProperty(Keys.KEY_AudioPanel_addRiffHeader[0], false);
 					return;
@@ -986,18 +995,18 @@ public class PreSettings extends JFrame {
 			}
 		};
 
-		box[3].addActionListener(al);
 		box[4].addActionListener(al);
 		box[5].addActionListener(al);
+		box[6].addActionListener(al);
 
 
 		JPanel audio1 = new JPanel();
 		audio1.setLayout( new ColumnLayout() );
 		audio1.setBorder( BorderFactory.createTitledBorder(Resource.getString("AudioPanel.Title2")) );
 
-		for (int i = 6; i < objects.length; i++)
+		for (int i = 7; i < objects.length; i++)
 		{
-			if (i == 13 || i == 16)
+			if (i == 14 || i == 17)
 				audio1.add(Box.createRigidArea(new Dimension(1, 10)));
 
 			audio1.add(box[i]);
@@ -1011,22 +1020,22 @@ public class PreSettings extends JFrame {
 
 				if (str.equals(Keys.KEY_AudioPanel_addRiffToMpgAudioL3[0]) && checkBox.isSelected())
 				{
-					box[14].setSelected(false);
+					box[15].setSelected(false);
 					Common.getSettings().setBooleanProperty(Keys.KEY_AudioPanel_addRiffToMpgAudio[0], false);
 					return;
 				}
 
 				else if (str.equals(Keys.KEY_AudioPanel_addRiffToMpgAudio[0]) && checkBox.isSelected())
 				{
-					box[15].setSelected(false);
+					box[16].setSelected(false);
 					Common.getSettings().setBooleanProperty(Keys.KEY_AudioPanel_addRiffToMpgAudioL3[0], false);
 					return;
 				}
 			}
 		};
 
-		box[14].addActionListener(al_2);
 		box[15].addActionListener(al_2);
+		box[16].addActionListener(al_2);
 
 		audio.add(audio0);
 		audio.add(audio1);
@@ -1347,7 +1356,8 @@ public class PreSettings extends JFrame {
 
 		String[][] objects = {
 			Keys.KEY_dumpDroppedGop,
-			Keys.KEY_holdStreamInfoOnOSD
+			Keys.KEY_holdStreamInfoOnOSD,
+			Keys.KEY_additionalInputBuffer
 		};
 
 		JCheckBox[] box = new JCheckBox[objects.length];
@@ -1362,7 +1372,8 @@ public class PreSettings extends JFrame {
 			box[i].setSelected(Common.getSettings().getBooleanProperty(objects[i]));
 			box[i].addActionListener(_CheckBoxListener);
 
-			op0.add(box[i]);
+			if (i < 2)
+				op0.add(box[i]);
 		}
 
 		op0.add(Box.createRigidArea(new Dimension(1, 4)));
@@ -1383,6 +1394,8 @@ public class PreSettings extends JFrame {
 		JPanel op2 = new JPanel();
 		op2.setLayout( new ColumnLayout() );
 		op2.setBorder( BorderFactory.createTitledBorder(Resource.getString("OptionPanel.Buffer.Title")) );
+
+		op2.add(box[2]);
 
 		String[][] keys = {
 			Keys.KEY_MainBuffer,

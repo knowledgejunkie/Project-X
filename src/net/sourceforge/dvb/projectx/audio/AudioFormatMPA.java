@@ -35,6 +35,8 @@ import java.util.ArrayList;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
+import java.io.BufferedOutputStream;
 
 import net.sourceforge.dvb.projectx.audio.MpaDecoder;
 import net.sourceforge.dvb.projectx.common.Common;
@@ -42,10 +44,12 @@ import net.sourceforge.dvb.projectx.audio.AudioFormat;
 
 public class AudioFormatMPA extends AudioFormat {
 		
-		
+	private String instanced_time = "";
+
 	public AudioFormatMPA()
 	{
 		super();
+		instanced_time = String.valueOf(System.currentTimeMillis());
 	}
 
 	private int[][][] bitrate_index = {{
@@ -508,6 +512,7 @@ public class AudioFormatMPA extends AudioFormat {
 
 	private boolean DecodeRDS = false;
 	private boolean Debug = false;
+	private boolean hasRawData = false;
 
 	private String[] rds_values = new String[7];
 	private final String[] pty_list = {
@@ -560,12 +565,12 @@ public class AudioFormatMPA extends AudioFormat {
 				return;
 		}
 
-		int len = frame[neg_offs - 1];
+		int len = 0xFF & frame[neg_offs - 1];
 
 		for (int i = neg_offs - 2, val; i > neg_offs - 2 - len; i--)
 		{
 			val = 0xFF & frame[i];
-			_list.add("" + val);
+			_list.add(String.valueOf(val));
 		}
 
 		decodeChunk(_list);
@@ -601,21 +606,6 @@ public class AudioFormatMPA extends AudioFormat {
 			return;
 		}
 
-
-		int chunklen = Integer.parseInt(list.get(4).toString());
-
-		chunklen ++;   //start_marker
-		chunklen += 2; //address  10b site add + 6b enc add; site: 0 all, 1-3ff; enc: 0 all, 1-3f
-		chunklen ++;   //sequence cnt 01-ff
-		chunklen ++;   //len field itself
-		chunklen += 2; //crc
-
-		if (eom_index < chunklen)
-		{
-			list.remove(0);
-			return;
-		}
-
 		if (Debug)
 		{
 			String str = "";
@@ -630,14 +620,17 @@ public class AudioFormatMPA extends AudioFormat {
 			System.out.println("RDS:" + str);
 		}
 
+		int chunk_length = Integer.parseInt(list.get(4).toString());
+		int real_length = -1;
 		int type = -1;
 
-		for (int i = 0; i <= eom_index; i++, list.remove(0))
+		// fill bytearray, excluding crc + EOM, correct special bytes
+		for (int i = 0, j = 0, k = 0, value; i <= eom_index; i++, list.remove(0))
 		{
-			if (i < 5 || i > eom_index - 3)
-				continue;
+			value = Integer.parseInt(list.get(0).toString());
 
-			int value = Integer.parseInt(list.get(0).toString());
+			if (i < 5 || value > 0xFD)
+				continue;
 
 			if (i == 5)
 			{
@@ -645,13 +638,38 @@ public class AudioFormatMPA extends AudioFormat {
 				continue;
 			}
 
-			bo.write(value);
+			// coding of 0xFD,FE,FF
+			if (value == 0xFD)
+			{
+				j = 1;
+				continue;
+			}
+
+			if (j == 1)
+			{
+				value += 0xFD;
+				j = 0;
+			}
+
+			if (k < chunk_length - 1)
+				bo.write(value);
+
+			real_length = k;
+			k++;
 		}
+
+		// wrong length
+		if (real_length != chunk_length)
+			type = -1;
 
 		String str;
 
 		switch (type)
 		{
+		case 0xDA: //Video-programminfos
+			getRawData(bo.toByteArray());
+			break;
+
 		case 0x0A: //RT
 			compareMsg(getRT(bo.toByteArray()), 0);
 			break;
@@ -695,6 +713,56 @@ public class AudioFormatMPA extends AudioFormat {
 	/**
 	 * 
 	 */
+	private void getRawData(byte[] array)
+	{
+		try {
+			int index = 0;
+
+			int len = 0xFF & array[index];
+			int end = array.length;
+
+			index += 5;
+
+			int counter = 0xFF & array[index];
+
+			index += 3;
+
+			int bound = 0xFF & array[index];
+
+			index++;
+
+			try {
+
+				if (!hasRawData)
+				{
+					hasRawData = true;
+					Common.setMessage("-> exporting RDS data type 0xDA to '" + instanced_time + "_rawdata_0xDA_RDS'");
+				}
+
+				BufferedOutputStream rawdata = new BufferedOutputStream(new FileOutputStream(Common.getCollection().getOutputNameParent(instanced_time + "_rawdata@RDS"), true));
+
+				for (int i = index, k; i < end; i++)
+				{
+					k = (0xFF & array[i]);
+
+					rawdata.write(k);
+				}
+
+				rawdata.flush();
+				rawdata.close();
+
+			} catch (IOException ie) {
+				Common.setMessage("!> error rds1");
+			}
+
+		} catch (ArrayIndexOutOfBoundsException ae) {
+			Common.setMessage("!> error rds2");
+		}
+	}
+
+	/**
+	 * 
+	 */
 	private void compareMsg(String str, int index)
 	{
 		if (str == null || str.equals(rds_values[index]))
@@ -710,24 +778,29 @@ public class AudioFormatMPA extends AudioFormat {
 	 */
 	private String getRT(byte[] array)
 	{
-		int index = 0;
+		try {
+			int index = 0;
 
-		int dsn = 0xFF & array[index];
-		int psn = 0xFF & array[index + 1];
+			int dsn = 0xFF & array[index];
+			int psn = 0xFF & array[index + 1];
 
-		index += 2;
+			index += 2;
 
-		int len = 0xFF & array[index];
+			int len = 0xFF & array[index];
 
-		index++;
+			index++;
 
-		int change = 0xFF & array[index];
+			int change = 0xFF & array[index];
 
-		index++;
+			index++;
 
-		String str = getString(array, index, len - 1);
+			String str = getString(array, index, len - 1);
 
-		return ("-> RT (" + Integer.toHexString(change).toUpperCase() + "): '" + str.trim() + "'");
+			return ("-> RT (" + Integer.toHexString(change).toUpperCase() + "): '" + str.trim() + "'");
+
+		} catch (ArrayIndexOutOfBoundsException ae) {}
+
+		return null;
 	}
 
 	/**
@@ -735,18 +808,23 @@ public class AudioFormatMPA extends AudioFormat {
 	 */
 	private String getPS(byte[] array)
 	{
-		int index = 0;
+		try {
+			int index = 0;
 
-		int dsn = 0xFF & array[index];
-		int psn = 0xFF & array[index + 1];
+			int dsn = 0xFF & array[index];
+			int psn = 0xFF & array[index + 1];
 
-		index += 2;
+			index += 2;
 
-		int len = array.length >= index + 8 ? 8 : array.length - index;
+			int len = array.length >= index + 8 ? 8 : array.length - index;
 
-		String str = getString(array, index, len);
+			String str = getString(array, index, len);
 
-		return ("-> PS (" + psn + "): '" + str.trim() + "'");
+			return ("-> PS (" + psn + "): '" + str.trim() + "'");
+
+		} catch (ArrayIndexOutOfBoundsException ae) {}
+
+		return null;
 	}
 
 	/**
@@ -754,16 +832,21 @@ public class AudioFormatMPA extends AudioFormat {
 	 */
 	private String getPI(byte[] array)
 	{
-		int index = 0;
+		try {
+			int index = 0;
 
-		int dsn = 0xFF & array[index];
-		int psn = 0xFF & array[index + 1];
+			int dsn = 0xFF & array[index];
+			int psn = 0xFF & array[index + 1];
 
-		index += 2;
+			index += 2;
 
-		int pi_code = (0xFF & array[index])<<8 | (0xFF & array[index + 1]);
+			int pi_code = (0xFF & array[index])<<8 | (0xFF & array[index + 1]);
 
-		return ("-> PI (" + psn + "): 0x" + Integer.toHexString(pi_code).toUpperCase());
+			return ("-> PI (" + psn + "): 0x" + Integer.toHexString(pi_code).toUpperCase());
+
+		} catch (ArrayIndexOutOfBoundsException ae) {}
+
+		return null;
 	}
 
 	/**
@@ -771,17 +854,22 @@ public class AudioFormatMPA extends AudioFormat {
 	 */
 	private String getTP(byte[] array)
 	{
-		int index = 0;
+		try {
+			int index = 0;
 
-		int dsn = 0xFF & array[index];
-		int psn = 0xFF & array[index + 1];
+			int dsn = 0xFF & array[index];
+			int psn = 0xFF & array[index + 1];
 
-		index += 2;
+			index += 2;
 
-		boolean tp = (2 & array[index]) != 0;
-		boolean ta = (1 & array[index]) != 0;
+			boolean tp = (2 & array[index]) != 0;
+			boolean ta = (1 & array[index]) != 0;
 
-		return ("-> TP/TA (" + psn + "): " + (tp ? "TP" : "no TP") + " / " + (ta ? "TA on air" : "no TA"));
+			return ("-> TP/TA (" + psn + "): " + (tp ? "TP" : "no TP") + " / " + (ta ? "TA on air" : "no TA"));
+
+		} catch (ArrayIndexOutOfBoundsException ae) {}
+
+		return null;
 	}
 
 	/**
@@ -789,16 +877,21 @@ public class AudioFormatMPA extends AudioFormat {
 	 */
 	private String getMS(byte[] array)
 	{
-		int index = 0;
+		try {
+			int index = 0;
 
-		int dsn = 0xFF & array[index];
-		int psn = 0xFF & array[index + 1];
+			int dsn = 0xFF & array[index];
+			int psn = 0xFF & array[index + 1];
 
-		index += 2;
+			index += 2;
 
-		boolean speech = (1 & array[index]) != 0;
+			boolean speech = (1 & array[index]) != 0;
 
-		return ("-> MS (" + psn + "): " + (speech ? "Speech" : "Music"));
+			return ("-> MS (" + psn + "): " + (speech ? "Speech" : "Music"));
+
+		} catch (ArrayIndexOutOfBoundsException ae) {}
+
+		return null;
 	}
 
 	/**
@@ -806,16 +899,21 @@ public class AudioFormatMPA extends AudioFormat {
 	 */
 	private String getPTY(byte[] array)
 	{
-		int index = 0;
+		try {
+			int index = 0;
 
-		int dsn = 0xFF & array[index];
-		int psn = 0xFF & array[index + 1];
+			int dsn = 0xFF & array[index];
+			int psn = 0xFF & array[index + 1];
 
-		index += 2;
+			index += 2;
 
-		int pty = 0x1F & array[index];
+			int pty = 0x1F & array[index];
 
-		return ("-> PTY (" + psn + "): " + pty_list[pty]);
+			return ("-> PTY (" + psn + "): " + pty_list[pty]);
+
+		} catch (ArrayIndexOutOfBoundsException ae) {}
+
+		return null;
 	}
 
 	/**
@@ -823,21 +921,26 @@ public class AudioFormatMPA extends AudioFormat {
 	 */
 	private String getRTC(byte[] array)
 	{
-		int index = 0;
+		try {
+			int index = 0;
 
-		String year  = "20" + Common.adaptString(Integer.toHexString(0x7F & array[index]), 2);
-		String month = Common.adaptString(String.valueOf(0xF & array[index + 1]), 2);
-		String date  = Common.adaptString(String.valueOf(0x1F & array[index + 2]), 2);
-		String hour  = Common.adaptString(String.valueOf(0x1F & array[index + 3]), 2);
-		String min   = Common.adaptString(String.valueOf(0x3F & array[index + 4]), 2);
-		String sec   = Common.adaptString(String.valueOf(0x3F & array[index + 5]), 2);
-		String censec= Common.adaptString(String.valueOf(0x7F & array[index + 6]), 2);
+			String year  = "20" + Common.adaptString(Integer.toHexString(0x7F & array[index]), 2);
+			String month = Common.adaptString(String.valueOf(0xF & array[index + 1]), 2);
+			String date  = Common.adaptString(String.valueOf(0x1F & array[index + 2]), 2);
+			String hour  = Common.adaptString(String.valueOf(0x1F & array[index + 3]), 2);
+			String min   = Common.adaptString(String.valueOf(0x3F & array[index + 4]), 2);
+			String sec   = Common.adaptString(String.valueOf(0x3F & array[index + 5]), 2);
+			String censec= Common.adaptString(String.valueOf(0x7F & array[index + 6]), 2);
 
-		int ltoffs   = 0xFF & array[index + 7];
+			int ltoffs   = 0xFF & array[index + 7];
 
-		String loctime = ltoffs != 0xFF ? (((0x20 & ltoffs) != 0) ? "-" + ((0x1F & ltoffs) / 2) : "+" + ((0x1F & ltoffs) / 2)) : "\u00B1" + "0";
+			String loctime = ltoffs != 0xFF ? (((0x20 & ltoffs) != 0) ? "-" + ((0x1F & ltoffs) / 2) : "+" + ((0x1F & ltoffs) / 2)) : "\u00B1" + "0";
 
-		return ("-> RTC (" + loctime + "h): " + year + "." + month + "." + date + "  " + hour + ":" + min + ":" + sec + "." + censec);
+			return ("-> RTC (" + loctime + "h): " + year + "." + month + "." + date + "  " + hour + ":" + min + ":" + sec + "." + censec);
+
+		} catch (ArrayIndexOutOfBoundsException ae) {}
+
+		return null;
 	}
 
 	/**
@@ -847,12 +950,16 @@ public class AudioFormatMPA extends AudioFormat {
 	{
 		String str = "";
 
-		for (int i = offset, val, j = offset + length; i < j; i++)
-		{
-			val = 0xFF & array[i];
+		try {
 
-			str += (val > 0x9F || val < 0x20) ? (char)chars[0] : (char)chars[val - 0x20];
-		}
+			for (int i = offset, val, j = offset + length; i < j; i++)
+			{
+				val = 0xFF & array[i];
+
+				str += (val > 0x9F || val < 0x20) ? (char)chars[0] : (char)chars[val - 0x20];
+			}
+
+		} catch (ArrayIndexOutOfBoundsException ae) {}
 
 		return str;
 	}

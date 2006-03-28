@@ -84,6 +84,9 @@ public class StreamProcessTeletext extends StreamProcessBase {
 	private final int EXPORT_STL  = 7;
 	private final int EXPORT_SON  = 8;
 
+	private byte tmp_byte_value = -1;
+	private int tmp_int_value = -1;
+
 	/**
 	 * 
 	 */
@@ -98,7 +101,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 		// 2nd export format, new run
 		SubtitleExportFormat = collection.getSettings().getProperty(Keys.KEY_SubtitleExportFormat_2);
 
-		if (SubtitleExportFormat != null)
+		if (!SubtitleExportFormat.equalsIgnoreCase("null"))
 			processStream(collection, xInputFile, filename_pts, filename_type, videofile_pts, isElementaryStream, SubtitleExportFormat);
 	}
 
@@ -546,9 +549,22 @@ public class StreamProcessTeletext extends StreamProcessBase {
 
 					if (!vps)
 					{
-						row = 0xFF & Teletext.bytereverse((byte)((0xF & Teletext.hamming_decode(packet[4]))<<4 | (0xF & Teletext.hamming_decode(packet[5]))));
-						magazine = (7 & row) == 0 ? 8 : (7 & row);
-						row >>>= 3;
+						tmp_int_value = (Teletext.hamming_8_4(packet[4]))<<4 | Teletext.hamming_8_4(packet[5]);
+
+						if (tmp_int_value < 0) // decode error
+						{
+							row = -1;
+							magazine = -1;
+						}
+
+						else
+						{
+						//	row = 0xFF & Teletext.bytereverse((byte)((0xF & Teletext.hamming_8_4(packet[4]))<<4 | (0xF & Teletext.hamming_8_4(packet[5]))));
+
+							row = 0xFF & Teletext.bytereverse((byte) tmp_int_value);
+							magazine = (7 & row) == 0 ? 8 : (7 & row);
+							row >>>= 3;
+						}
 					}
 
 					else
@@ -600,10 +616,10 @@ public class StreamProcessTeletext extends StreamProcessBase {
 						int flag = 0;
 
 						for (int a = 0; a < 6; a++)
-							flag |= (0xF & Teletext.bytereverse( Teletext.hamming_decode(packet[8+a]) )>>>4 ) <<(a*4);
+							flag |= (0xF & Teletext.bytereverse((byte) Teletext.hamming_8_4(packet[8+a]) )>>>4 ) <<(a*4);
 
-						page_number = Integer.toHexString(0xF & Teletext.bytereverse( Teletext.hamming_decode(packet[7]) )>>>4 ).toUpperCase() +
-							Integer.toHexString(0xF & Teletext.bytereverse( Teletext.hamming_decode(packet[6]) )>>>4 ).toUpperCase();
+						page_number = Integer.toHexString(0xF & Teletext.bytereverse((byte) Teletext.hamming_8_4(packet[7]) )>>>4 ).toUpperCase() +
+							Integer.toHexString(0xF & Teletext.bytereverse((byte) Teletext.hamming_8_4(packet[6]) )>>>4 ).toUpperCase();
 
 						int o[] = { 0xF, 7, 0xF, 3 };
 						subpage_number = "";

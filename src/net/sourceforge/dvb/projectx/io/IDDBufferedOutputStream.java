@@ -1,7 +1,7 @@
 /*
- * @(#)IDDBufferedOutputStream.java - new Mpeg2Schnitt export
+ * @(#)IDDBufferedOutputStream.java - export
  *
- * Copyright (c) 2003-2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2003-2006 by dvb.matt, All Rights Reserved.
  *
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -24,6 +24,11 @@
  *
  */
 
+/**
+ * cuttermaran info part from Arnaud
+ *
+ */
+
 package net.sourceforge.dvb.projectx.io;
 
 import java.io.BufferedOutputStream;
@@ -41,7 +46,7 @@ import net.sourceforge.dvb.projectx.parser.CommonParsing;
 
 public class IDDBufferedOutputStream extends BufferedOutputStream {
 
-	long pos = 0;
+    long pos = 0;
 	int type = 0;
 
 	String name = "";
@@ -66,7 +71,15 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 
 	BufferedOutputStream IddOut = null;
 	PrintWriter ChaptersOut = null;
-
+	
+    // cminfo ----- BEGIN -----
+    private String aInfoName = "";
+    private BufferedOutputStream aInfoOut = null; // --- cminfo ---
+    private boolean aInfoSeqEnd = false;
+    private BitWalker aBitWalker = null;
+    private StringBuffer aStringBuffer = null;
+    // cminfo ------ END ------
+    
 	int filenumber = 1;
 
 	/**
@@ -93,7 +106,7 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 		switch (type)
 		{
 		case 3: //vdrindex
-			if ((0xF0 & b[off+3])!=0xE0)
+			if ((0xF0 & b[off + 3]) != 0xE0)
 				break;
 
 			for (int a = off + 9 + (0xFF & b[8]), ret; a < off + len - 3; a++)
@@ -113,8 +126,8 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 				if (a + 5 >= off + len)
 					break;
 
-				int frametype = (7 & b[a+5]>>>3);
-				if (frametype==0 || frametype>3)
+				int frametype = (7 & b[a + 5]>>>3);
+				if (frametype == 0 || frametype > 3)
 					break;
 				IddOut.write(VdrIndex()); //pos
 				IddOut.write(frametype); //type
@@ -126,6 +139,16 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 			break;
 
 		case 1:  //idd Video
+            // cminfo ----- BEGIN -----
+            if (aInfoOut != null)
+			{
+                writeInfo(b, off, len);
+
+                if (IddOut == null)
+                    break;
+            }
+            // cminfo ------ END ------
+
 			for (int a = off, ret; a < off + len - 3; a++)
 			{
 				if ((ret = CommonParsing.validateStartcode(b, a)) < 0)
@@ -327,7 +350,7 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 
 		return bpos;
 	}
-
+    
 	/**
 	 *
 	 */
@@ -340,7 +363,7 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 		IddOut.write(IddHeader[type - 1]);
 	}
 
-	/**
+    /**
 	 *
 	 */
 	public void renameIddTo(File newName)
@@ -370,18 +393,18 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 		}
 	}
 
-	/**
-	 *
-	 */
-	public void renameVideoIddTo(String newName)
-	{
-		File nname = new File(newName + ".idd");
+    /**
+     *
+     */
+    public void renameVideoIddTo(String newName)
+    {
+        File nname = new File(newName + ".idd");
 
-		if (nname.exists())
-			nname.delete();
+        if (nname.exists())
+            nname.delete();
 
-		Common.renameTo(new File(name), nname);
-	}
+        Common.renameTo(new File(name), nname);
+    }
 
 	/**
 	 *
@@ -436,6 +459,16 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 		switch (type)
 		{
 		case 1:
+            // cminfo ----- BEGIN -----
+            if (aInfoOut != null)
+			{
+                closeInfo();
+
+                if (IddOut == null)
+                    break;
+            }
+            // cminfo ------ END ------
+
 			if(!sequenceend)
 			{
 				IddOut.write(0xB7);
@@ -444,7 +477,7 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 
 			IddOut.flush();
 			IddOut.close();
-
+			IddOut = null; // cminfo
 			break;
 
 		case 2:
@@ -457,4 +490,228 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 
 		super.close();
 	}
+
+    // cminfo ----- BEGIN -----
+    /**
+     * @param inpName
+     * @throws IOException
+     */
+    public void InitInfo(String inpName) throws IOException
+	{
+        aInfoName = inpName + ".info";
+        type = 1;
+
+        aInfoOut = new BufferedOutputStream(new FileOutputStream(aInfoName), 655350);
+        // ???
+        aInfoOut.write((byte)0xEF);
+        aInfoOut.write((byte)0xBB);
+        aInfoOut.write((byte)0xBF);
+
+        StringBuffer tmpBuf = getStringBuffer();
+        tmpBuf.setLength(0);
+        tmpBuf.append("<?xml version=\"1.0\" encoding=\"utf-8\"?><IndexContainer xmlns=\"http://www.cuttermaran.de\"><Version>1.61</Version>");
+
+        dumpInfo(tmpBuf);
+    }
+
+    /**
+     * @param newName
+     */
+    public void renameVideoInfoTo(String newName)
+	{
+        File nname = new File(newName + ".info");
+
+        if (nname.exists())
+            nname.delete();
+
+        Common.renameTo(new File(aInfoName), nname);
+
+        // 2 Minuten - 120000ms (?) für CM dazuschummeln ;-)
+        nname.setLastModified(nname.lastModified() + 120000);
+    }
+   
+    private void dumpInfo(StringBuffer inpBuf) throws IOException
+	{
+        int len = (inpBuf == null) ? 0 : inpBuf.length();
+
+        for (int i = 0; i < len; i++)  // for i
+            aInfoOut.write((byte) inpBuf.charAt(i));
+    }
+
+    /**
+     * @throws IOException
+     */
+    private synchronized void closeInfo() throws IOException
+	{
+        StringBuffer tmpBuf = getStringBuffer();
+        tmpBuf.setLength(0);
+
+        if (!aInfoSeqEnd)
+		{
+            tmpBuf.append("<SeqEnd adr=\"");
+            tmpBuf.append(pos);
+            tmpBuf.append('\"');
+            tmpBuf.append(" />");
+        }
+
+        tmpBuf.append("</IndexContainer>");
+        dumpInfo(tmpBuf);
+
+        aInfoOut.flush();
+        aInfoOut.close();
+        aInfoOut = null;
+
+        aInfoSeqEnd = false;
+
+        setBitWalker(null);
+        setStringBuffer(null);
+    }
+    
+    /**
+     * 
+     */
+    public void deleteInfo()
+	{
+        new File(aInfoName).delete();
+    }
+    
+    /**
+     * Write .info for CM
+     * 
+     * @param b
+     * @param off
+     * @param len
+     * @throws IOException
+     */
+    private synchronized void writeInfo(byte b[], int off, int len) throws IOException
+	{
+        if (aInfoOut == null)
+            return;
+
+        for (int a = off, ret; a < off + len - 3; a++)
+		{
+            if ((ret = CommonParsing.validateStartcode(b, a)) < 0)
+			{
+                a += (-ret) - 1;
+                continue;
+            }
+
+            StringBuffer tmpBuf;
+
+            if ((0xFF & b[a + 3]) == 0xB3)
+			{
+                int ratio = 0xF & b[a + 7] >>> 4;
+
+                tmpBuf = getStringBuffer();
+                tmpBuf.setLength(0);
+                tmpBuf.append("<Seq adr=\"");
+                tmpBuf.append(pos + a - off);
+                tmpBuf.append('\"');
+                tmpBuf.append(" ratio=\"");
+                tmpBuf.append(ratio);
+                tmpBuf.append('\"');
+                tmpBuf.append(" />");
+                dumpInfo(tmpBuf);
+
+                a += 12;
+            }
+
+			else if ((0xFF & b[a + 3]) == 0xB7)
+			{
+                tmpBuf = getStringBuffer();
+                tmpBuf.setLength(0);
+                tmpBuf.append("<SeqEnd adr=\"");
+                tmpBuf.append(pos + a - off);
+                tmpBuf.append('\"');
+                tmpBuf.append(" />");
+                dumpInfo(tmpBuf);
+
+                aInfoSeqEnd = true;
+
+                a += 3;
+            }
+
+			else if ((0xFF & b[a + 3]) == 0xB8)
+			{
+                tmpBuf = getStringBuffer();
+                tmpBuf.setLength(0);
+                tmpBuf.append("<GOP adr=\"");
+                tmpBuf.append(pos + a - off);
+                tmpBuf.append('\"');
+                tmpBuf.append(" />");
+                dumpInfo(tmpBuf);
+
+                a += 7;
+            }
+
+			else if (b[a + 3] == 0)
+			{
+                tmpBuf = getStringBuffer();
+                tmpBuf.setLength(0);
+                tmpBuf.append("<Pic adr=\"");
+                tmpBuf.append(pos + a - off);
+                tmpBuf.append('\"');
+
+                int tref = (3 & b[a + 5] >>> 6) | (0xFF & b[a + 4]) << 2;
+
+                tmpBuf.append(" tempRef=\"");
+                tmpBuf.append(tref);
+                tmpBuf.append('\"');
+
+                int typ = 7 & b[a + 5] >>> 3;
+
+                tmpBuf.append(" type=\"");
+                tmpBuf.append(typ);
+                tmpBuf.append('\"');
+
+                // picture_structure
+                BitWalker tmpWalker = getBitWalker();
+                tmpWalker.setBuf(b, a + 3);
+
+                int struct = tmpWalker.getPictureStructure(true);
+
+                if (struct != BitWalker.FRAME_PICTURE)
+				{
+                    tmpBuf.append(" struct=\"");
+                    tmpBuf.append(struct);
+                    tmpBuf.append('\"');
+                }
+
+                tmpBuf.append(" />");
+                dumpInfo(tmpBuf);
+
+                a += 8;
+            }
+        } // for a
+
+    }
+
+    private BitWalker getBitWalker()
+	{
+        if (aBitWalker == null)
+            aBitWalker = new BitWalker();
+
+        return aBitWalker;
+    }
+
+    private void setBitWalker(BitWalker inpBitWalker)
+	{
+        aBitWalker = inpBitWalker;
+    }
+
+    private StringBuffer getStringBuffer()
+	{
+        if (aStringBuffer == null)
+            aStringBuffer = new StringBuffer();
+
+        return aStringBuffer;
+    }
+
+    private void setStringBuffer(StringBuffer inpStringBuffer)
+	{
+        aStringBuffer = inpStringBuffer;
+    }
+
+    // cminfo ------ END ------
+
 }

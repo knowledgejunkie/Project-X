@@ -90,6 +90,7 @@ public class MpvDecoder extends Object {
 	private boolean DIRECTION = false;
 	private boolean ERROR1 = false;
 	private boolean ERROR2 = false;
+	private boolean ERROR3 = false;
 	private boolean viewGOP = true;
 
 	private String info_4 = "";
@@ -825,47 +826,82 @@ private int broken_link;
 
 
 
-public void Clear_Block(int comp) { // assembler?
-	java.util.Arrays.fill(block[comp],(short)0);	//clear macroblaock
-}
+	/**
+	 *
+	 */
+	private void Clear_Block(int comp) // assembler?
+	{ 
+		Arrays.fill(block[comp],(short)0);	//clear macroblaock
+	}
 
-/***/
-public void loadbits(int size) {
-	BitPos = BufferPos<<3;
-	BufferPos += size;
-}
+	/**
+	 *
+	 */
+	private int Get_Bits(int N)
+	{
+		int Pos, Val;
+		Pos = BitPos>>>3;
 
-public int Get_Bits(int N) {
-	int Pos, Val;
-	Pos = BitPos>>>3;
-	Val =   (0xFF&buf[Pos])<<24 |
-		(0xFF&buf[Pos+1])<<16 |
-		(0xFF&buf[Pos+2])<<8 |
-		(0xFF&buf[Pos+3]);
-	Val <<= BitPos & 7;
-	Val >>>= 32-N;
-	BitPos += N;
-	BufferPos = BitPos>>>3;
-	return Val;
-}
+		if (Pos >= buf.length)
+			ERROR3 = true;
 
-public int Show_Bits(int N) {
-	int Pos, Val;
-	Pos = BitPos>>>3;
-	Val =   (0xFF&buf[Pos])<<24 |
-		(0xFF&buf[Pos+1])<<16 |
-		(0xFF&buf[Pos+2])<<8 |
-		(0xFF&buf[Pos+3]);
-	Val <<= BitPos & 7;
-	Val >>>= 32-N;
-	return Val;
-}
-/***/
+		Val =  (0xFF & buf[Pos++])<<24;
 
-public void Flush_Bits(int N) {
-	BitPos += N;
-	BufferPos = BitPos>>>3;
-}
+		if (Pos < buf.length)
+			Val |= (0xFF & buf[Pos++])<<16;
+
+		if (Pos < buf.length)
+			Val |= (0xFF & buf[Pos++])<<8;
+
+		if (Pos < buf.length)
+			Val |= (0xFF & buf[Pos]);
+
+		Val <<= BitPos & 7;
+		Val >>>= 32-N;
+
+		BitPos += N;
+		BufferPos = BitPos>>>3;
+
+		return Val;
+	}
+
+	/**
+	 *
+	 */
+	private int Show_Bits(int N)
+	{
+		int Pos, Val;
+		Pos = BitPos>>>3;
+
+		if (Pos >= buf.length)
+			ERROR3 = true;
+
+		Val =  (0xFF & buf[Pos++])<<24;
+
+		if (Pos < buf.length)
+			Val |= (0xFF & buf[Pos++])<<16;
+
+		if (Pos < buf.length)
+			Val |= (0xFF & buf[Pos++])<<8;
+
+		if (Pos < buf.length)
+			Val |= (0xFF & buf[Pos]);
+
+		Val <<= BitPos & 7;
+		Val >>>= 32 - N;
+
+		return Val;
+	}
+
+	/**
+	 *
+	 */
+	private void Flush_Bits(int N)
+	{
+		BitPos += N;
+		BufferPos = BitPos>>>3;
+	}
+
 
 /* decode headers from one input stream */
 public int extern_Get_Hdr() {
@@ -917,9 +953,6 @@ public int Get_Hdr() {
 
 	for (;;){
 		/* look for next_start_code */
-
-
-
 		next_start_code();
 
 		switch (Get_Bits(32)){
@@ -943,19 +976,23 @@ public int Get_Hdr() {
 	}
 }
 
-/* align to start of next next_start_code */
-public void next_start_code(){
-	Flush_Bits( (8-(BitPos & 7))&7 );
-	while (Show_Bits(24) != 1)
-		Flush_Bits(8);
-}
+	/* align to start of next next_start_code */
+	private void next_start_code()
+	{
+		Flush_Bits((8 - (BitPos & 7)) & 7);
 
-/* align to start of next next_start_code */
-public void previous_start_code(){
-	Flush_Bits( (8-(BitPos & 7))&7 );
-	while (Show_Bits(24) != 1) 
-		Flush_Bits(-8);
-}
+		while (Show_Bits(24) != 1)
+			Flush_Bits(8);
+	}
+
+	/* align to start of next next_start_code */
+	private void previous_start_code()
+	{
+		Flush_Bits((8 - (BitPos & 7)) & 7);
+
+		while (Show_Bits(24) != 1) 
+			Flush_Bits(-8);
+	}
 
 /* decode sequence header */
 private void sequence_header(){
@@ -999,7 +1036,7 @@ private void sequence_header(){
 	}
 	else
 	{
-		java.util.Arrays.fill(non_intra_quantizer_matrix,16);
+		Arrays.fill(non_intra_quantizer_matrix,16);
 	}
 
 	/* copy luminance to chrominance matrices */
@@ -1370,7 +1407,7 @@ public void Decode_Picture(){
 	SequenceHeader=0;
 	Update_Picture_Buffers();
 	picture_data();
-	scale_Picture();
+//	scale_Picture();
 
 /**
 	if (ref>0 && (picture_structure==FRAME_PICTURE || Second_Field>0)){
@@ -1781,6 +1818,9 @@ if (quantizer_scale > 4)
 					val = 4096 - val;
 			}
 		}
+
+		//prevent outside index
+		i = i > 63 ? 63 : i;
 
 		j = scan[alternate_scan][i];
 
@@ -2202,41 +2242,51 @@ public void motion_compensation(int MBA[], int macroblock_type[], int motion_typ
 	}
 }
 
-/*  Perform IEEE 1180 reference (64-bit floating point, separable 8x1
- *  direct matrix multiply) Inverse Discrete Cosine Transform
- */
-//DM08022004 081.6 int16 changed to float and first pixel only
-public void IDCT_reference(short block[], int len){
-	int i, j, k, v;
-	float partial_product;
-	float tmp[] = new float[64];
+	/*  Perform IEEE 1180 reference (64-bit floating point, separable 8x1
+	*  direct matrix multiply) Inverse Discrete Cosine Transform
+	*/
+	//DM08022004 081.6 int16 changed to float and first pixel only
+	private void IDCT_reference(short block[], int len)
+	{
+		int i, j, k, v;
 
-	for (i=0; i<len; i++)
-		for (j=0; j<len; j++){
-			partial_product = 0.0f;
+		float partial_product;
+		float tmp[] = new float[64];
 
-			for (k=0; k<8; k++)
-				partial_product += ref_dct_matrix[k][j] * block[8*i+k];
+		try {
+			for (i = 0; i < len; i++)
+			{
+				for (j = 0; j < len; j++)
+				{
+					partial_product = 0.0f;
 
-			tmp[8*i+j] = partial_product;
-		}
+					for (k = 0; k < 8; k++)
+						partial_product += ref_dct_matrix[k][j] * block[8 * i + k];
 
-	// Transpose operation is integrated into address mapping by switching loop order of i and j
-	for (j=0; j<len; j++){
-		for (i=0; i<len; i++){
-			partial_product = 0.0f;
+					tmp[8 * i + j] = partial_product;
+				}
+			}
+		} catch (Exception e) {}
 
-			for (k=0; k<8; k++)
-				partial_product += ref_dct_matrix[k][i] * tmp[8*k+j];
+		try {
+			// Transpose operation is integrated into address mapping by switching loop order of i and j
+			for (j = 0; j < len; j++)
+			{
+				for (i = 0; i < len; i++){
+					partial_product = 0.0f;
 
-			v = (int) Math.floor(partial_product+0.5);
-			block[8*i+j] = idct_clip_table[IDCT_CLIP_TABLE_OFFSET+v];
-		}
+					for (k = 0; k < 8; k++)
+						partial_product += ref_dct_matrix[k][i] * tmp[8 * k + j];
+
+					v = (int) Math.floor(partial_product + 0.5);
+					block[8 * i + j] = idct_clip_table[IDCT_CLIP_TABLE_OFFSET + v];
+				}
+			}
+		} catch (Exception e) {}
+
+		if (len == 1)
+			Arrays.fill(block, block[0]);
 	}
-
-	if (len==1)
-		Arrays.fill(block,block[0]);
-}
 
 	/**
 	 * integer matrix by dukios
@@ -2647,16 +2697,15 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 		int scanline = 512;
 		int ny = 288;
 		int nx = x_offset == 0 ? scanline : scanline - x_offset;
+
 		float Y = 0, X = 0;
 		float Ydecimate = vertical_size / (float)ny;
 		float Xdecimate = horizontal_size / (float)(nx - x_offset);
 
 		for (int y = 0; Y < vertical_size && y < ny; Y += Ydecimate, y++, X=0)
 			for (int x = x_offset; X < horizontal_size && x < nx; X += Xdecimate, x++)
-				pixels2[x + (y * scanline)] = YUVtoRGB(pixels[(int)X + ((int)Y * horizontal_size)]);
+				pixels2[x + (y * scanline)] = YUVtoRGB(pixels[(int)X + ((int)Y * Coded_Picture_Width)]);
 
-
-		//Arrays.fill(pixels2, 0xFF507090);
 
 		//source.newPixels();
 		Common.getGuiInterface().updatePreviewPixel();
@@ -2790,7 +2839,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	 */
 	public int getErrors()
 	{
-		return 0 | (ERROR1 ? 1 : 0) | (ERROR2 ? 2 : 0);
+		return (0 | (ERROR1 ? 1 : 0) | (ERROR2 ? 2 : 0) | (ERROR3 ? 4 : 0));
 	}
 
 	/**
@@ -2855,8 +2904,11 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	{
 		FAST = fast;
 		DIRECTION = direction;
+
 		ERROR1 = false;
 		ERROR2 = false;
+		ERROR3 = false;
+
 		buf = array;
 		BufferPos = start_position;
 		BitPos = BufferPos<<3;
@@ -2885,6 +2937,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 
 					InitialDecoder();
 					Decode_Picture();
+					scale_Picture();
 					repaint();
 
 					return StartPos;
@@ -2908,6 +2961,8 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 		} catch (Error ee) { 
 			ERROR1 = true;
 		}
+
+		scale_Picture();
 
 		repaint();
 

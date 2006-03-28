@@ -266,7 +266,7 @@ public class MainProcess extends Thread {
 
 					if (Common.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_createSubDirNumber))
 					{
-						str = "(" + a + ")";
+						str = "[" + a + "]";
 
 						collection.setOutputDirectory( collection.getOutputDirectory() + collection.getFileSeparator() + str);
 
@@ -527,6 +527,10 @@ public class MainProcess extends Thread {
 			//idd
 			if (Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createM2sIndex))
 				Common.setMessage("-> " + Resource.getString("ExternPanel.createM2sIndex.Tip") + " " + Resource.getString(Keys.KEY_ExternPanel_createM2sIndex[0]));
+
+            // cminfo 
+            if (Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createInfoIndex))
+                Common.setMessage("-> " + Resource.getString("ExternPanel.createInfoIndex.Tip") + " " + Resource.getString(Keys.KEY_ExternPanel_createInfoIndex[0]));
 
 			//d2v_1
 			messageSetting(Keys.KEY_ExternPanel_createD2vIndex);

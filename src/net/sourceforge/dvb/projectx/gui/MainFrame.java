@@ -605,7 +605,7 @@ public class MainFrame extends JPanel {
 							ScanInfo(xInputFile);
 
 						xInputFile.getStreamInfo().setStreamType(i);
-						ScanInfo(xInputFile);
+						ScanInfo(xInputFile, i);
 
 						updateCollectionTable(collection.getCollectionAsTable());
 
@@ -2342,7 +2342,6 @@ public class MainFrame extends JPanel {
 		 *
 		 */
 		JPanel panel_1 = new JPanel();
-		panel_1.setToolTipText(Resource.getString("MainPanel.Process.Tip"));
 		panel_1.setLayout(new ColumnLayout());
 
 		MemoryMonitor memo = new MemoryMonitor();
@@ -2828,8 +2827,16 @@ public class MainFrame extends JPanel {
  	 */
 	public void ScanInfo(XInputFile aXInputFile)
 	{
-		if (aXInputFile.getStreamInfo() == null)
-			Common.getScanClass().getStreamInfo(aXInputFile);
+		ScanInfo(aXInputFile, -1);
+	}
+
+	/**
+	 * show ScanInfos, only directly called from manual stream assignment
+ 	 */
+	public void ScanInfo(XInputFile aXInputFile, int streamtype)
+	{
+		if (aXInputFile.getStreamInfo() == null || streamtype > -1)
+			Common.getScanClass().getStreamInfo(aXInputFile, streamtype);
 
 		CommonGui.getPicturePanel().setStreamInfo(aXInputFile.getStreamInfo());
 	}

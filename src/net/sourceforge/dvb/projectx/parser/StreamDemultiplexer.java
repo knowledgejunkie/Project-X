@@ -77,6 +77,7 @@ public class StreamDemultiplexer extends Object {
 	private boolean CreateM2sIndex;
 	private boolean SplitProjectFile;
 	private boolean CreateCellTimes;
+    private boolean CreateInfoIndex;
 
 	private long AddOffset = 0;
 	private long target_position = 0;
@@ -324,6 +325,7 @@ public class StreamDemultiplexer extends Object {
 		CreateM2sIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createM2sIndex);
 		SplitProjectFile = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
 		CreateCellTimes = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createCellTimes);
+        CreateInfoIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createInfoIndex);
 	}
 
 	/**
@@ -399,6 +401,9 @@ public class StreamDemultiplexer extends Object {
 			pes_ID = CommonParsing.getPES_IdField(pes_packet, offset);
 			pes_payloadlength = CommonParsing.getPES_LengthField(pes_packet, offset);
 			pes_isAligned = (pes_streamtype == CommonParsing.PES_AV_TYPE || pes_streamtype == CommonParsing.MPEG2PS_TYPE) && (4 & pes_packet[6 + offset]) != 0;
+
+			if (pes_ID == CommonParsing.PADDING_STREAM_CODE)
+				return;
 
 			if (pes_streamtype == CommonParsing.MPEG1PS_TYPE)
 			{
@@ -577,7 +582,7 @@ public class StreamDemultiplexer extends Object {
 				{
 					if ((es_streamtype == CommonParsing.MPEG_AUDIO || es_streamtype == CommonParsing.AC3_AUDIO || es_streamtype == CommonParsing.DTS_AUDIO || es_streamtype == CommonParsing.LPCM_AUDIO)
 							&& lastPTS != -1 && Math.abs(lastPTS - pts) > 100000)
-						Common.setMessage("!> ID 0x" + Integer.toHexString(pes_ID).toUpperCase() + " (sub 0x" + Integer.toHexString(subid).toUpperCase() + ") packet# " + pack + ", big PTS difference: new " + pts + ", old " + lastPTS);
+						Common.setMessage("!> ID 0x" + Integer.toHexString(pes_ID).toUpperCase() + " (sub 0x" + Integer.toHexString(subid).toUpperCase() + ") packet# " + pack + ", big PTS difference: this " + pts + ", prev. " + lastPTS);
 
 					pts_log.writeLong(pts);
 					pts_log.writeLong(target_position);
@@ -751,7 +756,10 @@ public class StreamDemultiplexer extends Object {
 
 			if (CreateM2sIndex)
 				out.InitIdd(FileName, 1);
-		
+
+            if (CreateInfoIndex)
+                out.InitInfo(FileName);
+
 			pts_log = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(FileName + ".pts"), 65535));
 			packet = new ByteArrayOutputStream();
 			vidbuf = new ByteArrayOutputStream();
@@ -779,7 +787,10 @@ public class StreamDemultiplexer extends Object {
 
 			if (CreateM2sIndex)
 				out.InitIdd(FileName, 1);
-		
+
+            if (CreateInfoIndex)
+                out.InitInfo(FileName);
+
 			pts_log = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(FileName + ".pts"), 65535));
 
 			packet.reset();
@@ -903,6 +914,18 @@ public class StreamDemultiplexer extends Object {
 				else
 					out.deleteIdd();
 			}
+
+            if (CreateInfoIndex)
+			{
+                if (new File(videofile).exists())
+				{
+                    String tmpFN = videofile.toString();
+                    out.renameVideoInfoTo(tmpFN);
+                }
+
+                else
+                    out.deleteInfo();
+            }
 
 		} catch (IOException e) { 
 
@@ -1157,6 +1180,9 @@ public class StreamDemultiplexer extends Object {
 						 */
 						if (CreateM2sIndex)
 							out.InitIdd(newpart, 1);
+
+                        if (CreateInfoIndex)
+                            out.InitInfo(newpart);
 
 						job_processing.getProjectFileD2V().setFile(newpart);
 						job_processing.setProjectFileExportLength(0);

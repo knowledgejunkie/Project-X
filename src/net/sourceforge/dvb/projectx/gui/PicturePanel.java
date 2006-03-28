@@ -419,12 +419,20 @@ public class PicturePanel extends JPanel {
 			g.drawString("error while decoding frame", 160, 133);
 		}
 
-		if ((ErrorFlag & 2) != 0)
+		if ((ErrorFlag & 4) != 0)
 		{
 			g.setColor(Color.white);
 			g.fill3DRect(150, 135, 200, 20, true);
 			g.setColor(Color.red);
-			g.drawString("cannot find sequence header", 160, 148);
+			g.drawString("not enough data in buffer", 160, 148);
+		}
+
+		if ((ErrorFlag & 2) != 0)
+		{
+			g.setColor(Color.white);
+			g.fill3DRect(150, 150, 200, 20, true);
+			g.setColor(Color.red);
+			g.drawString("cannot find sequence header", 160, 163);
 		}
 	}
 
@@ -891,9 +899,9 @@ public class PicturePanel extends JPanel {
 	/**
 	 *
 	 */
-	private final float[] aspectratio_table = { 
-		1.3333f, 1.3333f, 1.3333f, 1.7778f, 2.2100f, 1.3333f, 1.3333f, 1.3333f, 
-		1.3333f, 1.3333f, 1.3333f, 1.3333f, 1.3333f, 1.3333f, 1.3333f, 1.3333f 
+	private double[] aspectratio_table = { 
+		1.3333, 1.3333, 1.3333, 1.7778, 2.2100, 1.3333, 1.3333, 1.3333, 
+		1.3333, 1.3333, 1.3333, 1.3333, 1.3333, 1.3333, 1.3333, 1.3333 
 	};
 
 	/**
@@ -902,14 +910,23 @@ public class PicturePanel extends JPanel {
 	 * @param1 - automatic saving (demux mode - <extern> panel option)
 	 * @param2 - if GUI is not visible, don't update
 	 */
-	private void saveBMP(int[] pixels, int horizontal_size, int vertical_size, int aspectratio, boolean useAspectRatio)
+	private void saveBMP(int[] pixels, int horizontal_size, int vertical_size, int aspectratio_index, boolean useAspectRatio)
 	{
 		int[] sourcepixel = null;
+		int source_mb_width = (0xF & horizontal_size) != 0 ? (horizontal_size & ~0xF) + 16 : horizontal_size;
 
 		if (useAspectRatio)
 		{
-			sourcepixel = getScaledPixel(pixels, horizontal_size, vertical_size, aspectratio_table[aspectratio]);
-			horizontal_size = (int) Math.round(aspectratio_table[aspectratio] * vertical_size);
+			sourcepixel = getScaledPixel(pixels, horizontal_size, vertical_size, aspectratio_table[aspectratio_index]);
+
+			if (sourcepixel == null)
+				sourcepixel = pixels;
+
+			else
+			{
+				horizontal_size = (int) Math.round(aspectratio_table[aspectratio_index] * vertical_size);
+				source_mb_width = horizontal_size;
+			}
 		}
 
 		else
@@ -950,10 +967,15 @@ public class PicturePanel extends JPanel {
 
 		byte[] bmp24 = new byte[3];
 
-		littleEndian(bmpHead, 2, (54 + size * 3));
+		//int source_mb_width = (0xF & horizontal_size) != 0 ? (horizontal_size & ~0xF) + 16 : horizontal_size;
+		int padding = (horizontal_size & 3) != 0 ? (horizontal_size & 3) : 0;
+		
+		size = (horizontal_size * vertical_size * 3) + (padding > 0 ? (padding * vertical_size) : 0);
+
+		littleEndian(bmpHead, 2, (54 + size));
 		littleEndian(bmpHead, 18, horizontal_size);
 		littleEndian(bmpHead, 22, vertical_size);
-		littleEndian(bmpHead, 34, (size * 3));
+		littleEndian(bmpHead, 34, size);
 
 		try
 		{
@@ -961,9 +983,10 @@ public class PicturePanel extends JPanel {
 			BMPfile.write(bmpHead);
 
 			for (int a = vertical_size - 1; a >= 0; a--)
+			{
 				for (int b = 0, pixel = 0; b < horizontal_size; b++)
 				{
-					pixel = YUVtoRGB(sourcepixel[b + a * horizontal_size]);
+					pixel = YUVtoRGB(sourcepixel[b + (a * source_mb_width)]);
 
 					for (int c = 0; c < 3; c++)
 						bmp24[c] = (byte)(pixel >>(c * 8) & 0xFF);
@@ -971,36 +994,50 @@ public class PicturePanel extends JPanel {
 					BMPfile.write(bmp24);
 				}
 
+				if (padding > 0)
+					BMPfile.write(new byte[padding]);
+			}
+
 			BMPfile.flush();
 			BMPfile.close();
 
 			bmpCount++;
 		}
 
-		catch (IOException e)
-		{}
+		catch (Exception e)
+		{
+			Common.setExceptionMessage(e);
+		}
 	}
 
 	/**
 	 * create new cutimage pixel data
+	 * jdk122 seems to have a problem when it does multiplication !!
 	 */
-	private int[] getScaledPixel(int[] pixels, int horizontal_size, int vertical_size, float aspectratio)
+	private int[] getScaledPixel(int[] pixels, int horizontal_size, int vertical_size, double aspectratio)
 	{
-		int new_height = vertical_size;
-		int new_width = (int) Math.round(aspectratio * vertical_size);
 		int source_height = vertical_size;
 		int source_width = horizontal_size;
+		int source_mb_width = (0xF & horizontal_size) != 0 ? (horizontal_size & ~0xF) + 16 : horizontal_size;
+		int new_height = vertical_size;
+		int new_width = ((int) Math.round(vertical_size * aspectratio));
+
+		int new_size = new_width * new_height;
+
+		// oversized or zero ?
+		if (new_size > 0x1000000 || new_size <= 0)
+			return null;
 
 		float Y = 0;
 		float X = 0;
-		float decimate_height = (float)source_height / new_height;
-		float decimate_width = (float)source_width / new_width;
+		double decimate_height = (double)source_height / new_height;
+		double decimate_width = (double)source_width / new_width;
 
-		int[] new_image = new int[new_width * new_height];
+		int[] new_image = new int[new_size];
 
 		for (int y = 0; Y < source_height && y < new_height; Y += decimate_height, y++, X = 0)
 			for (int x = 0; X < source_width && x < new_width; X += decimate_width, x++)
-				new_image[x + (y * new_width)] = pixels[(int)X + ((int)Y * source_width)];
+				new_image[x + (y * new_width)] = pixels[(int)X + ((int)Y * source_mb_width)];
 
 		return new_image;
 	}

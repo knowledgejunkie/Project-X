@@ -213,6 +213,7 @@ public final class Teletext extends Object {
 		return n;
 	}
 
+
 	/****************
 	 * check parity *
  	****************/
@@ -239,7 +240,7 @@ public final class Teletext extends Object {
 
 	//DM24052004 081.7 int03 introduced
 	//no error correction ATM
-	public static int hamming24_18(byte b[], int off)
+	public static int hamming_24_18(byte b[], int off)
 	{
 		int val = 0;
 
@@ -252,17 +253,15 @@ public final class Teletext extends Object {
 	}
 
 	/******************
-	 * hamming decode *
+	 * hamming decode 8/4 *
 	 ******************/
-	//DM12032004 081.6 int18 changed
-	//DM24052004 081.7 int03 changed
-	public static byte hamming_decode(byte a)
+	public static int hamming_8_4(byte a)
 	{
 		switch (0xFF & a)
 		{
-		case 0xa8: 
+		case 0xA8: 
 			return 0;
-		case 0x0b: 
+		case 0x0B: 
 			return 1;
 		case 0x26: 
 			return 2;
@@ -272,28 +271,28 @@ public final class Teletext extends Object {
 			return 4;
 		case 0x31: 
 			return 5;
-		case 0x1c: 
+		case 0x1C: 
 			return 6;
-		case 0xbf: 
+		case 0xBF: 
 			return 7;
 		case 0x40: 
 			return 8;
-		case 0xe3: 
+		case 0xE3: 
 			return 9;
-		case 0xce: 
+		case 0xCE: 
 			return 10;
-		case 0x6d: 
+		case 0x6D: 
 			return 11;
-		case 0x7a: 
+		case 0x7A: 
 			return 12;
-		case 0xd9: 
+		case 0xD9: 
 			return 13;
-		case 0xf4: 
+		case 0xF4: 
 			return 14;
 		case 0x57: 
 			return 15;
 		default: 
-			return -1;     // decode error , not yet corrected
+			return -1;     // decoding error , not yet corrected
 		}
 	}
 
@@ -301,9 +300,6 @@ public final class Teletext extends Object {
 	/******************************
 	 * make suppic from teletext *
 	 ******************************/
-	//DM30122003 081.6 int10 changed
-	//DM24072004 081.7 int07 changed
-	//DM09082004 081.7 int08 changed
 	public static int[] makepic(byte[] packet, int offset, int len, int row, int character_set, boolean checkParity)
 	{
 		//  return int char<<8 | 0xF0 & active_color backgrnd | 0xF & active_color foregrnd
@@ -311,6 +307,7 @@ public final class Teletext extends Object {
 		boolean ascii = true, toggle = false;
 		int chars[] = new int[len];
 		int active_color = 7;  // init with white ascii color per line + black background
+		int parity_error = 0;
 
 		int language_code = Common.getSettings().getIntProperty(Keys.KEY_TtxLanguagePair) - 1;
 
@@ -346,8 +343,12 @@ public final class Teletext extends Object {
 				continue;
 			}
 
+			//if error, switch to graphics mode (= space)
 			if (checkParity && !cparity(packet[c])) 
-				packet[i] = 8; //if error, switch to graphics mode (= space)
+			{
+				parity_error++;
+				packet[i] = 8; 
+			}
 
 			int char_value = 0x7F & bytereverse(packet[c]);
 
@@ -471,6 +472,21 @@ public final class Teletext extends Object {
 		for (int s = 0; s < chars.length; s++) 
 			test += (char)(chars[s]>>>8);
 
+		// ab 3 paritätsfehlern zeile droppen
+		if (checkParity && parity_error > 0)
+		{
+			String msg = "!> line " + row + ", parity check failed at " + parity_error + " of " + len + " characters: '" + test + "'";
+			int max_errors = Common.getSettings().getIntProperty(Keys.KEY_SubtitlePanel_MaxParityErrors);
+
+			if (parity_error > max_errors)
+			{
+				test = "";
+				msg += ", line dropped..";
+			}
+
+			Common.setMessage(msg);
+		}
+
 		if (test.trim().length() == 0) 
 			return null;
 
@@ -481,12 +497,11 @@ public final class Teletext extends Object {
 	/******************************
 	 * make strings from teletext *
 	 ******************************/
-	//DM24072004 081.7 int07 changed
-	//DM09082004 081.7 int08 changed
 	public static String makestring(byte[] packet, int offset, int len, int row, int character_set, int color, boolean checkParity)
 	{
 		boolean ascii = true, toggle = false;
 		String text = "";
+		int parity_error = 0;
 
 		int language_code = Common.getSettings().getIntProperty(Keys.KEY_TtxLanguagePair) - 1;
 
@@ -522,8 +537,12 @@ public final class Teletext extends Object {
 				continue;
 			}
 
-			if (checkParity && !cparity(packet[c])) 
-				packet[c] = 8; //if error, switch to graphics mode (= space), by loosing all following chars
+			//if error, switch to graphics mode (= space), by loosing all following chars
+			if (checkParity && !cparity(packet[c]))
+			{
+				parity_error++;
+				packet[c] = 8; 
+			}
 
 			int char_value = 0x7F & bytereverse(packet[c]);
 
@@ -633,7 +652,23 @@ public final class Teletext extends Object {
 			continue loopi; 
 		}
 
-		if (color==1) 
+		// ab 3 paritätsfehlern zeile droppen
+		if (checkParity && parity_error > 0)
+		{
+			String msg = "!> line " + row + ", parity check failed at " + parity_error + " of " + len + " characters: '" + text + "'";
+			int max_errors = Common.getSettings().getIntProperty(Keys.KEY_SubtitlePanel_MaxParityErrors);
+
+			if (parity_error > max_errors)
+			{
+				text = "";
+				color = 0;
+				msg += ", line dropped..";
+			}
+
+			Common.setMessage(msg);
+		}
+
+		if (color == 1) 
 			return colors[7] + text.trim();
 
 		else 
@@ -666,21 +701,21 @@ public final class Teletext extends Object {
 		int val, mapping, position = 0, code;
 		byte address, mode, data, designation;
 
-		designation = bytereverse((byte)((0xF & hamming_decode(packet[6]))<<4));
+		designation = bytereverse((byte)((0xF & hamming_8_4(packet[6]))<<4));
 
 		//Common.setMessage("row " + row + " /designation " + designation);
 
 		if ((row == 29 && designation == 0) || (row == 29 && designation == 4) || (row == 28 && designation == 4))
 		{
 			// read triplet 1
-			val = hamming24_18(packet, 7);
+			val = hamming_24_18(packet, 7);
 			code = val<<3;
 
 			if (row == 28 && designation == 0 && (0x3F800 & val) != 0)
 				return;  // not X/28/0 format 1
 
 			// read triplet 2
-			val = hamming24_18(packet, 10);
+			val = hamming_24_18(packet, 10);
 			code |= (7 & val>>15);
 
 			//primary set
@@ -703,7 +738,7 @@ public final class Teletext extends Object {
 
 		for (int a = 7; a < 46; a += 3)
 		{
-			val = hamming24_18(packet, a);
+			val = hamming_24_18(packet, a);
 			address = bytereverse( (byte)(0xFC & val>>10));
 			mode = bytereverse( (byte)(0xF8 & val>>4));
 			data = bytereverse( (byte)(0xFE & val<<1));

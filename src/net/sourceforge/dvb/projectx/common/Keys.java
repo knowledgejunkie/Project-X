@@ -142,7 +142,8 @@ public class Keys extends Object {
 	public final static String[] KEY_ScanBuffer = { "OptionPanel.ScanBuffer", "1024000" }; //combobox[37]
 	public final static String[] KEY_PreviewBuffer = { "OptionPanel.PreviewBuffer", "1024000" }; //combobox[38]
 	public final static String[] KEY_holdStreamInfoOnOSD = { "OptionPanel.holdStreamInfoOnOSD", "0" };
-	public final static String[] KEY_OptionPanelIndex = { "OptionPanel.PanelIndex", "1" };
+	public final static String[] KEY_OptionPanelIndex = { "OptionPanel.PanelIndex", "0" };
+	public final static String[] KEY_additionalInputBuffer = { "OptionPanel.additionalInputBuffer", "1" }; //test
 
 	/**
 	 * SpecialPanel
@@ -199,6 +200,7 @@ public class Keys extends Object {
 	public final static String[] KEY_ExternPanel_createDgiIndex = { "ExternPanel.createDgiIndex", "0" }; //cbox[82] !!
 	public final static String[] KEY_ExternPanel_splitProjectFile = { "ExternPanel.splitProjectFile", "0" }; //cbox[30] !!
 	public final static String[] KEY_ExternPanel_ProjectFileSplitSize = { "ExternPanel.ProjectFileSplitSize", "2048" }; 
+    public final static String[] KEY_ExternPanel_createInfoIndex = { "ExternPanel.createInfoIndex", "0" };
 
 	public final static String[] KEY_killFtpClient = { "FtpPanel.killFtpClient", "0" }; //cbox[80] !!
 	public final static String[] KEY_useFtpServerResume = { "FtpPanel.useFtpServerResume", "1" };
@@ -246,6 +248,7 @@ public class Keys extends Object {
 	public final static String[] KEY_SubtitlePanel_useTextOutline = { "SubtitlePanel.useTextOutline", "1" }; //cbox[79] !!
 	public final static String[] KEY_SubtitlePanel_Format_SUP_Values = { "SubtitlePanel.Format.SUP.Values", "26;10;32;80;560;720;576;-1;4;3;1" }; 
 	public final static String[] KEY_SubtitlePanel_PageId_Value = { "SubtitlePanel.PageId.Value", "" }; 
+	public final static String[] KEY_SubtitlePanel_MaxParityErrors = { "SubtitlePanel.maxParityErrors", "2" }; 
 
 	public final static String[] KEY_SubtitlePanel_TtxPage1 = { "SubtitlePanel.TtxPage1", "null" }; //combobox[28]
 	public final static String[] KEY_SubtitlePanel_TtxPage2 = { "SubtitlePanel.TtxPage2", "null" }; //combobox[29]
@@ -295,6 +298,8 @@ public class Keys extends Object {
 	public final static String[] KEY_AudioPanel_PitchValue = { "AudioPanel.PitchValue", "0" }; 
 	public final static String[] KEY_AudioPanel_NormalizeValue = { "AudioPanel.NormalizeValue", "98" }; 
 	public final static String[] KEY_AudioPanel_createDDWave = { "AudioPanel.createDDWave", "0" };
+	public final static String[] KEY_AudioPanel_fadeInOut = { "AudioPanel.fadeInOut", "0" };
+	public final static String[] KEY_AudioPanel_fadeInOutMillis = { "AudioPanel.fadeInOutMillis", "2000" };
 
 	public final static String[] KEY_AudioPanel_loslessMpaConversionMode = { "AudioPanel.loslessMpaConversionMode", "0" }; 
 

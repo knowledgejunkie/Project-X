@@ -29,8 +29,12 @@ package net.sourceforge.dvb.projectx.xinput;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.BufferedInputStream;
 
 import net.sourceforge.dvb.projectx.xinput.ftp.XInputFileImpl;
+
+import net.sourceforge.dvb.projectx.common.Common;
+import net.sourceforge.dvb.projectx.common.Keys;
 
 public class XInputStream extends FilterInputStream {
 
@@ -48,7 +52,7 @@ public class XInputStream extends FilterInputStream {
 	 * @see java.io.FilterInputStream#FilterInputStream(InputStream in)
 	 */
 	public XInputStream(InputStream aIs) {
-		super(aIs);
+		super(Common.getSettings().getBooleanProperty(Keys.KEY_additionalInputBuffer) ? new BufferedInputStream(aIs, 1048576) : aIs);
 	}
 
 	public void setFtpFile(XInputFileImpl aIf) {

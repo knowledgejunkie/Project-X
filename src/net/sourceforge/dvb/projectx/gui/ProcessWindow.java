@@ -804,6 +804,7 @@ public class ProcessWindow extends JFrame {
 		panel.setBorder(BorderFactory.createEtchedBorder());
 
 		panel.add(new JLabel(Resource.getString("ProcessWindowPanel.Action")));
+		panel.setToolTipText(Resource.getString("MainPanel.Process.Tip"));
 
 		panel.add(Box.createRigidArea(new Dimension(10, 1)));
 

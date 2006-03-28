@@ -127,7 +127,15 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 		get_XY_Offset(collection, isElementaryStream);
 		getDisplayMode(collection, isElementaryStream);
 
-		processStream(collection, xInputFile, filename_pts, filename_type, videofile_pts, isElementaryStream);
+		String SubtitleExportFormat = collection.getSettings().getProperty(Keys.KEY_SubtitleExportFormat);
+
+		processStream(collection, xInputFile, filename_pts, filename_type, videofile_pts, isElementaryStream, SubtitleExportFormat);
+
+		// 2nd export format, new run
+		SubtitleExportFormat = collection.getSettings().getProperty(Keys.KEY_SubtitleExportFormat_2);
+
+		if (!SubtitleExportFormat.equalsIgnoreCase("null"))
+			processStream(collection, xInputFile, filename_pts, filename_type, videofile_pts, isElementaryStream, SubtitleExportFormat);
 	}
 
 	/**
@@ -177,17 +185,17 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 	}
 
 	/**
-	 * decoding subpicture stream
+	 * decoding subpicture stream, forces SUP, simple method for modifying a SUP stream from teletext process
 	 */
 	public void processStream(JobCollection collection, XInputFile xInputFile, int isElementaryStream)
 	{
-		processStream(collection, xInputFile, "-1", "sp", "-1", isElementaryStream);
+		processStream(collection, xInputFile, "-1", "sp", "-1", isElementaryStream, Keys.ITEMS_SubtitleExportFormat[7].toString());
 	}
 
 	/**
 	 * decoding subpicture stream
 	 */
-	private void processStream(JobCollection collection, XInputFile xInputFile, String filename_pts, String filename_type, String videofile_pts, int isElementaryStream)
+	private void processStream(JobCollection collection, XInputFile xInputFile, String filename_pts, String filename_type, String videofile_pts, int isElementaryStream, String SubtitleExportFormat)
 	{
 		Subpicture subpicture = Common.getSubpictureClass();
 
@@ -237,7 +245,7 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 
 		SubpictureColorModel = collection.getSettings().getProperty(Keys.KEY_SubpictureColorModel);
 		PageId_Value = collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_PageId_Value);
-		SubtitleExportFormat = collection.getSettings().getProperty(Keys.KEY_SubtitleExportFormat);
+	//	SubtitleExportFormat = collection.getSettings().getProperty(Keys.KEY_SubtitleExportFormat);
 
 		try {
 			if (ShowSubpictureWindow)
@@ -262,6 +270,7 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 				export_type = 1;
 			}
 
+			Common.setMessage("");
 			Common.setMessage(Resource.getString("subpicture.msg.output") + " " + subfile.substring(subfile.length() - 3));
 
 			PushbackInputStream in = new PushbackInputStream(xInputFile.getInputStream(), 65536);

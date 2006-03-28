@@ -124,22 +124,25 @@ public class StreamProcessAudio extends StreamProcessBase {
 		if (DecodeMpgAudio)
 		{
 			Common.setMessage(Resource.getString("audio.decode"));
-			Common.setMessage("\t" + Keys.ITEMS_resampleAudioMode[collection.getSettings().getIntProperty(Keys.KEY_AudioPanel_resampleAudioMode)]);
+			Common.setMessage("-> " + Keys.ITEMS_resampleAudioMode[collection.getSettings().getIntProperty(Keys.KEY_AudioPanel_resampleAudioMode)]);
 
 			if (Normalize)
-				Common.setMessage("\t" + Resource.getString(Keys.KEY_AudioPanel_Normalize[0]) + " " + (100 * MpaDecoder.MAX_VALUE / 32767) + "%");
+				Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_Normalize[0]) + " " + (100 * MpaDecoder.MAX_VALUE / 32767) + "%");
 
 			if (collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_Downmix))
-				Common.setMessage("\t" + Resource.getString(Keys.KEY_AudioPanel_Downmix[0]));
+				Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_Downmix[0]));
 	
+			if (collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_fadeInOut))
+				Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_fadeInOut[0]));
+
 			if (collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_changeByteorder))
-				Common.setMessage("\t" + Resource.getString(Keys.KEY_AudioPanel_changeByteorder[0]));
+				Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_changeByteorder[0]));
 
 			if (collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addRiffHeader))
-				Common.setMessage("\t" + Resource.getString(Keys.KEY_AudioPanel_addRiffHeader[0]));
+				Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_addRiffHeader[0]));
 
 			if (collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addAiffHeader))
-				Common.setMessage("\t" + Resource.getString(Keys.KEY_AudioPanel_addAiffHeader[0]));
+				Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_addAiffHeader[0]));
 		}
 
 		/**
@@ -206,6 +209,9 @@ public class StreamProcessAudio extends StreamProcessBase {
 		boolean ClearCRC = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_clearCRC);
 		boolean IgnoreErrors = collection.getSettings().getBooleanProperty(Keys.KEY_Audio_ignoreErrors);
 		boolean CreateDDWave = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_createDDWave);
+		boolean FadeInOut = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_fadeInOut);
+
+		int FadeInOutMillis = collection.getSettings().getIntProperty(Keys.KEY_AudioPanel_fadeInOutMillis);
 
 		/**
 		 * messages
@@ -2515,10 +2521,10 @@ public class StreamProcessAudio extends StreamProcessBase {
 			{
 				if (audio.getLayer() > 1)
 				{
-					MpaDecoder.fillRIFF(newnameL);
+					MpaDecoder.fillRIFF(newnameL, FadeInOut, FadeInOutMillis);
 
 					if (MpaConversionMode >= 4) 
-						MpaDecoder.fillRIFF(newnameR);
+						MpaDecoder.fillRIFF(newnameR, FadeInOut, FadeInOutMillis);
 				}
 				else
 				{
@@ -2533,10 +2539,10 @@ public class StreamProcessAudio extends StreamProcessBase {
 			{
 				if (audio.getLayer() > 1)
 				{
-					MpaDecoder.fillAiff(newnameL,(long)(time_counter / 90.0f));
+					MpaDecoder.fillAiff(newnameL,(long)(time_counter / 90.0f), FadeInOut, FadeInOutMillis);
 
 					if (MpaConversionMode >= 4) 
-						MpaDecoder.fillAiff(newnameR,(long)(time_counter / 90.0f));
+						MpaDecoder.fillAiff(newnameR,(long)(time_counter / 90.0f), FadeInOut, FadeInOutMillis);
 				}
 				else
 				{

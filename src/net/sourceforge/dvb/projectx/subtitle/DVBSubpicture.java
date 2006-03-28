@@ -265,7 +265,7 @@ public class DVBSubpicture extends Object {
 
 		int page_id = getBits(16); //page_id
 
-		if ((page_id & fix_page_id) == 0) // exclude unwanted pages
+		if (fix_page_id >= 0 && page_id != fix_page_id) // exclude unwanted pages 
 		{
 			stuffing();
 			return 0xFF;

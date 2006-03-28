@@ -190,7 +190,7 @@
 --fehlermeldung wenn datei im hintergrund entfernt wurde
 --vorschau abschalbar
 
-danach:
+0.90.3.01:
 --debug abfrage tlw geändert
 --fix: kein kapitelexport bei mpeg es und abgschalteter videoausgabe
 --fix: keine teletext export nach vdr
@@ -210,6 +210,37 @@ danach:
 --dvd-sup editierbare flags: set forced ut, clear forced ut, (drop forced ut, drop nonforced ut - vorerst ausgelassen), optionen bei export
 --2.Ausgabeformat für UT wählbar (falls verfügbar)
 
+danach:
+--fix: better preview of bad frames
+--fix: ac3 parsenextheader
+--fix: h-auflösung beim skalieren bild schief - 698*176 soll, kodiert 704*176
+--fix: absturz save with DAR (jdk122 komisches problem mit float/double)
+--fix? arrayindex rds decode cont.ra 
+--bild decode rds -> cont.ra
+--fix pagematrix wird beim ende (einfachdurchlauf) immer gelöscht
+--padding BE packets im TS zwischendrin stören erkennung, werden jetzt beim demux verworfen
+--mpv demux, daten ignore zw. seq.end + seq.start
+--subpicture, 2. exportformat freigeschaltet
+--dvb subicture, page id 0 wurde nicht verarbeitet
+--dvb subpicture, mtv adria eintrag ergänzt
+--errorcode meldung bei gop drop
+--pmt mit adaptionfield 
+--scan teile separieren für direktzugriff bei streamanpassung
+--scan neuscan bei manueller streamzuweisung
+--cut bytepos bzw andere value loggen
+--ergänzt: optional lesepuffer zur verringerung von zugriffen bei kleinen datenblöcken
+--ac3.bin um 192kb 2/0 ergänzt
+--cm info von arnaud
+--pes demux, prüfung pes_extension (vdr flags bei manchen plugins falsch)
+--ttx änderung,wenn fehler bei mag/row, dann verwerfen
+--ttx verwerfe zeile ab x paritätsfehlern (bspw arte), iniKey only, std: SubtitlePanel.maxParityErrors=2
+--decode pcm export fade-in/out, zeit nur über inikey AudioPanel.fadeInOutMillis=2000
+--modif. idct.dll sourcen für OS2
+
+!!-pes parser keine vorauswahl von headern ba,ff,f0 etc mehr, mit loggen
+!!-0xBE -> arte_ut, scan von pes ändern
+
+!!hav sektoren prüfen, nur melden
 !!-auto split mpa, wenn dual detektiert
 !!-profile hd,mpg reseted,vob, etc ermöglichen?
 !!-MPAD überarbeiten, nicht mehr statisch; decode: arrays.fill statt new init ca. 20% schneller
@@ -230,8 +261,9 @@ danach:
 !!-audiozusammenfassen, mpa,ac3,dts
 !!-projektdateiexport zusammenfassen
 !!-pegel graf audiodecode
-!!-pes parser keine vorauswahl von headern ba,ff,f0 etc, mit loggen
 !!--vorschau erweitert umringgops
+!!-pmt 0xC3 -> string epg - nur inter Typ 0 - mtv2 cyfra 11282v hotbird 
+!-PAT mit adaptionfield ?? 6400 10977 h 16°E, neue klasse
 
 //
 java.applet.AudioClip ac = java.applet.Applet.newAudioClip(Resource.getResourceURL("bsp.wav"));

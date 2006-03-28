@@ -1,7 +1,7 @@
 /*
  * @(#)MpaDecoder.java - MPA dec
  *
- * Copyright (c) 2003-2005 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2003-2006 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -40,6 +40,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
+
 
 public class MpaDecoder extends Object {
 
@@ -1912,22 +1913,22 @@ public static int decode_layer1() throws IOException {
 	/**
 	 *
 	 */
-	public static int littleEndian(int data,int flag)
+	private static int littleEndian(int data, int flag)
 	{
 		if (MOTOROLA) 
 			return data;
 
-		if (flag==4) 
-			return ( (0xFF&data>>>24) | (0xFF&data>>>16)<<8 | (0xFF&data>>>8)<<16 | (0xFF&data)<<24 );
+		if (flag == 4) 
+			return ( (0xFF & data>>>24) | (0xFF & data>>>16)<<8 | (0xFF & data>>>8)<<16 | (0xFF & data)<<24 );
 
 		else 
-			return ( (0xFF&data>>>8) | (0xFF&data)<<8 );
+			return ( (0xFF & data>>>8) | (0xFF & data)<<8 );
 	}
 
 	/**
 	 *
 	 */
-	public static void fillAiff(String file, long playtime) throws IOException
+	public static void fillAiff(String file, long playtime, boolean fade, int fade_millis) throws IOException
 	{
 		//always MSB
 		RandomAccessFile aiff = new RandomAccessFile(file,"rw");
@@ -1952,6 +1953,12 @@ public static int decode_layer1() throws IOException {
 
 		aiff.seek(42);
 		aiff.writeInt(len - 38);  //chunk size sample data
+
+		if (fade)
+		{
+			fadeIn(aiff, fade_millis, 46, len - 38);
+			fadeOut(aiff, fade_millis, 46, len - 38);
+		}
 
 		aiff.close();
 	}
@@ -2065,9 +2072,9 @@ public static int decode_layer1() throws IOException {
 	/**
 	 *
 	 */
-	public static void fillRIFF(String file) throws IOException
+	public static void fillRIFF(String file, boolean fade, int fade_millis) throws IOException
 	{
-		RandomAccessFile riff = new RandomAccessFile(file,"rw");
+		RandomAccessFile riff = new RandomAccessFile(file, "rw");
 
 		int len = (int)riff.length() - 8;
 
@@ -2097,6 +2104,12 @@ public static int decode_layer1() throws IOException {
 
 		riff.seek(40);
 		riff.writeInt(littleEndian(len - 36, 4));  //data-size
+
+		if (fade)
+		{
+			fadeIn(riff, fade_millis, 44, len - 36);
+			fadeOut(riff, fade_millis, 44, len - 36);
+		}
 
 		riff.close();
 	}
@@ -2191,5 +2204,65 @@ public static int decode_layer1() throws IOException {
 		return out2.toByteArray();
 	}
 
+	/**
+	 *
+	 */
+	private static void fadeIn(RandomAccessFile pcm_file, int fade_millis, long seek_position, int datachunk_length) throws IOException
+	{
+		fade(pcm_file, fade_millis, seek_position, datachunk_length, 1);
+	}
+
+	/**
+	 *
+	 */
+	private static void fadeOut(RandomAccessFile pcm_file, int fade_millis, long seek_position, int datachunk_length) throws IOException
+	{
+		fade(pcm_file, fade_millis, seek_position, datachunk_length, 2);
+	}
+
+	/**
+	 *
+	 */
+	private static void fade(RandomAccessFile pcm_file, int fade_millis, long seek_position, int datachunk_length, int fade_mode) throws IOException
+	{
+		int millis = (fade_millis < 0 || fade_millis > 5000) ? 2000 : fade_millis;
+		int load = head.newchannel * (int)((1L * millis * head.sampling_frequency * head.bits_per_sample) / 8000);
+		int bytes_per_sample = head.bits_per_sample / 8;
+
+		if (load > datachunk_length)
+			load = datachunk_length;
+
+		double amp = 1.0;
+
+		byte[] array = new byte[load];
+
+		if (fade_mode == 2)
+			seek_position = seek_position + datachunk_length - load;
+
+		pcm_file.seek(seek_position);
+		pcm_file.readFully(array);
+
+		for (int i = 0; i < load; )
+		{
+			amp = (1.0 * (fade_mode == 2 ? (load - i) : i)) / load;
+
+			for (int ch = 0, sample; ch < head.newchannel; ch++)
+			{
+				sample = (0xFF & array[i])<<8 | (0xFF & array[i + 1]);
+				sample = littleEndian(sample, 2);
+				sample = (0x8000 & sample) != 0 ? (0xFFFF0000 | sample) : sample;
+				sample = (int) (amp * sample);
+				sample = littleEndian(sample, 2);
+
+				array[i] = (byte) (0xFF & sample>>8);
+				array[i + 1] = (byte) (0xFF & sample);
+
+				i += bytes_per_sample;
+			}
+		}
+
+		pcm_file.seek(seek_position);
+		pcm_file.write(array);
+	}
 }
 

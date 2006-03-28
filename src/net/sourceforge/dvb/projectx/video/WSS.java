@@ -101,7 +101,7 @@ public final class WSS extends Object {
 
 			a = 0;
 
-			handlepixels("line 1 (24)");  // read out
+			handlepixels("line 1 (335)");  // read out
 		}
 	}
 

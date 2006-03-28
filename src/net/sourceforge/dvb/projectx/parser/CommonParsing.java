@@ -766,7 +766,7 @@ public class CommonParsing extends Object {
 						{ 
 							_bool = true; 
 
-							Common.setMessage(Resource.getString("msg.cuts.cutin", "" + gopnumber, "" + lastframes, "" + Common.formatTime_1((long)(lastframes * (double)(_videoframerate / 90.0f)) )));
+							Common.setMessage(Resource.getString("msg.cuts.cutin", "" + gopnumber, "" + lastframes, "" + Common.formatTime_1((long)(lastframes * (double)(_videoframerate / 90.0f)) )) + " (" + comparePoint + ")");
 
 							saveCuts(comparePoint, startPTS, lastframes, cuts_filename);
 
@@ -779,7 +779,7 @@ public class CommonParsing extends Object {
 
 					if (!_bool)
 					{
-						Common.setMessage(Resource.getString("msg.cuts.cutout", "" + gopnumber));
+						Common.setMessage(Resource.getString("msg.cuts.cutout", "" + gopnumber) + " (" + comparePoint + ")");
 
 						saveCuts(comparePoint, startPTS, lastframes, cuts_filename);
 					}
@@ -798,7 +798,7 @@ public class CommonParsing extends Object {
 					_bool = true;
 					_cutcount++;
 
-					Common.setMessage(Resource.getString("msg.cuts.cutin", "" + gopnumber, "" + lastframes, "" + Common.formatTime_1((long)(lastframes * (double)(_videoframerate / 90.0f)) )));
+					Common.setMessage(Resource.getString("msg.cuts.cutin", "" + gopnumber, "" + lastframes, "" + Common.formatTime_1((long)(lastframes * (double)(_videoframerate / 90.0f)) )) + " (" + comparePoint + ")");
 
 					saveCuts(comparePoint, startPTS, lastframes, cuts_filename);
 
@@ -1009,11 +1009,15 @@ public class CommonParsing extends Object {
 	/**
 	 * vdr_dvbsub determination
 	 */
-	public static int getExtension2_Id(byte[] pes_packet, int pes_headerlength, int pes_payloadlength, int pesID, boolean pes_isMpeg2)
+	public static int getExtension2_Id(byte[] pes_packet, int pes_headerlength, int pes_payloadlength, int pesID, boolean pes_isMpeg2, long file_position)
 	{
+		boolean extension_error = false;
 		int pes_extension2_id = -1;
 
-		if (pesID != PRIVATE_STREAM_1_CODE || !pes_isMpeg2)
+		if (!pes_isMpeg2)
+			return pes_extension2_id;
+
+		else if (pesID != PRIVATE_STREAM_1_CODE && (0xE0 & pesID) != 0xC0 && (0xF0 & pesID) != 0xE0) //not pD, Aud, Vid
 			return pes_extension2_id;
 
 		//read flags
@@ -1027,26 +1031,58 @@ public class CommonParsing extends Object {
 		pes_shift += (2 & pes_packet[7]) != 0 ? 2 : 0; //pes_crc
 
 		boolean pes_ext1 = (1 & pes_packet[7]) != 0; //ext1
+		boolean pes_ext2 = false; //ext2
 
-		if (pes_ext1 && pes_payloadlength > pes_shift + 2)
+		int pes_extension_length = 0xFF & pes_packet[8]; //all data must be inside extension
+
+		if (pes_headerlength + pes_extension_length < pes_shift)
+			extension_error = true;
+
+		else if (pes_ext1 && pes_headerlength + pes_extension_length < pes_shift + 1)
+			extension_error = true;
+
+		else if (pes_ext1)
 		{
 			int shift = pes_shift;
 
-			pes_shift += (0x80 & pes_packet[shift]) != 0 ? 16 : 0; //pes_private
-			pes_shift += (0x40 & pes_packet[shift]) != 0 ? 1 : 0; //pes_packfield
-			pes_shift += (0x20 & pes_packet[shift]) != 0 ? 2 : 0; //pes_sequ_counter
-			pes_shift += (0x10 & pes_packet[shift]) != 0 ? 2 : 0; //pes_P-STD
+			if (6 + pes_payloadlength < pes_shift + 1)
+				extension_error = true;
 
-			boolean pes_ext2 = (1 & pes_packet[shift]) != 0; //ext2
-
-			pes_shift++; //skip flag_fields of ext1
-
-			if (pes_ext2 && pes_payloadlength > pes_shift + 2)
+			else
 			{
-				pes_shift++; //skip ext2 length field
-				pes_extension2_id = 0xFF & pes_packet[pes_shift]; //read byte0 (res.) of ext2
+				pes_shift += (0x80 & pes_packet[shift]) != 0 ? 16 : 0; //pes_private
+				pes_shift += (0x40 & pes_packet[shift]) != 0 ? 1 : 0; //pes_packfield
+				pes_shift += (0x20 & pes_packet[shift]) != 0 ? 2 : 0; //pes_sequ_counter
+				pes_shift += (0x10 & pes_packet[shift]) != 0 ? 2 : 0; //pes_P-STD
+				// marker 3 bits
+
+				pes_ext2 = (1 & pes_packet[shift]) != 0; //ext2
+
+				pes_shift++; //skip flag_fields of ext1
+
+				if (pes_headerlength + pes_extension_length < pes_shift)
+					extension_error = true;
+
+				else if (pes_ext2)
+				{
+					int pes_ext2_length = 0x7F & pes_packet[pes_shift];
+
+					pes_shift++; //skip length_fields of ext2
+
+					if (6 + pes_payloadlength < pes_shift + pes_ext2_length)
+						extension_error = true;
+
+					else if (pes_headerlength + pes_extension_length < pes_shift + pes_ext2_length)
+						extension_error = true;
+
+					else if (pesID == PRIVATE_STREAM_1_CODE)
+						pes_extension2_id = 0xFF & pes_packet[pes_shift]; //read byte0 (res.) of ext2
+				}
 			}
 		}
+
+		if (extension_error)
+			Common.setMessage("!> error in pes_extension of pes-ID 0x" + Integer.toHexString(pesID).toUpperCase() + " @ pos: " + file_position + " (" + (6 + pes_payloadlength) + " / " + (pes_headerlength + pes_extension_length) + " / " + (pes_shift + 1) + " / " + pes_ext1 + " / " + pes_ext2 + ")");
 
 		return pes_extension2_id;
 	}

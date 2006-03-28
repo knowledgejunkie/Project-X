@@ -90,6 +90,7 @@ public class StreamParserESVideo extends StreamParserBase {
 		 */
 		fparent += job_processing.getSplitSize() > 0 ? "(" + job_processing.getSplitPart() + ")" : ".new" ;
 
+        boolean CreateInfoIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createInfoIndex);
 		boolean CreateM2sIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createM2sIndex);
 		boolean CreateD2vIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
 		boolean SplitProjectFile = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
@@ -103,6 +104,7 @@ public class StreamParserESVideo extends StreamParserBase {
 		boolean first = true;
 		boolean doWrite = true;
 		boolean lead_sequenceheader = false;
+		boolean isHeaderless = false;
 
 		byte[] vgl = new byte[4];
 		byte[] vptsbytes = new byte[16];
@@ -143,8 +145,17 @@ public class StreamParserESVideo extends StreamParserBase {
 
 			IDDBufferedOutputStream vstream = new IDDBufferedOutputStream( new FileOutputStream(fparent + ".s1"), MainBufferSize);
 
+			/**
+			 * M2s project 
+			 */
 			if (CreateM2sIndex)
 				vstream.InitIdd(fparent, 1);
+
+			/**
+			 * CM project 
+			 */
+            if (CreateInfoIndex)
+                vstream.InitInfo(fparent);
 
 			DataOutputStream vlog = new DataOutputStream( new FileOutputStream(fparent + ".s1.pts") ); 
 			ByteArrayOutputStream es_packetbuffer = new ByteArrayOutputStream();
@@ -290,7 +301,8 @@ public class StreamParserESVideo extends StreamParserBase {
 						if (job_processing.getCutByteposition() >= startPoint)
 							doWrite = true;
 
-						if (!first)
+						//if (!first)
+						if (!first && !isHeaderless) //changed
 						{
 							es_packet = es_packetbuffer.toByteArray();
 							es_packetbuffer.reset();
@@ -367,7 +379,10 @@ public class StreamParserESVideo extends StreamParserBase {
 
 							if (CreateM2sIndex)
 								vstream.InitIdd(newpart, 1);
-					
+
+                            if (CreateInfoIndex)
+                                vstream.InitInfo(newpart);
+
 							job_processing.getProjectFileD2V().setFile(newpart);
 							job_processing.setProjectFileExportLength(0);
 						}
@@ -386,8 +401,17 @@ public class StreamParserESVideo extends StreamParserBase {
 							first = false;
 						}
 
-						diff = (vload.length - mark - 4 < 2500) ? (vload.length - mark - 4) : 2500;
+//new
+						isHeaderless = false;
 
+						diff = (vload.length - mark - 4 < 2500) ? (vload.length - mark - 4) : 2500;
+//new
+						if (pes_ID == CommonParsing.SEQUENCE_END_CODE)
+						{
+							diff = 0;
+							isHeaderless = true; //skip data between sequnece end + sequence start
+						}
+//
 						if (diff > 0)
 						{
 							es_packetbuffer.write(vload, mark, diff);
@@ -496,6 +520,18 @@ public class StreamParserESVideo extends StreamParserBase {
 				else
 					vstream.deleteIdd();
 			}
+
+            if (CreateInfoIndex)
+			{
+                if (new File(videofile).exists())
+				{
+                    String tmpFN = videofile.toString();
+                    vstream.renameVideoInfoTo(tmpFN);
+                }
+
+                else
+                    vstream.deleteInfo();
+            }
 
 			List cell = job_processing.getCellTimes();
 			String workouts = collection.getOutputDirectory() + collection.getFileSeparator();
