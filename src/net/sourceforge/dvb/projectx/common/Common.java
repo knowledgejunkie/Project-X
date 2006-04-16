@@ -86,8 +86,8 @@ import net.sourceforge.dvb.projectx.net.WebInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90.4.00";
-	private static String version_date = "30.03.2006";
+	private static String version_name = "ProjectX 0.90.4.00.b01";
+	private static String version_date = "15.04.2006";
 
 	private static String line_separator = System.getProperty("line.separator");
 
@@ -137,6 +137,9 @@ public final class Common extends Object {
 	private static long[] Data_Troughput = { 0, 0 };
 	private static int SplitPart = 0;
 	private static String StatusString = null;
+
+	/* preview autom. buffer */
+	private static int LastPreviewBitrate = 1875000;
 
 	/* linkage to x.swing components */
 	private static GuiInterface guiInterface = null;
@@ -1080,7 +1083,7 @@ public final class Common extends Object {
 		}
 
 		if (MaxLog && ErrorCount == 500)
-			msg += getLineSeparator() + Resource.getString("all.msg.error.max");
+			msg += getLineSeparator() + getLineSeparator() + Resource.getString("all.msg.error.max") + getLineSeparator();
 
 		if (TimeLog) 
 			msg = "[" + formatTime_1(System.currentTimeMillis()) + "] " + msg;
@@ -1277,9 +1280,15 @@ public final class Common extends Object {
 
 
 			try { 
-				Runtime.getRuntime().exec(arguments); 
+				Process subprocess = Runtime.getRuntime().exec(arguments); 
 
-			} catch (IOException re)	{ 
+				if (getSettings().getBooleanProperty(Keys.KEY_PostProcessCompletion))
+				{
+					setMessage("-> waiting for completion of subprocess..");
+					setMessage("-> returncode of subprocess: " + subprocess.waitFor());
+				}
+
+			} catch (Exception re)	{ 
 
 				setExceptionMessage(re);
 			}
@@ -1667,4 +1676,31 @@ public final class Common extends Object {
 		return (arraylist.isEmpty() ? new Object[0] : arraylist.toArray());
 	}
 
+	/**
+	 *
+	 */
+	public static void setLastPreviewBitrate(int value)
+	{
+		LastPreviewBitrate = value / 8;
+	}
+
+	/**
+	 *
+	 */
+	public static int getPreviewBufferValue()
+	{
+		String str = getSettings().getProperty(Keys.KEY_PreviewBuffer);
+		int buffervalue = LastPreviewBitrate;
+
+		try {
+			if (!str.equals("auto"))
+				buffervalue = Integer.parseInt(str);
+
+		} catch (Exception e) {}
+
+		if (buffervalue < 128000)
+			LastPreviewBitrate = buffervalue = 1875000;
+
+		return buffervalue;
+	}
 }

@@ -1,7 +1,7 @@
 /*
- * @(#)MpaConverter.java -  converter M1L2,48khz losless
+ * @(#)MpaConverter.java -  converter M1L2,48khz lossless
  *
- * Copyright (c) 2002-2005 by dvb.matt, All rights reserved.
+ * Copyright (c) 2002-2006 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 

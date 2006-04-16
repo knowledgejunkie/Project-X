@@ -938,6 +938,21 @@ public class MainFrame extends JPanel {
 
 		popup.add(action);
 
+		popup.addSeparator();
+
+		//file properties
+		JMenuItem menuitem_17 = popup.add(Resource.getString("popup.FileProperties"));
+		menuitem_17.setActionCommand("FileProperties");
+		menuitem_17.setEnabled(false);
+
+		popup.addSeparator();
+
+		//file properties
+		JMenuItem menuitem_18 = popup.add(Resource.getString("popup.CollectionProperties"));
+		menuitem_18.setActionCommand("CollectionProperties");
+		menuitem_18.setEnabled(false);
+
+
 		popup.pack();
 
 		UIManager.addPropertyChangeListener(new UISwitchListener(popup));
@@ -954,6 +969,8 @@ public class MainFrame extends JPanel {
 		menuitem_14.addActionListener(_MenuListener);
 		menuitem_15.addActionListener(_MenuListener);
 		menuitem_16.addActionListener(_MenuListener);
+		menuitem_17.addActionListener(_MenuListener);
+		menuitem_18.addActionListener(_MenuListener);
 	}
 
 	/**
@@ -1495,7 +1512,7 @@ public class MainFrame extends JPanel {
 					for (int i = 1; i < 12; i++)
 						elements[i].getComponent().setEnabled(row >= 0);
 
-					for (int i = 12; i < elements.length; i++)
+					for (int i = 12; i < elements.length - 2; i++) // - 2 noch nötig wegen properties
 						elements[i].getComponent().setEnabled(index >= 0);
 
 					popup.show(tableView, e.getX(), e.getY() - popup.getHeight());

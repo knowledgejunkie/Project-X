@@ -1045,12 +1045,11 @@ private void sequence_header(){
 
 	frame_rate = (float)frame_rate_Table[frame_rate_code]; //DM06022004 081.6 int15 add
 
-
 	extension_and_user_data();
 
-	//DM06052004 081.7 int02 add
-	//DM29082004 081.7 int10 changed
 	info_3 = ", " + (bit_rate_value * 400) + "bps, vbv " + vbv_buffer_size + (constrained_parameters_flag > 0 ? ", cpf" : "");
+
+	Common.setLastPreviewBitrate(bit_rate_value * 400);
 }
 
 /* decode group of pictures header */

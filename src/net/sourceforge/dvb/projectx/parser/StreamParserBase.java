@@ -108,7 +108,7 @@ public class StreamParserBase extends Object {
 		long pts = 0;
 
 		int position = 0;
-		int buffersize = Integer.parseInt(collection.getSettings().getProperty(Keys.KEY_ScanBuffer));
+		int buffersize = collection.getSettings().getIntProperty(Keys.KEY_ScanBuffer);
 		int pes_ID;
 
 		boolean PVA_Audio = collection.getSettings().getBooleanProperty(Keys.KEY_PVA_Audio);

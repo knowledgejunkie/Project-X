@@ -239,18 +239,29 @@
 
 
 danach:
---key loslessmpaconversion -> losslessmpaconversion
-!!ac3 2/0 128kbs wg vro hinzufügen
-
+--key ändern loslessmpaconversion -> losslessmpaconversion
+--danish translation update jazzydane
+--wait for return bei extern prozess..
+--invalid startcode packet# (pos?) melden
+--os-2  start-exception in cl umleiten
+--B-c(losed) nur vorwärtsreferenzierte B-Frames ? behandeln
+--b-frames drop?
+--vorschaupuffer entspr. bitrate autom. wählen
+--pes0 - pesheader genauer überspringen + preview angepasst
+--rds decode abbruch bei falschem index
+!!ac3 2/0 128kbs wg vro hinzufügen, ac3 5.1 256, 320kb stille 
+!!ac3 384 wird nicht als Stille genommen, restart wenn 5.1 größer detektiert wird
+!!vro timecode lese patch?
+!!-dvb-subs,  pagenumber ausgelesen aus pmt?
+!!file + coll properties gui
 
 !!-pes parser keine vorauswahl von headern ba,ff,f0 etc mehr, mit loggen
-!!-0xBE -> arte_ut, scan von pes ändern
+!!-0xBE -> arte_ut fra, scan von pes ändern
 
 !!hav sektoren prüfen, nur melden
-!!-auto split mpa, wenn dual detektiert
+!!-auto split mpa, wenn dual detektiert?
 !!-profile hd,mpg reseted,vob, etc ermöglichen?
 !!-MPAD überarbeiten, nicht mehr statisch; decode: arrays.fill statt new init ca. 20% schneller
-!!-Bc(losed) nur vorwärtreferenzeirte B-Frames ? behandeln
 !!-ac3 bitraten patch mit CRC neu berechnung (bitraten neuerdings fast immer gleichbleibend)
 !!-info .00 sek, :00 frame, ;00 dropframes (semikoloon)
 !-h264 ? zzt nur info
@@ -263,7 +274,6 @@ danach:
 !!-vbvbuffer bei mpeg1 nicht?
 !!-ts-pid-wechseln folgen
 <<-mpa crc berechung optimiern, bitweise erschwert.
-!!-b-frames drop?
 !!-audiozusammenfassen, mpa,ac3,dts
 !!-projektdateiexport zusammenfassen
 !!-pegel graf audiodecode

@@ -90,6 +90,7 @@ public class Keys extends Object {
 	public final static String[] KEY_simpleMPG = { "MainPanel.simpleMPG", "0" }; //cbox[14]
 	public final static String[] KEY_enhancedPES = { "MainPanel.enhancedPES", "0" }; //cbox[14]
 	public final static String[] KEY_useAutoPidFilter = { "MainPanel.useAutoPidFilter", "0" };
+	public final static String[] KEY_PostProcessCompletion = { "MainPanel.PostProcessCompletion", "0" };
 
 	/**
 	 * LogWindowPanel
@@ -265,9 +266,8 @@ public class Keys extends Object {
 	public final static String[] KEY_SubpictureColorModel = { "SubtitlePanel.SubpictureColorModel", "(0) 4 colors" };
 	public final static String[] KEY_SubtitleChangeDisplay = { "SubtitlePanel.ChangeDisplay", "0" };
 	public final static String[] KEY_SubtitleMovePosition_Value = { "SubtitlePanel.MovePosition.Value", "" };
-
-//test
 	public final static String[] KEY_SubtitlePanel_specialTermination = { "SubtitlePanel.specialTermination", "1" };
+	public final static String[] KEY_SubtitlePanel_keepColourTable = { "SubtitlePanel.keepColourTable", "0" };
 
 	public static Object[] ITEMS_TtxLanguagePair = { 
 		"auto", "basic latin", "polish", "turkish", "cro,slo,rum", "est,lit,rus",
@@ -301,9 +301,9 @@ public class Keys extends Object {
 	public final static String[] KEY_AudioPanel_fadeInOut = { "AudioPanel.fadeInOut", "0" };
 	public final static String[] KEY_AudioPanel_fadeInOutMillis = { "AudioPanel.fadeInOutMillis", "2000" };
 
-	public final static String[] KEY_AudioPanel_loslessMpaConversionMode = { "AudioPanel.loslessMpaConversionMode", "0" }; 
+	public final static String[] KEY_AudioPanel_losslessMpaConversionMode = { "AudioPanel.losslessMpaConversionMode", "0" }; 
 
-	public static Object[] ITEMS_loslessMpaConversionMode = null;
+	public static Object[] ITEMS_losslessMpaConversionMode = null;
 
 	public final static String[] KEY_AudioPanel_resampleAudioMode = { "AudioPanel.decodeMpgAudio.resampleAudioMode", "0" }; 
 
@@ -406,14 +406,14 @@ public class Keys extends Object {
 		};
 		this.ITEMS_BitrateInFirstSequence = ITEMS_BitrateInFirstSequence;
 
-		Object[] ITEMS_loslessMpaConversionMode = { 
-			Resource.getString("AudioPanel.loslessMpaConversionMode0"),
-			Resource.getString("AudioPanel.loslessMpaConversionMode1"),
-			Resource.getString("AudioPanel.loslessMpaConversionMode2"),
-			Resource.getString("AudioPanel.loslessMpaConversionMode3"),
-			Resource.getString("AudioPanel.loslessMpaConversionMode4")
+		Object[] ITEMS_losslessMpaConversionMode = { 
+			Resource.getString("AudioPanel.losslessMpaConversionMode0"),
+			Resource.getString("AudioPanel.losslessMpaConversionMode1"),
+			Resource.getString("AudioPanel.losslessMpaConversionMode2"),
+			Resource.getString("AudioPanel.losslessMpaConversionMode3"),
+			Resource.getString("AudioPanel.losslessMpaConversionMode4")
 		};
-		this.ITEMS_loslessMpaConversionMode = ITEMS_loslessMpaConversionMode;
+		this.ITEMS_losslessMpaConversionMode = ITEMS_losslessMpaConversionMode;
 
 		Object[] ITEMS_resampleAudioMode = { 
 			Resource.getString("AudioPanel.decodeMpgAudio.resampleAudioMode0"),

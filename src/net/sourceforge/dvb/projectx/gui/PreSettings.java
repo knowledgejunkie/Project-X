@@ -857,15 +857,15 @@ public class PreSettings extends JFrame {
 		audio0.setLayout( new ColumnLayout() );
 		audio0.setBorder( BorderFactory.createTitledBorder(Resource.getString("AudioPanel.Title1")) );
 
-		audio0.add(new JLabel(Resource.getString("AudioPanel.loslessMpaConversion.Tip1")));
-		audio0.add(new JLabel(Resource.getString("AudioPanel.loslessMpaConversion.Tip2")));
-		audio0.setToolTipText(Resource.getString("AudioPanel.loslessMpaConversion.Tip"));
+		audio0.add(new JLabel(Resource.getString("AudioPanel.losslessMpaConversion.Tip1")));
+		audio0.add(new JLabel(Resource.getString("AudioPanel.losslessMpaConversion.Tip2")));
+		audio0.setToolTipText(Resource.getString("AudioPanel.losslessMpaConversion.Tip"));
 
-		JComboBox conversion_selection = new JComboBox(Keys.ITEMS_loslessMpaConversionMode);
+		JComboBox conversion_selection = new JComboBox(Keys.ITEMS_losslessMpaConversionMode);
 		conversion_selection.setPreferredSize(new Dimension(270, 20));
 		conversion_selection.setMaximumSize(new Dimension(270, 20));
-		conversion_selection.setActionCommand(Keys.KEY_AudioPanel_loslessMpaConversionMode[0]);
-		conversion_selection.setSelectedIndex(Common.getSettings().getIntProperty(Keys.KEY_AudioPanel_loslessMpaConversionMode));
+		conversion_selection.setActionCommand(Keys.KEY_AudioPanel_losslessMpaConversionMode[0]);
+		conversion_selection.setSelectedIndex(Common.getSettings().getIntProperty(Keys.KEY_AudioPanel_losslessMpaConversionMode));
 		conversion_selection.addActionListener(_ComboBoxIndexListener);
 		audio0.add(conversion_selection);
 
@@ -1063,7 +1063,7 @@ public class PreSettings extends JFrame {
 			Keys.KEY_SubtitlePanel_exportTextAsUnicode,
 			Keys.KEY_SubtitlePanel_exportTextAsUTF8,
 			Keys.KEY_SubtitlePanel_useTextOutline,
-			Keys.KEY_SubtitlePanel_specialTermination
+			Keys.KEY_SubtitlePanel_keepColourTable
 		};
 
 		final JCheckBox[] box = new JCheckBox[objects.length];
@@ -1406,7 +1406,7 @@ public class PreSettings extends JFrame {
 		Object[][] buffersizes = {
 			{ "10240000", "8192000", "7168000", "6144000", "5120000", "4096000", "3072000", "2048000", "1024000" },
 			{ "384000", "512000", "1024000", "1536000", "2048000", "2560000", "3072000" },
-			{ "256000", "384000", "512000", "768000", "1024000", "1536000", "2048000", "2560000", "3072000" }
+			{ "auto", "256000", "384000", "512000", "768000", "1024000", "1536000", "2048000", "2560000", "3072000" }
 		};
 
 		for (int i = 0; i < keys.length; i++)
@@ -1683,6 +1683,15 @@ public class PreSettings extends JFrame {
 
 			container.add(panel);
 		}
+
+		JCheckBox box = new JCheckBox(Resource.getString(Keys.KEY_PostProcessCompletion[0]));
+		box.setToolTipText(Resource.getString(Keys.KEY_PostProcessCompletion[0] + Keys.KEY_Tip));
+		box.setActionCommand(Keys.KEY_PostProcessCompletion[0]);
+		box.setSelected(Common.getSettings().getBooleanProperty(Keys.KEY_PostProcessCompletion));
+		box.addActionListener(_CheckBoxListener);
+
+		container.add(box);
+
 
 		return buildHeadPanel(container, Resource.getString("TabPanel.PostCommandsPanel"));
 	}

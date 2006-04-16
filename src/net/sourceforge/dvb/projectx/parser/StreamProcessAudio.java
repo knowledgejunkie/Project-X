@@ -116,10 +116,10 @@ public class StreamProcessAudio extends StreamProcessBase {
 		/**
 		 * messages
 		 */
-		int MpaConversionMode = collection.getSettings().getIntProperty(Keys.KEY_AudioPanel_loslessMpaConversionMode);
+		int MpaConversionMode = collection.getSettings().getIntProperty(Keys.KEY_AudioPanel_losslessMpaConversionMode);
 
 		if (MpaConversionMode > 0)
-			Common.setMessage(Resource.getString("audio.convert") + " " + Keys.ITEMS_loslessMpaConversionMode[MpaConversionMode]);
+			Common.setMessage(Resource.getString("audio.convert") + " " + Keys.ITEMS_losslessMpaConversionMode[MpaConversionMode]);
 
 		if (DecodeMpgAudio)
 		{
@@ -1686,7 +1686,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 
 					/**
-					 * check if frame write should paused 
+					 * check if frame write should be paused 
 					 */
 					if (vptsdata)
 					{ 
@@ -1703,11 +1703,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 					/**
 					 * message 
 					 */
-					if (awrite || !vptsdata) 
-						Common.getGuiInterface().showExportStatus(Resource.getString("audio.status.write")); 
-
-					else 
-						Common.getGuiInterface().showExportStatus(Resource.getString("audio.status.pause")); 
+					Common.getGuiInterface().showExportStatus((awrite || !vptsdata) ? Resource.getString("audio.status.write") : Resource.getString("audio.status.pause"));
 
 					/**
 					 * stop if no more audio needed 
@@ -1749,11 +1745,11 @@ public class StreamProcessAudio extends StreamProcessBase {
 					/**
 					 * message 
 					 */
-					if (Debug) 
+					if (Debug)
+					{
 						System.out.println("(1)audio frames: wri/pre/skip/ins/add " + frame_counter + "/" + cb + "/" + ce + "/" + cc + "/" + cd + "  @ " + Common.formatTime_1((long)(time_counter / 90.0f) ));
-
-					if (Debug) 
 						System.out.println(" x" + ((x < ptspos.length - 1) ? x + "/" + ptsval[x + 1] + "/" + ptspos[x + 1] : "-"));
+					}
 
 					/**
 					 * pts for next frame!! 

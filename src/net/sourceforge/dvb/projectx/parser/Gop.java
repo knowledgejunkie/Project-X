@@ -342,6 +342,7 @@ public class Gop extends Object {
 		boolean format_changed = false;
 		boolean error = false;
 		boolean broken_link = false;
+		boolean gop_closed = false;
 		boolean sequenceheader_complete = false;
 		boolean SDE_found = false;
 		boolean doExport = false;
@@ -627,6 +628,8 @@ public class Gop extends Object {
 
 					closedgop = s + 7;
 					writeframe = true;
+
+					gop_closed = (0x40 & gop[s + 7]) != 0;
 					broken_link = (0x20 & gop[s + 7]) != 0; 
 
 					//gop TC 
@@ -734,29 +737,32 @@ public class Gop extends Object {
 						/**
 						 * drop B-Frames, also if broken_link flag is set
 						 */
-						if (tref > 0 && (Math.abs(startpts - job_processing.getEndPtsOfGop()) > CommonParsing.getVideoFramerate() || broken_link))
+						if (tref > 0 && (broken_link || Math.abs(startpts - job_processing.getEndPtsOfGop()) > CommonParsing.getVideoFramerate()))
 						{
-							gop[s + 4] = 0;
-							gop[s + 5] &= 0x3F;  /* set first I-Frame's tref to 0 */
-							gop[closedgop] |= 0x40;
+							if (!gop_closed || (gop_closed && broken_link))
+							{
+								gop[s + 4] = 0;
+								gop[s + 5] &= 0x3F;  /* set first I-Frame's tref to 0 */
+								gop[closedgop] |= 0x40;
 
-							if (broken_link)
-								gop[closedgop] &= ~0x20;
+								if (broken_link)
+									gop[closedgop] &= ~0x20;
 
-							gopbuffer.write(gop, 0, s); 
+								gopbuffer.write(gop, 0, s); 
 	
-							smark = s;
+								smark = s;
 
-							if (job_processing.getExportedVideoFrameNumber() > 0)
-								infos.add(Resource.getString("video.msg.pts.diff", String.valueOf(startpts - job_processing.getEndPtsOfGop()), Common.formatTime_1((startpts - job_processing.getEndPtsOfGop()) / 90)) + " " + (broken_link ? Resource.getString("video.msg.error.brokenlink") : ""));
+								if (job_processing.getExportedVideoFrameNumber() > 0)
+									infos.add(Resource.getString("video.msg.pts.diff", String.valueOf(startpts - job_processing.getEndPtsOfGop()), Common.formatTime_1((startpts - job_processing.getEndPtsOfGop()) / 90)) + " " + (broken_link ? Resource.getString("video.msg.error.brokenlink") : ""));
 	
-							infos.add(Resource.getString("video.msg.frame.drop", "" + (clv[6] - 1)) + " " + Common.formatTime_1((long)(job_processing.getExportedVideoFrameNumber() * (double)(CommonParsing.getVideoFramerate() / 90.0f))));
+								infos.add(Resource.getString("video.msg.frame.drop", "" + (clv[6] - 1)) + " " + Common.formatTime_1((long)(job_processing.getExportedVideoFrameNumber() * (double)(CommonParsing.getVideoFramerate() / 90.0f))));
 
-							job_processing.countExportedVideoFrameNumber(-tref);
-							newframes -= tref;
-							trefcheck = tref;
-							changegop = true;
-							clv[0]++;  //cut
+								job_processing.countExportedVideoFrameNumber(-tref);
+								newframes -= tref;
+								trefcheck = tref;
+								changegop = true;
+								clv[0]++;  //cut
+							}
 						}
 					}
 

@@ -582,6 +582,8 @@ public class StreamParserPESPrimary extends StreamParserBase {
 
 					pes_packetlength = pes_packetoffset + pes_payloadlength;
 
+					pes_isMpeg2 = (0xC0 & pes_packet[6]) == 0x80;
+
 					/**
 					 * determine next startcode in zero packets
 					 */
@@ -590,7 +592,8 @@ public class StreamParserPESPrimary extends StreamParserBase {
 						if (Debug) 
 							System.out.println("A " + Resource.getString("parsePrimaryPES.packet.length") + " " + count);
 
-						for (int i = pes_packetoffset; isZeroPacket && i <= pes_packetlength; )
+						//start after pes header
+						for (int i = pes_packetoffset + (pes_isMpeg2 ? 3 : 1); isZeroPacket && i <= pes_packetlength; )
 						{
 							if ((returncode = CommonParsing.validateStartcode(pes_packet, i)) < 0 || CommonParsing.getPES_IdField(pes_packet, i) < CommonParsing.SYSTEM_END_CODE)
 							{
@@ -639,7 +642,7 @@ public class StreamParserPESPrimary extends StreamParserBase {
 					clv[5]++;
 
 					if (Debug) 
-						System.out.print("\r"+Resource.getString("parsePrimaryPES.packs") + ": " + pesID + "/" + clv[5] + "/" + (pes_packetlength) + "/" + ((count * 100 / size)) + "% " + (count));
+						System.out.println(Resource.getString("parsePrimaryPES.packs") + ": " + pesID + "/" + clv[5] + "/" + (pes_packetlength) + "/" + ((count * 100 / size)) + "% " + (count));
 
 					pes_extensionlength = CommonParsing.getPES_ExtensionLengthField(pes_packet, 0);
 
@@ -664,7 +667,7 @@ public class StreamParserPESPrimary extends StreamParserBase {
 						if (isZeroSubPacket)
 						{
 							if (Debug) 
-								System.out.println("B " + Resource.getString("parsePrimaryPES.packet.length") + " " + count);
+								System.out.println("B " + Resource.getString("parsePrimaryPES.packet.length") + " " + count + " / " + pes_isMpeg2);
 
 							pes_payloadlength = ZeroPacketPayload;
 

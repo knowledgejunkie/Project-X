@@ -154,55 +154,57 @@ public class Preview extends Object {
 
 	private byte[] search(byte data[], long startposition, int filetype)
 	{
-		ByteArrayOutputStream array = new ByteArrayOutputStream();
-
 		positionList.clear();
 
-		byte[] hav_chunk = { 0x5B, 0x48, 0x4F, 0x4A, 0x49, 0x4E, 0x20, 0x41 }; //'[HOJIN A'
-
-		int mark = 0;
-		int offset = 0;
-		int ID = -1;
 		int[] include = new int[predefined_Pids.length];
-
-		boolean save = false;
-
 
 		for (int i = 0; i < include.length; i++) 
 			include[i] = Integer.parseInt(predefined_Pids[i].toString().substring(2), 16);
 
 		Arrays.sort(include);
 
-		for (int a = 0; a < data.length - 9; a++)
+		//do the parse
+		switch (filetype)
 		{
-			//mpg es:
-			if (filetype == CommonParsing.ES_MPV_TYPE)
-				return data;
+		case CommonParsing.ES_MPV_TYPE:
+			return data;
 
-			//pva:
-			if (filetype == CommonParsing.PVA_TYPE && (0xFF & data[a]) == 0x41 && (0xFF & data[a + 1]) == 0x56 && (0xFF & data[a + 4]) == 0x55)
-			{
-				if (save)
-					array.write(data, mark, a - mark);
+		case CommonParsing.MPEG2PS_TYPE:
+		case CommonParsing.PES_AV_TYPE:
+			return parseMPG2(data, include);
 
-				mark = a;
+		case CommonParsing.MPEG1PS_TYPE:
+			return parseMPG1(data, include);
 
-				if (data[a + 2] == 1)
-				{
-					ID = 1;
-					mark = ((0x10 & data[a + 5]) != 0) ? a + 12 : a + 8;
-					int currentposition[] = { a,array.size() };
-					positionList.add(currentposition);
-					save = true;
-				}
-				else
-					save = false;
+		case CommonParsing.PVA_TYPE:
+			return parsePVA(data, include);
 
-				a += 7 + ((0xFF & data[a + 6])<<8 | (0xFF & data[a + 7]));
-			}
+		case CommonParsing.TS_TYPE:
+			return parseTS(data, include);
+		}
 
+		return data;
+	}
+
+	/**
+	 * PES_AV + MPG2
+	 */
+	private byte[] parseTS(byte[] data, int[] include)
+	{
+		ByteArrayOutputStream array = new ByteArrayOutputStream();
+
+		byte[] hav_chunk = { 0x5B, 0x48, 0x4F, 0x4A, 0x49, 0x4E, 0x20, 0x41 }; //'[HOJIN A'
+
+		boolean save = false;
+
+		int mark = 0;
+		int offset = 0;
+		int ID = -1;
+
+		for (int a = 0, PID; a < data.length - 9; a++)
+		{
 			//humax .vid workaround, skip special data chunk
-			if (filetype == CommonParsing.TS_TYPE && data[a] == 0x7F && data[a + 1] == 0x41 && data[a + 2] == 4 && data[a + 3] == (byte)0xFD)
+			if (data[a] == 0x7F && data[a + 1] == 0x41 && data[a + 2] == 4 && data[a + 3] == (byte)0xFD)
 			{
 				if (save && mark <= a)
 					array.write(data, mark, a - mark);
@@ -215,7 +217,7 @@ public class Preview extends Object {
 			}
 
 			//ts:
-			if (filetype == CommonParsing.TS_TYPE && a < data.length - 188 && data[a] == 0x47)
+			if (a < data.length - 188 && data[a] == 0x47)
 			{
 				int chunk_offset = 0;
 
@@ -271,7 +273,8 @@ public class Preview extends Object {
 					array.write(data, mark, a - mark);
 
 				mark = a;
-				int PID = (0x1F & data[a + 1])<<8 | (0xFF & data[a + 2]);
+
+				PID = (0x1F & data[a + 1])<<8 | (0xFF & data[a + 2]);
 
 				if (include.length > 0 && Arrays.binarySearch(include, PID) < 0)
 					save = false;
@@ -307,96 +310,247 @@ public class Preview extends Object {
 				mark += chunk_offset;
 			}
 
-			//mpg2-ps
-			if ((filetype == CommonParsing.MPEG2PS_TYPE || filetype == CommonParsing.PES_AV_TYPE) && data[a] == 0 && data[a + 1] == 0 && data[a + 2] == 1)
-			{
-				int PID = 0xFF&data[a+3];
-
-				if (PID < 0xB9)
-					continue;
-
-				if (save)
-					array.write(data,mark,a-mark);
-
-				mark = a;
-
-				if (include.length>0 && Arrays.binarySearch(include,PID)<0)
-					save=false;
-
-				else if ((ID==PID || ID==-1) && (0xF0&PID)==0xE0)
-				{
-					ID=PID;
-					mark = a + 9 + (0xFF&data[a+8]);
-					int currentposition[] = { a,array.size() };
-					positionList.add(currentposition);
-					save=true;
-				}
-				else
-					save=false;
-
-				offset=(0xFF&data[a+3])<0xBB?11:0;
-				a += (offset==0) ? (5+((0xFF&data[a+4])<<8 | (0xFF&data[a+5]))) : offset;
-			}
-
-			//mpg1-ps
-			if (filetype == CommonParsing.MPEG1PS_TYPE && data[a]==0 && data[a+1]==0 && data[a+2]==1)
-			{
-				int PID = 0xFF&data[a+3];
-
-				if (PID < 0xB9)
-					continue;
-
-				if (save)
-					array.write(data,mark,a-mark);
-
-				mark = a;
-
-				if (include.length>0 && Arrays.binarySearch(include,PID)<0)
-					save=false;
-
-				else if ((ID==PID || ID==-1) && (0xF0&PID)==0xE0){
-					ID=PID;
-					int shift=a+6;
-					skiploop:
-
-					while(true)
-					{
-						switch (0xC0&data[shift]) {
-						case 0x40:	shift+=2; 
-									continue skiploop; 
-						case 0x80: 	shift+=3; 
-									continue skiploop; 
-						case 0xC0: 	shift++;  
-									continue skiploop; 
-						case 0: 	break;
-						}
-						switch (0x30&data[shift]) {
-						case 0x20:	shift+=5;  
-									break skiploop; 
-						case 0x30: 	shift+=10; 
-									break skiploop; 
-						case 0x10:	shift+=5; 
-									break skiploop; 
-						case 0:    	shift++; 
-									break skiploop; 
-						}
-					}
-
-					mark = shift;
-					int currentposition[] = { a,array.size() };
-					positionList.add(currentposition);
-					save=true;
-				}
-				else
-					save = false;
-
-				offset = (0xFF & data[a + 3]) < 0xBB ? 11 : 0;
-				a += (offset == 0) ? (5 + ((0xFF & data[a + 4])<<8 | (0xFF & data[a + 5]))) : offset;
-			}
 		}
 
 		processed_PID = ID;
 
 		return array.toByteArray();
 	}
+
+
+	/**
+	 * PES_AV + MPG2
+	 */
+	private byte[] parseMPG2(byte[] pes_data, int[] include)
+	{
+		ByteArrayOutputStream array = new ByteArrayOutputStream();
+
+		boolean savePacket = false;
+
+		int mark = 0;
+		int pes_headerlength = 9;
+		int pes_offset = 6;
+		int pes_payloadlength = 0;
+		int pes_ID = -1;
+
+		for (int offset = 0, offset2, pes_ID_tmp, returncode, j = pes_data.length - pes_headerlength; offset < j; )
+		{
+			if ((returncode = CommonParsing.validateStartcode(pes_data, offset)) < 0)
+			{
+				offset += -returncode;
+				continue;
+			}
+
+			pes_ID_tmp = CommonParsing.getPES_IdField(pes_data, offset);
+
+			if (pes_ID_tmp < CommonParsing.SYSTEM_END_CODE)
+			{
+				offset += 4;
+				continue;
+			}
+
+			if (savePacket)
+				array.write(pes_data, mark, offset - mark);
+
+			mark = offset;
+
+			if (include.length > 0 && Arrays.binarySearch(include, pes_ID_tmp) < 0)
+				savePacket = false;
+
+			else if ((pes_ID == pes_ID_tmp || pes_ID == -1) && (0xF0 & pes_ID_tmp) == 0xE0)
+			{
+				pes_ID = pes_ID_tmp;
+				mark = offset + pes_headerlength + CommonParsing.getPES_ExtensionLengthField(pes_data, offset);
+
+				int[] currentposition = { offset, array.size() };
+
+				positionList.add(currentposition);
+				savePacket = true;
+			}
+
+			else
+				savePacket = false;
+
+			offset2 = pes_ID_tmp < CommonParsing.SYSTEM_START_CODE ? 12 : 0; //BA
+
+			pes_payloadlength = CommonParsing.getPES_LengthField(pes_data, offset);
+
+			if (pes_payloadlength == 0) //zero length
+				offset2 = pes_headerlength;
+
+			offset += (offset2 == 0 ? (pes_offset + pes_payloadlength) : offset2);
+		}
+
+		processed_PID = pes_ID;
+
+		return array.toByteArray();
+	}
+
+	/**
+	 * MPG1
+	 */
+	private byte[] parseMPG1(byte[] pes_data, int[] include)
+	{
+		ByteArrayOutputStream array = new ByteArrayOutputStream();
+
+		boolean savePacket = false;
+
+		int mark = 0;
+		int pes_headerlength = 7;
+		int pes_offset = 6;
+		int pes_payloadlength = 0;
+		int pes_ID = -1;
+
+		for (int offset = 0, offset2, pes_ID_tmp, returncode, shift, j = pes_data.length - pes_headerlength; offset < j; )
+		{
+			if ((returncode = CommonParsing.validateStartcode(pes_data, offset)) < 0)
+			{
+				offset += -returncode;
+				continue;
+			}
+
+			pes_ID_tmp = CommonParsing.getPES_IdField(pes_data, offset);
+
+			if (pes_ID_tmp < CommonParsing.SYSTEM_END_CODE)
+			{
+				offset += 4;
+				continue;
+			}
+
+			if (savePacket)
+				array.write(pes_data, mark, offset - mark);
+
+			mark = offset;
+
+			if (include.length > 0 && Arrays.binarySearch(include, pes_ID_tmp) < 0)
+				savePacket = false;
+
+			else if ((pes_ID == pes_ID_tmp || pes_ID == -1) && (0xF0 & pes_ID_tmp) == 0xE0)
+			{
+				pes_ID = pes_ID_tmp;
+
+				shift = offset + pes_offset;
+
+				skiploop:
+				while(true)
+				{
+					switch (0xC0 & pes_data[shift])
+					{
+					case 0x40:
+						shift += 2; 
+						continue skiploop; 
+
+					case 0x80:
+						shift += 3; 
+						continue skiploop; 
+
+					case 0xC0:
+						shift++;  
+						continue skiploop; 
+
+					case 0:
+						break;
+					}
+
+					switch (0x30 & pes_data[shift])
+					{
+					case 0x20:
+						shift += 5;  
+						break skiploop; 
+
+					case 0x30:
+						shift += 10; 
+						break skiploop; 
+
+					case 0x10:
+						shift += 5; 
+						break skiploop; 
+
+					case 0:
+						shift++; 
+						break skiploop; 
+					}
+				}
+
+				mark = shift;
+
+				int[] currentposition = { offset, array.size() };
+
+				positionList.add(currentposition);
+				savePacket = true;
+			}
+
+			else
+				savePacket = false;
+
+
+			offset2 = pes_ID_tmp < CommonParsing.SYSTEM_START_CODE ? 12 : 0; //BA
+
+			pes_payloadlength = CommonParsing.getPES_LengthField(pes_data, offset);
+
+			if (pes_payloadlength == 0) //zero length
+				offset2 = pes_headerlength;
+
+			offset += (offset2 == 0 ? (pes_offset + pes_payloadlength) : offset2);
+		}
+
+		processed_PID = pes_ID;
+
+		return array.toByteArray();
+	}
+
+	/**
+	 * PVA
+	 */
+	private byte[] parsePVA(byte[] pes_data, int[] include)
+	{
+		ByteArrayOutputStream array = new ByteArrayOutputStream();
+
+		boolean savePacket = false;
+
+		int mark = 0;
+		int pes_headerlength = 8;
+		int pes_offset = 8;
+		int pes_payloadlength = 0;
+		int pes_ID = -1;
+
+		for (int offset = 0, pes_ID_tmp, j = pes_data.length - pes_headerlength; offset < j; )
+		{
+			if ((0xFF & pes_data[offset]) != 0x41 || (0xFF & pes_data[offset + 1]) != 0x56 || (0xFF & pes_data[offset + 4]) != 0x55)
+			{
+				offset++;
+				continue;
+			}
+
+			if (savePacket)
+				array.write(pes_data, mark, offset - mark);
+
+			mark = offset;
+
+			pes_ID_tmp = 0xFF & pes_data[offset + 2];
+
+			if (pes_ID_tmp == 1)
+			{
+				pes_ID = 1;
+				mark = ((0x10 & pes_data[offset + 5]) != 0) ? offset + pes_offset + 4 : offset + pes_offset;
+
+				int[] currentposition = { offset, array.size() };
+
+				positionList.add(currentposition);
+				savePacket = true;
+			}
+
+			else
+				savePacket = false;
+
+			pes_payloadlength = (0xFF & pes_data[offset + 6])<<8 | (0xFF & pes_data[offset + 7]);
+
+			offset += (pes_offset + pes_payloadlength);
+		}
+
+		processed_PID = pes_ID;
+
+		return array.toByteArray();
+	}
 }
+

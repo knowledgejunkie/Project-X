@@ -183,11 +183,11 @@ public class StreamConverter extends Object {
 	/**
 	 * set broken link flag after a cut
 	 */
-	private void setBrokenLink(byte[] pes_packet, int pes_offset)
+	private void setBrokenLink(JobProcessing job_processing, byte[] pes_packet, int pes_offset)
 	{
 		if (CommonParsing.validateStartcode(pes_packet, pes_offset) < 0)
 		{
-			Common.setMessage("!> invalid start_code of packet");
+			Common.setMessage("!> invalid start_code of packet (sbl), pos: " + job_processing.getLastHeaderBytePosition());
 			return;
 		}
 
@@ -359,7 +359,7 @@ public class StreamConverter extends Object {
 		repackMpg1(pes_packet, pes_offset, streamdemultiplexer);
 
 		if (streamdemultiplexer.getType() == CommonParsing.MPEG_VIDEO && !BrokenLinkFlag)
-			setBrokenLink(pes_packet, pes_offset);
+			setBrokenLink(job_processing, pes_packet, pes_offset);
 
 		if (Buffer.size() != 0)
 			Buffer.reset();
@@ -427,7 +427,7 @@ public class StreamConverter extends Object {
 
 			if (CommonParsing.validateStartcode(pes_packet, pes_offset) < 0)
 			{
-				Common.setMessage("!> invalid startcode " + Packet + " (" + Integer.toHexString(newID) + "/" + es_streamtype + ")");
+				Common.setMessage("!> invalid startcode " + Packet + ", pos: " + job_processing.getLastHeaderBytePosition() + " (" + Integer.toHexString(newID) + "/" + es_streamtype + ")");
 				return;
 			}
 
@@ -518,7 +518,7 @@ public class StreamConverter extends Object {
 
 			if (CommonParsing.validateStartcode(pes_packet, pes_offset) < 0)
 			{
-				Common.setMessage("!> invalid startcode " + Packet + " (" + Integer.toHexString(newID) + "/" + es_streamtype + ")");
+				Common.setMessage("!> invalid startcode " + Packet + ", pos: " + job_processing.getLastHeaderBytePosition() + " (" + Integer.toHexString(newID) + "/" + es_streamtype + ")");
 				return;
 			}
 
@@ -724,7 +724,7 @@ public class StreamConverter extends Object {
 
 			if (CommonParsing.validateStartcode(pes_packet, pes_offset) < 0)
 			{
-				Common.setMessage("!> invalid startcode " + Packet + " (" + Integer.toHexString(newID) + "/" + es_streamtype + ")");
+				Common.setMessage("!> invalid startcode " + Packet + ", pos: " + job_processing.getLastHeaderBytePosition() + " (" + Integer.toHexString(newID) + "/" + es_streamtype + ")");
 				return;
 			}
 
@@ -917,7 +917,7 @@ public class StreamConverter extends Object {
 
 			if (CommonParsing.validateStartcode(pes_packet, pes_offset) < 0)
 			{
-				Common.setMessage("!> invalid startcode " + Packet + " (" + Integer.toHexString(newID) + "/" + es_streamtype + ")");
+				Common.setMessage("!> invalid startcode " + Packet + ", pos: " + job_processing.getLastHeaderBytePosition() + " (" + Integer.toHexString(newID) + "/" + es_streamtype + ")");
 				return;
 			}
 

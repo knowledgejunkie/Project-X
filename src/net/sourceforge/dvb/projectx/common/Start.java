@@ -323,7 +323,13 @@ public class Start extends Object {
 				StringWriter sw = new StringWriter();
 				e.printStackTrace(new PrintWriter(sw));
 
-				Common.getGuiInterface().showErrorMessageDialog(Resource.getString("StartUp.Error") + Common.getLineSeparator() + Common.getLineSeparator() + sw.toString(), Resource.getString("StartUp.Error.Title"));
+				/**
+				 * message to the commandline
+				 */
+				String message = Resource.getString("StartUp.Error") + Common.getLineSeparator() + Common.getLineSeparator() + sw.toString();
+				System.err.println(message);
+
+				Common.getGuiInterface().showErrorMessageDialog(message, Resource.getString("StartUp.Error.Title"));
 			}
 
 			/**

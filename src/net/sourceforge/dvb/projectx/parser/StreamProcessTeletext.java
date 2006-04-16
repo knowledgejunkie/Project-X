@@ -121,8 +121,11 @@ public class StreamProcessTeletext extends StreamProcessBase {
 		boolean ExportTextAsUTF8 = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_exportTextAsUTF8);
 		boolean DecodeHiddenRows = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_decodeHiddenRows);
 		boolean KeepOriginalTimecode = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_keepOriginalTimecode);
-//test
-		boolean SpecialTermination = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_specialTermination);
+
+//		boolean SpecialTermination = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_specialTermination);
+		boolean SpecialTermination = true;
+
+		boolean KeepColourTable = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_keepColourTable);
 
 		//String SubtitleExportFormat = collection.getSettings().getProperty(Keys.KEY_SubtitleExportFormat);
 
@@ -137,7 +140,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 			Common.getGuiInterface().showSubpicture();
 
 		if (SubtitleExportFormat.equalsIgnoreCase(Keys.ITEMS_SubtitleExportFormat[7].toString()) || SubtitleExportFormat.equalsIgnoreCase(Keys.ITEMS_SubtitleExportFormat[6].toString())) // SUP + SON, set variables
-			SUP_Offset = subpicture.set(SubtitleFont, Format_SUP_Values);
+			SUP_Offset = subpicture.set(SubtitleFont, Format_SUP_Values, KeepColourTable);
 
 		String[] userdefined_pages = {
 			collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_TtxPage1),
@@ -253,8 +256,10 @@ public class StreamProcessTeletext extends StreamProcessBase {
 			if (KeepOriginalTimecode)
 				Common.setMessage("-> " + Resource.getString(Keys.KEY_SubtitlePanel_keepOriginalTimecode[0]));
 
-			if (SpecialTermination)
-				Common.setMessage("-> " + Resource.getString(Keys.KEY_SubtitlePanel_specialTermination[0]));
+	//		if (SpecialTermination)
+	//			Common.setMessage("-> " + Resource.getString(Keys.KEY_SubtitlePanel_specialTermination[0]));
+			if (KeepColourTable)
+				Common.setMessage("-> " + Resource.getString(Keys.KEY_SubtitlePanel_keepColourTable[0]));
 
 
 			DateFormat timeformat_1 = new SimpleDateFormat("HH:mm:ss.SSS");
@@ -527,7 +532,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 
 					default:  // others, unknown
 						if (debug) 
-							System.out.println(" unkn_"+Integer.toHexString(0xFF & packet[0])+"/"+(count-46));
+							System.out.println(" unkn_" + Integer.toHexString(0xFF & packet[0]) + "/" + (count - 46));
 						//continue readloop;
 					}
 
@@ -535,6 +540,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 					if (debug)
 					{
 						System.out.println();
+						System.out.println("pos: " + (count - 46));
 
 						for (int a = 0; a < 46; a++)
 							System.out.print(" " + ((0xFF & packet[a])<0x10 ? "0" : "") + Integer.toHexString(0xFF & packet[a]).toUpperCase());

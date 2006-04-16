@@ -1345,7 +1345,7 @@ public class CollectionPanel extends JPanel {
 	private int getLoadSize()
 	{
 		try {
-			int val = Integer.parseInt(Common.getSettings().getProperty(Keys.KEY_PreviewBuffer));
+			int val = Common.getPreviewBufferValue();
 
 			return val;
 		}

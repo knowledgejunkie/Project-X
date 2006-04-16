@@ -765,7 +765,14 @@ public class Subpicture extends Object {
 	/*** set user packet ("Font pointsize; Backgr. Alpha value; Yoffset; Xoffset; Screenwidth"); **/
 	public int[] set(String nm, String values)
 	{
-		resetUserColorTable();
+		return set(nm, values, false);
+	}
+
+	/*** set user packet ("Font pointsize; Backgr. Alpha value; Yoffset; Xoffset; Screenwidth"); **/
+	public int[] set(String nm, String values, boolean keepColourTable)
+	{
+		if (!keepColourTable)
+			resetUserColorTable();
 
 		System.arraycopy(standard_values, 0, option, 0, standard_values.length);
 

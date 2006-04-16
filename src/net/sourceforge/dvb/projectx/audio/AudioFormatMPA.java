@@ -514,6 +514,10 @@ public class AudioFormatMPA extends AudioFormat {
 	private boolean Debug = false;
 	private boolean hasRawData = false;
 
+	private final byte RDS_identifier = (byte) 0xFD;
+	private final byte RDS_startcode = (byte) 0xFE;
+	private final byte RDS_endcode = (byte) 0xFF;
+
 	private String[] rds_values = new String[7];
 	private final String[] pty_list = {
 		"undefined", "News", "Current Affairs", "Information", "Sport", "Education", "Drama", "Culture", "Science", 
@@ -536,7 +540,6 @@ public class AudioFormatMPA extends AudioFormat {
 		0x00e2, 0x00e4, 0x00ea, 0x00eb, 0x00ee, 0x00ef, 0x00f4, 0x00f6, 0x00fb, 0x00fc, 0x00f1, 0x00e7, 0x015f, 0x011f, 0x0131, 0x0133
 	};
 
-
 	/**
 	 *
 	 */
@@ -557,17 +560,17 @@ public class AudioFormatMPA extends AudioFormat {
 
 		int neg_offs = Size - 1;
 
-		if (frame[neg_offs] != (byte)0xFD)
+		if (frame[neg_offs] != RDS_identifier)
 		{
 			neg_offs -= 2;
 
-			if (frame[neg_offs] != (byte)0xFD)
+			if (frame[neg_offs + 2] != 0 || frame[neg_offs + 1] != 0 || frame[neg_offs] != RDS_identifier)
 				return;
 		}
 
 		int len = 0xFF & frame[neg_offs - 1];
 
-		for (int i = neg_offs - 2, val; i > neg_offs - 2 - len; i--)
+		for (int i = neg_offs - 2, val; i > 3 && i > neg_offs - 2 - len; i--)
 		{
 			val = 0xFF & frame[i];
 			_list.add(String.valueOf(val));
@@ -581,7 +584,7 @@ public class AudioFormatMPA extends AudioFormat {
 	 */
 	private void decodeChunk(ArrayList list)
 	{
-		int index = list.indexOf("254"); //0xfe, start
+		int index = list.indexOf(String.valueOf(RDS_startcode));
 
 		if (index < 0)
 		{
@@ -595,7 +598,7 @@ public class AudioFormatMPA extends AudioFormat {
 			index--;
 		}
 
-		int eom_index = list.indexOf("255"); //0xff, end
+		int eom_index = list.indexOf(String.valueOf(RDS_endcode));
 
 		if (eom_index < 0)
 			return;
@@ -625,11 +628,11 @@ public class AudioFormatMPA extends AudioFormat {
 		int type = -1;
 
 		// fill bytearray, excluding crc + EOM, correct special bytes
-		for (int i = 0, j = 0, k = 0, value; i <= eom_index; i++, list.remove(0))
+		for (int i = 0, j = 0, k = 0, value, identifier_int = (0xFF & RDS_identifier); i <= eom_index; i++, list.remove(0))
 		{
 			value = Integer.parseInt(list.get(0).toString());
 
-			if (i < 5 || value > 0xFD)
+			if (i < 5 || value > identifier_int)
 				continue;
 
 			if (i == 5)
@@ -639,7 +642,7 @@ public class AudioFormatMPA extends AudioFormat {
 			}
 
 			// coding of 0xFD,FE,FF
-			if (value == 0xFD)
+			if (value == identifier_int)
 			{
 				j = 1;
 				continue;
@@ -647,7 +650,7 @@ public class AudioFormatMPA extends AudioFormat {
 
 			if (j == 1)
 			{
-				value += 0xFD;
+				value += identifier_int;
 				j = 0;
 			}
 
