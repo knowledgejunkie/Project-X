@@ -144,7 +144,7 @@ public class Keys extends Object {
 	public final static String[] KEY_PreviewBuffer = { "OptionPanel.PreviewBuffer", "1024000" }; //combobox[38]
 	public final static String[] KEY_holdStreamInfoOnOSD = { "OptionPanel.holdStreamInfoOnOSD", "0" };
 	public final static String[] KEY_OptionPanelIndex = { "OptionPanel.PanelIndex", "0" };
-	public final static String[] KEY_additionalInputBuffer = { "OptionPanel.additionalInputBuffer", "1" }; //test
+	public final static String[] KEY_additionalInputBuffer = { "OptionPanel.additionalInputBuffer", "0" }; //test
 
 	/**
 	 * SpecialPanel

@@ -254,6 +254,7 @@ danach:
 !!vro timecode lese patch?
 !!-dvb-subs,  pagenumber ausgelesen aus pmt?
 !!file + coll properties gui
+!!multi-vob - pts offs nicht erkannt bei nächster cellid
 
 !!-pes parser keine vorauswahl von headern ba,ff,f0 etc mehr, mit loggen
 !!-0xBE -> arte_ut fra, scan von pes ändern
