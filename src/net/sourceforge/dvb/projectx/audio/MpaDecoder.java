@@ -1273,7 +1273,8 @@ public static int parse_header() {
 }
 
 
-public static int decode_layer2() throws IOException {
+public static int decode_layer2() throws IOException
+{
 
 	loadbits(head.framesize-4-(head.protection_bit*2));
 
@@ -1650,7 +1651,8 @@ public static int decode_layer2() throws IOException {
 }
 
 
-public static int decode_layer1() throws IOException {
+public static int decode_layer1() throws IOException 
+{
 
 	out1.reset();
 	out2.reset();
@@ -2153,7 +2155,7 @@ public static int decode_layer1() throws IOException {
 	/**
 	 *
 	 */
-	public static byte[] decodeArray(byte[] data) throws IOException
+	public static byte[] decodeArray(byte[] data)
 	{
 		buf = data;
 		BufferPos = 0;
@@ -2173,18 +2175,23 @@ public static int decode_layer1() throws IOException {
 		if (head.newchannel == 0)
 			head.newchannel = DOWNMIX ? 1 : 2;
 
-		switch (ERROR_CODE1)
-		{
-		case 1:	
-			silentSamples(head.new_sampling_frequency);
-			break;
+		try {
+			switch (ERROR_CODE1)
+			{
+			case 1:	
+				silentSamples(head.new_sampling_frequency);
+				break;
 
-		case 2:	
-			ERROR_CODE = decode_layer2();
-			break;
+			case 2:	
+				ERROR_CODE = decode_layer2();
+				break;
 
-		case 3:	
-			ERROR_CODE = decode_layer1();
+			case 3:	
+				ERROR_CODE = decode_layer1();
+			}
+
+		} catch (Exception e) {
+			
 		}
 
 		if (ERROR_CODE == 1)

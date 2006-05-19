@@ -249,12 +249,17 @@ danach:
 --vorschaupuffer entspr. bitrate autom. wählen
 --pes0 - pesheader genauer überspringen + preview angepasst
 --rds decode abbruch bei falschem index
+--prozessfenster coll#/von zahl
+--umleitung cli ( > datei ) geht nicht
+--checkwriteaccess fehler bei addon?
+--fehlermeldung + rücksetzung, wenn unterverzeichnis nicht erstellt werden kann
+--coll properties gui
 !!ac3 2/0 128kbs wg vro hinzufügen, ac3 5.1 256, 320kb stille 
 !!ac3 384 wird nicht als Stille genommen, restart wenn 5.1 größer detektiert wird
 !!vro timecode lese patch?
-!!-dvb-subs,  pagenumber ausgelesen aus pmt?
-!!file + coll properties gui
-!!multi-vob - pts offs nicht erkannt bei nächster cellid
+!!dvb-subs,  pagenumber ausgelesen aus pmt?
+!!file properties gui
+!!multi-vob - pts offs nicht erkannt bei nächster cellid, manchmal
 
 !!-pes parser keine vorauswahl von headern ba,ff,f0 etc mehr, mit loggen
 !!-0xBE -> arte_ut fra, scan von pes ändern
@@ -281,6 +286,7 @@ danach:
 !!--vorschau erweitert umringgops
 !!-pmt 0xC3 -> string epg - nur inter Typ 0 - mtv2 cyfra 11282v hotbird 
 !-PAT mit adaptionfield ?? 6400 10977 h 16°E, neue klasse
+!!sendername aus SDT anzeigen?
 
 //
 java.applet.AudioClip ac = java.applet.Applet.newAudioClip(Resource.getResourceURL("bsp.wav"));

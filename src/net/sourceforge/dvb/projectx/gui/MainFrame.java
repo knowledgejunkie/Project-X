@@ -495,6 +495,43 @@ public class MainFrame extends JPanel {
 			/**
 			 *
 			 */
+			else if (actName.equals("FileProperties"))
+			{
+				int index = tableView.getSelectedRow();
+
+				if (index < 0 || tableView.getValueAt(index, 0) == null)
+					return;
+
+				JobCollection collection = Common.getCollection();
+
+				XInputFile xInputFile = ((XInputFile) collection.getInputFile(index)).getNewInstance();
+
+				if (xInputFile != null && xInputFile.exists())
+				{
+					CommonGui.getFileProperties().open(xInputFile, Common.getActiveCollection());
+
+					updateCollectionTable(collection.getCollectionAsTable());
+					updateCollectionPanel(Common.getActiveCollection());
+
+					tableView.clearSelection();
+				}
+
+			}
+
+			/**
+			 *
+			 */
+			else if (actName.equals("CollectionProperties"))
+			{
+				if (Common.isCollectionListEmpty())
+					return;
+
+				CommonGui.getCollectionProperties().open(Common.getCollection(), Common.getActiveCollection());
+			}
+
+			/**
+			 *
+			 */
 			else if (actName.equals("stripRelook"))
 			{
 				stripRelook(0);
@@ -943,14 +980,14 @@ public class MainFrame extends JPanel {
 		//file properties
 		JMenuItem menuitem_17 = popup.add(Resource.getString("popup.FileProperties"));
 		menuitem_17.setActionCommand("FileProperties");
-		menuitem_17.setEnabled(false);
+		//menuitem_17.setEnabled(false);
 
 		popup.addSeparator();
 
-		//file properties
+		//coll properties
 		JMenuItem menuitem_18 = popup.add(Resource.getString("popup.CollectionProperties"));
 		menuitem_18.setActionCommand("CollectionProperties");
-		menuitem_18.setEnabled(false);
+		//menuitem_18.setEnabled(false);
 
 
 		popup.pack();
@@ -1512,7 +1549,7 @@ public class MainFrame extends JPanel {
 					for (int i = 1; i < 12; i++)
 						elements[i].getComponent().setEnabled(row >= 0);
 
-					for (int i = 12; i < elements.length - 2; i++) // - 2 noch nötig wegen properties
+					for (int i = 12; i < elements.length; i++)
 						elements[i].getComponent().setEnabled(index >= 0);
 
 					popup.show(tableView, e.getX(), e.getY() - popup.getHeight());
@@ -1521,8 +1558,8 @@ public class MainFrame extends JPanel {
 				else if (row >= 0)
 					ScanInfo((XInputFile) Common.getCollection(index).getInputFile(row));
 
-				if (e.getClickCount() >= 2 && e.getModifiers() == MouseEvent.BUTTON1_MASK)
-					Common.getGuiInterface().showPreSettings();
+				if (e.getClickCount() >= 2 && e.getModifiers() == MouseEvent.BUTTON1_MASK && !Common.isCollectionListEmpty())
+					CommonGui.getCollectionProperties().open(Common.getCollection(), Common.getActiveCollection());
 			}
 		});
 
@@ -2398,24 +2435,27 @@ public class MainFrame extends JPanel {
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
 		panel.add(panel_2, BorderLayout.CENTER);
-		panel.add(buildFilePanel(), BorderLayout.SOUTH);
+		panel.add(buildFilePanel1(), BorderLayout.SOUTH);
 
 		return panel;
 	}
 
-
 	/**
 	 *
 	 */
-	protected javax.swing.JRootPane buildFilePanel1()
+	protected JPanel buildFilePanel1()
 	{
-		javax.swing.JRootPane pane = new javax.swing.JRootPane();
+		JPanel panel = new JPanel();
 
-		//javax.swing.JLayeredPane pane = new javax.swing.JLayeredPane();
+		JTabbedPane tabbedPane = new JTabbedPane();
+		tabbedPane.setTabPlacement(SwingConstants.BOTTOM);
 
-		pane.getContentPane().add(buildFilePanel());
+		tabbedPane.addTab("Settings", buildFilePanel());
+		tabbedPane.addTab("CutViews", new JPanel());
 
-		return pane;
+		panel.add(tabbedPane, BorderLayout.CENTER);
+
+		return panel;
 	}
 
 	/**

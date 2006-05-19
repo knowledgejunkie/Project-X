@@ -497,7 +497,8 @@ public class StreamParserPESPrimary extends StreamParserBase {
 
 									if (collection.getSettings().getBooleanProperty(Keys.KEY_VOB_resetPts))
 									{
-										ptsoffset = nextFilePTS(collection, CommonParsing.PRIMARY_PES_PARSER, pes_streamtype, lastpts, job_processing.getFileNumber(), (count - base));
+							//			ptsoffset = nextFilePTS(collection, CommonParsing.PRIMARY_PES_PARSER, pes_streamtype, lastpts, job_processing.getFileNumber(), (count - base));
+										ptsoffset = nextFilePTS(collection, CommonParsing.PRIMARY_PES_PARSER, pes_streamtype, lastpts, ptsoffset, job_processing.getFileNumber(), (count - base));
 
 										if (ptsoffset == -1) 
 											ptsoffset = 0; 
@@ -1152,7 +1153,7 @@ public class StreamParserPESPrimary extends StreamParserBase {
 							job_processing.getProjectFileD2V().write(job_processing.getProjectFileExportLength(), job_processing.getExportedVideoFrameNumber());
 
 						Common.setMessage("");
-						Common.setMessage(Resource.getString("video.msg.summary") + " " + job_processing.getExportedVideoFrameNumber() + "/ " + clv[0] + "/ " + clv[1] + "/ " + clv[2] + "/ " + clv[3] + "/ " + clv[4]);
+						Common.setMessage(Resource.getString("video.msg.summary") + " " + job_processing.getExportedVideoFrameNumber() + "-" + clv[0] + "-" + clv[1] + "-" + clv[2] + "-" + clv[3] + "-" + clv[4]);
 
 						vptslog = streamdemultiplexer.closeVideo(job_processing, collection.getOutputDirectory() + collection.getFileSeparator());
 

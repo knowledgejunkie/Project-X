@@ -455,20 +455,19 @@ public class JobCollection extends Object {
 	 */
 	private boolean checkWriteAccess(String path)
 	{
-		File _path = new File(path);
-		String _file = path + getFileSeparator() + "~$pjx$.tmp";
-
-		if (path == null || !_path.exists())
-			return false;
-
 		try {
+			File _path = new File(path);
+			String _file = path + getFileSeparator() + "~$pjx$.tmp";
+
+			if (path == null || !_path.exists())
+				return false;
 
 			RandomAccessFile raf = new RandomAccessFile(_file, "rw");
 			raf.close();
 
 			new File(_file).delete();
 
-		} catch (IOException e) {
+		} catch (Exception ex2) {
 
 			return false;
 		}
@@ -935,6 +934,14 @@ public class JobCollection extends Object {
 	}
 
 	/**
+	 * 
+	 */
+	public boolean hasSettings()
+	{
+		return (settings == null ? false : true);
+	}
+
+	/**
 	 * routing returning settings
 	 */
 	public Settings getSettings()
@@ -948,13 +955,27 @@ public class JobCollection extends Object {
 	/**
 	 * collection specific settings
 	 */
-	public void setSettings(Settings _settings) throws IOException
+	public void setSettings(Settings _settings)
 	{
 		if (isActive())
 			return;
 
+		else if (_settings == null)
+		{
+			settings = null;
+			return;
+		}
+
 		settings = new Settings();
-		settings.loadProperties(new ByteArrayInputStream(_settings.storeProperties()));
+
+		try {
+			settings.loadProperties(new ByteArrayInputStream(_settings.storeProperties()));
+
+		} catch (IOException e) {
+
+			settings = null;
+			Common.setExceptionMessage(e);
+		}
 	}
 
 }

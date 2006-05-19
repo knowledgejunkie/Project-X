@@ -471,7 +471,7 @@ public class AudioFormatMPA extends AudioFormat {
 	 * riffdata from mpeg audio
 	 * awaiting a frame byte array, only the header is used
 	 */
-	public int[] parseRiffData(byte[] rh)
+	public void parseRiffData(byte[] rh, int channel)
 	{
 		int[] riffdata = new int[10];
 
@@ -498,7 +498,7 @@ public class AudioFormatMPA extends AudioFormat {
 		if ((2 & rh[2]) != 0) 
 			riffdata[8] += rpadding[(6 & rh[1])>>>1];
 
-		return riffdata;
+		setExtraWaveData(riffdata, channel);
 	}
 
 
@@ -967,5 +967,236 @@ public class AudioFormatMPA extends AudioFormat {
 		return str;
 	}
 
+
+	/**
+	 * part for RIFF wave header data processing
+	 */
+
+	private WaveHeader WaveHeader_Ch1;
+	private WaveHeader WaveHeader_Ch2;
+
+	/**
+	 * 
+	 */
+	public void initExtraWaveHeader(boolean bool_ACM, boolean bool_BWF, boolean bool_AC3)
+	{
+		WaveHeader_Ch1 = new WaveHeader(bool_ACM, bool_BWF);
+		WaveHeader_Ch2 = new WaveHeader(bool_ACM, bool_BWF);
+	}
+
+	/**
+	 * 
+	 */
+	public byte[] getExtraWaveHeader(int channel, boolean placeholder)
+	{
+		switch (channel)
+		{
+		case 1:
+			return (placeholder ? WaveHeader_Ch1.getPlaceHolder() : WaveHeader_Ch1.getHeader());
+
+		case 2:
+			return (placeholder ? WaveHeader_Ch2.getPlaceHolder() : WaveHeader_Ch2.getHeader());
+		}
+
+		return (new byte[0]);
+	}
+
+	/**
+	 * 
+	 */
+	public void setExtraWaveData(int[] array, int channel)
+	{
+		switch (channel)
+		{
+		case 1:
+			WaveHeader_Ch1.setWaveData(array);
+			break;
+
+		case 2:
+			WaveHeader_Ch2.setWaveData(array);
+			break;
+		}
+	}
+
+	/**
+	 * 
+	 */
+	public void setExtraWaveLength(long filelength, long timelength, int channel)
+	{
+		switch (channel)
+		{
+		case 1:
+			WaveHeader_Ch1.setWaveLength(filelength, timelength);
+			break;
+
+		case 2:
+			WaveHeader_Ch2.setWaveLength(filelength, timelength);
+			break;
+		}
+	}
+
+
+	/**
+	 * 
+	 */
+	private class WaveHeader {
+
+		private byte[] riffacm = { 
+			82, 73, 70, 70,  0,  0,  0,  0, 87, 65, 86, 69,102,109,116, 32,
+			30,  0,  0,  0, 85,  0,  1,  0,  1,  0,  0,  0,  0,  0,  0,  0,
+			1,  0,  0,  0, 12,  0,  1,  0,  2,  0,  0,  0,  0,  0,  1,  0,
+			113,  5,102, 97, 99,116,  4,  0,  0,  0,  0,  0,  0,  0,100, 97,
+			116, 97,  0,  0,  0,  0 
+		};
+
+		private byte[] riffbwf = { 
+			82, 73, 70, 70,  0,  0,  0,  0, 87, 65, 86, 69,102,109,116, 32,
+			40,  0,  0,  0, 80,  0,  1,  0,  1,  0,  0,  0,  0,  0,  0,  0,
+			0,  0,  0,  0, 22,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,
+			0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,102, 97, 99,116,
+			4,  0,  0,  0,  0,  0,  0,  0,100, 97,116, 97,  0,  0,  0,  0 
+		};
+
+		private long Samples = 0;
+		private long SampleCount = 0;
+
+		private final int HeaderLength_ACM = 70;
+		private final int HeaderLength_BWF = 80;
+		private final int ACM_WaveFormat = 1;
+		private final int BWF_WaveFormat = 2;
+
+		private int WaveFormat;
+
+		//init
+		public WaveHeader(boolean bool_ACM, boolean bool_BWF)
+		{
+			WaveFormat = bool_ACM ? ACM_WaveFormat : bool_BWF ? BWF_WaveFormat : 0;
+		}
+
+		/**
+		 * get place holder
+		 */
+		public byte[] getPlaceHolder()
+		{
+			switch (WaveFormat)
+			{
+			case ACM_WaveFormat:
+				return (new byte[HeaderLength_ACM]);
+
+			case BWF_WaveFormat:
+				return (new byte[HeaderLength_BWF]);
+			}
+
+			return (new byte[0]);
+		}
+
+		/**
+		 * get updated header 
+		 */
+		public byte[] getHeader()
+		{ 
+			switch (WaveFormat)
+			{
+			case ACM_WaveFormat:
+				return riffacm;
+
+			case BWF_WaveFormat:
+				return riffbwf;
+			}
+
+			return (new byte[0]);
+		} 
+
+		/**
+		 * set wave data
+		 */
+		public void setWaveData(int[] riffdata)
+		{
+			Samples += riffdata[2]; 
+			SampleCount++;
+
+			int nSamplesPerSec = getValue(riffbwf, 24, 4, true);
+			int dwHeadBitrate  = getValue(riffbwf, 40, 4, true);
+			int nBlockAlign    = getValue(riffbwf, 32, 2, true);
+
+			//nBlockAlign
+			if (nBlockAlign == 0)
+			{
+				setValue(riffacm, 44, 2, true, riffdata[8]);
+				setValue(riffbwf, 32, 2, true, riffdata[8]);
+			}
+
+			else if (nBlockAlign != 1 &&  nBlockAlign != riffdata[8])
+				setValue(riffbwf, 32, 2, true, 1);
+
+			//nSamplesPerSec
+			if (nSamplesPerSec == 1)
+			{
+				setValue(riffacm, 24, 4, true, riffdata[2]);
+				setValue(riffbwf, 24, 4, true, riffdata[2]);
+			}
+
+			else if (nSamplesPerSec != 0 &&  nSamplesPerSec != riffdata[2]) 
+			{
+				setValue(riffacm, 24, 4, true, 0);
+				setValue(riffbwf, 24, 4, true, 0);
+			}
+
+			//dwHeadBitrate
+			if (dwHeadBitrate == 1)
+				setValue(riffbwf, 40, 4, true, riffdata[6]);
+
+			else if (dwHeadBitrate != 0 &&  dwHeadBitrate != riffdata[6]) 
+				setValue(riffbwf, 40, 4, true, 0);
+
+			// fwHeadModeExt
+			if (riffdata[3] == 2)
+				riffbwf[46] |= (byte) riffdata[5];  
+
+			// nChannels
+			if (riffbwf[22] == 1)
+				riffacm[22] = riffbwf[22] = (byte) riffdata[4];    
+
+			riffbwf[38] |= (byte) riffdata[1];   // fwHeadLayer
+			riffbwf[44] |= (byte) riffdata[3];   // fwHeadMode
+			riffbwf[48] |= (byte) riffdata[7];   // wHeadEmphasis
+			riffbwf[50] |= (byte) riffdata[0];   // fwHeadFlags
+		}
+
+		/**
+		 * 
+		 */
+		public void setWaveLength(long filelength, long timelength)
+		{
+			int lengthACM = (int)filelength - HeaderLength_ACM;
+			int lengthBWF = (int)filelength - HeaderLength_BWF;
+
+			for (int i = 0; i < 4; i++)
+			{
+				riffacm[4 + i] = (byte)(0xFF & (lengthACM + 62)>>>(i * 8));
+				riffbwf[4 + i] = (byte)(0xFF & (lengthBWF + 72)>>>(i * 8));
+				riffacm[66 + i] = (byte)(0xFF & lengthACM>>>(i * 8));
+				riffbwf[76 + i] = (byte)(0xFF & lengthBWF>>>(i * 8));
+			}
+
+			if (filelength <= 100)
+				return;
+
+			int time = (int)timelength;
+			int nAvgBytePerSecACM = (int)(1000L * lengthACM / time);
+			int nAvgBytePerSecBWF = (int)(1000L * lengthBWF / time);
+
+			for (int i = 0; i < 4; i++)
+			{ 
+				riffacm[28 + i] = (byte)(0xFF & nAvgBytePerSecACM>>>(i * 8));
+				riffbwf[28 + i] = (byte)(0xFF & nAvgBytePerSecBWF>>>(i * 8));
+			}
+
+			int fact = (int)(1L * (Samples/SampleCount) * time /1000);
+
+			for (int i = 0; i < 4; i++) 
+				riffacm[58 + i] = riffbwf[68 + i] = (byte)(0xFF & fact>>>(i * 8));
+		}
+	}
 
 }

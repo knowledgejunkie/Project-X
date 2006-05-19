@@ -122,7 +122,7 @@ public class StripRelook extends Object {
 
 			in.close();
 
-		} catch (IOException e) {
+		} catch (Exception e) {
 
 			Common.setExceptionMessage(e);
 			return null;

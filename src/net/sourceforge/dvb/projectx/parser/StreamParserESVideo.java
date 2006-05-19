@@ -483,7 +483,7 @@ public class StreamParserESVideo extends StreamParserBase {
 			vlog.close();
 
 			Common.setMessage("");
-			Common.setMessage(Resource.getString("video.msg.summary") + " " + job_processing.getExportedVideoFrameNumber() + "/ " + clv[0] + "/ " + clv[1] + "/ " + clv[2] + "/ " + clv[3] + "/ " + clv[4]);
+			Common.setMessage(Resource.getString("video.msg.summary") + " " + job_processing.getExportedVideoFrameNumber() + "-" + clv[0] + "-" + clv[1] + "-" + clv[2] + "-" + clv[3] + "-" + clv[4]);
 
 			File newfile = new File(fparent + ".s1");
 

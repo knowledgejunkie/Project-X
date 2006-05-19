@@ -93,13 +93,22 @@ public class StreamParserBase extends Object {
 		return nextFilePTS(collection, parser_type, pes_streamtype, lastpts, file_number, 0L);
 	}
 
-
 	/**
 	 * nextfile PTS check
 	 * 
 	 * returns new pts offset to append
 	 */
 	public long nextFilePTS(JobCollection collection, int parser_type, int pes_streamtype, long lastpts, int file_number, long startPoint)
+	{
+		return nextFilePTS(collection, parser_type, pes_streamtype, lastpts, 0L, file_number, 0L);
+	}
+
+	/**
+	 * nextfile PTS check
+	 * 
+	 * returns new pts offset to append
+	 */
+	public long nextFilePTS(JobCollection collection, int parser_type, int pes_streamtype, long lastpts, long ptsoffset, int file_number, long startPoint)
 	{
 		JobProcessing job_processing = collection.getJobProcessing();
 
@@ -300,6 +309,10 @@ public class StreamParserBase extends Object {
 				Common.setExceptionMessage(e);
 			}
 		}
+
+	//Common.setMessage("AA " + pts + " / " + ptsoffset + " / " + (pts + ptsoffset) + " / " + lastpts);
+	//re-use given ptsoffset (chapterpoints of vob)
+	//	pts += ptsoffset;
 
 		if (file_number == 0 && startPoint == 0)
 		{  // need global offset?

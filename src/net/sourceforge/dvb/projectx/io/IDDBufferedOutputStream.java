@@ -354,13 +354,19 @@ public class IDDBufferedOutputStream extends BufferedOutputStream {
 	/**
 	 *
 	 */
-	public void InitIdd(String iddname, int iddtype) throws IOException
+	public void InitIdd(String iddname, int iddtype)
 	{
-		name = iddname + ".id";
-		type = iddtype;
+		try {
+			name = iddname + ".id";
+			type = iddtype;
 
-		IddOut = new BufferedOutputStream(new FileOutputStream(name), 655350);
-		IddOut.write(IddHeader[type - 1]);
+			IddOut = new BufferedOutputStream(new FileOutputStream(name), 655350);
+			IddOut.write(IddHeader[type - 1]);
+
+		} catch (IOException e) {
+
+			Common.setExceptionMessage(e);
+		}
 	}
 
     /**

@@ -421,7 +421,7 @@ public class AudioFormatAC3 extends AudioFormat {
 	 * riffdata from ac3 audio
 	 * awaiting a frame byte array, only the header is used
 	 */
-	public int[] parseRiffData(byte[] frame)
+	public void parseRiffData(byte[] frame, int channel)
 	{
 		int[] riffdata = new int[10];
 
@@ -434,7 +434,150 @@ public class AudioFormatAC3 extends AudioFormat {
 		// nBlockAlign
 		riffdata[8] = ac3const[(0xC0 & frame[4])>>>6][(0x3E & frame[4])>>>1] + (((1 & frame[4])!=0) ? 2 : 0);
 
-		return riffdata;
+		setExtraWaveData(riffdata, channel);
+	}
+
+	/**
+	 * part for RIFF wave header data processing
+	 */
+
+	private WaveHeader WaveHeader_Ch1;
+
+	/**
+	 * 
+	 */
+	public void initExtraWaveHeader(boolean bool_ACM, boolean bool_BWF, boolean bool_AC3)
+	{
+		WaveHeader_Ch1 = new WaveHeader(bool_AC3);
+	}
+
+	/**
+	 * 
+	 */
+	public byte[] getExtraWaveHeader(int channel, boolean placeholder)
+	{
+		if (channel == 1)
+			return (placeholder ? WaveHeader_Ch1.getPlaceHolder() : WaveHeader_Ch1.getHeader());
+
+		return (new byte[0]);
+	}
+
+	/**
+	 * 
+	 */
+	public void setExtraWaveData(int[] array, int channel)
+	{
+		if (channel == 1)
+			WaveHeader_Ch1.setWaveData(array);
+	}
+
+	/**
+	 * 
+	 */
+	public void setExtraWaveLength(long filelength, long timelength, int channel)
+	{
+		if (channel == 1)
+			WaveHeader_Ch1.setWaveLength(filelength, timelength);
+	}
+
+	/**
+	 * 
+	 */
+	private class WaveHeader {
+
+		private byte[] riffac3 = { 
+			82, 73, 70, 70,  0,  0,  0,  0, 87, 65, 86, 69,102,109,116, 32,
+			18,  0,  0,  0,  0, 32,  1,  0,  1,  0,  0,  0,  0,  0,  0,  0,
+			0,  0,  0,  0, 18,  0,100, 97,116, 97,  0,  0,  0,  0, 
+		};
+
+		private long Samples = 0;
+		private long SampleCount = 0;
+
+		private final int HeaderLength_AC3 = 46;
+		private final int AC3_WaveFormat = 1;
+
+		private int WaveFormat;
+
+		//init
+		public WaveHeader(boolean bool_AC3)
+		{
+			WaveFormat = bool_AC3 ? AC3_WaveFormat : 0;
+		}
+
+		/**
+		 * get place holder
+		 */
+		public byte[] getPlaceHolder()
+		{
+			if (WaveFormat == AC3_WaveFormat)
+				return (new byte[HeaderLength_AC3]);
+
+			return (new byte[0]);
+		}
+
+		/**
+		 * get updated header 
+		 */
+		public byte[] getHeader()
+		{ 
+			if (WaveFormat == AC3_WaveFormat)
+				return riffac3;
+
+			return (new byte[0]);
+		} 
+
+		/**
+		 * set wave data
+		 */
+		public void setWaveData(int[] riffdata)
+		{
+			Samples += riffdata[2]; 
+			SampleCount++;
+
+			int nSamplesPerSec = getValue(riffac3, 24, 4, true);
+			int nBlockAlign    = getValue(riffac3, 32, 2, true);
+
+			//nBlockAlign
+			if (nBlockAlign == 0)  
+				setValue(riffac3, 32, 2, true, riffdata[8]);
+
+			else if (nBlockAlign != 1 &&  nBlockAlign != riffdata[8])
+				setValue(riffac3, 32, 2, true, 1);
+
+			//nSamplesPerSec
+			if (nSamplesPerSec == 1)
+				setValue(riffac3, 24, 4, true, riffdata[2]);
+
+			else if (nSamplesPerSec != 0 &&  nSamplesPerSec != riffdata[2]) 
+				setValue(riffac3, 24, 4, true, 0);
+
+			// nChannels
+			if ((0xFF & riffac3[22]) < riffdata[4])   
+				riffac3[22] = (byte) riffdata[4];    
+		}
+
+		/**
+		 * 
+		 */
+		public void setWaveLength(long filelength, long timelength)
+		{
+			int lengthAC3 = (int)filelength - HeaderLength_AC3;
+
+			for (int i = 0; i < 4; i++)
+			{
+				riffac3[4 + i] = (byte)(0xFF & (lengthAC3 + 38)>>>(i * 8));
+				riffac3[42 + i] = (byte)(0xFF & lengthAC3>>>(i * 8));
+			}
+
+			if (filelength <= 100)
+				return;
+
+			int time = (int)timelength;
+			int nAvgBytePerSecAC3 = (int)(1000L * lengthAC3 / time);
+
+			setValue(riffac3, 28, 4, true, nAvgBytePerSecAC3);
+		}
 	}
 
 }

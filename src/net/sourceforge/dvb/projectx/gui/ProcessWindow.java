@@ -751,7 +751,7 @@ public class ProcessWindow extends JFrame {
 				int val = Common.isRunningProcess() ? Common.getProcessedCollection() : Common.getActiveCollection();
 
 				if (last_coll != val)
-					collLabel.setText("Collection: " + (val < 0 ? "-" : String.valueOf(val)));
+					collLabel.setText("Collection: " + (val < 0 ? "-" : String.valueOf(val) + "/" + String.valueOf(Common.getCollectionListSize() - 1)));
 
 				last_coll = val;
 			}

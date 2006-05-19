@@ -254,7 +254,7 @@ public class MainProcess extends Thread {
 
 					tf.setfirstID();
 
-					messageSettings();
+					messageSettings(collection);
 
 					if ( (str = collection.checkOutputDirectory()) != null)
 					{
@@ -268,9 +268,7 @@ public class MainProcess extends Thread {
 					{
 						str = "[" + a + "]";
 
-						collection.setOutputDirectory( collection.getOutputDirectory() + collection.getFileSeparator() + str);
-
-						new File(collection.getOutputDirectory()).mkdirs();
+						createOutputDirectory(collection, str);
 					}
 
 
@@ -283,9 +281,7 @@ public class MainProcess extends Thread {
 
 						str = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss").format(new Date(collection.getFirstFileDate())) + "_" + collection.getFirstFileName();
 
-						collection.setOutputDirectory( collection.getOutputDirectory() + collection.getFileSeparator() + str);
-
-						new File(collection.getOutputDirectory()).mkdirs();
+						createOutputDirectory(collection, str);
 					}
 
 					/**
@@ -296,9 +292,7 @@ public class MainProcess extends Thread {
 						str = "_" + new File(collection.getFirstFileBase()).getName() + System.getProperty("file.separator")
 							+ new SimpleDateFormat("yyyy-MM-dd.HH.mm.ss.SSS").format(new Date()) + ".rec";
 
-						collection.setOutputDirectory( collection.getOutputDirectory() + collection.getFileSeparator() + str);
-
-						new File(collection.getOutputDirectory()).mkdirs();
+						createOutputDirectory(collection, str);
 					}
 
 					Common.setMessage(Resource.getString("run.write.output.to") + " '" + collection.getOutputDirectory() + "'");
@@ -487,122 +481,137 @@ public class MainProcess extends Thread {
 		Common.getGuiInterface().resetMainFrameTitle();
 	}  
 
+	/**
+	 * create output
+	 */
+	private void createOutputDirectory(JobCollection collection, String str)
+	{
+		String oldValue = collection.getOutputDirectory();
+
+		collection.setOutputDirectory( collection.getOutputDirectory() + collection.getFileSeparator() + str);
+
+		if ( !(new File(collection.getOutputDirectory()).mkdirs()))
+		{
+			Common.setMessage("!> can't create output directory..");
+			collection.setOutputDirectory(oldValue);
+		}
+	}
 
 	/**
 	 * list settings on start
 	 */
-	private void messageSettings()
+	private void messageSettings(JobCollection collection)
 	{
 		Common.setMessage(" ");
 
 		//biglog
-		messageSetting(Keys.KEY_DebugLog);
+		messageSetting(collection, Keys.KEY_DebugLog);
 
 		//normallog
-		messageSetting(Keys.KEY_NormalLog);
+		messageSetting(collection, Keys.KEY_NormalLog);
 
 		//MPG->sPES
-		messageSetting(Keys.KEY_simpleMPG);
+		messageSetting(collection, Keys.KEY_simpleMPG);
 
 		//sPES->MPG
-		messageSetting(Keys.KEY_enhancedPES);
+		messageSetting(collection, Keys.KEY_enhancedPES);
 
 		//split
-		if (Common.getSettings().getBooleanProperty(Keys.KEY_SplitSize))
-			Common.setMessage(Resource.getString("run.split.output") + " " + Common.getSettings().getProperty(Keys.KEY_ExportPanel_SplitSize_Value) + " MB");
+		if (collection.getSettings().getBooleanProperty(Keys.KEY_SplitSize))
+			Common.setMessage(Resource.getString("run.split.output") + " " + collection.getSettings().getProperty(Keys.KEY_ExportPanel_SplitSize_Value) + " MB");
 
 		//write video
-		messageSetting(Keys.KEY_WriteOptions_writeVideo);
+		messageSetting(collection, Keys.KEY_WriteOptions_writeVideo);
 
 		//write others
-		messageSetting(Keys.KEY_WriteOptions_writeAudio);
+		messageSetting(collection, Keys.KEY_WriteOptions_writeAudio);
 
 		//demux
-		if (Common.getSettings().getIntProperty(Keys.KEY_ConversionMode) == CommonParsing.ACTION_DEMUX)
+		if (collection.getSettings().getIntProperty(Keys.KEY_ConversionMode) == CommonParsing.ACTION_DEMUX)
 		{
 			//add offset
-			if (Common.getSettings().getBooleanProperty(Keys.KEY_additionalOffset))
-				Common.setMessage(Resource.getString("run.add.time.offset", "" + Common.getSettings().getProperty(Keys.KEY_ExportPanel_additionalOffset_Value)));
+			if (collection.getSettings().getBooleanProperty(Keys.KEY_additionalOffset))
+				Common.setMessage(Resource.getString("run.add.time.offset", "" + collection.getSettings().getProperty(Keys.KEY_ExportPanel_additionalOffset_Value)));
 
 			//idd
-			if (Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createM2sIndex))
+			if (collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createM2sIndex))
 				Common.setMessage("-> " + Resource.getString("ExternPanel.createM2sIndex.Tip") + " " + Resource.getString(Keys.KEY_ExternPanel_createM2sIndex[0]));
 
             // cminfo 
-            if (Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createInfoIndex))
+            if (collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createInfoIndex))
                 Common.setMessage("-> " + Resource.getString("ExternPanel.createInfoIndex.Tip") + " " + Resource.getString(Keys.KEY_ExternPanel_createInfoIndex[0]));
 
 			//d2v_1
-			messageSetting(Keys.KEY_ExternPanel_createD2vIndex);
+			messageSetting(collection, Keys.KEY_ExternPanel_createD2vIndex);
 
 			//d2v_2
-			if (Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile))
+			if (collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile))
 				Common.setMessage("-> " + Resource.getString(Keys.KEY_ExternPanel_createD2vIndex[0]) + " " + Resource.getString(Keys.KEY_ExternPanel_splitProjectFile[0]));
 
 			//dar export limit
-			if (Common.getSettings().getBooleanProperty(Keys.KEY_OptionDAR))
-				Common.setMessage("-> " + Resource.getString("CollectionPanel.ExportLimits") + " " + Resource.getString(Keys.KEY_OptionDAR[0]) + " " + Keys.ITEMS_ExportDAR[Common.getSettings().getIntProperty(Keys.KEY_ExportDAR)]);
+			if (collection.getSettings().getBooleanProperty(Keys.KEY_OptionDAR))
+				Common.setMessage("-> " + Resource.getString("CollectionPanel.ExportLimits") + " " + Resource.getString(Keys.KEY_OptionDAR[0]) + " " + Keys.ITEMS_ExportDAR[collection.getSettings().getIntProperty(Keys.KEY_ExportDAR)]);
 
 			//h_resol export limit
-			if (Common.getSettings().getBooleanProperty(Keys.KEY_OptionHorizontalResolution))
-				Common.setMessage("-> " + Resource.getString("CollectionPanel.ExportLimits") + " " + Resource.getString(Keys.KEY_OptionHorizontalResolution[0]) + " " + Common.getSettings().getProperty(Keys.KEY_ExportHorizontalResolution));
+			if (collection.getSettings().getBooleanProperty(Keys.KEY_OptionHorizontalResolution))
+				Common.setMessage("-> " + Resource.getString("CollectionPanel.ExportLimits") + " " + Resource.getString(Keys.KEY_OptionHorizontalResolution[0]) + " " + collection.getSettings().getProperty(Keys.KEY_ExportHorizontalResolution));
 
 			//C.D.Flag
-			messageSetting(Keys.KEY_VideoPanel_clearCDF);
+			messageSetting(collection, Keys.KEY_VideoPanel_clearCDF);
 
 			//patch2interl
-			messageSetting(Keys.KEY_VideoPanel_patchToInterlaced);
+			messageSetting(collection, Keys.KEY_VideoPanel_patchToInterlaced);
 
 			//patch2progr
-			messageSetting(Keys.KEY_VideoPanel_patchToProgressive);
+			messageSetting(collection, Keys.KEY_VideoPanel_patchToProgressive);
 
 			//patchfield
-			messageSetting(Keys.KEY_VideoPanel_toggleFieldorder);
+			messageSetting(collection, Keys.KEY_VideoPanel_toggleFieldorder);
 
 			//Sequ_endcode
-			messageSetting(Keys.KEY_VideoPanel_addEndcode);
+			messageSetting(collection, Keys.KEY_VideoPanel_addEndcode);
 
 			//Sequ_endcode on changes
-			messageSetting(Keys.KEY_VideoPanel_insertEndcode);
+			messageSetting(collection, Keys.KEY_VideoPanel_insertEndcode);
 
 			//SDE
-			if (Common.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_addSde))
-				Common.setMessage("-> " + Resource.getString(Keys.KEY_VideoPanel_addSde[0]) + " " + Common.getSettings().getProperty(Keys.KEY_VideoPanel_SdeValue));
+			if (collection.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_addSde))
+				Common.setMessage("-> " + Resource.getString(Keys.KEY_VideoPanel_addSde[0]) + " " + collection.getSettings().getProperty(Keys.KEY_VideoPanel_SdeValue));
 
 			//add missing sequ_header
-			messageSetting(Keys.KEY_VideoPanel_addSequenceHeader);
+			messageSetting(collection, Keys.KEY_VideoPanel_addSequenceHeader);
 		}
 
 		boolean invers = true;
 
 		//es types to demux_detect
-		messageSetting(Resource.getString("run.stream.type.disabled"), Keys.KEY_Streamtype_MpgVideo, invers);
-		messageSetting(Resource.getString("run.stream.type.disabled"), Keys.KEY_Streamtype_MpgAudio, invers);
-		messageSetting(Resource.getString("run.stream.type.disabled"), Keys.KEY_Streamtype_Ac3Audio, invers);
-		messageSetting(Resource.getString("run.stream.type.disabled"), Keys.KEY_Streamtype_PcmAudio, invers);
-		messageSetting(Resource.getString("run.stream.type.disabled"), Keys.KEY_Streamtype_Teletext, invers);
-		messageSetting(Resource.getString("run.stream.type.disabled"), Keys.KEY_Streamtype_Subpicture, invers);
-		messageSetting(Resource.getString("run.stream.type.disabled"), Keys.KEY_Streamtype_Vbi, invers);
+		messageSetting(collection, Resource.getString("run.stream.type.disabled"), Keys.KEY_Streamtype_MpgVideo, invers);
+		messageSetting(collection, Resource.getString("run.stream.type.disabled"), Keys.KEY_Streamtype_MpgAudio, invers);
+		messageSetting(collection, Resource.getString("run.stream.type.disabled"), Keys.KEY_Streamtype_Ac3Audio, invers);
+		messageSetting(collection, Resource.getString("run.stream.type.disabled"), Keys.KEY_Streamtype_PcmAudio, invers);
+		messageSetting(collection, Resource.getString("run.stream.type.disabled"), Keys.KEY_Streamtype_Teletext, invers);
+		messageSetting(collection, Resource.getString("run.stream.type.disabled"), Keys.KEY_Streamtype_Subpicture, invers);
+		messageSetting(collection, Resource.getString("run.stream.type.disabled"), Keys.KEY_Streamtype_Vbi, invers);
 
 		/**
 		 * enhanced
 		 */
-		messageSetting(Keys.KEY_PVA_FileOverlap);
-		messageSetting(Keys.KEY_PVA_Audio);
-		messageSetting(Keys.KEY_VOB_resetPts);
-		messageSetting(Keys.KEY_TS_ignoreScrambled);
-		messageSetting(Keys.KEY_TS_blindSearch);
-		messageSetting(Keys.KEY_TS_joinPackets);
-		messageSetting(Keys.KEY_TS_HumaxAdaption);
-		messageSetting(Keys.KEY_TS_FinepassAdaption);
-		messageSetting(Keys.KEY_TS_generatePmt);
-		messageSetting(Keys.KEY_TS_generateTtx);
-		messageSetting(Keys.KEY_Input_getEnclosedPackets);
-		messageSetting(Keys.KEY_Input_concatenateForeignRecords);
-		messageSetting(Keys.KEY_Video_ignoreErrors);
-		messageSetting(Keys.KEY_Video_trimPts);
-		messageSetting(Keys.KEY_Conversion_startWithVideo);
-		messageSetting(Keys.KEY_Conversion_addPcrToStream);
+		messageSetting(collection, Keys.KEY_PVA_FileOverlap);
+		messageSetting(collection, Keys.KEY_PVA_Audio);
+		messageSetting(collection, Keys.KEY_VOB_resetPts);
+		messageSetting(collection, Keys.KEY_TS_ignoreScrambled);
+		messageSetting(collection, Keys.KEY_TS_blindSearch);
+		messageSetting(collection, Keys.KEY_TS_joinPackets);
+		messageSetting(collection, Keys.KEY_TS_HumaxAdaption);
+		messageSetting(collection, Keys.KEY_TS_FinepassAdaption);
+		messageSetting(collection, Keys.KEY_TS_generatePmt);
+		messageSetting(collection, Keys.KEY_TS_generateTtx);
+		messageSetting(collection, Keys.KEY_Input_getEnclosedPackets);
+		messageSetting(collection, Keys.KEY_Input_concatenateForeignRecords);
+		messageSetting(collection, Keys.KEY_Video_ignoreErrors);
+		messageSetting(collection, Keys.KEY_Video_trimPts);
+		messageSetting(collection, Keys.KEY_Conversion_startWithVideo);
+		messageSetting(collection, Keys.KEY_Conversion_addPcrToStream);
 
 		Common.setMessage(" ");
 	}
@@ -610,27 +619,27 @@ public class MainProcess extends Thread {
 	/**
 	 * list settings on start
 	 */
-	private void messageSetting(String[] key)
+	private void messageSetting(JobCollection collection, String[] key)
 	{
-		if (Common.getSettings().getBooleanProperty(key))
+		if (collection.getSettings().getBooleanProperty(key))
 			Common.setMessage("-> " + Resource.getString(key[0]));
 	}
 
 	/**
 	 * list settings on start
 	 */
-	private void messageSetting(String str, String[] key)
+	private void messageSetting(JobCollection collection, String str, String[] key)
 	{
-		if (Common.getSettings().getBooleanProperty(key))
+		if (collection.getSettings().getBooleanProperty(key))
 			Common.setMessage(str + " " + Resource.getString(key[0]));
 	}
 
 	/**
 	 * list settings on start
 	 */
-	private void messageSetting(String str, String[] key, boolean invers)
+	private void messageSetting(JobCollection collection, String str, String[] key, boolean invers)
 	{
-		if (Common.getSettings().getBooleanProperty(key) != invers)
+		if (collection.getSettings().getBooleanProperty(key) != invers)
 			Common.setMessage(str + " " + Resource.getString(key[0]));
 	}
 

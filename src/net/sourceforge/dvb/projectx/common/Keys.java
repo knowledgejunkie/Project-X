@@ -49,7 +49,7 @@ public class Keys extends Object {
 	public final static String[] KEY_WindowPositionMain_X = { "WindowPosition.Main.X", "50" }; 
 	public final static String[] KEY_WindowPositionMain_Y = { "WindowPosition.Main.Y", "50" }; 
 	public final static String[] KEY_WindowPositionMain_Width = { "WindowPosition.Main.Width", "906" }; 
-	public final static String[] KEY_WindowPositionMain_Height = { "WindowPosition.Main.Height", "652" }; 
+	public final static String[] KEY_WindowPositionMain_Height = { "WindowPosition.Main.Height", "694" }; 
 
 	/**
 	 * PostCommands

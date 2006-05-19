@@ -102,6 +102,15 @@ public class Start extends Object {
 			 */
 
 			/**
+			 * remove the stdout re-direction of sys infos
+			 */
+			if ((index = getSwitch(">")) >= 0)
+			{
+				if (index < cli_switches.size())
+					cli_switches.remove(index);
+			}
+
+			/**
 			 * get version switch
 			 */
 			if (getBooleanSwitch("-version"))

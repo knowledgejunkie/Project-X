@@ -411,9 +411,45 @@ public class AudioFormat extends Object {
 	/**
 	 * 
 	 */
-	public int[] parseRiffData(byte[] frame)
+	public void parseRiffData(byte[] frame, int channel)
 	{
-		return (impl == null ? null : impl.parseRiffData( frame));
+		if (impl != null)
+			impl.parseRiffData(frame, channel);
+	}
+
+	/**
+	 * 
+	 */
+	public void initExtraWaveHeader(boolean bool_ACM, boolean bool_BWF, boolean bool_AC3)
+	{
+		if (impl != null)
+			impl.initExtraWaveHeader(bool_ACM, bool_BWF, bool_AC3);
+	}
+
+	/**
+	 * 
+	 */
+	public byte[] getExtraWaveHeader(int channel, boolean placeholder)
+	{
+		return (impl == null ? (new byte[0]) : impl.getExtraWaveHeader(channel, placeholder));
+	}
+
+	/**
+	 * 
+	 */
+	public void setExtraWaveData(int[] array, int channel)
+	{
+		if (impl != null)
+			impl.setExtraWaveData(array, channel);
+	}
+
+	/**
+	 * 
+	 */
+	public void setExtraWaveLength(long filelength, long timelength, int channel)
+	{
+		if (impl != null)
+			impl.setExtraWaveLength(filelength, timelength, channel);
 	}
 
 	/**
@@ -523,7 +559,27 @@ public class AudioFormat extends Object {
 
 		return value;
 	}
-	
+
+	/**
+	 *
+	 */
+	public int getValue(byte[] data, int offset, int len, boolean reverse)
+	{
+		return littleEndian(data, offset, len, reverse);
+	}
+
+	/**
+	 *
+	 */
+	public void setValue(byte[] array, int offset, int len, boolean bytereordering, int value)
+	{
+		for (int i = 0; bytereordering && i < len; i++)
+			array[i + offset] = (byte)(0xFF & (value>>>(i * 8)));
+
+		for (int i = 0, j = len - 1; !bytereordering && i < len; i++, j--)
+			array[i + offset] = (byte)(0xFF & (value>>>(j * 8)));
+	}
+
 	/**
 	 *
 	 */
@@ -546,5 +602,6 @@ public class AudioFormat extends Object {
 		else 
 			return ( (0xFF & data>>>8) | (0xFF & data)<<8 );
 	}
+
 
 }

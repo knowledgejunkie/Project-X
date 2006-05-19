@@ -114,3 +114,6 @@ src/net/sourceforge/dvb/projectx/gui/TextFieldListener.java
 src/net/sourceforge/dvb/projectx/gui/TextFieldKeyListener.java
 src/net/sourceforge/dvb/projectx/gui/UISwitchListener.java
 src/net/sourceforge/dvb/projectx/gui/X_JFileChooser.java
+
+src/net/sourceforge/dvb/projectx/gui/FileProperties.java
+src/net/sourceforge/dvb/projectx/gui/CollectionProperties.java
