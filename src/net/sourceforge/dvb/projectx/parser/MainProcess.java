@@ -85,7 +85,6 @@ import java.net.URL;
 import net.sourceforge.dvb.projectx.audio.AudioFormat;
 import net.sourceforge.dvb.projectx.audio.MpaConverter;
 import net.sourceforge.dvb.projectx.audio.MpaDecoder;
-import net.sourceforge.dvb.projectx.audio.RIFFHeader;
 
 import net.sourceforge.dvb.projectx.subtitle.BMP;
 import net.sourceforge.dvb.projectx.subtitle.Bitmap;

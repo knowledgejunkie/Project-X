@@ -6,7 +6,6 @@ src/net/sourceforge/dvb/projectx/audio/AudioFormatWAV.java
 src/net/sourceforge/dvb/projectx/audio/AudioFormatMPA.java
 src/net/sourceforge/dvb/projectx/audio/MpaConverter.java
 src/net/sourceforge/dvb/projectx/audio/MpaDecoder.java
-src/net/sourceforge/dvb/projectx/audio/RIFFHeader.java
 src/net/sourceforge/dvb/projectx/common/Common.java
 src/net/sourceforge/dvb/projectx/common/GuiInterface.java
 src/net/sourceforge/dvb/projectx/common/GuiInterfaceIF.java
