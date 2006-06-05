@@ -1229,8 +1229,8 @@ public class PreSettings extends JFrame {
 		panel_1_2.add(font);
 
 		JComboBox font_list = new JComboBox(Common.getFonts());
-		font_list.setPreferredSize(new Dimension(150, 22));
-		font_list.setMaximumSize(new Dimension(150, 22));
+		font_list.setPreferredSize(new Dimension(160, 22));
+		font_list.setMaximumSize(new Dimension(160, 22));
 		font_list.setActionCommand(Keys.KEY_SubtitleFont[0]);
 		font_list.setSelectedItem(Common.getSettings().getProperty(Keys.KEY_SubtitleFont));
 		font_list.addActionListener(_ComboBoxItemListener);
@@ -1247,8 +1247,8 @@ public class PreSettings extends JFrame {
 		panel_1_3.add(sup_label);
 
 		JTextField subpicture_values = new JTextField(Common.getSettings().getProperty(Keys.KEY_SubtitlePanel_Format_SUP_Values));
-		subpicture_values.setPreferredSize(new Dimension(190, 22));
-		subpicture_values.setMaximumSize(new Dimension(190, 22));
+		subpicture_values.setPreferredSize(new Dimension(200, 22));
+		subpicture_values.setMaximumSize(new Dimension(200, 22));
 		subpicture_values.setToolTipText(Resource.getString(Keys.KEY_SubtitlePanel_Format_SUP_Values[0] + Keys.KEY_Tip));
 		subpicture_values.setEditable(true);
 		subpicture_values.setActionCommand(Keys.KEY_SubtitlePanel_Format_SUP_Values[0]);

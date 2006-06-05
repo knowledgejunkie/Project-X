@@ -254,12 +254,21 @@ danach:
 --checkwriteaccess fehler bei addon?
 --fehlermeldung + rücksetzung, wenn unterverzeichnis nicht erstellt werden kann
 --coll properties gui
+--0x3c data stream ignoriern (TS)
+--rds decode defekt
+--ftp unterordner optional listen
+test-!!mac os url problem umlaute,leerzeichen, sonderzeichen
+!!coll properties gui, split at filesize geht noch nicht
 !!ac3 2/0 128kbs wg vro hinzufügen, ac3 5.1 256, 320kb stille 
 !!ac3 384 wird nicht als Stille genommen, restart wenn 5.1 größer detektiert wird
-!!vro timecode lese patch?
 !!dvb-subs,  pagenumber ausgelesen aus pmt?
 !!file properties gui
+!!vro-vob timecode lese patch?
 !!multi-vob - pts offs nicht erkannt bei nächster cellid, manchmal
+!!multi-vob - fortlaufende pts nicht erkannt bei nächster cellid (nach einer erfoglten anpassung früher)
+!!vobsub + idx erzeugen
+!!dvbsubs except - pagecomposition
+!!vdrindex bei vdr geändert
 
 !!-pes parser keine vorauswahl von headern ba,ff,f0 etc mehr, mit loggen
 !!-0xBE -> arte_ut fra, scan von pes ändern

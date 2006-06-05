@@ -1,7 +1,7 @@
 /*
  * @(#)XInputFileImpl.java - implementation for ftp access
  *
- * Copyright (c) 2004-2005 by roehrist, All Rights Reserved. 
+ * Copyright (c) 2004-2006 by roehrist, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 

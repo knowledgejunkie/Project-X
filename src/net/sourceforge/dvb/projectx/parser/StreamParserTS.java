@@ -972,7 +972,7 @@ public class StreamParserTS extends StreamParserBase {
 										break;
 
 									default:
-										if ((payload_psiID >= 4 && payload_psiID <= 3F) || (payload_psiID >= 0x74 && payload_psiID <= 0x7D))
+										if ((payload_psiID >= 4 && payload_psiID <= 0x3F) || (payload_psiID >= 0x74 && payload_psiID <= 0x7D))
 										{
 											type = "(res.)"; 
 											break;

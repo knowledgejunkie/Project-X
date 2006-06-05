@@ -515,8 +515,8 @@ public class AudioFormatMPA extends AudioFormat {
 	private boolean hasRawData = false;
 
 	private final byte RDS_identifier = (byte) 0xFD;
-	private final byte RDS_startcode = (byte) 0xFE;
-	private final byte RDS_endcode = (byte) 0xFF;
+	private final int RDS_startcode = 0xFE;
+	private final int RDS_endcode = 0xFF;
 
 	private String[] rds_values = new String[7];
 	private final String[] pty_list = {

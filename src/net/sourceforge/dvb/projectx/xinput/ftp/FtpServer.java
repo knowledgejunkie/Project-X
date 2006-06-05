@@ -1,7 +1,7 @@
 /*
  * @(#)FtpServer.java -  for ftp access
  *
- * Copyright (c) 2004-2005 by roehrist, All Rights Reserved. 
+ * Copyright (c) 2004-2006 by roehrist, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -34,8 +34,12 @@ package net.sourceforge.dvb.projectx.xinput.ftp;
 import java.io.IOException;
 import java.io.InputStream;
 
+import java.util.ArrayList;
+
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
+import net.sourceforge.dvb.projectx.xinput.XInputDirectory;
+import net.sourceforge.dvb.projectx.xinput.ftp.FtpVO;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
@@ -114,24 +118,82 @@ public class FtpServer {
 		return isSuccessful;
 	}
 
-	public XInputFile[] listFiles() {
+	/**
+	 *
+	 */
+	public XInputFile[] listFiles()
+	{
+		ArrayList list = new ArrayList();
 		FTPFile[] ftpFiles = null;
-		XInputFile[] ftpInputFiles = null;
+
 		try {
 			ftpFiles = ftpClient.listFiles();
-			ftpInputFiles = new XInputFile[ftpFiles.length];
 
-			for (int i = 0; i < ftpFiles.length; i++) {
+			for (int i = 0, j = ftpFiles.length; i < j; i++)
+			{
+				if (!ftpFiles[i].isFile())
+					continue;
+
 				FtpVO tempFtpVO = (FtpVO) ftpVO.clone();
+
 				tempFtpVO.setFtpFile(ftpFiles[i]);
-				ftpInputFiles[i] = new XInputFile(tempFtpVO);
+
+				list.add(new XInputFile(tempFtpVO));
 			}
 
 		} catch (Exception e) {
-			ftpInputFiles = new XInputFile[0];
+
+			System.err.println("!> error create ftp filelist: " + e);
 		}
+
+		XInputFile[] ftpInputFiles = new XInputFile[list.size()];
+
+		for (int i = 0, j = ftpInputFiles.length; i < j; i++)
+			ftpInputFiles[i] = (XInputFile) list.get(i);
+
 		return ftpInputFiles;
 	}
+
+	/**
+	 *
+	 */
+	public FtpVO[] listDirectories()
+	{
+		ArrayList list = new ArrayList();
+		FTPFile[] ftpFiles = null;
+
+		try {
+			ftpFiles = ftpClient.listFiles();
+
+			for (int i = 0, j = ftpFiles.length; i < j; i++)
+			{
+				if (!ftpFiles[i].isDirectory())
+					continue;
+
+				else if (ftpFiles[i].getName().startsWith("."))
+					continue;
+
+				FtpVO tempFtpVO = (FtpVO) ftpVO.clone();
+
+				tempFtpVO.setDirectory(tempFtpVO.getDirectory() + "/" + ftpFiles[i].getName());
+				tempFtpVO.setFtpFile(ftpFiles[i]);
+
+				list.add(tempFtpVO);
+			}
+
+		} catch (Exception e) {
+
+			System.err.println("!> error create ftp directory list: " + e);
+		}
+
+		FtpVO[] ftpInputDirectories = new FtpVO[list.size()];
+
+		for (int i = 0, j = ftpInputDirectories.length; i < j; i++)
+			ftpInputDirectories[i] = (FtpVO) list.get(i);
+
+		return ftpInputDirectories;
+	}
+
 
 	public InputStream retrieveFileStream(String aFileName) throws IOException {
 		return ftpClient.retrieveFileStream(aFileName);

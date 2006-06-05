@@ -1,7 +1,7 @@
 /*
  * @(#)XInputDirectoryImpl.java - implementation for ftp access
  *
- * Copyright (c) 2004-2005 by roehrist, All Rights Reserved. 
+ * Copyright (c) 2004-2006 by roehrist, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -31,6 +31,10 @@ import net.sourceforge.dvb.projectx.xinput.XInputDirectoryIF;
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
 
 import java.net.URL;
+import java.util.ArrayList;
+
+import net.sourceforge.dvb.projectx.common.Common;
+import net.sourceforge.dvb.projectx.common.Keys;
 
 public class XInputDirectoryImpl implements XInputDirectoryIF {
 
@@ -77,8 +81,10 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 			int posAt = aFileIdentifier.indexOf('@', posColon);
 			int posSlash = aFileIdentifier.indexOf('/', posAt);
 
-			if (posAt == -1 || posColon == -1 || posSlash == -1) { throw new IllegalArgumentException(
-					"aFileIdentifier is a malformed ftp URL!"); }
+			if (posAt == -1 || posColon == -1 || posSlash == -1)
+			{ 
+				throw new IllegalArgumentException("aFileIdentifier is a malformed ftp URL!");
+			}
 
 			String user = aFileIdentifier.substring(6, posColon);
 			String password = aFileIdentifier.substring(posColon + 1, posAt);
@@ -87,6 +93,7 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 			String port = null;
 
 			int posColon2 = server.indexOf(':');
+
 			if (posColon2 != -1)
 			{
 				server = server.substring(0, posColon2);
@@ -271,13 +278,53 @@ public class XInputDirectoryImpl implements XInputDirectoryIF {
 	 */
 	public XInputFile[] getFiles() {
 
-		XInputFile[] xInputFiles = null;
+		ArrayList list = new ArrayList();
 
 		ftpServer.open();
-		xInputFiles = ftpServer.listFiles();
+		XInputFile[] xInputFiles = ftpServer.listFiles();
 		ftpServer.close();
 
+		for (int i = 0, j = xInputFiles.length; i < j; i++)
+			list.add(xInputFiles[i]);
+
+		if (Common.getSettings().getBooleanProperty(Keys.KEY_InputDirectoriesDepth))
+			getDirectories(ftpVO, list);  // depth 1
+
+		xInputFiles = new XInputFile[list.size()];
+
+		for (int i = 0, j = xInputFiles.length; i < j; i++) {
+			xInputFiles[i] = (XInputFile) list.get(i);
+		}
+
 		return xInputFiles;
+	}
+
+	/**
+	 * 
+	 */
+	private void getDirectories(FtpVO aFtpVO, ArrayList list)
+	{
+		FtpServer server = new FtpServer(aFtpVO);
+
+		server.open();
+		FtpVO[] xFtpVO = server.listDirectories();
+		server.close();
+
+		XInputFile[] xInputFiles;
+
+		for (int i = 0; i < xFtpVO.length; i++)
+		{
+			server = new FtpServer(xFtpVO[i]);
+
+			server.open();
+			xInputFiles = server.listFiles();
+			server.close();
+
+			for (int j = 0; j < xInputFiles.length; j++)
+				list.add(xInputFiles[j]);
+
+			getDirectories(xFtpVO[i], list); // depth 2
+		}
 	}
 
 	/**

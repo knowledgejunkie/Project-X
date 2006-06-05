@@ -1,7 +1,7 @@
 /*
  * @(#)DVBSubpicture.java - decodes DVB subtitles
  *
- * Copyright (c) 2004-2005 by dvb.matt, All rights reserved
+ * Copyright (c) 2004-2006 by dvb.matt, All rights reserved
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -378,7 +378,12 @@ public class DVBSubpicture extends Object {
 			if (region.getErrors() > 0)
 			{
 				Common.setMessage(Resource.getString("subpicture.msg.error.dvbdecoding", "" + region.getErrors(), "" + region.getId(), "" + page.getTimeIn()));
-				//region.setActive(false);
+
+				if ((region.getErrors() & 4) != 0)
+				{
+					Common.setMessage("!> Region ignored (VN): " + region.getVersionNumber());
+					region.setActive(false);
+				}
 			}
 
 			addBigMessage("enum: region " + region.getId() + " /err " + region.getErrors() + " /acti " + region.isActive() + " /chng " + region.isChanged() + " /ti_o " + time_out);
@@ -1298,10 +1303,21 @@ public class DVBSubpicture extends Object {
 			int x2 = x + w;
 			int y2 = y + h;
 
-			minX = x < minX ? x : minX;
-			minY = y < minY ? y : minY;
-			maxX = x2 > maxX ? x2 : maxX;
-			maxY = y2 > maxY ? y2 : maxY;
+			int _minX = x < minX ? x : minX;
+			int _minY = y < minY ? y : minY;
+			int _maxX = x2 > maxX ? x2 : maxX;
+			int _maxY = y2 > maxY ? y2 : maxY;
+
+			if (_minX < 0 || _minY < 0 || _maxX < 0 || _maxY < 0 || (_maxX - _minX) < 0 || (_maxY - _minY) < 0)
+			{
+				Common.setMessage("!> decoding error: page area, page_id " + getId() + "[" + _minX + "," + _minY + "," + _maxX + "," + _maxY + "] (pts " + getTimeIn() + ")");
+				return;
+			}
+
+			minX = _minX;
+			minY = _minY;
+			maxX = _maxX;
+			maxY = _maxY;
 		}
 
 		private int getX()

@@ -1595,8 +1595,11 @@ public class MainFrame extends JPanel {
 
 						// MacOsX tiger returns one Url instead of a file list, works only without host specification of the file
 						try {
-							URL url = (URL)obj;
-							File f = new File(url.getFile());
+							URL url = (URL) obj;
+
+						//	File f = new File(url.getFile());
+							File f = new File(java.net.URLDecoder.decode(url.getFile()));
+
 							list = new ArrayList();
 							list.add(f);
 
@@ -2049,7 +2052,7 @@ public class MainFrame extends JPanel {
 		CommonGui.localize(editMenu, "Common.Edit");
 
 		JCheckBoxMenuItem subdir = new JCheckBoxMenuItem(Resource.getString(Keys.KEY_InputDirectoriesDepth[0]));
-		subdir.setToolTipText(Resource.getString(Keys.KEY_InputDirectoriesDepth[0]) + Keys.KEY_Tip);
+		subdir.setToolTipText(Resource.getString(Keys.KEY_InputDirectoriesDepth[0] + Keys.KEY_Tip));
 		subdir.setActionCommand(Keys.KEY_InputDirectoriesDepth[0]);
 		subdir.setState(Common.getSettings().getBooleanProperty(Keys.KEY_InputDirectoriesDepth));
 		subdir.addActionListener(_BoxListener);
@@ -2450,8 +2453,8 @@ public class MainFrame extends JPanel {
 		JTabbedPane tabbedPane = new JTabbedPane();
 		tabbedPane.setTabPlacement(SwingConstants.BOTTOM);
 
-		tabbedPane.addTab("Settings", buildFilePanel());
-		tabbedPane.addTab("CutViews", new JPanel());
+		tabbedPane.addTab("FileTable", buildFilePanel());
+		tabbedPane.addTab("ScanViews", new JPanel());
 
 		panel.add(tabbedPane, BorderLayout.CENTER);
 
