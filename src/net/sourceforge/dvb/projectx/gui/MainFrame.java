@@ -1855,44 +1855,20 @@ public class MainFrame extends JPanel {
 			public void actionPerformed(ActionEvent e)
 			{
 				if (comboBox_13.getItemCount() > 1)
-				{
-					if (comboBox_13.getSelectedIndex() == 0)
-						Common.getSettings().remove(Keys.KEY_OutputDirectory[0]);
+					Common.getSettings().setProperty(Keys.KEY_OutputDirectory[0], comboBox_13.getSelectedItem());
 
-					else
-						Common.getSettings().setProperty(Keys.KEY_OutputDirectory[0], comboBox_13.getSelectedItem());
+				if (comboBox_0.getItemCount() == 0)
+					return;
 
-					if (comboBox_0.getItemCount() > 0)
-					{
-						Common.setActiveCollection(comboBox_0.getSelectedIndex());
+				Common.setActiveCollection(comboBox_0.getSelectedIndex());
 
-						JobCollection collection = Common.getCollection();
+				JobCollection collection = Common.getCollection();
 
-						collection.setOutputDirectory(Common.getSettings().getProperty(Keys.KEY_OutputDirectory));
+				collection.setOutputDirectory(Common.getSettings().getProperty(Keys.KEY_OutputDirectory));
 
-						updateOutputField(collection);
+				updateOutputField(collection);
 
-						updateCollectionTable(collection.getCollectionAsTable());
-					}
-				}
-
-				else
-				{
-					Common.getSettings().remove(Keys.KEY_OutputDirectory[0]);
-
-					if (comboBox_0.getItemCount() > 0)
-					{
-						Common.setActiveCollection(comboBox_0.getSelectedIndex());
-
-						JobCollection collection = Common.getCollection();
-
-						collection.setOutputDirectory(Common.getSettings().getProperty(Keys.KEY_OutputDirectory));
-
-						updateOutputField(collection);
-
-						updateCollectionTable(collection.getCollectionAsTable());
-					}
-				}
+				updateCollectionTable(collection.getCollectionAsTable());
 			}
 		});
 

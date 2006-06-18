@@ -284,9 +284,17 @@ public class MainProcess extends Thread {
 					}
 
 					/**
+					 * gets collection priority of action type
+					 */
+					int action = collection.getActionType();
+
+					if (action <= CommonParsing.ACTION_UNDEFINED)
+						action = Common.getSettings().getIntProperty(Keys.KEY_ConversionMode);
+
+					/**
 					 * create index.vdr + new path
 					 */
-					if (Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createVdrIndex) && Common.getSettings().getIntProperty(Keys.KEY_ConversionMode) == 1)
+					if (Common.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_createSubDirVdr) && action == CommonParsing.ACTION_TO_VDR)
 					{
 						str = "_" + new File(collection.getFirstFileBase()).getName() + System.getProperty("file.separator")
 							+ new SimpleDateFormat("yyyy-MM-dd.HH.mm.ss.SSS").format(new Date()) + ".rec";
@@ -304,19 +312,11 @@ public class MainProcess extends Thread {
 
 					collection.setLogFiles();
 
-					/**
-					 * gets collection priority of action type
-					 */
-					int action = collection.getActionType();
-
-					if (action < 0)
-						action = Common.getSettings().getIntProperty(Keys.KEY_ConversionMode);
-
 					/** 
 					 * quick pre-run for TS autoPMT 
 					 * depends also on collection priority of action type
 					 */ 
-					if (!CommonParsing.isInfoScan() && action == CommonParsing.ACTION_TO_TS && Common.getSettings().getBooleanProperty(Keys.KEY_TS_generatePmt))
+					if (!CommonParsing.isInfoScan() && action == CommonParsing.ACTION_TO_TS && collection.getSettings().getBooleanProperty(Keys.KEY_TS_generatePmt))
 					{
 						Common.setMessage("");
 						Common.setMessage(Resource.getString("run.start.quick.info"));
@@ -351,7 +351,7 @@ public class MainProcess extends Thread {
 					/**
 					 * M2S chapters per coll#
 					 */
-					job_processing.getChapters().init(Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createChapters));
+					job_processing.getChapters().init(collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createChapters));
 
 					/**
 					 * call the process
@@ -679,7 +679,7 @@ public class MainProcess extends Thread {
 		if (MainBufferSize <= 0)
 			MainBufferSize = 4096000;
 
-		job_processing.setSplitSize(Common.getSettings().getBooleanProperty(Keys.KEY_SplitSize) ? 0x100000L * Integer.parseInt(Common.getSettings().getProperty(Keys.KEY_ExportPanel_SplitSize_Value)) : 0);
+		job_processing.setSplitSize(collection.getSettings().getBooleanProperty(Keys.KEY_SplitSize) ? 0x100000L * Integer.parseInt(collection.getSettings().getProperty(Keys.KEY_ExportPanel_SplitSize_Value)) : 0);
 
 		long splitsize = job_processing.getSplitSize();
 
@@ -698,8 +698,8 @@ public class MainProcess extends Thread {
 
 		CommonParsing.setVideoFramerate(3600.0);
 
-		if (Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile)) 
-			job_processing.setProjectFileSplitSize(Long.parseLong(Common.getSettings().getProperty(Keys.KEY_ExternPanel_ProjectFileSplitSize))  * 1048576L);
+		if (collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile)) 
+			job_processing.setProjectFileSplitSize(Long.parseLong(collection.getSettings().getProperty(Keys.KEY_ExternPanel_ProjectFileSplitSize))  * 1048576L);
 
 		job_processing.setElementaryVideoStream(false);
 		job_processing.set1stVideoPTS(-1);
@@ -720,7 +720,7 @@ public class MainProcess extends Thread {
 		 */
 		int action = collection.getActionType();
 
-		if (action < 0)
+		if (action <= CommonParsing.ACTION_UNDEFINED)
 			action = Common.getSettings().getIntProperty(Keys.KEY_ConversionMode);
 
 		/**

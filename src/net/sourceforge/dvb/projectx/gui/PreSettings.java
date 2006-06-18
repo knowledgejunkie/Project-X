@@ -257,12 +257,13 @@ public class PreSettings extends JFrame {
 			Keys.KEY_TS_joinPackets,
 			Keys.KEY_TS_HumaxAdaption,
 			Keys.KEY_TS_FinepassAdaption,
+			Keys.KEY_TS_KoscomAdaption,
 			Keys.KEY_TS_generatePmt,
 			Keys.KEY_TS_generateTtx,
 			Keys.KEY_TS_setMainAudioAc3
 		};
 
-		for (int i = 0; i < objects.length; i++)
+		for (int i = 0, padd_offs = 2; i < objects.length; i++)
 		{
 			JCheckBox box = new JCheckBox(Resource.getString(objects[i][0]));
 			box.setToolTipText(Resource.getString(objects[i][0] + Keys.KEY_Tip));
@@ -272,8 +273,8 @@ public class PreSettings extends JFrame {
 			box.setSelected(Common.getSettings().getBooleanProperty(objects[i]));
 			box.addActionListener(_CheckBoxListener);
 
-			if (i == 2 || i == 3)
-				idPanel3.add(Box.createRigidArea(new Dimension(1, 10)));
+			if (i == padd_offs || i == padd_offs + 1)
+				idPanel3.add(Box.createRigidArea(new Dimension(1, 8)));
 
 			idPanel3.add(box);
 		}

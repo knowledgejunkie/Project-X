@@ -115,6 +115,7 @@ public class Keys extends Object {
 	public final static String[] KEY_ExportPanel_Export_Overlap = { "ExportPanel.Overlap", "0" }; 
 	public final static String[] KEY_ExportPanel_createSubDirNumber = { "ExportPanel.createSubDirNumber", "0" }; //cbox[2]
 	public final static String[] KEY_ExportPanel_createSubDirName = { "ExportPanel.createSubDirName", "0" }; //cbox[71]
+	public final static String[] KEY_ExportPanel_createSubDirVdr =  { "ExportPanel.createSubDirVdr", "0" };
 	public final static String[] KEY_ExportPanel_SplitSize_Value = { "ExportPanel.SplitSize.Value", "650" }; //combox[2]
 	public final static String[] KEY_ExportPanel_Overlap_Value = { "ExportPanel.Overlap.Value", "0" }; //combox[25]
 	public final static String[] KEY_ExportPanel_Infoscan_Value = { "ExportPanel.Infoscan.Value", "5" }; //combox[21]
@@ -157,6 +158,7 @@ public class Keys extends Object {
 	public final static String[] KEY_TS_joinPackets = { "SpecialPanel.TS.joinPackets", "1" }; //cbox[53], true
 	public final static String[] KEY_TS_HumaxAdaption = { "SpecialPanel.TS.HumaxAdaption", "0" }; //cbox[70]
 	public final static String[] KEY_TS_FinepassAdaption = { "SpecialPanel.TS.FinepassAdaption", "0" };
+	public final static String[] KEY_TS_KoscomAdaption = { "SpecialPanel.TS.KoscomAdaption", "0" };
 	public final static String[] KEY_TS_generatePmt = { "SpecialPanel.TS.generatePmt", "1" }; //cbox[41], true
 	public final static String[] KEY_TS_generateTtx = { "SpecialPanel.TS.generateTtx", "0" }; //cbox[42] --ts !!
 	public final static String[] KEY_TS_setMainAudioAc3 = { "SpecialPanel.TS.setMainAudioAc3", "0" }; //cbox[37] --ts  !!

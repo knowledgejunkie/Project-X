@@ -296,13 +296,14 @@ public class ProcessWindow extends JFrame {
 			Keys.KEY_useAllCollections,
 			Keys.KEY_ExportPanel_createSubDirNumber,
 			Keys.KEY_ExportPanel_createSubDirName,
+			Keys.KEY_ExportPanel_createSubDirVdr,
 			Keys.KEY_enablePostProcessing,
 			Keys.KEY_simpleMPG,
 			Keys.KEY_enhancedPES,
 			Keys.KEY_useAutoPidFilter
 		};
 
-		for (int i = 0; i < objects.length; i++)
+		for (int i = 0, sep_offs = 3; i < objects.length; i++)
 		{
 			JCheckBoxMenuItem box = new JCheckBoxMenuItem(Resource.getString(objects[i][0]));
 			box.setToolTipText(Resource.getString(objects[i][0] + Keys.KEY_Tip));
@@ -310,7 +311,7 @@ public class ProcessWindow extends JFrame {
 			box.setState(Common.getSettings().getBooleanProperty(objects[i]));
 			box.addActionListener(_BoxListener);
 
-			if (i == 3 || i == 4 || i == 6 || i == 7)
+			if (i == sep_offs || i == sep_offs + 1 || i == sep_offs + 4 || i == sep_offs + 5)
 				editMenu.addSeparator();
 
 			editMenu.add(box);

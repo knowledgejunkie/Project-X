@@ -58,16 +58,34 @@ import net.sourceforge.dvb.projectx.parser.StreamProcess;
  */
 public class StreamParserTS extends StreamParserBase {
 
-	StreamBuffer streambuffer;
-	StreamDemultiplexer streamdemultiplexer;
-	StreamConverter streamconverter;
+	private StreamBuffer streambuffer;
+	private StreamDemultiplexer streamdemultiplexer;
+	private StreamConverter streamconverter;
 
-	ArrayList usedPIDs;
-	List demuxList;
-	List TSPidlist;
+	private ArrayList usedPIDs;
+	private List demuxList;
+	private List TSPidlist;
 
-	boolean CreateD2vIndex;
-	boolean SplitProjectFile;
+	private PushbackInputStream inputstream;
+
+	private boolean CreateD2vIndex;
+	private boolean SplitProjectFile;
+	private boolean HumaxAdaption;
+	private boolean HandanAdaption;
+	private boolean KoscomAdaption;
+	private boolean Debug;
+
+	private long count;
+
+	private byte TS_SyncByte = 0x47;
+	private byte[] hav_chunk = { 0x5B, 0x48, 0x4F, 0x4A, 0x49, 0x4E, 0x20, 0x41 }; //'[HOJIN A'
+	private byte[] tmp_chunk = new byte[36];
+
+	private int TS_BufferSize = 189;
+	private int TS_PacketLength = 188;
+	private int PidMask = 0x1FFF;
+	private int MaxBufferSize = 6000000;
+	private int PushbackBufferSize = 225; //200
 
 	/**
 	 * 
@@ -96,18 +114,25 @@ public class StreamParserTS extends StreamParserBase {
 
 		boolean Message_1 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg1);
 		boolean Message_2 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
-		boolean Debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
+
+		Debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
+
 		boolean JoinPackets = collection.getSettings().getBooleanProperty(Keys.KEY_TS_joinPackets);
-		boolean HumaxAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_HumaxAdaption);
-		boolean FinepassAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_FinepassAdaption);
 		boolean GetEnclosedPackets = collection.getSettings().getBooleanProperty(Keys.KEY_Input_getEnclosedPackets);
 		boolean IgnoreScrambledPackets = collection.getSettings().getBooleanProperty(Keys.KEY_TS_ignoreScrambled);
 		boolean PcrCounter = collection.getSettings().getBooleanProperty(Keys.KEY_Conversion_PcrCounter);
 		boolean BlindSearch = collection.getSettings().getBooleanProperty(Keys.KEY_TS_blindSearch);
+
 		CreateD2vIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
 		SplitProjectFile = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
+
 		boolean UseAutoPidFilter = collection.getSettings().getBooleanProperty(Keys.KEY_useAutoPidFilter);
 		boolean Overlap = collection.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
+
+		HumaxAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_HumaxAdaption);
+		HandanAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_FinepassAdaption);
+		KoscomAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_KoscomAdaption);
+
 
 		boolean ts_isIncomplete = false;
 		boolean ts_startunit = false;
@@ -119,12 +144,9 @@ public class StreamParserTS extends StreamParserBase {
 		boolean isTeletext;
 		boolean foundObject;
 
-		int ts_buffersize = 189;
-		int ts_packetlength = 188;
 
-		byte[] ts_packet = new byte[ts_buffersize];
+		byte[] ts_packet = new byte[TS_BufferSize];
 		byte[] pes_packet;
-		byte[] hav_chunk = { 0x5B, 0x48, 0x4F, 0x4A, 0x49, 0x4E, 0x20, 0x41 }; //'[HOJIN A'
 
 		int Infoscan_Value = Integer.parseInt(collection.getSettings().getProperty(Keys.KEY_ExportPanel_Infoscan_Value));
 		int CutMode = collection.getSettings().getIntProperty(Keys.KEY_CutMode);
@@ -154,7 +176,9 @@ public class StreamParserTS extends StreamParserBase {
 		long lastpts = 0;
 		long ptsoffset = 0;
 		long packet = 0;
-		long count = 0;
+
+		count = 0;
+
 		long size = 0;
 		long base;
 		long startPoint = 0;
@@ -296,7 +320,7 @@ public class StreamParserTS extends StreamParserBase {
 		int[] include = new int[predefined_Pids.length];
 
 		for (int i = 0; i < include.length; i++) 
-			include[i] = 0x1FFF & predefined_Pids[i];
+			include[i] = PidMask & predefined_Pids[i];
 
 		if (include.length > 0)
 		{
@@ -386,7 +410,7 @@ public class StreamParserTS extends StreamParserBase {
 			base = count;
 			size = count + xInputFile.length();
 
-			PushbackInputStream in = new PushbackInputStream(xInputFile.getInputStream(startPoint - base), 200);
+			inputstream = new PushbackInputStream(xInputFile.getInputStream(startPoint - base), PushbackBufferSize);
 
 			count += (startPoint - base);
 
@@ -439,15 +463,15 @@ public class StreamParserTS extends StreamParserBase {
 					 */
 					if (!ts_isIncomplete || !JoinPackets)
 					{
-						bytes_read = in.read(ts_packet, 0, ts_buffersize);
+						bytes_read = inputstream.read(ts_packet, 0, TS_BufferSize);
 
 						/**
 						 * EOF is packet aligned
 						 */
-						if (bytes_read == ts_packetlength && size - count == bytes_read)
-							ts_packet[188] = 0x47;
+						if (bytes_read == TS_PacketLength && size - count == bytes_read)
+							ts_packet[188] = TS_SyncByte;
 
-						else if (bytes_read < ts_buffersize && JoinPackets)
+						else if (bytes_read < TS_BufferSize && JoinPackets)
 						{
 							Common.setMessage(Resource.getString("parseTS.incomplete") + " " + count);
 							count += bytes_read;
@@ -458,61 +482,28 @@ public class StreamParserTS extends StreamParserBase {
 					/**
 					 * humax .vid workaround, skip special data chunk
 					 */
-					if (HumaxAdaption && ts_packet[0] == 0x7F && ts_packet[1] == 0x41 && ts_packet[2] == 4 && ts_packet[3] == (byte)0xFD)
-					{
-						in.skip(995);
-						count += 1184;
-						continue loop;
-					}
+					skipLeadingHumaxDataChunk(ts_packet);
 
 					/**
-					 * finepass .hav workaround, chunks fileposition index (hdd sectors) unused, because a file can be hard-cut anywhere
+					 * koscom .vid workaround, skip special data chunk
 					 */
-					if (FinepassAdaption && ts_packet[0] == 0x47 && ts_packet[188] != 0x47)
-					{
-						int i = ts_packetlength;
-						int j;
-						int k = ts_buffersize;
-						int l = hav_chunk.length;
+					skipLeadingKoscomDataChunk(ts_packet);
 
-						while (i > 0)
-						{
-							j = 0;
+					/**
+					 * handan+finepass .hav workaround, chunks fileposition index (hdd sectors) unused, because a file can be hard-cut anywhere
+					 */
+					skipLeadingHandanDataChunk(ts_packet);
 
-							while (i > 0 && ts_packet[i] != hav_chunk[j])
-								i--;
+					/**
+					 * koscom .vid workaround, skip special data chunk
+					 */
+					if (skipKoscomDataChunk(ts_packet))
+					{}
 
-							for ( ; i > 0 && j < l && i + j < k; j++)
-								if (ts_packet[i + j] != hav_chunk[j])
-									break;
-
-							/**
-							 * found at least one byte of chunk
-							 */
-							if (j > 0)
-							{
-								/** ident of chunk doesnt match completely */
-								if (j < l && i + j < k)
-								{
-									i--;
-									continue;
-								}
-
-								in.skip(0x200 - (k - i));
-								in.read(ts_packet, i, k - i);
-
-								count += 0x200;
-
-								break;
-							}
-						}
-					}
-
-
-		 			if (HumaxAdaption && ts_packet[0] == 0x47 && ts_packet[188] == 0x7F)
+		 			else if (skipHumaxDataChunk(ts_packet))
 					{}  // do nothing, take the packet
 
-		 			else if (ts_packet[0] != 0x47 || (GetEnclosedPackets && ts_packet[188] != 0x47) )
+		 			else if (ts_packet[0] != TS_SyncByte || (GetEnclosedPackets && ts_packet[188] != TS_SyncByte) )
 					{
 						if (Message_2 && !missing_syncword) 
 							Common.setMessage(Resource.getString("parseTS.missing.sync") + " " + count);
@@ -521,7 +512,7 @@ public class StreamParserTS extends StreamParserBase {
 						{
 							Common.setMessage(Resource.getString("parseTS.comp.failed"));
 
-							in.unread(ts_packet, 190 - bytes_read, bytes_read - 1);
+							inputstream.unread(ts_packet, 190 - bytes_read, bytes_read - 1);
 
 							ts_isIncomplete = false;
 
@@ -532,16 +523,15 @@ public class StreamParserTS extends StreamParserBase {
 						{
 							int i = 1;
 
-							while (i < ts_buffersize)
+							while (i < TS_BufferSize)
 							{
-								if (ts_packet[i] == 0x47)
+								if (ts_packet[i] == TS_SyncByte)
 									break;
 
 								i++;
 							}
 							
-						//	in.unread(ts_packet, 1, ts_packetlength);
-							in.unread(ts_packet, i, ts_buffersize - i);
+							inputstream.unread(ts_packet, i, TS_BufferSize - i);
 
 							count += i;
 						}
@@ -560,7 +550,7 @@ public class StreamParserTS extends StreamParserBase {
 
 					missing_syncword = false;
 
-					in.unread(ts_packet, ts_packetlength, 1);
+					inputstream.unread(ts_packet, TS_PacketLength, 1);
 
 					/**
 					 * mark for split and cut
@@ -576,7 +566,7 @@ public class StreamParserTS extends StreamParserBase {
 					}
 
 					else
-						count += ts_packetlength;
+						count += TS_PacketLength;
 
 
 					packet++;
@@ -591,8 +581,6 @@ public class StreamParserTS extends StreamParserBase {
 
 					Common.updateProgressBar((count - base), (size - base));
 
-					//yield();
-
 					/** 
 					 * pid inclusion 
 					 */
@@ -604,7 +592,7 @@ public class StreamParserTS extends StreamParserBase {
 					 */
 					if (action == CommonParsing.ACTION_FILTER)
 					{
-						streamconverter.write(job_processing, ts_packet, 0, ts_packetlength, null, next_CUT_BYTEPOSITION, CommonParsing.isInfoScan(), CutpointList);
+						streamconverter.write(job_processing, ts_packet, 0, TS_PacketLength, null, next_CUT_BYTEPOSITION, CommonParsing.isInfoScan(), CutpointList);
 						continue loop;
 					}
 
@@ -654,7 +642,7 @@ public class StreamParserTS extends StreamParserBase {
 						/**
 						 * padding packet
 						 */
-						if (ts_pid == 0x1FFF)
+						if (ts_pid == PidMask)
 						{
 							Common.setMessage(Resource.getString("parseTS.stuffing"));
 							streambuffer.setneeded(false);
@@ -726,7 +714,7 @@ public class StreamParserTS extends StreamParserBase {
 						if (streambuffer.isneeded() && streambuffer.isStarted())
 							streambuffer.writeData(ts_packet, 4 + ts_adaptionfieldlength, 184 - ts_adaptionfieldlength);
 
-						if (streambuffer.getDataSize() > 6000000)
+						if (streambuffer.getDataSize() > MaxBufferSize)
 						{
 							Common.setMessage("!> 0x" + Integer.toHexString(streambuffer.getPID()).toUpperCase() + ", buffered packet exceed maximum size, flushed...");
 							streambuffer.reset();
@@ -998,7 +986,7 @@ public class StreamParserTS extends StreamParserBase {
 
 								if (ts_scrambling > 0 && !IgnoreScrambledPackets)
 								{
-									type += " (0x" + Long.toHexString(count - 188).toUpperCase() + " #" + packet + ") ";  // pos + packno
+									type += " (0x" + Long.toHexString(count - TS_PacketLength).toUpperCase() + " #" + packet + ") ";  // pos + packno
 
 									if (!streambuffer.getScram()) 
 										Common.setMessage(Resource.getString("parseTS.scrambled.notignored", Integer.toHexString(ts_pid).toUpperCase(), type));
@@ -1011,7 +999,7 @@ public class StreamParserTS extends StreamParserBase {
 									continue loop;
 								}
 
-								type += " (" + (count - 188) + " #" + packet + ") ";  // pos + packno
+								type += " (" + (count - TS_PacketLength) + " #" + packet + ") ";  // pos + packno
 								Common.setMessage("!> PID 0x" + Integer.toHexString(ts_pid).toUpperCase() + " " + type + Resource.getString("parseTS.ignored"));
 
 								if (!BlindSearch || type.indexOf("pay") == -1)
@@ -1025,7 +1013,7 @@ public class StreamParserTS extends StreamParserBase {
 
 							else
 							{
-								type += " (" + (count - 188) + " #" + packet + ") ";  // pos + packno
+								type += " (" + (count - TS_PacketLength) + " #" + packet + ") ";  // pos + packno
 								Common.setMessage(Resource.getString("parseTS.pid.has.pes", Integer.toHexString(ts_pid).toUpperCase(), Integer.toHexString(0xFF & payload_pesID).toUpperCase(), type));
 								usedPIDs.add("0x" + Integer.toHexString(ts_pid));
 							}
@@ -1151,28 +1139,28 @@ public class StreamParserTS extends StreamParserBase {
 				 */
 				if (job_processing.getFileNumber() < collection.getPrimaryInputFileSegments() - 1)
 				{ 
-					in.close();
+					inputstream.close();
 					//System.gc();
 
 					XInputFile nextXInputFile = (XInputFile) collection.getInputFile(job_processing.countFileNumber(+1));
 					count = size;
 
-					in = new PushbackInputStream(nextXInputFile.getInputStream(), 200);
+					inputstream = new PushbackInputStream(nextXInputFile.getInputStream(), PushbackBufferSize);
 
 					size += nextXInputFile.length();
 					base = count;
 
-				//	job_processing.addCellTime(String.valueOf(job_processing.getExportedVideoFrameNumber()));
+					addCellTimeFromFileSegment(job_processing);
 
 					Common.setMessage(Resource.getString("parseTS.actual.vframes") + " " + job_processing.getExportedVideoFrameNumber());
 					Common.setMessage(Resource.getString("parseTS.switch.to") + " " + nextXInputFile + " (" + Common.formatNumber(nextXInputFile.length()) + " bytes) @ " + base);
 
 					Common.updateProgressBar((action == CommonParsing.ACTION_DEMUX ? Resource.getString("parseTS.demuxing") : Resource.getString("parseTS.converting")) + " " + Resource.getString("parseTS.dvb.mpeg") + " " + nextXInputFile.getName());
 
-					if (JoinPackets && bytes_read < 188 && nextXInputFile.length() >= 189 - bytes_read)
+					if (JoinPackets && bytes_read < TS_PacketLength && nextXInputFile.length() >= TS_BufferSize - bytes_read)
 					{
 						ts_isIncomplete = true;
-						bytes_read = in.read(ts_packet, bytes_read, 189 - bytes_read);
+						bytes_read = inputstream.read(ts_packet, bytes_read, TS_BufferSize - bytes_read);
 
 						Common.setMessage(Resource.getString("parseTS.tryto.complete"));
 					}
@@ -1190,7 +1178,7 @@ public class StreamParserTS extends StreamParserBase {
 			if ( (count >= size || ende) && job_processing.getSplitSize() > 0 ) 
 				job_processing.setSplitLoopActive(false);
 
-			in.close(); 
+			inputstream.close(); 
 
 
 			if (action != CommonParsing.ACTION_DEMUX) 
@@ -1334,5 +1322,203 @@ public class StreamParserTS extends StreamParserBase {
 			/* update pid list of an opened panel */
 			Common.getGuiInterface().updateCollectionPanel(Common.getActiveCollection());
 		}
+	}
+
+	/**
+	 * humax .vid workaround, skip special data chunk
+	 */
+	private boolean skipLeadingHumaxDataChunk(byte[] ts_packet)
+	{
+		boolean b = false;
+		int chunk_size = 1184;
+
+		if (!HumaxAdaption)
+			return b;
+
+		if (ts_packet[0] != 0x7F || ts_packet[1] != 0x41 || ts_packet[2] != 4 || ts_packet[3] != (byte)0xFD)
+			return b;
+
+		try {
+			inputstream.skip(chunk_size - TS_BufferSize);
+			inputstream.read(ts_packet, 0, TS_BufferSize);
+			count += chunk_size;
+
+			return !b;
+
+		} catch (IOException e) {
+			Common.setExceptionMessage(e);
+		}
+
+		return b;
+	}
+
+	/**
+	 * koscom .vid workaround, skip special data chunk
+	 */
+	private boolean skipLeadingKoscomDataChunk(byte[] ts_packet)
+	{
+		boolean b = false;
+		int chunk_size = 36;
+		int value;
+
+		if (!KoscomAdaption)
+			return b;
+
+		if (ts_packet[2] != 0 || ts_packet[3] != 0 || ts_packet[4] != 0 || ts_packet[36] != TS_SyncByte)
+			return b;
+
+		try {
+			if (Debug)
+			{
+				value = CommonParsing.getIntValue(ts_packet, 0, 3, !CommonParsing.BYTEREORDERING);
+				System.out.println("koscom hd chunk: " + value);
+			}
+
+			inputstream.unread(ts_packet, chunk_size, TS_BufferSize - chunk_size);
+			inputstream.read(ts_packet, 0, TS_BufferSize);
+			count += chunk_size;
+
+			return !b;
+
+		} catch (IOException e) {
+			Common.setExceptionMessage(e);
+		}
+
+		return b;
+	}
+
+	/**
+	 * finepass+handan .hav workaround, chunks fileposition index (hdd sectors) unused, because a file can be hard-cut anywhere
+	 */
+	private boolean skipLeadingHandanDataChunk(byte[] ts_packet)
+	{
+		boolean b = false;
+		int chunk_size = 0x200;
+		int i = TS_PacketLength;
+		int j;
+		int k = TS_BufferSize;
+		int l = hav_chunk.length;
+
+		if (!HandanAdaption)
+			return b;
+
+		if (ts_packet[0] != TS_SyncByte || ts_packet[188] == TS_SyncByte)
+			return b;
+
+		while (i > 0)
+		{
+			j = 0;
+
+			while (i > 0 && ts_packet[i] != hav_chunk[j])
+				i--;
+
+			for ( ; i > 0 && j < l && i + j < k; j++)
+				if (ts_packet[i + j] != hav_chunk[j])
+					break;
+
+			/**
+			 * found at least one byte of chunk
+			 */
+			if (j > 0)
+			{
+				/** ident of chunk doesnt match completely */
+				if (j < l && i + j < k)
+				{
+					i--;
+					continue;
+				}
+
+				try {
+					inputstream.skip(chunk_size - (k - i));
+					inputstream.read(ts_packet, i, k - i);
+
+					count += chunk_size;
+
+					return !b;
+
+				} catch (IOException e) {
+					Common.setExceptionMessage(e);
+				}
+
+				break;
+			}
+		}
+
+		return b;
+	}
+
+	/**
+	 * humax .vid workaround, skip special data chunk
+	 */
+	private boolean skipHumaxDataChunk(byte[] ts_packet)
+	{
+		boolean b = false;
+
+		if (!HumaxAdaption)
+			return b;
+
+		if (ts_packet[0] != TS_SyncByte || ts_packet[188] != 0x7F)
+			return b;
+
+		return !b;
+	}
+
+	/**
+	 * koscom .vid workaround, skip special data chunk
+	 */
+	private boolean skipKoscomDataChunk(byte[] ts_packet)
+	{
+		boolean b = false;
+		int value;
+		int chunk_size = 36;
+
+		if (!KoscomAdaption)
+			return b;
+
+		if (ts_packet[188] == TS_SyncByte)
+			return b;
+
+		try {
+			inputstream.read(tmp_chunk, 0, chunk_size);
+
+			// hdd padding chunk 36 bytes , 0 + 1 psb. chunk_no.
+			if (tmp_chunk[2] == 0 && tmp_chunk[3] == 0 && tmp_chunk[35] == TS_SyncByte)
+			{
+				if (Debug)
+				{
+					value = (0xFF & tmp_chunk[1])<<16 | (0xFF & tmp_chunk[0])<<8 | (0xFF & ts_packet[188]);
+					System.out.println("koscom hd chunk: " + value);
+				}
+
+				ts_packet[188] = TS_SyncByte;
+				count += chunk_size;
+
+				return !b;
+			}
+
+			else
+				inputstream.unread(tmp_chunk, 0, chunk_size);
+
+		} catch (IOException e) {
+			Common.setExceptionMessage(e);
+		}
+
+		return b;
+	}
+
+	/**
+	 *
+	 */
+	private void addCellTimeFromFileSegment(JobProcessing job_processing)
+	{
+		//addCellTime(job_processing);
+	}
+
+	/**
+	 *
+	 */
+	private void addCellTime(JobProcessing job_processing)
+	{
+		job_processing.addCellTime(job_processing.getExportedVideoFrameNumber());
 	}
 }

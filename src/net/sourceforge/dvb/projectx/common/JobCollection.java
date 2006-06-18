@@ -433,7 +433,7 @@ public class JobCollection extends Object {
 	{
 		String str = output_directory;
 
-		if (str == null || str.length() == 0)
+		if (str == null || str.length() == 0 || str.startsWith("[res]"))
 		{
 			if (input_files.size() == 0)
 				return "";

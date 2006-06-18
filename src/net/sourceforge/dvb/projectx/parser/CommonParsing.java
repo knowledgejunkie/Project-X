@@ -95,6 +95,7 @@ public class CommonParsing extends Object {
 	public final static int DTS_AUDIO  = 6;	//handled with in AC3_AUDIO so far
 	public final static int WAV_AUDIO  = 7;	
 
+	public final static int ACTION_UNDEFINED = -1;
 	public final static int ACTION_DEMUX  = 0;	
 	public final static int ACTION_TO_VDR = 1;	
 	public final static int ACTION_TO_M2P = 2;	

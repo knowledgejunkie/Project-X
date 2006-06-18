@@ -201,9 +201,9 @@ public class Preview extends Object {
 		int offset = 0;
 		int ID = -1;
 
-		for (int a = 0, PID; a < data.length - 9; a++)
+		for (int a = 0, PID, dl = data.length - 9; a < dl; a++)
 		{
-			//humax .vid workaround, skip special data chunk
+			//humax chunk
 			if (data[a] == 0x7F && data[a + 1] == 0x41 && data[a + 2] == 4 && data[a + 3] == (byte)0xFD)
 			{
 				if (save && mark <= a)
@@ -216,11 +216,25 @@ public class Preview extends Object {
 				continue;
 			}
 
+			//koscom chunk
+			if (a < data.length - 36 && data[a + 2] == 0 && data[a + 3] == 0 && data[a + 36] == 0x47)
+			{
+				if (save && mark <= a)
+					array.write(data, mark, a - mark);
+
+				save = false;
+				a += 35;
+				mark = a + 1;
+
+				continue;
+			}
+
 			//ts:
 			if (a < data.length - 188 && data[a] == 0x47)
 			{
 				int chunk_offset = 0;
 
+				//handan chunk
 				if (data[a + 188] != 0x47 && data[a + 188] != 0x7F)
 				{
 					int i = a + 188;
@@ -265,7 +279,11 @@ public class Preview extends Object {
 						}
 					}
 
-					if (chunk_offset == 0)
+					//koscom chunk
+					if (chunk_offset == 0 && a < data.length - 224 && data[a + 190] == 0 && data[a + 191] == 0 && data[a + 224] == 0x47)
+					{}
+
+					else if (chunk_offset == 0)
 						continue;
 				}
 

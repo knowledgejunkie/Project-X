@@ -257,8 +257,12 @@ danach:
 --0x3c data stream ignoriern (TS)
 --rds decode defekt
 --ftp unterordner optional listen
-test-!!mac os url problem umlaute,leerzeichen, sonderzeichen
-!!coll properties gui, split at filesize geht noch nicht
+--dvbsubs except - pagecomposition
+--vdr verzeichniserstellung extra
+--reserved outputfile (in = out) auch in ini gespeichert
+--coll properties gui, 
+-vid von koscom, tlw (segmente)
+test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding
 !!ac3 2/0 128kbs wg vro hinzufügen, ac3 5.1 256, 320kb stille 
 !!ac3 384 wird nicht als Stille genommen, restart wenn 5.1 größer detektiert wird
 !!dvb-subs,  pagenumber ausgelesen aus pmt?
@@ -267,8 +271,8 @@ test-!!mac os url problem umlaute,leerzeichen, sonderzeichen
 !!multi-vob - pts offs nicht erkannt bei nächster cellid, manchmal
 !!multi-vob - fortlaufende pts nicht erkannt bei nächster cellid (nach einer erfoglten anpassung früher)
 !!vobsub + idx erzeugen
-!!dvbsubs except - pagecomposition
-!!vdrindex bei vdr geändert
+!!info anzeige von kurzepg o.ä. in TS
+!!dvdlap index
 
 !!-pes parser keine vorauswahl von headern ba,ff,f0 etc mehr, mit loggen
 !!-0xBE -> arte_ut fra, scan von pes ändern
@@ -289,7 +293,7 @@ test-!!mac os url problem umlaute,leerzeichen, sonderzeichen
 !!-vbvbuffer bei mpeg1 nicht?
 !!-ts-pid-wechseln folgen
 <<-mpa crc berechung optimiern, bitweise erschwert.
-!!-audiozusammenfassen, mpa,ac3,dts
+!!-audiozusammenfassen, mpa,ac3,dts, tlw
 !!-projektdateiexport zusammenfassen
 !!-pegel graf audiodecode
 !!--vorschau erweitert umringgops

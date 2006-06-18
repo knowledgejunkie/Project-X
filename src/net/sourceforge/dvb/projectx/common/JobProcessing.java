@@ -307,6 +307,13 @@ public class JobProcessing extends Object {
 	/**
 	 * 
 	 */
+	public void addCellTime(int value)
+	{
+		addCellTime(String.valueOf(value));
+	}
+	/**
+	 * 
+	 */
 	public int[] getStatusVariables()
 	{
 		return clv;
