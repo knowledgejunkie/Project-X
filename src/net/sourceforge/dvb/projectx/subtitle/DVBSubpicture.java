@@ -40,6 +40,7 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.util.Hashtable;
 import java.util.Enumeration;
+import java.util.Arrays;
 
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Common;
@@ -585,6 +586,9 @@ public class DVBSubpicture extends Object {
 		object.setNonModify(getBits(1)); //non_modifying_colour_flag
 		flushBits(1);
 
+		//assign region specific CLUT
+		clut = epoch.setCLUT(region.getCLUT_id());
+
 		/**
 		 * modify user_table here, if no clut definition were sent
 		 */
@@ -936,7 +940,7 @@ public class DVBSubpicture extends Object {
 
 		color = scaleRGB(color);
 
-		java.util.Arrays.fill(pixel_data, color);
+		Arrays.fill(pixel_data, color);
 	}
 
 	// 
@@ -950,7 +954,7 @@ public class DVBSubpicture extends Object {
 	// only for painted preview picture, else not necessary
 	private void clearBackground()
 	{
-		java.util.Arrays.fill(preview_pixel_data, 0x60);
+		Arrays.fill(preview_pixel_data, 0x60);
 
 		big.setColor( new Color(0, 0, 0x60));   //deep blue to see full transparency
 		big.fillRect( bimg.getMinX(), bimg.getMinY(), bimg.getWidth(), bimg.getHeight());
@@ -1002,7 +1006,7 @@ public class DVBSubpicture extends Object {
 			region.setError(1);
 		}
 
-		java.util.Arrays.fill(pixel_data, from_index, to_index, color);
+		Arrays.fill(pixel_data, from_index, to_index, color);
 	}
 
 	// not yet exported, only info for existence
@@ -1479,6 +1483,11 @@ public class DVBSubpicture extends Object {
 		private void setCLUT_id(int val)
 		{
 			CLUT_id = val;
+		}
+
+		private int getCLUT_id()
+		{
+			return CLUT_id;
 		}
 
 		private void setPixelCode_8bit(int val) //see fillflag, backgr CLUT entry

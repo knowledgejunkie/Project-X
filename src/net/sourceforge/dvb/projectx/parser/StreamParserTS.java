@@ -1,5 +1,5 @@
 /*
- * @(#)StreamParser
+ * @(#)StreamParserTS.java
  *
  * Copyright (c) 2005-2006 by dvb.matt, All rights reserved.
  * 
@@ -1142,10 +1142,14 @@ public class StreamParserTS extends StreamParserBase {
 					inputstream.close();
 					//System.gc();
 
-					XInputFile nextXInputFile = (XInputFile) collection.getInputFile(job_processing.countFileNumber(+1));
-					count = size;
+					long startoffset = checkNextKoscomSegment(collection, job_processing.getFileNumber(), bytes_read);
 
-					inputstream = new PushbackInputStream(nextXInputFile.getInputStream(), PushbackBufferSize);
+					XInputFile nextXInputFile = (XInputFile) collection.getInputFile(job_processing.countFileNumber(+1));
+					count = size + startoffset;
+				//	count = size;
+
+					inputstream = new PushbackInputStream(nextXInputFile.getInputStream(startoffset), PushbackBufferSize);
+				//	inputstream = new PushbackInputStream(nextXInputFile.getInputStream(), PushbackBufferSize);
 
 					size += nextXInputFile.length();
 					base = count;
@@ -1520,5 +1524,39 @@ public class StreamParserTS extends StreamParserBase {
 	private void addCellTime(JobProcessing job_processing)
 	{
 		job_processing.addCellTime(job_processing.getExportedVideoFrameNumber());
+	}
+
+	/**
+	 *
+	 */
+	private long checkNextKoscomSegment(JobCollection collection, int filenumber, int bytes_read)
+	{
+		if (!KoscomAdaption)
+			return 0;
+
+		byte[] nextsegment = new byte[200];
+		long startoffset = 0x3C2E0L;
+		int offset = 4;
+
+		if (filenumber < collection.getPrimaryInputFileSegments() - 1)
+		{
+			try {
+
+				((XInputFile) collection.getInputFile(filenumber + 1)).randomAccessSingleRead(nextsegment, startoffset);
+
+				for (int i = 0; i < offset; i++)
+					if (nextsegment[i] != 0)
+						return 0;
+
+				if (nextsegment[offset + TS_PacketLength - bytes_read] == TS_SyncByte)
+					return (startoffset + offset);
+
+			} catch (IOException e) {
+
+				Common.setExceptionMessage(e);
+			}
+		}
+
+		return 0;
 	}
 }

@@ -270,6 +270,7 @@ public class Keys extends Object {
 	public final static String[] KEY_SubtitleMovePosition_Value = { "SubtitlePanel.MovePosition.Value", "" };
 	public final static String[] KEY_SubtitlePanel_specialTermination = { "SubtitlePanel.specialTermination", "1" };
 	public final static String[] KEY_SubtitlePanel_keepColourTable = { "SubtitlePanel.keepColourTable", "0" };
+	public final static String[] KEY_SubtitlePanel_exportAsVobSub = { "SubtitlePanel.exportAsVobSub", "0" };
 
 	public static Object[] ITEMS_TtxLanguagePair = { 
 		"auto", "basic latin", "polish", "turkish", "cro,slo,rum", "est,lit,rus",

@@ -1064,7 +1064,8 @@ public class PreSettings extends JFrame {
 			Keys.KEY_SubtitlePanel_exportTextAsUnicode,
 			Keys.KEY_SubtitlePanel_exportTextAsUTF8,
 			Keys.KEY_SubtitlePanel_useTextOutline,
-			Keys.KEY_SubtitlePanel_keepColourTable
+			Keys.KEY_SubtitlePanel_keepColourTable,
+			Keys.KEY_SubtitlePanel_exportAsVobSub
 		};
 
 		final JCheckBox[] box = new JCheckBox[objects.length];
@@ -1335,8 +1336,8 @@ public class PreSettings extends JFrame {
 		panel_1.add(panel_2_3);
 
 		panel_1.add(Box.createRigidArea(new Dimension(1, 10)));
-		panel_1.add(new JLabel("Test:"));
 		panel_1.add(box[7]);
+		panel_1.add(box[8]);
 
 		teletext.add(panel_1);
 

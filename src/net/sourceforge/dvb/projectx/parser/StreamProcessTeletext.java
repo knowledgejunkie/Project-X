@@ -65,6 +65,7 @@ import net.sourceforge.dvb.projectx.parser.StreamProcessSubpicture;
 import net.sourceforge.dvb.projectx.subtitle.Teletext;
 import net.sourceforge.dvb.projectx.subtitle.UnicodeWriter;
 import net.sourceforge.dvb.projectx.subtitle.Subpicture;
+import net.sourceforge.dvb.projectx.subtitle.Sup2VobSub;
 
 import net.sourceforge.dvb.projectx.thirdparty.Ifo;
 
@@ -121,13 +122,12 @@ public class StreamProcessTeletext extends StreamProcessBase {
 		boolean ExportTextAsUTF8 = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_exportTextAsUTF8);
 		boolean DecodeHiddenRows = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_decodeHiddenRows);
 		boolean KeepOriginalTimecode = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_keepOriginalTimecode);
+		boolean ExportAsVobSub = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_exportAsVobSub);
 
 //		boolean SpecialTermination = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_specialTermination);
 		boolean SpecialTermination = true;
 
 		boolean KeepColourTable = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_keepColourTable);
-
-		//String SubtitleExportFormat = collection.getSettings().getProperty(Keys.KEY_SubtitleExportFormat);
 
 		String SubtitleFont = collection.getSettings().getProperty(Keys.KEY_SubtitleFont);
 		String Format_SUP_Values = collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_Format_SUP_Values);
@@ -1213,6 +1213,10 @@ public class StreamProcessTeletext extends StreamProcessBase {
 
 					job_processing.countMediaFilesExportLength(ttxfile1.length());
 					job_processing.addSummaryInfo(Resource.getString("teletext.summary", "" + job_processing.countPictureStream(), "" + seiten, "" + page, infoPTSMatch(filename_pts, videofile_pts, vptsdata, ptsdata)) + "'" + ttxfile1 + "'");
+
+					//vobsub
+					if (subtitle_type == EXPORT_SUP && ExportAsVobSub)
+						new Sup2VobSub(ttxfile, subpicture.getUserColorTableArray());
 				}
 
 			} catch (IOException e2) { 

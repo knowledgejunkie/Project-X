@@ -261,16 +261,16 @@ danach:
 --vdr verzeichniserstellung extra
 --reserved outputfile (in = out) auch in ini gespeichert
 --coll properties gui, 
--vid von koscom, tlw (segmente)
-test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding
+--fix dvb subpicture - falsche farben bei verschiedenen farbtabellen pro region
+--vobsub + idx erzeugen aus teletext + sup input
+--vid von koscom anpassung
+-test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding
 !!ac3 2/0 128kbs wg vro hinzufügen, ac3 5.1 256, 320kb stille 
 !!ac3 384 wird nicht als Stille genommen, restart wenn 5.1 größer detektiert wird
-!!dvb-subs,  pagenumber ausgelesen aus pmt?
 !!file properties gui
 !!vro-vob timecode lese patch?
 !!multi-vob - pts offs nicht erkannt bei nächster cellid, manchmal
 !!multi-vob - fortlaufende pts nicht erkannt bei nächster cellid (nach einer erfoglten anpassung früher)
-!!vobsub + idx erzeugen
 !!info anzeige von kurzepg o.ä. in TS
 !!dvdlap index
 
@@ -293,13 +293,14 @@ test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding
 !!-vbvbuffer bei mpeg1 nicht?
 !!-ts-pid-wechseln folgen
 <<-mpa crc berechung optimiern, bitweise erschwert.
-!!-audiozusammenfassen, mpa,ac3,dts, tlw
+!-audiozusammenfassen, mpa,ac3,dts, tlw
 !!-projektdateiexport zusammenfassen
 !!-pegel graf audiodecode
 !!--vorschau erweitert umringgops
 !!-pmt 0xC3 -> string epg - nur inter Typ 0 - mtv2 cyfra 11282v hotbird 
 !-PAT mit adaptionfield ?? 6400 10977 h 16°E, neue klasse
 !!sendername aus SDT anzeigen?
+!!dvb-subs,  pagenumber ausgelesen aus pmt?
 
 //
 java.applet.AudioClip ac = java.applet.Applet.newAudioClip(Resource.getResourceURL("bsp.wav"));

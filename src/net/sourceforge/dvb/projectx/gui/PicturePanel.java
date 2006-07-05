@@ -220,9 +220,6 @@ public class PicturePanel extends JPanel {
 					repaint();
 				}
 
-	//			if (e.getClickCount() > 1)
-	//				saveBMP(Common.getMpvDecoderClass().getPixels(), Common.getMpvDecoderClass().getWidth(), Common.getMpvDecoderClass().getHeight(), Common.getMpvDecoderClass().getAspectRatio());
-
 				if (e.getClickCount() >= 1 && e.getModifiers() == MouseEvent.BUTTON3_MASK)
 					popup.show(getParent(), e.getX(), e.getY());
 			}

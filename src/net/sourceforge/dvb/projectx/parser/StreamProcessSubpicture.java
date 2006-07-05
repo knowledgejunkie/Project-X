@@ -67,6 +67,7 @@ import net.sourceforge.dvb.projectx.subtitle.Subpicture;
 import net.sourceforge.dvb.projectx.subtitle.BMP;
 import net.sourceforge.dvb.projectx.subtitle.Bitmap;
 import net.sourceforge.dvb.projectx.subtitle.Teletext;
+import net.sourceforge.dvb.projectx.subtitle.Sup2VobSub;
 
 import net.sourceforge.dvb.projectx.thirdparty.Ifo;
 
@@ -93,6 +94,7 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 
 	private boolean debug;
 	private boolean KeepOriginalTimecode;
+	private boolean ExportAsVobSub;
 	private boolean UseAdditionalOffset;
 	private boolean ShowSubpictureWindow;
 	private boolean Message_2;
@@ -237,6 +239,7 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 
 		debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
 		KeepOriginalTimecode = isElementaryStream == CommonParsing.ES_TYPE ? true : collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_keepOriginalTimecode);
+		ExportAsVobSub = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_exportAsVobSub);
 		UseAdditionalOffset = collection.getSettings().getBooleanProperty(Keys.KEY_additionalOffset);
 		ShowSubpictureWindow = collection.getSettings().getBooleanProperty(Keys.KEY_showSubpictureWindow);
 		Message_2 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
@@ -630,6 +633,10 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 				Common.setMessage(Resource.getString("msg.newfile") + " " + subfile);
 				job_processing.countMediaFilesExportLength(subfile1.length());
 				job_processing.addSummaryInfo(Resource.getString("subpicture.summary", "" + job_processing.countPictureStream(), "" + pics, infoPTSMatch(filename_pts, videofile_pts, vptsdata, ptsdata)) + "'" + subfile1 + "'");
+
+				//vobsub
+				if (export_type == 0 && ExportAsVobSub)
+					new Sup2VobSub(subfile, subpicture.getUserColorTableArray());
 			}
 
 			Common.updateProgressBar(size, size);

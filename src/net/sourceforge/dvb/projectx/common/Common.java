@@ -86,8 +86,8 @@ import net.sourceforge.dvb.projectx.net.WebInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90.4.00.b03";
-	private static String version_date = "01.06.2006";
+	private static String version_name = "ProjectX 0.90.4.00.b05";
+	private static String version_date = "04.07.2006";
 
 	private static String line_separator = System.getProperty("line.separator");
 
@@ -778,6 +778,15 @@ public final class Common extends Object {
 		String time_str = time_format_2.format(new Date(time_value));
 
 		return (time_str.substring(0, time_str.length() - 3) + adaptString((Integer.parseInt(time_str.substring(time_str.length() - 3)) * 90 / (int)frame_rate), 2));
+	}
+
+	/**
+	 *
+	 */
+	public static String formatTime_2a(long time_value)
+	{
+		time_format_2.setTimeZone(TimeZone.getTimeZone("GMT+0:00"));
+		return time_format_2.format(new Date(time_value));
 	}
 
 	/**
