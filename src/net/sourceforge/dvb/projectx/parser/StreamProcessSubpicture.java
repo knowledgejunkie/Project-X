@@ -555,6 +555,9 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 
 								print_out.println("Display_Area\t(" + Common.adaptString(bitmap.getX(), 3) + " " + Common.adaptString(bitmap.getY(), 3) + " " + Common.adaptString(bitmap.getMaxX(), 3) + " " + Common.adaptString(bitmap.getMaxY(), 3) + ")");
 								print_out.println(outfile_base.substring(outfile_base.length() - 4) + "\t\t" + Common.formatTime_2(bitmap.getInTime() / 90, (long)CommonParsing.getVideoFramerate()) + "\t" + Common.formatTime_2((bitmap.getInTime() / 90) + (bitmap.getPlayTime() * 10), (long)CommonParsing.getVideoFramerate()) + "\t" + new File(outfile).getName());
+
+								if (debug)
+									System.out.println("-> " + outfile);
 							}
 
 							//Common.setMessage(subpicture.getArea());
@@ -594,7 +597,10 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 					Common.getGuiInterface().setSubpictureTitle(" " + Resource.getString("subpicture.preview.title.noexport"));
 
 				if (debug)
-					System.out.println(" -> " + write + "/ " + v + "/ " + new_pts + "/ " + time_difference + "/ " + pics + "/ " + display_time);
+				{
+					System.out.println("-> wr " + write + " /v " + v + " /npts " + new_pts + " /tdif " + time_difference + " /pic " + pics + " /dtim " + display_time);
+					System.out.println("");
+				}
 			}
 
 			in.close();

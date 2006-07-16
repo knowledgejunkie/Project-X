@@ -39,6 +39,12 @@ import net.sourceforge.dvb.projectx.common.JobProcessing;
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
 
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
+//
+import net.sourceforge.dvb.projectx.parser.StreamConverter;
+import net.sourceforge.dvb.projectx.parser.StreamDemultiplexer;
+import net.sourceforge.dvb.projectx.parser.StreamProcess;
+
+import java.util.List;
 
 /**
  * main thread
@@ -47,6 +53,20 @@ public class StreamParserBase extends Object {
 
 	public int ERRORCODE = 0;
 	public int MainBufferSize = 8192000;
+
+//
+	public static StreamDemultiplexer streamdemultiplexer;
+	public static StreamConverter streamconverter;
+
+	public static List demuxList;
+
+	public static boolean CreateD2vIndex;
+	public static boolean SplitProjectFile;
+
+	public static String fchild;
+	public static String fparent;
+
+//
 
 	/**
 	 * 
@@ -65,6 +85,17 @@ public class StreamParserBase extends Object {
 
 		if (MainBufferSize <= 0)
 			MainBufferSize = 4096000;
+
+
+		streamdemultiplexer = null;
+		streamconverter = null;
+		demuxList = null;
+
+		CreateD2vIndex = false;
+		SplitProjectFile = false;
+
+		fchild = "";
+		fparent = "";
 	}
 
 	/**
@@ -73,6 +104,26 @@ public class StreamParserBase extends Object {
 	public String parseStream(JobCollection collection, XInputFile aXInputFile, int pes_streamtype, int action, String vptslog)
 	{
 		return null;
+	}
+
+	/**
+	 * 
+	 */
+	public void setFileName(JobCollection collection, JobProcessing job_processing, XInputFile aXInputFile)
+	{
+		setFileName(collection, job_processing, aXInputFile, "");
+	}
+
+	/**
+	 * 
+	 */
+	public void setFileName(JobCollection collection, JobProcessing job_processing, XInputFile aXInputFile, String extension)
+	{
+		fchild = collection.getOutputName(aXInputFile.getName());
+		fparent = collection.getOutputNameParent(fchild);
+
+		// split part 
+		fparent += job_processing.getSplitSize() > 0 ? "(" + job_processing.getSplitPart() + ")" : extension;
 	}
 
 	/**
@@ -364,5 +415,212 @@ public class StreamParserBase extends Object {
 		}
 	}
 
+	/**
+	 * 
+	 */
+	public String processElementaryStreams(String vptslog, int action, int[] clv, JobCollection collection, JobProcessing job_processing)
+	{
+		if (action != CommonParsing.ACTION_DEMUX)
+		{
+			streamconverter.close(job_processing, CommonParsing.isInfoScan());
+			return vptslog;
+		}
 
+		//finish video stream
+		for (int i = 0, NumberOfVideostreams = 0; i < demuxList.size(); i++)
+		{
+			streamdemultiplexer = (StreamDemultiplexer) demuxList.get(i);
+
+			if (streamdemultiplexer.getType() == CommonParsing.MPEG_VIDEO)
+			{ 
+				// accept only first video
+				if (NumberOfVideostreams > 0)
+				{
+					Common.setMessage("!> further videostream found (PID 0x" + Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase() + " / ID 0x" + Integer.toHexString(streamdemultiplexer.getID()).toUpperCase() + ") -> ignored");
+					continue;
+				}
+
+				// d2v project 
+				if (CreateD2vIndex || SplitProjectFile)
+					job_processing.getProjectFileD2V().write(job_processing.getProjectFileExportLength(), job_processing.getExportedVideoFrameNumber());
+
+				Common.setMessage("");
+				Common.setMessage(formatIDString(Resource.getString("ExportPanel.Streamtype.MpgVideo"), streamdemultiplexer.getPID(), streamdemultiplexer.getID(), streamdemultiplexer.subID()));
+				Common.setMessage(Resource.getString("video.msg.summary") + " " + job_processing.getExportedVideoFrameNumber() + "-" + clv[0] + "-" + clv[1] + "-" + clv[2] + "-" + clv[3] + "-" + clv[4]);
+
+				vptslog = streamdemultiplexer.closeVideo(job_processing, collection.getOutputDirectory() + collection.getFileSeparator());
+
+				NumberOfVideostreams++;
+			}
+		} 
+
+		processNonVideoElementaryStreams(vptslog, action, clv, collection, job_processing);
+
+		return vptslog;
+	}
+
+	/**
+	 * 
+	 */
+	public void processNonVideoElementaryStreams(String vptslog, int action, int[] clv, JobCollection collection, JobProcessing job_processing)
+	{
+		processNonVideoElementaryStreams(vptslog, action, clv, collection, job_processing, null, null);
+	}
+
+	/**
+	 * 
+	 */
+	public void processNonVideoElementaryStreams(String vptslog, int action, int[] clv, JobCollection collection, JobProcessing job_processing, List tempfiles, XInputFile aXInputFile)
+	{
+		//finish other streams
+		int[] stream_number = new int[10]; 
+
+		for (int i = 0, es_streamtype; i < demuxList.size(); i++)
+		{
+			streamdemultiplexer = (StreamDemultiplexer) demuxList.get(i);
+			es_streamtype = streamdemultiplexer.getType();
+
+			if (es_streamtype == CommonParsing.MPEG_VIDEO) 
+				continue;
+
+			// from pva - test with others
+			if (streamdemultiplexer.getID() == 0) 
+				continue;
+
+			String[] values = streamdemultiplexer.close(job_processing, vptslog);
+
+			if (values[0].equals("")) 
+			{
+				Common.setMessage(formatIDString(Resource.getString("StreamParser.NoExport"), streamdemultiplexer.getPID(), streamdemultiplexer.getID(), streamdemultiplexer.subID()));
+				continue;
+			}
+
+			String newfile = values[3] + (stream_number[es_streamtype] > 0 ? ("[" + stream_number[es_streamtype] + "]") : "") + "." + values[2];
+
+			Common.renameTo(values[0], newfile);
+		
+			values[0] = newfile;
+			values[3] = vptslog;
+
+			switch (es_streamtype)
+			{
+			case CommonParsing.AC3_AUDIO:
+			case CommonParsing.DTS_AUDIO:
+				if (streamdemultiplexer.subID() != 0 && (0xF0 & streamdemultiplexer.subID()) != 0x80) 
+					break;
+
+				Common.setMessage("");
+				Common.setMessage(formatIDString(Resource.getString("ExportPanel.Streamtype.Ac3Audio"), streamdemultiplexer.getPID(), streamdemultiplexer.getID(), streamdemultiplexer.subID()));
+
+				new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
+				break;
+
+			case CommonParsing.TELETEXT: 
+				Common.setMessage("");
+				Common.setMessage(formatIDString(Resource.getString("ExportPanel.Streamtype.Teletext"), streamdemultiplexer.getPID(), streamdemultiplexer.getID(), streamdemultiplexer.subID()));
+
+				new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
+				break;
+
+			case CommonParsing.MPEG_AUDIO: 
+				Common.setMessage("");
+				Common.setMessage(formatIDString(Resource.getString("ExportPanel.Streamtype.MpgAudio"), streamdemultiplexer.getPID(), streamdemultiplexer.getID(), streamdemultiplexer.subID()));
+
+				new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
+				break;
+	
+			case CommonParsing.LPCM_AUDIO:
+				Common.setMessage("");
+				Common.setMessage(formatIDString(Resource.getString("ExportPanel.Streamtype.PcmAudio"), streamdemultiplexer.getPID(), streamdemultiplexer.getID(), streamdemultiplexer.subID()));
+
+				new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
+				break;
+
+			case CommonParsing.SUBPICTURE:
+				Common.setMessage("");
+				Common.setMessage(formatIDString(Resource.getString("ExportPanel.Streamtype.Subpicture"), streamdemultiplexer.getPID(), streamdemultiplexer.getID(), streamdemultiplexer.subID()));
+
+				new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
+				break;
+			}
+
+			stream_number[es_streamtype]++;
+
+			// save infos for output segmentation
+			if (tempfiles != null)
+			{
+				tempfiles.add(values[0]);
+				tempfiles.add(aXInputFile);
+				tempfiles.add(values[1]);
+				tempfiles.add(values[2]);
+
+				if (job_processing.getSplitSize() == 0)
+				{
+					new File(newfile).delete();
+					new File(values[1]).delete();
+				}
+			}
+
+			else
+			{
+				new File(newfile).delete();
+				new File(values[1]).delete();
+			}
+		}
+	}
+
+	/**
+	 * 
+	 */
+	private String formatIDString(String str1, int pid, int id, int subid)
+	{
+		String str = "+> " + str1;
+
+		str += ": PID 0x" + Common.adaptString(Integer.toHexString(pid).toUpperCase(), 4);
+		str += " / PesID 0x" + Common.adaptString(Integer.toHexString(id).toUpperCase(), 2);
+		str += " / SubID 0x" + Common.adaptString(Integer.toHexString(subid).toUpperCase(), 2);
+		str += " :";
+
+		return str;
+	}
+
+	/**
+	 *
+	 */
+	public void addCellTimeFromFileSegment(JobProcessing job_processing)
+	{
+		//addCellTime(job_processing);
+	}
+
+	/**
+	 *
+	 */
+	public void addCellTime(JobProcessing job_processing)
+	{
+		job_processing.addCellTime(job_processing.getExportedVideoFrameNumber());
+	}
+
+	/**
+	 * init conversions 
+	 */
+	public void initConversion(JobCollection collection, String parent, int action, int source, int splitpart)
+	{
+		if (action <= CommonParsing.ACTION_DEMUX)
+			return;
+
+		String[] ext = { "", ".vdr", ".m2p", ".pva", ".ts" };
+
+		switch (action)
+		{
+		case CommonParsing.ACTION_TO_VDR:
+		case CommonParsing.ACTION_TO_M2P:
+		case CommonParsing.ACTION_TO_PVA:
+		case CommonParsing.ACTION_TO_TS:
+			streamconverter.init(collection, parent + "[mux]" + ext[action], MainBufferSize, action, splitpart);
+			break;
+
+		case CommonParsing.ACTION_FILTER:
+			streamconverter.init(collection, parent + "[filter]" + ext[source], MainBufferSize, action, splitpart);
+		}
+	}
 }

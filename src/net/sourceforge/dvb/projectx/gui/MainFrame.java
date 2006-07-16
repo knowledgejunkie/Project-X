@@ -978,14 +978,14 @@ public class MainFrame extends JPanel {
 		popup.addSeparator();
 
 		//file properties
-		JMenuItem menuitem_17 = popup.add(Resource.getString("popup.FileProperties"));
+		JMenuItem menuitem_17 = popup.add(Resource.getString("General.FileProperties") + "..");
 		menuitem_17.setActionCommand("FileProperties");
 		//menuitem_17.setEnabled(false);
 
 		popup.addSeparator();
 
 		//coll properties
-		JMenuItem menuitem_18 = popup.add(Resource.getString("popup.CollectionProperties"));
+		JMenuItem menuitem_18 = popup.add(Resource.getString("General.CollectionProperties") + "..");
 		menuitem_18.setActionCommand("CollectionProperties");
 		//menuitem_18.setEnabled(false);
 

@@ -44,6 +44,7 @@ import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Keys;
 import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.common.JobProcessing;
+import net.sourceforge.dvb.projectx.common.JobCollection;
 
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
 import net.sourceforge.dvb.projectx.video.Video;
@@ -78,6 +79,7 @@ public class StreamDemultiplexer extends Object {
 	private boolean SplitProjectFile;
 	private boolean CreateCellTimes;
     private boolean CreateInfoIndex;
+    private boolean AppendPidToFileName;
 
 	private long AddOffset = 0;
 	private long target_position = 0;
@@ -113,14 +115,20 @@ public class StreamDemultiplexer extends Object {
 	private byte[] subpicture_header = { 0x53, 0x50, 0, 0, 0, 0, 0, 0, 0, 0 };
 	private byte[] lpcm_header = { 0x50, 0x43, 0x4D, 0, 0, 0, 0, 0, 0, 0 }; //'PCM'+5b(pts)+2b(size) 
 
-	public StreamDemultiplexer()
+	/**
+	 *
+	 */
+	public StreamDemultiplexer(JobCollection collection)
 	{
-		getSettings();
+		getSettings(collection);
 	}
 
-	public StreamDemultiplexer(long val)
+	/**
+	 *
+	 */
+	public StreamDemultiplexer(JobCollection collection, long val)
 	{
-		getSettings();
+		getSettings(collection);
 		ptsoffset = val;
 	}
 
@@ -305,39 +313,40 @@ public class StreamDemultiplexer extends Object {
 	/**
 	 *
 	 */
-	private void getSettings()
+	private void getSettings(JobCollection collection)
 	{
-		Streamtype_MpgVideo = Common.getSettings().getBooleanProperty(Keys.KEY_Streamtype_MpgVideo);
-		Streamtype_MpgAudio = Common.getSettings().getBooleanProperty(Keys.KEY_Streamtype_MpgAudio);
-		Streamtype_Ac3Audio = Common.getSettings().getBooleanProperty(Keys.KEY_Streamtype_Ac3Audio);
-		Streamtype_PcmAudio = Common.getSettings().getBooleanProperty(Keys.KEY_Streamtype_PcmAudio);
-		Streamtype_Teletext = Common.getSettings().getBooleanProperty(Keys.KEY_Streamtype_Teletext);
-		Streamtype_Subpicture = Common.getSettings().getBooleanProperty(Keys.KEY_Streamtype_Subpicture);
-		AddOffset = Common.getSettings().getBooleanProperty(Keys.KEY_additionalOffset) ? 90L * Common.getSettings().getIntProperty(Keys.KEY_ExportPanel_additionalOffset_Value) : 0;    // time offset for data
-		WriteNonVideo = Common.getSettings().getBooleanProperty(Keys.KEY_WriteOptions_writeAudio);
-		WriteVideo = Common.getSettings().getBooleanProperty(Keys.KEY_WriteOptions_writeVideo);
-		Debug = Common.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
-		DecodeVBI = Common.getSettings().getBooleanProperty(Keys.KEY_Streamtype_Vbi);
-		RebuildPTS = Common.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_rebuildPTS);
-		AddSequenceEndcode = Common.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_addEndcode);
-		RenameVideo = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_renameVideo);
-		CreateD2vIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
-		CreateM2sIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createM2sIndex);
-		SplitProjectFile = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
-		CreateCellTimes = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createCellTimes);
-        CreateInfoIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createInfoIndex);
+		Streamtype_MpgVideo = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_MpgVideo);
+		Streamtype_MpgAudio = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_MpgAudio);
+		Streamtype_Ac3Audio = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_Ac3Audio);
+		Streamtype_PcmAudio = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_PcmAudio);
+		Streamtype_Teletext = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_Teletext);
+		Streamtype_Subpicture = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_Subpicture);
+		AddOffset = collection.getSettings().getBooleanProperty(Keys.KEY_additionalOffset) ? 90L * collection.getSettings().getIntProperty(Keys.KEY_ExportPanel_additionalOffset_Value) : 0;    // time offset for data
+		WriteNonVideo = collection.getSettings().getBooleanProperty(Keys.KEY_WriteOptions_writeAudio);
+		WriteVideo = collection.getSettings().getBooleanProperty(Keys.KEY_WriteOptions_writeVideo);
+		Debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
+		DecodeVBI = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_Vbi);
+		RebuildPTS = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_rebuildPTS);
+		AddSequenceEndcode = collection.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_addEndcode);
+		RenameVideo = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_renameVideo);
+		CreateD2vIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
+		CreateM2sIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createM2sIndex);
+		SplitProjectFile = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
+		CreateCellTimes = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createCellTimes);
+        CreateInfoIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createInfoIndex);
+        AppendPidToFileName = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_appendPidToFileName);
 	}
 
 	/**
 	 * init nonVideo streams
 	 */
-	private void initNonVideo(String _name)
+	private void initNonVideo(JobCollection collection, String _name)
 	{
 		parentname = _name;
 		FileName = parentname + source[sourcetype] + lfn;
 		target_position = 0;
 
-		getSettings();
+		getSettings(collection);
 
 		try {
 			out = new IDDBufferedOutputStream(new FileOutputStream(FileName), buffersize);
@@ -352,21 +361,21 @@ public class StreamDemultiplexer extends Object {
 	/**
 	 * main init nonVideo
 	 */
-	public void init(String _name, int _buffersize, int _lfn, int _parsertype)
+	public void init(JobCollection collection, String _name, int _buffersize, int _lfn, int _parsertype)
 	{
 		lfn = _lfn;
 		buffersize = _buffersize;
 		sourcetype = _parsertype;
 
-		initNonVideo(_name);
+		initNonVideo(collection, _name);
 	}
 
 	/**
 	 * re-init nonVideo
 	 */
-	public void init2(String _name)
+	public void init2(JobCollection collection, String _name)
 	{
-		initNonVideo(_name);
+		initNonVideo(collection, _name);
 	}
 
 	/**
@@ -727,6 +736,12 @@ public class StreamDemultiplexer extends Object {
 				parameters[0] = "";
 			}
 
+			else if (AppendPidToFileName)
+			{
+				parentname += formatIDString(getPID(), getID(), subID());
+				parameters[3] = parentname;
+			}
+
 		} catch (IOException e) { 
 
 			Common.setExceptionMessage(e);
@@ -736,11 +751,26 @@ public class StreamDemultiplexer extends Object {
 	} 
 
 	/**
+	 * 
+	 */
+	private String formatIDString(int pid, int id, int subid)
+	{
+		String str = "";
+
+		str += "[0x" + Common.adaptString(Integer.toHexString(pid).toUpperCase(), 4);
+		str += "-0x" + Common.adaptString(Integer.toHexString(id).toUpperCase(), 2);
+		str += "-0x" + Common.adaptString(Integer.toHexString(subid).toUpperCase(), 2);
+		str += "]";
+
+		return str;
+	}
+
+	/**
 	 *
 	 */
-	public void initVideo(String _name, int _buffersize, int _lfn, int _parsertype)
+	public void initVideo(JobCollection collection, String _name, int _buffersize, int _lfn, int _parsertype)
 	{
-		getSettings();
+		getSettings(collection);
 
 		parentname = _name;
 		lfn = _lfn;
@@ -772,9 +802,9 @@ public class StreamDemultiplexer extends Object {
 		}
 	}
 
-	public void initVideo2(String _name)
+	public void initVideo2(JobCollection collection, String _name)
 	{
-		getSettings();
+		getSettings(collection);
 
 		parentname = _name;
 		FileName = parentname + source[sourcetype] + lfn;
@@ -867,6 +897,9 @@ public class StreamDemultiplexer extends Object {
 			else
 			{ 
 				int ot = (RenameVideo || CreateD2vIndex || SplitProjectFile) ? 0 : 2;
+
+				if (AppendPidToFileName)
+					parentname += formatIDString(getPID(), getID(), subID());
 
 				videofile = parentname + videoext[MPGVideotype[0] + ot];
 				File newfile = new File(videofile);

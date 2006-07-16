@@ -132,7 +132,7 @@ public class StreamProcessBase extends Object {
 			return null;
 		}
 
-		Common.setMessage(Resource.getString("video.msg.pts.start_end", Common.formatTime_1(vptsval[0][0] / 90)) + " " + Common.formatTime_1(vptsval[0][vptsval[0].length - 1] / 90));
+		Common.setMessage("-> " + Resource.getString("video.msg.pts.start_end", Common.formatTime_1(vptsval[0][0] / 90)) + " " + Common.formatTime_1(vptsval[0][vptsval[0].length - 1] / 90));
 
 		return vptsval;
 	}
@@ -256,7 +256,7 @@ public class StreamProcessBase extends Object {
 			return null;
 		}
 
-		Common.setMessage(Resource.getString(message_3, Common.formatTime_1(ptsval[0][0] / 90)) + " " + Common.formatTime_1(ptsval[0][ptsval[0].length - 2] / 90));
+		Common.setMessage("-> " + Resource.getString(message_3, Common.formatTime_1(ptsval[0][0] / 90)) + " " + Common.formatTime_1(ptsval[0][ptsval[0].length - 2] / 90));
 
 		return ptsval;
 	}
@@ -398,5 +398,4 @@ public class StreamProcessBase extends Object {
 
 		return awrite;
 	}
-
 }

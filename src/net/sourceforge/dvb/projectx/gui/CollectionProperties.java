@@ -70,8 +70,7 @@ import net.sourceforge.dvb.projectx.common.JobCollection;
  */
 public class CollectionProperties extends JFrame {
 
-	//private String title = Resource.getString("PreferencesPanel.Title");
-	private String title = "Collection Properties";
+	private String title = Resource.getString("General.CollectionProperties");
 	private int collection_number = -1;
 
 	private final Color head_color = new Color(224, 224, 224);
@@ -967,6 +966,7 @@ public class CollectionProperties extends JFrame {
 			Keys.KEY_ExternPanel_renameAudio,
 			Keys.KEY_ExternPanel_renameVideo,
 			Keys.KEY_ExternPanel_appendExtension,
+			Keys.KEY_ExternPanel_appendPidToFileName,
 			Keys.KEY_ExternPanel_createM2sIndex,
             Keys.KEY_ExternPanel_createInfoIndex,
 			Keys.KEY_ExternPanel_createD2vIndex,
@@ -976,7 +976,7 @@ public class CollectionProperties extends JFrame {
 
 		JCheckBox[] box = new JCheckBox[objects.length];
 
-		for (int i = 0; i < objects.length; i++)
+		for (int i = 0, j = 11; i < objects.length; i++)
 		{
 			box[i] = new JCheckBox(Resource.getString(objects[i][0]));
 			box[i].setPreferredSize(new Dimension(270, 20));
@@ -986,12 +986,12 @@ public class CollectionProperties extends JFrame {
 			box[i].setSelected(getBooleanProperty(objects[i]));
 			box[i].addActionListener(_CheckBoxListener);
 
-			if (i == 10)
+			if (i == j)
 				box[i].setEnabled(false);
 		}
 
 		// left grid
-		for (int i = 0; i < 7; i++)
+		for (int i = 0; i < 8; i++)
 			video2Panel.add(box[i]);
 
 		video2.add(video2Panel);
@@ -1006,20 +1006,20 @@ public class CollectionProperties extends JFrame {
 		video3Panel.add(new JLabel(Resource.getString("ExternPanel.createM2sIndex")));
 
 		// right grid
-		video3Panel.add(box[7]);
+		video3Panel.add(box[8]);
 
 		video3Panel.add(Box.createRigidArea(new Dimension(1, 10)));
 
         video3Panel.add(new JLabel(Resource.getString("ExternPanel.createInfoLabel")));
 
-        video3Panel.add(box[8]);
+        video3Panel.add(box[9]);
 
         video3Panel.add(Box.createRigidArea(new Dimension(1, 10)));
 
 		video3Panel.add(new JLabel(Resource.getString("ExternPanel.createD2vIndex")));
 
 		// right grid
-		for (int i = 9; i < objects.length; i++)
+		for (int i = 10; i < objects.length; i++)
 			video3Panel.add(box[i]);
 
 		JTextField d2v_splitsize = new JTextField(getProperty(Keys.KEY_ExternPanel_ProjectFileSplitSize));

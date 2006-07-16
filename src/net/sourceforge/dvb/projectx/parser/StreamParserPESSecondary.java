@@ -52,7 +52,6 @@ import net.sourceforge.dvb.projectx.parser.CommonParsing;
 import net.sourceforge.dvb.projectx.parser.StreamConverter;
 import net.sourceforge.dvb.projectx.parser.StreamDemultiplexer;
 import net.sourceforge.dvb.projectx.parser.StreamParserBase;
-import net.sourceforge.dvb.projectx.parser.StreamProcess;
 
 
 /**
@@ -170,11 +169,9 @@ public class StreamParserPESSecondary extends StreamParserBase {
 		Hashtable substreams = new Hashtable();
 		StandardBuffer sb;
 
-		List demuxList = job_processing.getSecondaryPESDemuxList();
-
+		demuxList = job_processing.getSecondaryPESDemuxList();
 		demuxList.clear();
 
-		StreamDemultiplexer streamdemultiplexer = null;
 
 		try {
 
@@ -528,7 +525,7 @@ public class StreamParserPESSecondary extends StreamParserBase {
 						case 0xE0: 
 							IDtype = Resource.getString("idtype.mpeg.video.ignored");
 
-							streamdemultiplexer = new StreamDemultiplexer();
+							streamdemultiplexer = new StreamDemultiplexer(collection);
 							streamdemultiplexer.setID(pesID);
 							streamdemultiplexer.setsubID(0);
 							streamdemultiplexer.setType(CommonParsing.MPEG_VIDEO);
@@ -541,14 +538,14 @@ public class StreamParserPESSecondary extends StreamParserBase {
 						case 0xD0:
 							IDtype = Resource.getString("idtype.mpeg.audio"); 
 
-							streamdemultiplexer = new StreamDemultiplexer();
+							streamdemultiplexer = new StreamDemultiplexer(collection);
 							streamdemultiplexer.setID(pesID);
 							streamdemultiplexer.setsubID(0);
 							streamdemultiplexer.setType(CommonParsing.MPEG_AUDIO);
 							streamdemultiplexer.setStreamType(pes_streamtype);
 
 							demuxList.add(streamdemultiplexer);
-							streamdemultiplexer.init(fparent, MainBufferSize / demuxList.size(), demuxList.size(), CommonParsing.SECONDARY_PES_PARSER);
+							streamdemultiplexer.init(collection, fparent, MainBufferSize / demuxList.size(), demuxList.size(), CommonParsing.SECONDARY_PES_PARSER);
 
 							break; 
 						}
@@ -559,7 +556,7 @@ public class StreamParserPESSecondary extends StreamParserBase {
 							IDtype = Resource.getString("idtype.private.stream");
 							IDtype += (isTeletext ? " TTX ": "") + (subID != 0 ? " (SubID 0x" + Integer.toHexString(subID).toUpperCase() + ")" : ""); 
 
-							streamdemultiplexer = new StreamDemultiplexer();
+							streamdemultiplexer = new StreamDemultiplexer(collection);
 							streamdemultiplexer.setID(pesID);
 							streamdemultiplexer.setsubID(subID);
 
@@ -586,7 +583,7 @@ public class StreamParserPESSecondary extends StreamParserBase {
 							streamdemultiplexer.setStreamType(pes_streamtype);
 
 							demuxList.add(streamdemultiplexer);
-							streamdemultiplexer.init(fparent, MainBufferSize / demuxList.size(), demuxList.size(), CommonParsing.SECONDARY_PES_PARSER);
+							streamdemultiplexer.init(collection, fparent, MainBufferSize / demuxList.size(), demuxList.size(), CommonParsing.SECONDARY_PES_PARSER);
 
 							break; 
 						}
@@ -615,87 +612,7 @@ public class StreamParserPESSecondary extends StreamParserBase {
 
 			in.close(); 
 
-			int[] stream_number = new int[10];
-
-			for (int i = 0, es_streamtype; i < demuxList.size(); i++)
-			{
-				streamdemultiplexer = (StreamDemultiplexer) demuxList.get(i);
-				es_streamtype = streamdemultiplexer.getType();
-
-				if (es_streamtype == CommonParsing.MPEG_VIDEO) 
-					continue;
-
-				String[] values = streamdemultiplexer.close(job_processing, vptslog);
-
-				if (values[0].equals("")) 
-				{
-					Common.setMessage(Resource.getString("parseSecondaryPES.msg.noexport") + Integer.toHexString(streamdemultiplexer.getID()).toUpperCase() + ")");
-					continue;
-				}
-
-				String newfile = values[3] + (stream_number[es_streamtype] > 0 ? ("[" + stream_number[es_streamtype] + "]") : "") + "." + values[2];
-
-				Common.renameTo(values[0], newfile);
-
-				values[0] = newfile;
-				values[3] = vptslog;
-
-				switch (es_streamtype)
-				{
-				case CommonParsing.AC3_AUDIO:
-				case CommonParsing.DTS_AUDIO:
-					if ( streamdemultiplexer.subID() != 0 && (0xF0 & streamdemultiplexer.subID()) != 0x80 ) 
-						break;
-
-					Common.setMessage("");
-					Common.setMessage(Resource.getString("parseSecondaryPES.ac3.audio") + ((streamdemultiplexer.subID() != 0) ? ("(SubID 0x" + Integer.toHexString(streamdemultiplexer.subID()).toUpperCase()+")") : ""));
-
-					new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-					break;
-
-				case CommonParsing.TELETEXT: 
-					Common.setMessage("");
-					Common.setMessage(Resource.getString("parseSecondaryPES.teletext") + " (SubID 0x" + Integer.toHexString(streamdemultiplexer.subID()).toUpperCase() + ")");
-
-					new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-					break;
-
-				case CommonParsing.MPEG_AUDIO: 
-					Common.setMessage("");
-					Common.setMessage(Resource.getString("parseSecondaryPES.mpeg.audio") + " (0x" + Integer.toHexString(streamdemultiplexer.getID()).toUpperCase() + ")");
-
-					new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-					break;
-
-				case CommonParsing.LPCM_AUDIO:
-					Common.setMessage("");
-					Common.setMessage(Resource.getString("parseSecondaryPES.lpcm.audio") + " (SubID 0x" + Integer.toHexString(streamdemultiplexer.subID()).toUpperCase() + ")");
-
-					new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-					break;
-
-				case CommonParsing.SUBPICTURE:
-					Common.setMessage("");
-					Common.setMessage(Resource.getString("parseSecondaryPES.subpic") + " (SubID 0x" + Integer.toHexString(streamdemultiplexer.subID()).toUpperCase() + ")");
-
-					new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-					break;
-				}
-
-				stream_number[es_streamtype]++;
-
-				// save infos for output segmentation
-				tempfiles.add(values[0]);
-				tempfiles.add(aXInputFile);
-				tempfiles.add(values[1]);
-				tempfiles.add(values[2]);
-
-				if (job_processing.getSplitSize() == 0)
-				{
-					new File(newfile).delete();
-					new File(values[1]).delete();
-				}
-			}
+			processNonVideoElementaryStreams(vptslog, action, clv, collection, job_processing, tempfiles, aXInputFile);
 
 		} catch (IOException e2) { 
 

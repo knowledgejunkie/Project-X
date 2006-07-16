@@ -52,13 +52,21 @@ import net.sourceforge.dvb.projectx.parser.CommonParsing;
 import net.sourceforge.dvb.projectx.parser.StreamConverter;
 import net.sourceforge.dvb.projectx.parser.StreamDemultiplexer;
 import net.sourceforge.dvb.projectx.parser.StreamParserBase;
-import net.sourceforge.dvb.projectx.parser.StreamProcess;
 
 
 /**
  * main thread
  */
 public class StreamParserPESPrimary extends StreamParserBase {
+
+	private boolean Message_2;
+	private boolean Debug;
+	private boolean SimpleMPG;
+	private boolean GetEnclosedPackets;
+	private boolean IgnoreScrambledPackets;
+	private boolean PreviewAllGops;
+	private boolean DumpDroppedGop;
+	private boolean Overlap;
 
 	/**
 	 * 
@@ -73,26 +81,20 @@ public class StreamParserPESPrimary extends StreamParserBase {
 	 */
 	public String parseStream(JobCollection collection, XInputFile aXInputFile, int _pes_streamtype, int action, String vptslog)
 	{
-		String fchild = collection.getOutputName(aXInputFile.getName());
-		String fparent = collection.getOutputNameParent(fchild);
-
 		JobProcessing job_processing = collection.getJobProcessing();
 
-		/**
-		 * split part 
-		 */
-		fparent += job_processing.getSplitSize() > 0 ? "(" + job_processing.getSplitPart() + ")" : "" ;
+		setFileName(collection, job_processing, aXInputFile);
 
-		boolean Message_2 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
-		boolean Debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
-		boolean SimpleMPG = collection.getSettings().getBooleanProperty(Keys.KEY_simpleMPG);
-		boolean GetEnclosedPackets = collection.getSettings().getBooleanProperty(Keys.KEY_Input_getEnclosedPackets);
-		boolean IgnoreScrambledPackets = collection.getSettings().getBooleanProperty(Keys.KEY_TS_ignoreScrambled);
-		boolean PreviewAllGops = collection.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops);
-		boolean DumpDroppedGop = collection.getSettings().getBooleanProperty(Keys.KEY_dumpDroppedGop);
-		boolean CreateD2vIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
-		boolean SplitProjectFile = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
-		boolean Overlap = collection.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
+		Debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
+		Message_2 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
+		SimpleMPG = collection.getSettings().getBooleanProperty(Keys.KEY_simpleMPG);
+		GetEnclosedPackets = collection.getSettings().getBooleanProperty(Keys.KEY_Input_getEnclosedPackets);
+		IgnoreScrambledPackets = collection.getSettings().getBooleanProperty(Keys.KEY_TS_ignoreScrambled);
+		PreviewAllGops = collection.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops);
+		DumpDroppedGop = collection.getSettings().getBooleanProperty(Keys.KEY_dumpDroppedGop);
+		CreateD2vIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
+		SplitProjectFile = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
+		Overlap = collection.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
 
 		boolean isTeletext = false;
 		boolean missing_startcode = false;
@@ -147,13 +149,12 @@ public class StreamParserPESPrimary extends StreamParserBase {
 
 		vptslog = "-1"; //fix
 
-		StreamDemultiplexer streamdemultiplexer = null;
-		StreamConverter streamconverter = new StreamConverter();
+		streamconverter = new StreamConverter();
 
 		Hashtable substreams = new Hashtable();
 		StandardBuffer sb;
 
-		List demuxList = job_processing.getPrimaryPESDemuxList();
+		demuxList = job_processing.getPrimaryPESDemuxList();
 
 		/**
 		 * re-read old streams, for next split part
@@ -175,40 +176,23 @@ public class StreamParserPESPrimary extends StreamParserBase {
 
 				if (streamdemultiplexer.getType() == CommonParsing.MPEG_VIDEO)
 				{ 
-					streamdemultiplexer.initVideo2(fparent);
+					streamdemultiplexer.initVideo2(collection, fparent);
 
 					if (pesID0 == 0) //?
 						pesID0 = streamdemultiplexer.getID();
 				}
 				else 
-					streamdemultiplexer.init2(fparent);
+					streamdemultiplexer.init2(collection, fparent);
 			}
 		}
 
+		/**
+		 * init conversions 
+		 */
 		String mpeg_type_str = (Keys.ITEMS_FileTypes[pes_streamtype]).toString().toLowerCase();
 		mpeg_type_str = "[" + mpeg_type_str.substring(0, mpeg_type_str.indexOf(' ')) + "]";
 
-		switch (action)
-		{
-		case CommonParsing.ACTION_TO_VDR:
-			streamconverter.init(fparent + (job_processing.getSplitSize() == 0 ? mpeg_type_str : "") + ".vdr", MainBufferSize, action, job_processing.getSplitPart());
-			break;
-
-		case CommonParsing.ACTION_TO_M2P:
-			streamconverter.init(fparent + (job_processing.getSplitSize() == 0 ? mpeg_type_str : "") + ".m2p", MainBufferSize, action, job_processing.getSplitPart());
-			break;
-
-		case CommonParsing.ACTION_TO_PVA:
-			streamconverter.init(fparent + ".pva", MainBufferSize, action, job_processing.getSplitPart());
-			break;
-
-		case CommonParsing.ACTION_TO_TS:
-			streamconverter.init(fparent + ".ts", MainBufferSize, action, job_processing.getSplitPart());
-			break;
-
-		case CommonParsing.ACTION_FILTER:
-			streamconverter.init(fparent + "[filtered].pes", MainBufferSize, action, job_processing.getSplitPart());
-		}
+		initConversion(collection, fparent + (job_processing.getSplitSize() == 0 ? mpeg_type_str : ""), action, CommonParsing.ACTION_TO_VDR, job_processing.getSplitPart());
 
 		/**
 		 * d2v projectfile
@@ -879,7 +863,7 @@ public class StreamParserPESPrimary extends StreamParserBase {
 							case 0xE0:
 								IDtype = Resource.getString("idtype.mpeg.video");
 
-								streamdemultiplexer = new StreamDemultiplexer(ptsoffset);
+								streamdemultiplexer = new StreamDemultiplexer(collection, ptsoffset);
 								streamdemultiplexer.setID(pesID);
 								streamdemultiplexer.setType(CommonParsing.MPEG_VIDEO);
 								streamdemultiplexer.setnewID(newID[CommonParsing.MPEG_VIDEO]++);
@@ -891,7 +875,7 @@ public class StreamParserPESPrimary extends StreamParserBase {
 								if (pesID0 == 0 || pesID0 == pesID)
 								{ 
 									if (action == CommonParsing.ACTION_DEMUX) 
-										streamdemultiplexer.initVideo(fparent, MainBufferSize, demuxList.size(), CommonParsing.PRIMARY_PES_PARSER);
+										streamdemultiplexer.initVideo(collection, fparent, MainBufferSize, demuxList.size(), CommonParsing.PRIMARY_PES_PARSER);
 
 									else
 										IDtype += " " + Resource.getString("idtype.mapped.to") + Integer.toHexString(streamdemultiplexer.getnewID()).toUpperCase();
@@ -908,7 +892,7 @@ public class StreamParserPESPrimary extends StreamParserBase {
 							case 0xD0:
 								IDtype = Resource.getString("idtype.mpeg.audio"); 
 
-								streamdemultiplexer = new StreamDemultiplexer(ptsoffset);
+								streamdemultiplexer = new StreamDemultiplexer(collection, ptsoffset);
 								streamdemultiplexer.setID(pesID);
 								streamdemultiplexer.setType(CommonParsing.MPEG_AUDIO);
 								streamdemultiplexer.setnewID(newID[CommonParsing.MPEG_AUDIO]++);
@@ -918,7 +902,7 @@ public class StreamParserPESPrimary extends StreamParserBase {
 								demuxList.add(streamdemultiplexer);
 
 								if (action == CommonParsing.ACTION_DEMUX) 
-									streamdemultiplexer.init(fparent, MainBufferSize / demuxList.size(), demuxList.size(), CommonParsing.PRIMARY_PES_PARSER);
+									streamdemultiplexer.init(collection, fparent, MainBufferSize / demuxList.size(), demuxList.size(), CommonParsing.PRIMARY_PES_PARSER);
 	
 								else
 									IDtype += " " + Resource.getString("idtype.mapped.to") + Integer.toHexString(streamdemultiplexer.getnewID()).toUpperCase();
@@ -932,7 +916,7 @@ public class StreamParserPESPrimary extends StreamParserBase {
 								IDtype = Resource.getString("idtype.private.stream");
 								IDtype += (isTeletext ? " TTX " : "") + (subID != 0 ? " (SubID 0x" + Integer.toHexString(subID).toUpperCase() + ")" : ""); 
 
-								streamdemultiplexer = new StreamDemultiplexer(ptsoffset);
+								streamdemultiplexer = new StreamDemultiplexer(collection, ptsoffset);
 								streamdemultiplexer.setID(pesID);
 								streamdemultiplexer.setsubID(subID);
 								streamdemultiplexer.setTTX(isTeletext);
@@ -988,7 +972,7 @@ public class StreamParserPESPrimary extends StreamParserBase {
 									case CommonParsing.TELETEXT:
 									case CommonParsing.SUBPICTURE:
 									case CommonParsing.LPCM_AUDIO:
-										streamdemultiplexer.init(fparent, MainBufferSize / demuxList.size(), demuxList.size(), CommonParsing.PRIMARY_PES_PARSER);
+										streamdemultiplexer.init(collection, fparent, MainBufferSize / demuxList.size(), demuxList.size(), CommonParsing.PRIMARY_PES_PARSER);
 										break;
 
 									default:
@@ -1116,7 +1100,6 @@ public class StreamParserPESPrimary extends StreamParserBase {
 
 			}
 
-
 			/**
 			 * file end reached for split 
 			 */
@@ -1125,117 +1108,7 @@ public class StreamParserPESPrimary extends StreamParserBase {
 
 			in.close(); 
 
-
-			if (action != CommonParsing.ACTION_DEMUX) 
-				streamconverter.close(job_processing, CommonParsing.isInfoScan());
-
-			else
-			{
-				for (int i = 0, NumberOfVideostreams = 0; i < demuxList.size(); i++)
-				{
-					streamdemultiplexer = (StreamDemultiplexer) demuxList.get(i);
-
-					if (streamdemultiplexer.getType() == CommonParsing.MPEG_VIDEO)
-					{ 
-						/**
-						 * accept only first video
-						 */
-						if (NumberOfVideostreams > 0)
-						{
-							Common.setMessage("!> further videostream found (ID 0x" + Integer.toHexString(streamdemultiplexer.getID()).toUpperCase() + ") -> ignored");
-							continue;
-						}
-
-						/**
-						 * d2v project 
-						 */
-						if (CreateD2vIndex || SplitProjectFile)
-							job_processing.getProjectFileD2V().write(job_processing.getProjectFileExportLength(), job_processing.getExportedVideoFrameNumber());
-
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("video.msg.summary") + " " + job_processing.getExportedVideoFrameNumber() + "-" + clv[0] + "-" + clv[1] + "-" + clv[2] + "-" + clv[3] + "-" + clv[4]);
-
-						vptslog = streamdemultiplexer.closeVideo(job_processing, collection.getOutputDirectory() + collection.getFileSeparator());
-
-						NumberOfVideostreams++;
-					}
-				} 
-
-				//System.gc();
-
-				int[] stream_number = new int[10]; 
-
-				for (int i = 0, es_streamtype; i < demuxList.size(); i++)
-				{
-					streamdemultiplexer = (StreamDemultiplexer) demuxList.get(i);
-					es_streamtype = streamdemultiplexer.getType();
-
-					if (es_streamtype == CommonParsing.MPEG_VIDEO) 
-						continue;
-
-					String[] values = streamdemultiplexer.close(job_processing, vptslog);
-
-					if (values[0].equals("")) 
-					{
-						Common.setMessage(Resource.getString("parsePrimaryPES.msg.noexport") + Integer.toHexString(streamdemultiplexer.getID()).toUpperCase() + ")");
-						continue;
-					}
-
-					String newfile = values[3] + (stream_number[es_streamtype] > 0 ? ("[" + stream_number[es_streamtype] + "]") : "") + "." + values[2];
-
-					Common.renameTo(values[0], newfile);
-		
-					values[0] = newfile;
-					values[3] = vptslog;
-
-					switch (es_streamtype)
-					{
-					case CommonParsing.AC3_AUDIO:
-					case CommonParsing.DTS_AUDIO:
-						if (streamdemultiplexer.subID() != 0 && (0xF0 & streamdemultiplexer.subID()) != 0x80) 
-							break;
-
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("parsePrimaryPES.ac3") + " " + (streamdemultiplexer.subID() != 0 ? ("(SubID 0x" + Integer.toHexString(streamdemultiplexer.subID()).toUpperCase() + ")") : ""));
-
-						new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-						break;
-
-					case CommonParsing.TELETEXT: 
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("parsePrimaryPES.teletext") + Integer.toHexString(streamdemultiplexer.subID()).toUpperCase() + ")");
-
-						new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-						break;
-
-					case CommonParsing.MPEG_AUDIO: 
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("parsePrimaryPES.mpeg.audio") + Integer.toHexString(streamdemultiplexer.getID()).toUpperCase() + ")");
-
-						new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-						break;
-	
-					case CommonParsing.LPCM_AUDIO:
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("parsePrimaryPES.lpcm.audio") + Integer.toHexString(streamdemultiplexer.subID()).toUpperCase() + ")");
-
-						new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-						break;
-
-					case CommonParsing.SUBPICTURE:
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("parsePrimaryPES.subpic") + Integer.toHexString(streamdemultiplexer.subID()).toUpperCase() + ")");
-
-						new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-						break;
-					}
-
-					stream_number[es_streamtype]++;
-
-					new File(newfile).delete();
-					new File(values[1]).delete();
-				}
-			}
+			vptslog = processElementaryStreams(vptslog, action, clv, collection, job_processing);
 
 		} catch (IOException e2) { 
 
@@ -1244,5 +1117,4 @@ public class StreamParserPESPrimary extends StreamParserBase {
 
 		return vptslog;
 	}
-
 }

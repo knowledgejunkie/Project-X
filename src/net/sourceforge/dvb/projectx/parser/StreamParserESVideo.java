@@ -80,20 +80,16 @@ public class StreamParserESVideo extends StreamParserBase {
 	 */
 	public String parseStream(JobCollection collection, XInputFile aXInputFile, int pes_streamtype, int action, String vptslog)
 	{
-		String fchild = collection.getOutputName(aXInputFile.getName());
-		String fparent = collection.getOutputNameParent(fchild);
-
 		JobProcessing job_processing = collection.getJobProcessing();
 
-		/**
-		 * split part 
-		 */
-		fparent += job_processing.getSplitSize() > 0 ? "(" + job_processing.getSplitPart() + ")" : ".new" ;
+		setFileName(collection, job_processing, aXInputFile, ".new");
 
         boolean CreateInfoIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createInfoIndex);
 		boolean CreateM2sIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createM2sIndex);
-		boolean CreateD2vIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
-		boolean SplitProjectFile = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
+
+		CreateD2vIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
+		SplitProjectFile = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
+
 		boolean WriteVideo = collection.getSettings().getBooleanProperty(Keys.KEY_WriteOptions_writeVideo);
 		boolean AddSequenceEndcode = collection.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_addEndcode);
 		boolean RenameVideo = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_renameVideo);
@@ -137,7 +133,7 @@ public class StreamParserESVideo extends StreamParserBase {
 		Common.updateProgressBar(Resource.getString("video.progress") + " " + fchild, 0, 0);
 
 
-		StreamDemultiplexer streamdemultiplexer = new StreamDemultiplexer();
+		streamdemultiplexer = new StreamDemultiplexer(collection);
 
 		try {
 

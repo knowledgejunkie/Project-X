@@ -204,6 +204,7 @@ public class Keys extends Object {
 	public final static String[] KEY_ExternPanel_splitProjectFile = { "ExternPanel.splitProjectFile", "0" }; //cbox[30] !!
 	public final static String[] KEY_ExternPanel_ProjectFileSplitSize = { "ExternPanel.ProjectFileSplitSize", "2048" }; 
     public final static String[] KEY_ExternPanel_createInfoIndex = { "ExternPanel.createInfoIndex", "0" };
+	public final static String[] KEY_ExternPanel_appendPidToFileName = { "ExternPanel.appendPidToFileName", "0" };
 
 	public final static String[] KEY_killFtpClient = { "FtpPanel.killFtpClient", "0" }; //cbox[80] !!
 	public final static String[] KEY_useFtpServerResume = { "FtpPanel.useFtpServerResume", "1" };

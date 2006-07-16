@@ -246,7 +246,7 @@ public class ProcessWindow extends JFrame {
 		fileMenu.addSeparator();
 
 		JCheckBoxMenuItem closeOnEnd = new JCheckBoxMenuItem(Resource.getString(Keys.KEY_closeOnEnd[0]));
-		closeOnEnd.setToolTipText(Resource.getString(Keys.KEY_closeOnEnd[0]) + Keys.KEY_Tip);
+		closeOnEnd.setToolTipText(Resource.getString(Keys.KEY_closeOnEnd[0] + Keys.KEY_Tip));
 		closeOnEnd.setActionCommand(Keys.KEY_closeOnEnd[0]);
 		closeOnEnd.setState(Common.getSettings().getBooleanProperty(Keys.KEY_closeOnEnd));
 		closeOnEnd.addActionListener(_BoxListener);

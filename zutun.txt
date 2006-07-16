@@ -264,6 +264,7 @@ danach:
 --fix dvb subpicture - falsche farben bei verschiedenen farbtabellen pro region
 --vobsub + idx erzeugen aus teletext + sup input
 --vid von koscom anpassung
+--pid in dateinamen
 -test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding
 !!ac3 2/0 128kbs wg vro hinzufügen, ac3 5.1 256, 320kb stille 
 !!ac3 384 wird nicht als Stille genommen, restart wenn 5.1 größer detektiert wird
@@ -273,34 +274,36 @@ danach:
 !!multi-vob - fortlaufende pts nicht erkannt bei nächster cellid (nach einer erfoglten anpassung früher)
 !!info anzeige von kurzepg o.ä. in TS
 !!dvdlap index
+!!fehlzuordnung ttx aus ts zu ac3
 
 !!-pes parser keine vorauswahl von headern ba,ff,f0 etc mehr, mit loggen
 !!-0xBE -> arte_ut fra, scan von pes ändern
 
 !!hav sektoren prüfen, nur melden
-!!-auto split mpa, wenn dual detektiert?
-!!-profile hd,mpg reseted,vob, etc ermöglichen?
-!!-MPAD überarbeiten, nicht mehr statisch; decode: arrays.fill statt new init ca. 20% schneller
-!!-ac3 bitraten patch mit CRC neu berechnung (bitraten neuerdings fast immer gleichbleibend)
-!!-info .00 sek, :00 frame, ;00 dropframes (semikoloon)
+!!auto split mpa, wenn dual detektiert?
+!!profile hd,mpg reseted,vob, etc ermöglichen?
+!!MPAD überarbeiten, nicht mehr statisch; decode: arrays.fill statt new init ca. 20% schneller
+!!ac3 bitraten patch mit CRC neu berechnung (bitraten neuerdings fast immer gleichbleibend)
+!!info .00 sek, :00 frame, ;00 dropframes (semikoloon)
 !-h264 ? zzt nur info
-!!-finepass wrapper,humax wrapper,vcd-svcd-image wrapper etc evtl. übergeordnet?
-!!-avi(bmp)film zu .sup
-!!-fixes array für gops verwenden (max 6MB)
-!!-id3tag infos anzeigen
+!!finepass wrapper,humax wrapper,vcd-svcd-image wrapper etc evtl. übergeordnet?
+!!avi(bmp)film zu .sup
+!!fixes array für gops verwenden (max 6MB)
+!!id3tag infos anzeigen
 !-ftp,dll access als status , falls nicht verfügbar, apache libs optional machen, dann ohne ftp
-!!-dvb-subs,  besonderer hinweis: pagenumber definieren "http://www.cs.helsinki.fi/u/mikkila/son2srt/"
+!!dvb-subs,  besonderer hinweis: pagenumber definieren "http://www.cs.helsinki.fi/u/mikkila/son2srt/"
+!!dvb-subs,  pagenumber ausgelesen aus pmt?
 !!-vbvbuffer bei mpeg1 nicht?
 !!-ts-pid-wechseln folgen
 <<-mpa crc berechung optimiern, bitweise erschwert.
 !-audiozusammenfassen, mpa,ac3,dts, tlw
-!!-projektdateiexport zusammenfassen
-!!-pegel graf audiodecode
-!!--vorschau erweitert umringgops
-!!-pmt 0xC3 -> string epg - nur inter Typ 0 - mtv2 cyfra 11282v hotbird 
+!!projektdateiexport zusammenfassen
+!!pegel graf audiodecode
+!!vorschau erweitert umringgops
+!!pmt 0xC3 -> string epg - nur inter Typ 0 - mtv2 cyfra 11282v hotbird 
 !-PAT mit adaptionfield ?? 6400 10977 h 16°E, neue klasse
 !!sendername aus SDT anzeigen?
-!!dvb-subs,  pagenumber ausgelesen aus pmt?
+
 
 //
 java.applet.AudioClip ac = java.applet.Applet.newAudioClip(Resource.getResourceURL("bsp.wav"));

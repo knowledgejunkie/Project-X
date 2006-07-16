@@ -48,7 +48,6 @@ import net.sourceforge.dvb.projectx.parser.CommonParsing;
 import net.sourceforge.dvb.projectx.parser.StreamConverter;
 import net.sourceforge.dvb.projectx.parser.StreamDemultiplexer;
 import net.sourceforge.dvb.projectx.parser.StreamParserBase;
-import net.sourceforge.dvb.projectx.parser.StreamProcess;
 
 
 /**
@@ -92,15 +91,9 @@ public class StreamParserPVA extends StreamParserBase {
 	 */
 	public String parseStream(JobCollection collection, XInputFile aPvaXInputFile, int pes_streamtype, int action, String vptslog)
 	{
-		String fchild = collection.getOutputName(aPvaXInputFile.getName());
-		String fparent = collection.getOutputNameParent(fchild);
-
 		JobProcessing job_processing = collection.getJobProcessing();
 
-		/**
-		 * split part 
-		 */
-		fparent += job_processing.getSplitSize() > 0 ? "(" + job_processing.getSplitPart() + ")" : "" ;
+		setFileName(collection, job_processing, aPvaXInputFile);
 
 		boolean Message_1 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg1);
 		boolean Message_2 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
@@ -108,8 +101,10 @@ public class StreamParserPVA extends StreamParserBase {
 		boolean Debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
 		boolean OverlapCheck = collection.getSettings().getBooleanProperty(Keys.KEY_PVA_FileOverlap);
 		boolean Concatenate = collection.getSettings().getBooleanProperty(Keys.KEY_Input_concatenateForeignRecords);
-		boolean CreateD2vIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
-		boolean SplitProjectFile = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
+
+		CreateD2vIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
+		SplitProjectFile = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
+
 		boolean Overlap = collection.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
 
 		boolean containsPts = false;
@@ -166,10 +161,10 @@ public class StreamParserPVA extends StreamParserBase {
 
 		RawFile rawfile = null;
 		StreamBuffer streambuffer = null;
-		StreamDemultiplexer streamdemultiplexer = null;
-		StreamConverter streamconverter = new StreamConverter();
+		streamconverter = new StreamConverter();
 
-		List demuxList = job_processing.getPVADemuxList();
+		demuxList = job_processing.getPVADemuxList();
+
 		List PVAPidlist = job_processing.getPVAPidList();
 
 		/**
@@ -200,38 +195,17 @@ public class StreamParserPVA extends StreamParserBase {
 					continue;
 
 				if (streamdemultiplexer.getType() == CommonParsing.MPEG_VIDEO) 
-					streamdemultiplexer.initVideo2(fparent);
+					streamdemultiplexer.initVideo2(collection, fparent);
 
 				else 
-					streamdemultiplexer.init2(fparent);
+					streamdemultiplexer.init2(collection, fparent);
 			}
 		}
 
 		/**
 		 * init conversions 
 		 */
-		switch (action)
-		{
-		case CommonParsing.ACTION_TO_VDR:
-			streamconverter.init(fparent + ".vdr", MainBufferSize, action, job_processing.getSplitPart());
-			break;
-
-		case CommonParsing.ACTION_TO_M2P:
-			streamconverter.init(fparent + ".m2p", MainBufferSize, action, job_processing.getSplitPart());
-			break;
-
-		case CommonParsing.ACTION_TO_PVA:
-			streamconverter.init(fparent + ".new.pva", MainBufferSize, action, job_processing.getSplitPart());
-			break;
-
-		case CommonParsing.ACTION_TO_TS:
-			streamconverter.init(fparent + ".ts", MainBufferSize, action, job_processing.getSplitPart());
-			break;
-
-		case CommonParsing.ACTION_FILTER:
-			streamconverter.init(fparent + "[filtered].pva", MainBufferSize, action, job_processing.getSplitPart());
-		}
-
+		initConversion(collection, fparent, action, CommonParsing.ACTION_TO_PVA, job_processing.getSplitPart());
 
 		/**
 		 * d2v project 
@@ -644,7 +618,7 @@ public class StreamParserPVA extends StreamParserBase {
 						{
 						case 1:
 							IDtype=Resource.getString("idtype.video");
-							streamdemultiplexer = new StreamDemultiplexer(ptsoffset);
+							streamdemultiplexer = new StreamDemultiplexer(collection, ptsoffset);
 
 							streambuffer.setStarted(true);
 
@@ -659,7 +633,7 @@ public class StreamParserPVA extends StreamParserBase {
 							demuxList.add(streamdemultiplexer);
 
 							if (action == CommonParsing.ACTION_DEMUX) 
-								streamdemultiplexer.initVideo(fparent, MainBufferSize, demuxList.size(), CommonParsing.PVA_PARSER);
+								streamdemultiplexer.initVideo(collection, fparent, MainBufferSize, demuxList.size(), CommonParsing.PVA_PARSER);
 							else 
 								IDtype += " " + Resource.getString("idtype.mapped.to.e0") + streamtypes[3];
 
@@ -683,7 +657,7 @@ public class StreamParserPVA extends StreamParserBase {
 								break; 
 							}
 
-							streamdemultiplexer = new StreamDemultiplexer(ptsoffset);
+							streamdemultiplexer = new StreamDemultiplexer(collection, ptsoffset);
 
 							streambuffer.setStarted(true);
 
@@ -704,7 +678,7 @@ public class StreamParserPVA extends StreamParserBase {
 							IDtype += " " + Resource.getString("idtype.has.pesid") + Integer.toHexString(streamID).toUpperCase() + " " + streamtypes[streamdemultiplexer.getType()];
 
 							if (action == CommonParsing.ACTION_DEMUX) 
-								streamdemultiplexer.init(fparent, MainBufferSize / demuxList.size(), demuxList.size(), CommonParsing.PVA_PARSER);
+								streamdemultiplexer.init(collection, fparent, MainBufferSize / demuxList.size(), demuxList.size(), CommonParsing.PVA_PARSER);
 							else 
 								IDtype += " " + Resource.getString("idtype.mapped.to") + Integer.toHexString(streamdemultiplexer.getnewID()).toUpperCase();
 
@@ -899,117 +873,7 @@ public class StreamParserPVA extends StreamParserBase {
 
 			in.close(); 
 
-			if (action != CommonParsing.ACTION_DEMUX) 
-				streamconverter.close(job_processing, CommonParsing.isInfoScan());
-
-			else
-			{
-				for (int i = 0, NumberOfVideostreams = 0; i < demuxList.size(); i++)
-				{
-					streamdemultiplexer = (StreamDemultiplexer)demuxList.get(i);
-
-					if (streamdemultiplexer.getType() == CommonParsing.MPEG_VIDEO)
-					{ 
-						/**
-						 * accept only first video
-						 */
-						if (NumberOfVideostreams > 0)
-						{
-							Common.setMessage("!> further videostream found (ID 0x" + Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase() + ") -> ignored");
-							continue;
-						}
-
-						/**
-						 * d2v project 
-						 */
-						if (CreateD2vIndex || SplitProjectFile)
-							job_processing.getProjectFileD2V().write(job_processing.getProjectFileExportLength(), job_processing.getExportedVideoFrameNumber());
-
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("video.msg.summary") + " " + job_processing.getExportedVideoFrameNumber() + "-" + clv[0] + "-" + clv[1] + "-" + clv[2] + "-" + clv[3] + "-" + clv[4]);
-
-						vptslog = streamdemultiplexer.closeVideo(job_processing, collection.getOutputDirectory() + collection.getFileSeparator());
-
-						NumberOfVideostreams++;
-					}
-				} 
-
-				int[] stream_number = new int[10];
-
-				for (int i = 0, es_streamtype; i < demuxList.size(); i++)
-				{
-					streamdemultiplexer = (StreamDemultiplexer)demuxList.get(i);
-					es_streamtype = streamdemultiplexer.getType();
-
-					if (es_streamtype == CommonParsing.MPEG_VIDEO) 
-						continue;
-
-					if (streamdemultiplexer.getID() == 0) 
-						continue;
-
-					String[] values = streamdemultiplexer.close(job_processing, vptslog);
-
-					if (values[0].equals(""))
-					{
-						Common.setMessage(Resource.getString("parsePVA.msg.noexport") + Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase() + " (0x" + Integer.toHexString(streamdemultiplexer.getID()).toUpperCase() + ")");
-						continue;
-					}
-
-					String newfile = values[3] + ( stream_number[es_streamtype] > 0 ? ("[" + stream_number[es_streamtype] + "]") : "") + "." + values[2];
-
-					Common.renameTo(values[0], newfile);
-
-					values[0] = newfile;
-					values[3] = vptslog;
-
-					switch (es_streamtype)
-					{
-					case CommonParsing.AC3_AUDIO:
-					case CommonParsing.DTS_AUDIO:
-						if (streamdemultiplexer.subID() != 0 && (0xF0 & streamdemultiplexer.subID()) != 0x80)
-							break;
-
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("parsePVA.ac3.onid") + Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase() + " " + ((streamdemultiplexer.subID() != 0) ? ("(SubID 0x" + Integer.toHexString(streamdemultiplexer.subID()).toUpperCase() + ")") : ""));
-
-						new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-						break;
-
-					case CommonParsing.TELETEXT: 
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("parsePVA.teletext.onid") + Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase() + " (SubID 0x" + Integer.toHexString(streamdemultiplexer.subID()).toUpperCase() + ")");
-
-						new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-						break;
-
-					case CommonParsing.MPEG_AUDIO: 
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("parsePVA.mpeg.audio.onid") + Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase() + " (0x" + Integer.toHexString(streamdemultiplexer.getID()).toUpperCase() + ")");
-
-						new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-						break;
-
-					case CommonParsing.LPCM_AUDIO:
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("parsePVA.lpcm.onid") + Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase() + " (SubID 0x" + Integer.toHexString(streamdemultiplexer.subID()).toUpperCase() + ")");
-
-						new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-						break;
-
-					case CommonParsing.SUBPICTURE:
-						Common.setMessage("");
-						Common.setMessage(Resource.getString("parsePVA.subpicture.onid") + Integer.toHexString(streamdemultiplexer.getPID()).toUpperCase() + " (SubID 0x" + Integer.toHexString(streamdemultiplexer.subID()).toUpperCase() + ")");
-
-						new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-						break;
-					}
-
-					stream_number[es_streamtype]++;
-
-					new File(newfile).delete();
-					new File(values[1]).delete();
-				}
-			}
+			vptslog = processElementaryStreams(vptslog, action, clv, collection, job_processing);
 
 			if (job_processing.getSplitSize() == 0)
 			{
@@ -1030,3 +894,4 @@ public class StreamParserPVA extends StreamParserBase {
 
 
 }
+

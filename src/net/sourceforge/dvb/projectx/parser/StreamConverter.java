@@ -39,6 +39,7 @@ import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.common.Keys;
 import net.sourceforge.dvb.projectx.common.JobProcessing;
+import net.sourceforge.dvb.projectx.common.JobCollection;
 
 import net.sourceforge.dvb.projectx.io.IDDBufferedOutputStream;
 import net.sourceforge.dvb.projectx.thirdparty.TS;
@@ -121,27 +122,27 @@ public class StreamConverter extends Object {
 	/**
 	 *
 	 */
-	private void getSettings()
+	private void getSettings(JobCollection collection)
 	{
-		ExportVideo = Common.getSettings().getBooleanProperty(Keys.KEY_WriteOptions_writeVideo);
-		ExportNonVideo = Common.getSettings().getBooleanProperty(Keys.KEY_WriteOptions_writeAudio);
-		Debug = Common.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
-		PCR_Delta = Long.parseLong(Common.getSettings().getProperty(Keys.KEY_PcrDelta_Value));
-		CutMode = Common.getSettings().getIntProperty(Keys.KEY_CutMode);
-		AddPcrToStream = Common.getSettings().getBooleanProperty(Keys.KEY_Conversion_addPcrToStream);
-		MustStartWithVideo = Common.getSettings().getBooleanProperty(Keys.KEY_Conversion_startWithVideo);
-		SetMainAudioAc3 = Common.getSettings().getBooleanProperty(Keys.KEY_TS_setMainAudioAc3);
-		GenerateTTX = Common.getSettings().getBooleanProperty(Keys.KEY_TS_generateTtx);
-		GeneratePMT = Common.getSettings().getBooleanProperty(Keys.KEY_TS_generatePmt);
-		TsHeaderMode = Common.getSettings().getIntProperty(Keys.KEY_TsHeaderMode);
-		PcrCounter = Common.getSettings().getBooleanProperty(Keys.KEY_Conversion_PcrCounter);
-		CreateVdrIndex = Common.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createVdrIndex);
+		ExportVideo = collection.getSettings().getBooleanProperty(Keys.KEY_WriteOptions_writeVideo);
+		ExportNonVideo = collection.getSettings().getBooleanProperty(Keys.KEY_WriteOptions_writeAudio);
+		Debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
+		PCR_Delta = collection.getSettings().getIntProperty(Keys.KEY_PcrDelta_Value);
+		CutMode = collection.getSettings().getIntProperty(Keys.KEY_CutMode);
+		AddPcrToStream = collection.getSettings().getBooleanProperty(Keys.KEY_Conversion_addPcrToStream);
+		MustStartWithVideo = collection.getSettings().getBooleanProperty(Keys.KEY_Conversion_startWithVideo);
+		SetMainAudioAc3 = collection.getSettings().getBooleanProperty(Keys.KEY_TS_setMainAudioAc3);
+		GenerateTTX = collection.getSettings().getBooleanProperty(Keys.KEY_TS_generateTtx);
+		GeneratePMT = collection.getSettings().getBooleanProperty(Keys.KEY_TS_generatePmt);
+		TsHeaderMode = collection.getSettings().getIntProperty(Keys.KEY_TsHeaderMode);
+		PcrCounter = collection.getSettings().getBooleanProperty(Keys.KEY_Conversion_PcrCounter);
+		CreateVdrIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createVdrIndex);
 	}
 
 	/**
 	 *
 	 */
-	public void init(String _name, int buffersize, int action, int filenumber)
+	public void init(JobCollection collection, String _name, int buffersize, int action, int filenumber)
 	{
 		FileName = _name;
 
@@ -158,7 +159,7 @@ public class StreamConverter extends Object {
 		SCR_Value = 0;
 		Packet = 0;
 
-		getSettings();
+		getSettings(collection);
 
 		Arrays.fill(StuffingData, (byte)0xFF);
 
