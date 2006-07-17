@@ -491,11 +491,12 @@ public class StreamParserBase extends Object {
 
 			if (values[0].equals("")) 
 			{
-				Common.setMessage(formatIDString(Resource.getString("StreamParser.NoExport"), streamdemultiplexer.getPID(), streamdemultiplexer.getID(), streamdemultiplexer.subID()));
+				Common.setMessage(formatIDString(Resource.getString("StreamParser.NoExport"), streamdemultiplexer.getPID(), 0xFF & streamdemultiplexer.getID(), streamdemultiplexer.subID()));
 				continue;
 			}
 
-			String newfile = values[3] + (stream_number[es_streamtype] > 0 ? ("[" + stream_number[es_streamtype] + "]") : "") + "." + values[2];
+		//	String newfile = values[3] + (stream_number[es_streamtype] > 0 ? ("[" + stream_number[es_streamtype] + "]") : "") + "." + values[2];
+			String newfile = values[3] + (stream_number[es_streamtype] > 0 ? ("-" + Common.adaptString(stream_number[es_streamtype], 2)) : "") + "." + values[2];
 
 			Common.renameTo(values[0], newfile);
 		

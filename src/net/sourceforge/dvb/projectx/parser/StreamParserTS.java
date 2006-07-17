@@ -566,13 +566,10 @@ public class StreamParserTS extends StreamParserBase {
 					}
 
 					/**
-					 * 00 = reserved value
+					 * 00 = reserved value, do not message it, it's used e.g. in padding stream 0x1FFF
 					 */
 					if ((ts_adaptionfield & 1) == 0)
-					{
-						Common.setMessage(Resource.getString("parseTS.bit.error", Integer.toHexString(ts_pid).toUpperCase(), "" + packet, "" + (count-188)) + " - wrong ts_adaptionfield");
 						continue loop;
-					}
 
 					if (ts_adaptionfieldlength > 183 || (ts_adaptionfieldlength > 180 && ts_startunit))
 						ts_hasErrors = true;

@@ -731,8 +731,11 @@ public class StreamDemultiplexer extends Object {
 
 			if (new File(FileName).length() < 10)
 			{
+				Common.setMessage("-> temp. Filesize < 10 Bytes");
+
 				new File(FileName).delete();
 				new File(pts_log_name).delete();
+
 				parameters[0] = "";
 			}
 
@@ -757,10 +760,10 @@ public class StreamDemultiplexer extends Object {
 	{
 		String str = "";
 
-		str += "[0x" + Common.adaptString(Integer.toHexString(pid).toUpperCase(), 4);
+		str += "{0x" + Common.adaptString(Integer.toHexString(pid).toUpperCase(), 4);
 		str += "-0x" + Common.adaptString(Integer.toHexString(id).toUpperCase(), 2);
 		str += "-0x" + Common.adaptString(Integer.toHexString(subid).toUpperCase(), 2);
-		str += "]";
+		str += "}";
 
 		return str;
 	}
