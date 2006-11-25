@@ -72,7 +72,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -515,6 +514,15 @@ public class MainProcess extends Thread {
 		//sPES->MPG
 		messageSetting(collection, Keys.KEY_enhancedPES);
 
+		messageSetting(collection, Keys.KEY_MessagePanel_Msg1);
+		messageSetting(collection, Keys.KEY_MessagePanel_Msg2);
+		messageSetting(collection, Keys.KEY_MessagePanel_Msg3);
+		messageSetting(collection, Keys.KEY_MessagePanel_Msg5);
+		messageSetting(collection, Keys.KEY_MessagePanel_Msg6);
+		messageSetting(collection, Keys.KEY_MessagePanel_Msg7);
+		messageSetting(collection, Keys.KEY_MessagePanel_Msg8);
+
+
 		//split
 		if (collection.getSettings().getBooleanProperty(Keys.KEY_SplitSize))
 			Common.setMessage(Resource.getString("run.split.output") + " " + collection.getSettings().getProperty(Keys.KEY_ExportPanel_SplitSize_Value) + " MB");
@@ -885,10 +893,7 @@ public class MainProcess extends Thread {
 						if (!CommonParsing.getPvaPidExtraction()) 
 							Common.setMessage(convertType[action]);
 
-						if (Common.getSettings().getBooleanProperty(Keys.KEY_enhancedPES))
-							vptslog = (new StreamParser(CommonParsing.PRIMARY_PES_PARSER)).parseStream(collection, xInputFile, CommonParsing.MPEG2PS_TYPE, action, vptslog);
-						else
-							vptslog = (new StreamParser(CommonParsing.PRIMARY_PES_PARSER)).parseStream(collection, xInputFile, filetype, action, vptslog);
+						vptslog = (new StreamParser(CommonParsing.PRIMARY_PES_PARSER)).parseStream(collection, xInputFile, Common.getSettings().getBooleanProperty(Keys.KEY_enhancedPES) ? CommonParsing.MPEG2PS_TYPE : filetype, action, vptslog);
 
 						if (action == CommonParsing.ACTION_DEMUX) 
 							CommonParsing.resetSplitMode(job_processing, vptslog);
@@ -922,10 +927,7 @@ public class MainProcess extends Thread {
 						if (!CommonParsing.getPvaPidExtraction()) 
 							Common.setMessage(convertType[action]);
 
-						if (Common.getSettings().getBooleanProperty(Keys.KEY_simpleMPG))
-							vptslog = (new StreamParser(CommonParsing.PRIMARY_PES_PARSER)).parseStream(collection, xInputFile, CommonParsing.PES_AV_TYPE, action, vptslog);
-						else
-							vptslog = (new StreamParser(CommonParsing.PRIMARY_PES_PARSER)).parseStream(collection, xInputFile, filetype, action, vptslog);
+						vptslog = (new StreamParser(CommonParsing.PRIMARY_PES_PARSER)).parseStream(collection, xInputFile, Common.getSettings().getBooleanProperty(Keys.KEY_simpleMPG) ? CommonParsing.PES_AV_TYPE : filetype, action, vptslog);
 
 						if (action == CommonParsing.ACTION_DEMUX) 
 							CommonParsing.resetSplitMode(job_processing, vptslog);
@@ -981,10 +983,7 @@ public class MainProcess extends Thread {
 						if (!CommonParsing.getPvaPidExtraction()) 
 							Common.setMessage(convertType[action]);
 
-						if (Common.getSettings().getBooleanProperty(Keys.KEY_enhancedPES))
-							vptslog = (new StreamParser(CommonParsing.PRIMARY_PES_PARSER)).parseStream(collection, xInputFile, CommonParsing.MPEG2PS_TYPE, action, vptslog);
-						else
-							vptslog = (new StreamParser(CommonParsing.PRIMARY_PES_PARSER)).parseStream(collection, xInputFile, CommonParsing.PES_AV_TYPE, action, vptslog);
+						vptslog = (new StreamParser(CommonParsing.PRIMARY_PES_PARSER)).parseStream(collection, xInputFile, Common.getSettings().getBooleanProperty(Keys.KEY_enhancedPES) ? CommonParsing.MPEG2PS_TYPE : CommonParsing.PES_AV_TYPE, action, vptslog);
 
 						if (action == CommonParsing.ACTION_DEMUX) 
 							CommonParsing.resetSplitMode(job_processing, vptslog);
@@ -1055,7 +1054,6 @@ public class MainProcess extends Thread {
 		}
 
 		Common.setMessage("=> " + Common.formatNumber(job_processing.getMediaFilesExportLength()) + " " + Resource.getString("working.bytes.written"));
-
 		Common.setMessage(Resource.getString("all.msg.error.summary", String.valueOf(Common.getErrorCount())));
 
 		File mpegvideolog = new File(vptslog);
@@ -1066,8 +1064,6 @@ public class MainProcess extends Thread {
 		collection.closeDebugLogStream();
 		collection.closeNormalLogStream(Common.getMessageLog());
 
-		//Common.clearMessageLog();
-
 		/**
 		 * delete tempfiles which have been multi-used 
 		 */
@@ -1075,10 +1071,13 @@ public class MainProcess extends Thread {
 
 		if (!tempfiles.isEmpty())
 		{
+Common.setMessage("del " + tempfiles);
+/**
 			for (int i = 0; i < tempfiles.size(); i += 2)
 				if ( new File(tempfiles.get(i).toString()).exists() ) 
 					new File(tempfiles.get(i).toString()).delete();
 
+**/
 			tempfiles.clear();
 		}
 

@@ -1,5 +1,14 @@
 #! /bin/bash
-# Build script for ProjectX under Linux 
+# Build script for ProjectX under Linux
+
+# check prerequisites
+type javac >/dev/null 2>&1
+if [ $? -ne 0 ] ; then
+  echo "javac not found in \$PATH" >&2
+  echo "Please install the JAVA compiler before calling this
+script!" >&2
+  exit 1
+fi
 
 if [ -e ./ProjectX.jar ] ; then
   rm -f ./ProjectX.jar

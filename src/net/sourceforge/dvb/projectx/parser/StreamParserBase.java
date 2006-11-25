@@ -45,6 +45,7 @@ import net.sourceforge.dvb.projectx.parser.StreamDemultiplexer;
 import net.sourceforge.dvb.projectx.parser.StreamProcess;
 
 import java.util.List;
+import java.util.Hashtable;
 
 /**
  * main thread
@@ -59,6 +60,7 @@ public class StreamParserBase extends Object {
 	public static StreamConverter streamconverter;
 
 	public static List demuxList;
+	public static Hashtable streamobjects;
 
 	public static boolean CreateD2vIndex;
 	public static boolean SplitProjectFile;
@@ -90,6 +92,7 @@ public class StreamParserBase extends Object {
 		streamdemultiplexer = null;
 		streamconverter = null;
 		demuxList = null;
+		streamobjects = null;
 
 		CreateD2vIndex = false;
 		SplitProjectFile = false;
@@ -418,6 +421,14 @@ public class StreamParserBase extends Object {
 	/**
 	 * 
 	 */
+	public Hashtable getStreamObjects(JobProcessing job_processing)
+	{
+		return job_processing.getStreamObjects();
+	}
+
+	/**
+	 * 
+	 */
 	public String processElementaryStreams(String vptslog, int action, int[] clv, JobCollection collection, JobProcessing job_processing)
 	{
 		if (action != CommonParsing.ACTION_DEMUX)
@@ -473,7 +484,18 @@ public class StreamParserBase extends Object {
 	public void processNonVideoElementaryStreams(String vptslog, int action, int[] clv, JobCollection collection, JobProcessing job_processing, List tempfiles, XInputFile aXInputFile)
 	{
 		//finish other streams
-		int[] stream_number = new int[10]; 
+		int[] stream_number = job_processing.getStreamNumbers(); 
+
+		String[] key_values = { 
+			Keys.KEY_Streamtype_Ac3Audio[0],
+			Keys.KEY_Streamtype_Teletext[0],
+			Keys.KEY_Streamtype_MpgAudio[0],
+			"",
+			Keys.KEY_Streamtype_PcmAudio[0],
+			Keys.KEY_Streamtype_Subpicture[0],
+			Keys.KEY_Streamtype_Ac3Audio[0],
+			Keys.KEY_Streamtype_PcmAudio[0]
+		};
 
 		for (int i = 0, es_streamtype; i < demuxList.size(); i++)
 		{
@@ -495,8 +517,13 @@ public class StreamParserBase extends Object {
 				continue;
 			}
 
-		//	String newfile = values[3] + (stream_number[es_streamtype] > 0 ? ("[" + stream_number[es_streamtype] + "]") : "") + "." + values[2];
-			String newfile = values[3] + (stream_number[es_streamtype] > 0 ? ("-" + Common.adaptString(stream_number[es_streamtype], 2)) : "") + "." + values[2];
+			if (streamdemultiplexer.getStreamNumber() < 0)
+			{
+				streamdemultiplexer.setStreamNumber(stream_number[es_streamtype]);
+				stream_number[es_streamtype]++;
+			}
+
+			String newfile = values[3] + (streamdemultiplexer.getStreamNumber() > 0 ? ("-" + Common.adaptString(stream_number[es_streamtype], 2)) : "") + "." + values[2];
 
 			Common.renameTo(values[0], newfile);
 		
@@ -507,54 +534,29 @@ public class StreamParserBase extends Object {
 			{
 			case CommonParsing.AC3_AUDIO:
 			case CommonParsing.DTS_AUDIO:
-				if (streamdemultiplexer.subID() != 0 && (0xF0 & streamdemultiplexer.subID()) != 0x80) 
+				if (streamdemultiplexer.subID() != 0 && (0xF0 & streamdemultiplexer.subID()) != 0x80)
+				{
+					Common.setMessage(formatIDString(Resource.getString("StreamParser.NoExport"), streamdemultiplexer.getPID(), 0xFF & streamdemultiplexer.getID(), streamdemultiplexer.subID()));
 					break;
-
-				Common.setMessage("");
-				Common.setMessage(formatIDString(Resource.getString("ExportPanel.Streamtype.Ac3Audio"), streamdemultiplexer.getPID(), streamdemultiplexer.getID(), streamdemultiplexer.subID()));
-
-				new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-				break;
+				}
 
 			case CommonParsing.TELETEXT: 
-				Common.setMessage("");
-				Common.setMessage(formatIDString(Resource.getString("ExportPanel.Streamtype.Teletext"), streamdemultiplexer.getPID(), streamdemultiplexer.getID(), streamdemultiplexer.subID()));
-
-				new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-				break;
-
 			case CommonParsing.MPEG_AUDIO: 
-				Common.setMessage("");
-				Common.setMessage(formatIDString(Resource.getString("ExportPanel.Streamtype.MpgAudio"), streamdemultiplexer.getPID(), streamdemultiplexer.getID(), streamdemultiplexer.subID()));
-
-				new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-				break;
-	
 			case CommonParsing.LPCM_AUDIO:
-				Common.setMessage("");
-				Common.setMessage(formatIDString(Resource.getString("ExportPanel.Streamtype.PcmAudio"), streamdemultiplexer.getPID(), streamdemultiplexer.getID(), streamdemultiplexer.subID()));
-
-				new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
-				break;
-
 			case CommonParsing.SUBPICTURE:
-				Common.setMessage("");
-				Common.setMessage(formatIDString(Resource.getString("ExportPanel.Streamtype.Subpicture"), streamdemultiplexer.getPID(), streamdemultiplexer.getID(), streamdemultiplexer.subID()));
-
-				new StreamProcess(es_streamtype, collection, values[0], values[1], values[2], values[3]);
+				createStreamProcess(es_streamtype, collection, values, key_values[es_streamtype]);
 				break;
 			}
-
-			stream_number[es_streamtype]++;
 
 			// save infos for output segmentation
 			if (tempfiles != null)
 			{
-				tempfiles.add(values[0]);
+/**/				tempfiles.add(values[0]);
 				tempfiles.add(aXInputFile);
 				tempfiles.add(values[1]);
 				tempfiles.add(values[2]);
-
+/**/
+Common.setMessage("tmpfiles " + tempfiles.size());
 				if (job_processing.getSplitSize() == 0)
 				{
 					new File(newfile).delete();
@@ -567,13 +569,14 @@ public class StreamParserBase extends Object {
 				new File(newfile).delete();
 				new File(values[1]).delete();
 			}
+
 		}
 	}
 
 	/**
 	 * 
 	 */
-	private String formatIDString(String str1, int pid, int id, int subid)
+	public String formatIDString(String str1, int pid, int id, int subid)
 	{
 		String str = "+> " + str1;
 
@@ -586,6 +589,17 @@ public class StreamParserBase extends Object {
 	}
 
 	/**
+	 * 
+	 */
+	public void createStreamProcess(int es_streamtype, JobCollection collection, String[] values, String key_value)
+	{
+		Common.setMessage("");
+		Common.setMessage(formatIDString(Resource.getString(key_value), streamdemultiplexer.getPID(), streamdemultiplexer.getID(), streamdemultiplexer.subID()));
+
+		new StreamProcess(es_streamtype, collection, values);
+	}
+
+	/**
 	 *
 	 */
 	public void addCellTimeFromFileSegment(JobProcessing job_processing)
@@ -593,8 +607,8 @@ public class StreamParserBase extends Object {
 		//addCellTime(job_processing);
 	}
 
-	/**
-	 *
+	/**	 *
+
 	 */
 	public void addCellTime(JobProcessing job_processing)
 	{
@@ -617,11 +631,12 @@ public class StreamParserBase extends Object {
 		case CommonParsing.ACTION_TO_M2P:
 		case CommonParsing.ACTION_TO_PVA:
 		case CommonParsing.ACTION_TO_TS:
-			streamconverter.init(collection, parent + "[mux]" + ext[action], MainBufferSize, action, splitpart);
+			streamconverter.init(collection, parent + "[remux]" + ext[action], MainBufferSize, action, splitpart);
 			break;
 
 		case CommonParsing.ACTION_FILTER:
 			streamconverter.init(collection, parent + "[filter]" + ext[source], MainBufferSize, action, splitpart);
 		}
 	}
+
 }

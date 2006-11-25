@@ -29,6 +29,8 @@ package net.sourceforge.dvb.projectx.common;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Hashtable;
+import java.util.Enumeration;
 
 import java.io.File;
 import java.io.RandomAccessFile;
@@ -68,8 +70,12 @@ public class JobProcessing extends Object {
 	private List TempFileList;
 	private List InfoAtEnd;
 	private List CellTimesList;
-
+//
+	private Hashtable StreamObjects;
+//
+	private int[] stream_number;
 	private int[] clv;
+
 	private int SourceVideoFrameNumber;
 	private int ExportedVideoFrameNumber;
 	private int FileNumber;
@@ -134,7 +140,11 @@ public class JobProcessing extends Object {
 		TempFileList = new ArrayList();
 		InfoAtEnd = new ArrayList();
 		CellTimesList = new ArrayList();
+//
+		StreamObjects = new Hashtable();
+//
 		clv = new int[10];
+		stream_number = new int[10]; 
 
 		gop = new Gop(collection);
 		gop_array = new GopArray();
@@ -191,7 +201,10 @@ public class JobProcessing extends Object {
 		InfoAtEnd = null;
 		CellTimesList = null;
 		clv = null;
-
+		stream_number = null; 
+//
+		StreamObjects = null;
+//
 		gop = null;
 		gop_array = null;
 		d2v = null;
@@ -311,6 +324,7 @@ public class JobProcessing extends Object {
 	{
 		addCellTime(String.valueOf(value));
 	}
+
 	/**
 	 * 
 	 */
@@ -325,6 +339,22 @@ public class JobProcessing extends Object {
 	public void clearStatusVariables()
 	{
 		Arrays.fill(clv, 0);
+	}
+
+	/**
+	 * 
+	 */
+	public int[] getStreamNumbers()
+	{
+		return stream_number;
+	}
+
+	/**
+	 * 
+	 */
+	public void clearStreamNumbers()
+	{
+		Arrays.fill(stream_number, 0);
 	}
 
 	/**
@@ -969,6 +999,14 @@ public class JobProcessing extends Object {
 	public String getSavedOutputDirectory()
 	{
 		return savedOutputDirectory;
+	}
+
+	/**
+	 * 
+	 */
+	public Hashtable getStreamObjects()
+	{
+		return StreamObjects;
 	}
 
 }

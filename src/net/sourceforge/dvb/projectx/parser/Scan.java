@@ -113,14 +113,14 @@ public class Scan extends Object {
 				streamInfo = new StreamInfo();
 
 			// type must be first when scanning
-			streamInfo.setStreamInfo(aXInputFile.getFileType().getName(), getType(aXInputFile, assigned_streamtype), _name, _location, _date, _size, getPlaytime(), getVideo(), getAudio(), getText(), getPics());
+			streamInfo.setStreamInfo(Common.getNewFileID(), aXInputFile.getFileType().getName(), getType(aXInputFile, assigned_streamtype), _name, _location, _date, _size, getPlaytime(), getVideo(), getAudio(), getText(), getPics());
 
 			streamInfo.setStreamType(filetype, addInfo);
 			streamInfo.setPIDs(getPIDs());
 			streamInfo.setVideoHeader(getVBasic());
 		}
 		else
-			streamInfo = new StreamInfo("", Resource.getString("ScanInfo.NotFound"), _name, _location, "", "", "");
+			streamInfo = new StreamInfo("none", "", Resource.getString("ScanInfo.NotFound"), _name, _location, "", "", "");
 
 		aXInputFile.setStreamInfo(streamInfo);
 	}
@@ -1394,7 +1394,7 @@ public class Scan extends Object {
 		mpegtscheck:
 		for (int i = 0; i < buffersize; i++) 
 		{ 
-			if ( check[i] != 0x47 || check[i + 188] != 0x47 || check[i + 376] != 0x47 || check[i + 564] != 0x47 || check[i + 752] != 0x47) 
+			if ( check[i] != 0x47 || check[i + 188] != 0x47 || check[i + 376] != 0x47 || check[i + 564] != 0x47 || check[i + 752] != 0x47 || check[i + 940] != 0x47 || check[i + 1182] != 0x47) 
 				continue mpegtscheck;
 
 			readPMT(check, i);

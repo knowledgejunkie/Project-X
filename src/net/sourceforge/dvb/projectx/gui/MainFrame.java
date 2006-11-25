@@ -1,7 +1,7 @@
 /*
  * @(#)MainFrame.java - holds main gui
  *
- * Copyright (c) 2001-2005 by dvb.matt, All rights reserved.
+ * Copyright (c) 2001-2006 by dvb.matt, All rights reserved.
  *
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -74,6 +74,7 @@ import java.util.StringTokenizer;
 import java.util.Locale;
 
 import java.util.Calendar;
+import java.util.Collections;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -96,7 +97,6 @@ import javax.swing.JRadioButton;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JScrollPane;
-import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.JTextArea;
@@ -168,9 +168,11 @@ public class MainFrame extends JPanel {
 	private static boolean SilentAction = true;
 
 	//create empty table
-	private static Object[][] FileObjectTable = new Object[5][11];
+	private static Object[][] FileObjectTable = new Object[10][12];
 
 	private static CollectionPanel collection_panel;
+//
+	private static CutPanel cut_panel;
 
 	private static JFrame frame = new JFrame();
 
@@ -214,6 +216,126 @@ public class MainFrame extends JPanel {
 		public void lostOwnership(Clipboard clipboard, Transferable contents)
 		{}
 	}
+
+		private DropTargetListener dnd1Listener = new DropTargetListener()
+		{
+			public void drop(DropTargetDropEvent e)
+			{
+				try {
+
+					int dropaction = e.getDropAction();  // 1=copy, 2=move
+
+					if (dropaction == 0 || dropaction > 2)
+					{
+						e.rejectDrop();
+						return;
+					}
+
+					e.acceptDrop(dropaction);
+
+					Transferable tr = e.getTransferable();
+					DataFlavor[] df = tr.getTransferDataFlavors();
+
+					// Get list with one or more File objects
+					// List li = (java.util.List)tr.getTransferData(df[0]);
+					List list = null;
+
+					Object obj = tr.getTransferData(df[0]);
+
+					try {
+						list = (java.util.List) obj;
+
+					} catch (Exception ce1) {
+
+						// MacOsX tiger returns one Url instead of a file list, works only without host specification of the file
+						try {
+							URL url = (URL) obj;
+
+						//	File f = new File(url.getFile());
+							File f = new File(java.net.URLDecoder.decode(url.getFile()));
+
+							list = new ArrayList();
+							list.add(f);
+
+						} catch (Exception ce2) {
+
+							e.dropComplete(true);
+							return;
+						}
+					}
+
+	//
+					Collections.sort(list);
+
+					// Replace dropped File objects by XInputFile objects
+					ArrayList tempList = new ArrayList();
+
+					for (int i = 0; i < list.size(); i++)
+						tempList.add(new XInputFile((File)list.get(i)));
+
+					list = tempList;
+
+					if (dropaction == 1)        // copy = new coll each
+					{
+						Object[] val = list.toArray();
+
+						/**
+						 * create new collection for each file
+						 */
+						for (int i = 0; i < val.length; i++)
+						{
+							JobCollection collection = Common.addCollection();
+							collection.addInputFile(val[i]);
+
+							updateCollectionTable(collection.getCollectionAsTable());
+						}
+					}
+
+					else if (dropaction == 2)    // move = one coll
+					{
+						Common.addCollection(false);
+
+						Object[] val = list.toArray();
+
+						if (val.length > 0)
+						{
+							JobCollection collection = Common.getCollection(comboBox_0.getSelectedIndex());
+							collection.addInputFile(val);
+
+							updateCollectionTable(collection.getCollectionAsTable());
+						}
+					}
+
+					e.dropComplete(true);
+
+					if (list.size() > 0)
+						updateCollectionPanel(Common.getActiveCollection());
+
+				} catch (Exception eee) {
+
+					e.dropComplete(false);
+					Common.setExceptionMessage(eee);
+				}
+
+				tableView.setBackground(Color.white);
+			}
+
+			public void dragEnter(DropTargetDragEvent e)
+			{
+				tableView.setBackground(Color.green);
+			}
+
+			public void dragExit(DropTargetEvent e)
+			{
+				tableView.setBackground(Color.white);
+			}
+
+			public void dragOver(DropTargetDragEvent e)
+			{}
+
+			public void dropActionChanged(DropTargetDragEvent e)
+			{}
+		};
 
 	/**
 	 *
@@ -563,7 +685,11 @@ public class MainFrame extends JPanel {
 					patch_panel = new PatchDialog(frame);
 
 				if (patch_panel.entry(xInputFile))
-					ScanInfo(xInputFile);
+				{
+					getScanInfo(xInputFile, xInputFile.getStreamInfo().getStreamType());
+					updateCollectionTable(collection.getCollectionAsTable());
+					updateCollectionPanel(Common.getActiveCollection());
+				}
 			}
 
 			/**
@@ -639,21 +765,23 @@ public class MainFrame extends JPanel {
 					if (str.equals(items[i].toString()))
 					{
 						if (xInputFile.getStreamInfo() == null)
-							ScanInfo(xInputFile);
+							getScanInfo(xInputFile);
 
 						xInputFile.getStreamInfo().setStreamType(i);
-						ScanInfo(xInputFile, i);
+						getScanInfo(xInputFile, i);
 
 						updateCollectionTable(collection.getCollectionAsTable());
+						updateCollectionPanel(Common.getActiveCollection());
 
 						return;
 					}
 				}
 
 				xInputFile.setStreamInfo(null);
-				ScanInfo(xInputFile);
+				getScanInfo(xInputFile);
 
 				updateCollectionTable(collection.getCollectionAsTable());
+				updateCollectionPanel(Common.getActiveCollection());
 			}
 
 			/**
@@ -829,7 +957,7 @@ public class MainFrame extends JPanel {
 	 */
 	private void updateCollectionTable(Object[][] objects)
 	{
-		FileObjectTable = objects == null ? new Object[5][11] : objects;
+		FileObjectTable = objects == null ? new Object[10][12] : objects;
 
 		tableView.clearSelection();
 		tableView.revalidate();
@@ -1420,8 +1548,9 @@ public class MainFrame extends JPanel {
 
         // final
         final String[] names = {
-			"#",
+			"ID",
 			Resource.getString("CollectionTable.Source"),
+			"#",
 			Resource.getString("CollectionTable.FileName"),
 			Resource.getString("CollectionTable.FileLocation"),
 			Resource.getString("CollectionTable.Size"),
@@ -1499,29 +1628,34 @@ public class MainFrame extends JPanel {
 		tableView.getColumn("#").setCellRenderer(renderer_2);
 		tableView.getColumn("#").setMaxWidth(20);
 
+		tableView.getColumn("ID").setCellRenderer(renderer_2);
+		tableView.getColumn("ID").setMaxWidth(25);
+
 		tableView.getColumn(names[1]).setCellRenderer(renderer_2);
 		tableView.getColumn(names[1]).setMinWidth(32);
 		tableView.getColumn(names[1]).setMaxWidth(32);
 
-		tableView.getColumn(names[2]).setPreferredWidth(200);
-		tableView.getColumn(names[3]).setPreferredWidth(200);
+		//tableView.getColumn(names[3]).setPreferredWidth(165); //200
+		//tableView.getColumn(names[4]).setPreferredWidth(165);
+		tableView.getColumn(names[3]).setMinWidth(165); //200
+		tableView.getColumn(names[4]).setMinWidth(165);
 
-		tableView.getColumn(names[4]).setCellRenderer(renderer_1);
-		tableView.getColumn(names[4]).setMinWidth(62);
-		tableView.getColumn(names[4]).setMaxWidth(62);
+		tableView.getColumn(names[5]).setCellRenderer(renderer_1);
+		tableView.getColumn(names[5]).setMinWidth(62);
+		tableView.getColumn(names[5]).setMaxWidth(62);
 
-		tableView.getColumn(names[5]).setCellRenderer(renderer_2);
-		tableView.getColumn(names[5]).setMinWidth(96);
-		tableView.getColumn(names[5]).setMaxWidth(96);
+		tableView.getColumn(names[6]).setCellRenderer(renderer_2);
+		tableView.getColumn(names[6]).setMinWidth(96);
+		tableView.getColumn(names[6]).setMaxWidth(96);
 
-		for (int i = 6; i < 10; i++)
+		for (int i = 7; i < 11; i++)
 		{
 			tableView.getColumn(names[i]).setCellRenderer(renderer_2);
 			tableView.getColumn(names[i]).setMinWidth(16);
 			tableView.getColumn(names[i]).setMaxWidth(16);
 		}
 
-        tableView.getColumn(names[10]).setMinWidth(90);
+        tableView.getColumn(names[11]).setMinWidth(90);
 
         tableView.sizeColumnsToFit(JTable.AUTO_RESIZE_LAST_COLUMN);
 
@@ -1556,129 +1690,13 @@ public class MainFrame extends JPanel {
 				}
 
 				else if (row >= 0)
-					ScanInfo((XInputFile) Common.getCollection(index).getInputFile(row));
+					getScanInfo((XInputFile) Common.getCollection(index).getInputFile(row));
 
-				if (e.getClickCount() >= 2 && e.getModifiers() == MouseEvent.BUTTON1_MASK && !Common.isCollectionListEmpty())
-					CommonGui.getCollectionProperties().open(Common.getCollection(), Common.getActiveCollection());
+				if (e.getClickCount() >= 2 && e.getModifiers() == MouseEvent.BUTTON1_MASK && !Common.isCollectionListEmpty() && row >= 0)
+				//	CommonGui.getCollectionProperties().open(Common.getCollection(), Common.getActiveCollection());
+					CommonGui.getFileProperties().open((XInputFile) Common.getCollection(index).getInputFile(row), Common.getActiveCollection());
 			}
 		});
-
-		DropTargetListener dnd1Listener = new DropTargetListener()
-		{
-			public void drop(DropTargetDropEvent e)
-			{
-				try {
-
-					int dropaction = e.getDropAction();  // 1=copy, 2=move
-
-					if (dropaction == 0 || dropaction > 2)
-					{
-						e.rejectDrop();
-						return;
-					}
-
-					e.acceptDrop(dropaction);
-
-					Transferable tr = e.getTransferable();
-					DataFlavor[] df = tr.getTransferDataFlavors();
-
-					// Get list with one or more File objects
-					// List li = (java.util.List)tr.getTransferData(df[0]);
-					List list = null;
-
-					Object obj = tr.getTransferData(df[0]);
-
-					try {
-						list = (java.util.List) obj;
-
-					} catch (Exception ce1) {
-
-						// MacOsX tiger returns one Url instead of a file list, works only without host specification of the file
-						try {
-							URL url = (URL) obj;
-
-						//	File f = new File(url.getFile());
-							File f = new File(java.net.URLDecoder.decode(url.getFile()));
-
-							list = new ArrayList();
-							list.add(f);
-
-						} catch (Exception ce2) {
-
-							e.dropComplete(true);
-							return;
-						}
-					}
-
-					// Replace dropped File objects by XInputFile objects
-					ArrayList tempList = new ArrayList();
-
-					for (int i = 0; i < list.size(); i++)
-						tempList.add(new XInputFile((File)list.get(i)));
-
-					list = tempList;
-
-					if (dropaction == 1)        // copy = new coll each
-					{
-						Object[] val = list.toArray();
-
-						/**
-						 * create new collection for each file
-						 */
-						for (int i = 0; i < val.length; i++)
-						{
-							JobCollection collection = Common.addCollection();
-							collection.addInputFile(val[i]);
-
-							updateCollectionTable(collection.getCollectionAsTable());
-						}
-					}
-
-					else if (dropaction == 2)    // move = one coll
-					{
-						Common.addCollection(false);
-
-						Object[] val = list.toArray();
-
-						if (val.length > 0)
-						{
-							JobCollection collection = Common.getCollection(comboBox_0.getSelectedIndex());
-							collection.addInputFile(val);
-
-							updateCollectionTable(collection.getCollectionAsTable());
-						}
-					}
-
-					e.dropComplete(true);
-
-					if (list.size() > 0)
-						updateCollectionPanel(Common.getActiveCollection());
-
-				} catch (Exception eee) {
-
-					e.dropComplete(false);
-					Common.setExceptionMessage(eee);
-				}
-
-				tableView.setBackground(Color.white);
-			}
-
-			public void dragEnter(DropTargetDragEvent e)
-			{
-				tableView.setBackground(Color.green);
-			}
-
-			public void dragExit(DropTargetEvent e)
-			{
-				tableView.setBackground(Color.white);
-			}
-
-			public void dragOver(DropTargetDragEvent e)
-			{}
-
-			public void dropActionChanged(DropTargetDragEvent e)
-			{}
-		};
 
 		DropTarget dropTarget_2 = new DropTarget(tableView, dnd1Listener);
 
@@ -1978,9 +1996,9 @@ public class MainFrame extends JPanel {
 
 		panel.add(control_2);
 
-		panel.setPreferredSize(new Dimension(900, 114));
-		panel.setMaximumSize(new Dimension(900, 114));
-		panel.setMinimumSize(new Dimension(900, 114));
+		panel.setPreferredSize(new Dimension(846, 114));
+		panel.setMaximumSize(new Dimension(846, 114));
+		panel.setMinimumSize(new Dimension(846, 114));
 
 		return panel;
 	}
@@ -2191,11 +2209,11 @@ public class MainFrame extends JPanel {
 		/**
 		 *
 		 */
-		JButton add_coll_and_files = new JButton(CommonGui.loadIcon("addleft.gif"));
-		add_coll_and_files.setPreferredSize(new Dimension(50,28));
-		add_coll_and_files.setMaximumSize(new Dimension(50,28));
-		add_coll_and_files.setToolTipText(Resource.getString("autoload.add.coll.tip"));
-		add_coll_and_files.addActionListener(new ActionListener() {
+		JButton add_coll_and_1file = new JButton(CommonGui.loadIcon("addleft.gif"));
+		add_coll_and_1file.setPreferredSize(new Dimension(50,28));
+		add_coll_and_1file.setMaximumSize(new Dimension(50,28));
+		add_coll_and_1file.setToolTipText(Resource.getString("autoload.add.coll.tip"));
+		add_coll_and_1file.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				Object[] val = list1.getSelectedValues();
@@ -2218,8 +2236,37 @@ public class MainFrame extends JPanel {
 				autoload.toFront();
 			}
 		});
-		bb.add(add_coll_and_files);
+		bb.add(add_coll_and_1file);
 
+		/**
+		 *
+		 */
+		JButton add_coll_and_files = new JButton(CommonGui.loadIcon("addleft1.gif"));
+		add_coll_and_files.setPreferredSize(new Dimension(50,28));
+		add_coll_and_files.setMaximumSize(new Dimension(50,28));
+		add_coll_and_files.setToolTipText(Resource.getString("autoload.add.coll.tip"));
+		add_coll_and_files.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				Object[] val = list1.getSelectedValues();
+
+				if (val.length == 0)
+					return;
+
+				/**
+				 * create new collection add all selected files
+				 */
+				JobCollection collection = Common.addCollection();
+
+				collection.addInputFile(val);
+
+				updateCollectionTable(collection.getCollectionAsTable());
+				updateCollectionPanel(Common.getActiveCollection());
+
+				autoload.toFront();
+			}
+		});
+		bb.add(add_coll_and_files);
 
 		/**
 		 *
@@ -2314,7 +2361,7 @@ public class MainFrame extends JPanel {
 				else if (e.getClickCount() == 1)
 				{
 					if (list1.getSelectedValue() != null )
-						ScanInfo( (XInputFile) list1.getSelectedValue());
+						getScanInfo( (XInputFile) list1.getSelectedValue());
 				}
 			}
 		});
@@ -2383,16 +2430,12 @@ public class MainFrame extends JPanel {
 			memo.surf.start();
 
 		panel_1.add(memo, BorderLayout.NORTH);
-
-		panel_1.add(Box.createRigidArea(new Dimension(1, 5)));
-		panel_1.add(Box.createRigidArea(new Dimension(1, 54)));
-
 		panel_1.add(buildProcessControlPanel());
 		panel_1.add(buildCollectionControlPanel());
 
-		panel_1.setPreferredSize(new Dimension(115, 468));
-		panel_1.setMaximumSize(new Dimension(115, 468));
-		panel_1.setMinimumSize(new Dimension(115, 468));
+		panel_1.setPreferredSize(new Dimension(115, 406));
+		panel_1.setMaximumSize(new Dimension(115, 406));
+		panel_1.setMinimumSize(new Dimension(115, 406));
 
 		/**
 		 *
@@ -2403,9 +2446,9 @@ public class MainFrame extends JPanel {
 		panel_2.add(panel_1, BorderLayout.WEST);
 		panel_2.add(collection_panel = new CollectionPanel(), BorderLayout.CENTER);
 
-		panel_2.setPreferredSize(new Dimension(900, 468));
-		panel_2.setMaximumSize(new Dimension(900, 468));
-		panel_2.setMinimumSize(new Dimension(900, 468));
+		panel_2.setPreferredSize(new Dimension(846, 406));
+		panel_2.setMaximumSize(new Dimension(846, 406));
+		panel_2.setMinimumSize(new Dimension(846, 406));
 
 		/**
 		 *
@@ -2425,14 +2468,17 @@ public class MainFrame extends JPanel {
 	protected JPanel buildFilePanel1()
 	{
 		JPanel panel = new JPanel();
+		panel.setLayout(new BorderLayout());
 
 		JTabbedPane tabbedPane = new JTabbedPane();
 		tabbedPane.setTabPlacement(SwingConstants.BOTTOM);
 
 		tabbedPane.addTab("FileTable", buildFilePanel());
-		tabbedPane.addTab("ScanViews", new JPanel());
+	//	tabbedPane.addTab("ScanView", new ScanView());
+		tabbedPane.addTab("CutPanel", (cut_panel = new CutPanel()));
 
-		panel.add(tabbedPane, BorderLayout.CENTER);
+		panel.add(cut_panel.getSliderPanel(), BorderLayout.NORTH);
+		panel.add(tabbedPane);
 
 		return panel;
 	}
@@ -2508,6 +2554,8 @@ public class MainFrame extends JPanel {
 		textarea.setBackground(idle_color);
 		textarea.setFont(new Font("Tahoma", Font.PLAIN, 11));
 		textarea.setEditable(false);
+
+		DropTarget dropTarget_1 = new DropTarget(textarea, dnd1Listener);
 
 		JPanel panel_2 = new JPanel();
 		panel_2.setLayout(new GridLayout(1,1));
@@ -2861,15 +2909,15 @@ public class MainFrame extends JPanel {
 	/**
 	 * show ScanInfos
  	 */
-	public void ScanInfo(XInputFile aXInputFile)
+	public void getScanInfo(XInputFile aXInputFile)
 	{
-		ScanInfo(aXInputFile, -1);
+		getScanInfo(aXInputFile, -1);
 	}
 
 	/**
 	 * show ScanInfos, only directly called from manual stream assignment
  	 */
-	public void ScanInfo(XInputFile aXInputFile, int streamtype)
+	public void getScanInfo(XInputFile aXInputFile, int streamtype)
 	{
 		if (aXInputFile.getStreamInfo() == null || streamtype > -1)
 			Common.getScanClass().getStreamInfo(aXInputFile, streamtype);
@@ -3110,6 +3158,7 @@ public class MainFrame extends JPanel {
 	 */
 	public static void updateCollectionPanel(int index)
 	{
-		collection_panel.entry(index);
+		//collection_panel.entry(index);
+		cut_panel.entry(index);
 	}
 }

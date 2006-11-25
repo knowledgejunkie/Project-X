@@ -33,6 +33,7 @@ import java.io.PushbackInputStream;
 
 import java.util.Arrays;
 import java.util.List;
+//import java.util.Hashtable;
 
 import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.common.Resource;
@@ -89,11 +90,11 @@ public class StreamParserPVA extends StreamParserBase {
 	/**
 	 * PVA/PSV/PSA  Parser 
 	 */
-	public String parseStream(JobCollection collection, XInputFile aPvaXInputFile, int pes_streamtype, int action, String vptslog)
+	public String parseStream(JobCollection collection, XInputFile aXInputFile, int pes_streamtype, int action, String vptslog)
 	{
 		JobProcessing job_processing = collection.getJobProcessing();
 
-		setFileName(collection, job_processing, aPvaXInputFile);
+		setFileName(collection, job_processing, aXInputFile);
 
 		boolean Message_1 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg1);
 		boolean Message_2 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
@@ -151,6 +152,7 @@ public class StreamParserPVA extends StreamParserBase {
 		long Overlap_Value = 1048576L * (collection.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1);
 		long qexit;
 
+		String file_id = aXInputFile.getStreamInfo().getFileID();
 	
 		String[] streamtypes = { 
 			Resource.getString("parsePVA.streamtype.ac3"),
@@ -164,8 +166,10 @@ public class StreamParserPVA extends StreamParserBase {
 		streamconverter = new StreamConverter();
 
 		demuxList = job_processing.getPVADemuxList();
-
 		List PVAPidlist = job_processing.getPVAPidList();
+//
+		streamobjects = getStreamObjects(job_processing);
+//
 
 		/**
 		 * re-read old streams, for next split part
@@ -187,7 +191,8 @@ public class StreamParserPVA extends StreamParserBase {
 			for (int i = 0; i < demuxList.size(); i++)
 			{
 				streamdemultiplexer = (StreamDemultiplexer) demuxList.get(i);
-
+Common.setMessage(">>3 " + streamdemultiplexer);
+Common.setMessage(">>4 " + streamdemultiplexer.hashCode());
 				if (streamdemultiplexer.getnewID() != 0)
 					newID[streamdemultiplexer.getType()]++;
 
@@ -254,18 +259,18 @@ public class StreamParserPVA extends StreamParserBase {
 			 */
 			for (int i = 0; i < starts.length; i++)
 			{
-				aPvaXInputFile = (XInputFile) collection.getInputFile(i);
+				aXInputFile = (XInputFile) collection.getInputFile(i);
 				starts[i] = size;
-				size += aPvaXInputFile.length();
+				size += aXInputFile.length();
 			}
 
-			aPvaXInputFile = (XInputFile) collection.getInputFile(job_processing.getFileNumber());
+			aXInputFile = (XInputFile) collection.getInputFile(job_processing.getFileNumber());
 
 			/**
 			 * set start & end byte pos. of first file segment
 			 */
 			count = starts[job_processing.getFileNumber()];
-			size = count + aPvaXInputFile.length();
+			size = count + aXInputFile.length();
 
 			if (CommonParsing.getPvaPidExtraction()) 
 				rawfile = new RawFile(fparent, 	CommonParsing.getPvaPidToExtract(), MainBufferSize);
@@ -313,22 +318,22 @@ public class StreamParserPVA extends StreamParserBase {
 				}
 			}
 
-			aPvaXInputFile = (XInputFile) collection.getInputFile(job_processing.getFileNumber());
+			aXInputFile = (XInputFile) collection.getInputFile(job_processing.getFileNumber());
 			count = starts[job_processing.getFileNumber()];
 
 			if (job_processing.getFileNumber() > 0)
-				Common.setMessage(Resource.getString("parsePVA.continue") + " " + aPvaXInputFile);
+				Common.setMessage(Resource.getString("parsePVA.continue") + " " + aXInputFile);
 
 			base = count;
-			size = count + aPvaXInputFile.length();
+			size = count + aXInputFile.length();
 
-			PushbackInputStream in = new PushbackInputStream(aPvaXInputFile.getInputStream(startPoint - base), pva_buffersize);
+			PushbackInputStream in = new PushbackInputStream(aXInputFile.getInputStream(startPoint - base), pva_buffersize);
 
 			count += (startPoint - base);
 
 			overlapPVA(collection, overlapnext);
 
-			Common.updateProgressBar((action == CommonParsing.ACTION_DEMUX ? Resource.getString("parsePVA.demuxing") : Resource.getString("parsePVA.converting")) + " " + Resource.getString("parsePVA.pvafile") + " " + aPvaXInputFile.getName(), (count - base), (size - base));
+			Common.updateProgressBar((action == CommonParsing.ACTION_DEMUX ? Resource.getString("parsePVA.demuxing") : Resource.getString("parsePVA.converting")) + " " + Resource.getString("parsePVA.pvafile") + " " + aXInputFile.getName(), (count - base), (size - base));
 
 			qexit = count + (0x100000L * Infoscan_Value);
 
@@ -608,7 +613,7 @@ public class StreamParserPVA extends StreamParserBase {
 						post_bytes = 0;
 
 					if (streambuffer.isStarted()) 
-						streamdemultiplexer = (StreamDemultiplexer)demuxList.get(streambuffer.getID());
+						streamdemultiplexer = (StreamDemultiplexer) demuxList.get(streambuffer.getID());
 
 					else
 					{   // create new ID object
@@ -629,6 +634,7 @@ public class StreamParserPVA extends StreamParserBase {
 							streamdemultiplexer.setsubID(0);
 							streamdemultiplexer.setStreamType(pes_streamtype);
 
+						//	streambuffer.setID(streamdemultiplexer.hashCode());
 							streambuffer.setID(demuxList.size());
 							demuxList.add(streamdemultiplexer);
 
@@ -640,11 +646,11 @@ public class StreamParserPVA extends StreamParserBase {
 							break; 
 
 						case 2:
-							IDtype=Resource.getString("idtype.main.audio");
+							IDtype = Resource.getString("idtype.main.audio");
 							//do not break
 
 						default: 
-							IDtype=Resource.getString("idtype.additional"); 
+							IDtype = Resource.getString("idtype.additional"); 
 
 							if (!containsPts) 
 								continue loop;
@@ -672,6 +678,7 @@ public class StreamParserPVA extends StreamParserBase {
 							streamdemultiplexer.setTTX(isTeletext);
 							streamdemultiplexer.setStreamType(pes_streamtype);
 
+						//	streambuffer.setID(streamdemultiplexer.hashCode());
 							streambuffer.setID(demuxList.size());
 							demuxList.add(streamdemultiplexer);
 

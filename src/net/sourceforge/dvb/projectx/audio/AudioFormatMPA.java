@@ -100,7 +100,7 @@ public class AudioFormatMPA extends AudioFormat {
 			return -1;
 	
 		ID = 1 & frame[pos + 1]>>>3;
-	        Emphasis = 3 & frame[pos + 3];
+		Emphasis = 3 & frame[pos + 3];
 	
 		if (ID == 1 && Emphasis == 2)
 			ID = 2;
@@ -172,7 +172,8 @@ public class AudioFormatMPA extends AudioFormat {
 			if (Bound > Sblimit) 
 				Bound = Sblimit;
 
-			Size = (Size_base = 144 * Bitrate / Sampling_frequency) + Padding_bit;
+			Size = (Size_base = (ID == 0 ? 72 : 144) * Bitrate / Sampling_frequency) + Padding_bit;
+		//	Size = (Size_base = 144 * Bitrate / Sampling_frequency) + Padding_bit;
 		}
 
 		else
@@ -224,17 +225,24 @@ public class AudioFormatMPA extends AudioFormat {
 		nOriginal = 1&frame[pos+3]>>>2;
 		nTime_length = time_index[nLayer]/nSampling_frequency;
 	
-		if (nID==1 && nLayer==2) {	// MPEG-1,L2 restrictions
-			if(nBitrate/Channel < 32000) 
+		if (nID == 1 && nLayer == 2)
+		{	// MPEG-1,L2 restrictions
+			if (nBitrate/Channel < 32000) 
 				return -5; /* unsupported bitrate */
-			if(nBitrate/Channel > 192000) 
+
+			if (nBitrate/Channel > 192000) 
 				return -6; /* unsupported bitrate */
 		}
 	
-		if (nLayer<3) {
-			nSize = (nSize_base = 144*nBitrate/nSampling_frequency) + nPadding_bit;
+		if (nLayer < 3)
+		{
+			nSize = (nSize_base = (nID == 0 ? 72 : 144) * nBitrate / nSampling_frequency) + nPadding_bit;
+		//	nSize = (nSize_base = 144*nBitrate/nSampling_frequency) + nPadding_bit;
 			return 1;
-		} else {
+		}
+
+		else
+		{
 			nSize = (nSize_base = (12*nBitrate/nSampling_frequency)*4) + (4*nPadding_bit);
 			return 2;
 		}
@@ -246,27 +254,27 @@ public class AudioFormatMPA extends AudioFormat {
 	public int compareHeader()
 	{
 		if (lID != ID) 
-			return 1;
+			return 0x1;
 
 		else if (lLayer != Layer) 
-			return 2;
-
-		else if (lBitrate != Bitrate) 
-			return 3;
+			return 0x2;
 
 		else if (lSampling_frequency != Sampling_frequency) 
-			return 4;
+			return 0x4;
+
+		else if (lBitrate != Bitrate) 
+			return 0x8;
 
 		else if (lProtection_bit != Protection_bit) 
-			return 5;
+			return 0x10;
 
 		else if (lMode != Mode)
 		{
 			if (Mode + lMode < 2)
-				return 6;
+				return 0x20;
 
 			else
-				return 7;
+				return 0x40;
 		}
 
 		else 
@@ -518,7 +526,8 @@ public class AudioFormatMPA extends AudioFormat {
 	private final int RDS_startcode = 0xFE;
 	private final int RDS_endcode = 0xFF;
 
-	private String[] rds_values = new String[7];
+	private String[] rds_values = new String[7]; //buffer of messages
+
 	private final String[] pty_list = {
 		"undefined", "News", "Current Affairs", "Information", "Sport", "Education", "Drama", "Culture", "Science", 
 		"Varied", "Pop Music", "Rock Music", "Easy Listening", "Light Classical", "Seriuos Classical", "Other Music", 
@@ -553,7 +562,7 @@ public class AudioFormatMPA extends AudioFormat {
 	/**
 	 *
 	 */
-	public void decodeAncillaryData(byte[] frame)
+	public void decodeAncillaryData(byte[] frame, String frametime_str)
 	{
 		if (!DecodeRDS)
 			return;
@@ -576,13 +585,13 @@ public class AudioFormatMPA extends AudioFormat {
 			_list.add(String.valueOf(val));
 		}
 
-		decodeChunk(_list);
+		decodeChunk(_list, frametime_str);
 	}
 
 	/**
 	 * 
 	 */
-	private void decodeChunk(ArrayList list)
+	private void decodeChunk(ArrayList list, String frametime_str)
 	{
 		int index = list.indexOf(String.valueOf(RDS_startcode));
 
@@ -674,31 +683,31 @@ public class AudioFormatMPA extends AudioFormat {
 			break;
 
 		case 0x0A: //RT
-			compareMsg(getRT(bo.toByteArray()), 0);
+			compareMsg(getRT(bo.toByteArray()), 0, frametime_str);
 			break;
 
 		case 0x01: //PI
-			compareMsg(getPI(bo.toByteArray()), 1);
+			compareMsg(getPI(bo.toByteArray()), 1, frametime_str);
 			break;
 
 		case 0x02: //PS program service name 
-			compareMsg(getPS(bo.toByteArray()), 2);
+			compareMsg(getPS(bo.toByteArray()), 2, frametime_str);
 			break;
 
 		case 0x03: //TA
-			compareMsg(getTP(bo.toByteArray()), 3);
+			compareMsg(getTP(bo.toByteArray()), 3, frametime_str);
 			break;
 
 		case 0x05: //MS
-			compareMsg(getMS(bo.toByteArray()), 4);
+			compareMsg(getMS(bo.toByteArray()), 4, frametime_str);
 			break;
 
 		case 0x07: //PTY
-			compareMsg(getPTY(bo.toByteArray()), 5);
+			compareMsg(getPTY(bo.toByteArray()), 5, frametime_str);
 			break;
 
 		case 0x0D: //RTC
-			compareMsg(getRTC(bo.toByteArray()), 6);
+			compareMsg(getRTC(bo.toByteArray()), 6, frametime_str);
 			break;
 
 		case 0x30: //TMC 
@@ -766,14 +775,14 @@ public class AudioFormatMPA extends AudioFormat {
 	/**
 	 * 
 	 */
-	private void compareMsg(String str, int index)
+	private void compareMsg(String str, int index, String frametime_str)
 	{
 		if (str == null || str.equals(rds_values[index]))
 			return;
 
 		rds_values[index] = str;
 
-		Common.setMessage(str);
+		Common.setMessage("-> RDS @ " + frametime_str + ": " + str);
 	}
 
 	/**

@@ -80,6 +80,9 @@ public class StreamParserPESSecondary extends StreamParserBase {
 
 		JobProcessing job_processing = collection.getJobProcessing();
 
+		job_processing.clearStatusVariables();
+		int[] clv = job_processing.getStatusVariables();
+
 		/**
 		 * split part 
 		 */
@@ -87,6 +90,8 @@ public class StreamParserPESSecondary extends StreamParserBase {
 
 		String paname = fparent + ".ma1";
 
+		String file_id = aXInputFile.getStreamInfo().getFileID();
+	
 		List tempfiles = job_processing.getTemporaryFileList();
 
 		if (!tempfiles.isEmpty())
@@ -155,8 +160,6 @@ public class StreamParserPESSecondary extends StreamParserBase {
 		long size;
 		long qexit;
 
-		job_processing.clearStatusVariables();
-		int[] clv = job_processing.getStatusVariables();
 
 		job_processing.setMinBitrate(CommonParsing.MAX_BITRATE_VALUE);
 		job_processing.setMaxBitrate(0);
@@ -608,7 +611,6 @@ public class StreamParserPESSecondary extends StreamParserBase {
 			}
 
 			Common.setMessage(Resource.getString("parseSecondaryPES.packs", String.valueOf(clv[5]), String.valueOf(count * 100 / size), String.valueOf(count)));
-
 
 			in.close(); 
 

@@ -86,8 +86,8 @@ import net.sourceforge.dvb.projectx.net.WebInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90.4.00.b06";
-	private static String version_date = "15.07.2006";
+	private static String version_name = "ProjectX 0.90.4.00.b07";
+	private static String version_date = "24.11.2006";
 
 	private static String line_separator = System.getProperty("line.separator");
 
@@ -98,6 +98,7 @@ public final class Common extends Object {
 
 	private static int ProcessedPercent = 0;
 	private static int ErrorCount = 0;
+	private static int FileID = 0;
 
 	private static boolean showGUI = false;
 	private static boolean runningCLI = false;
@@ -1712,4 +1713,15 @@ public final class Common extends Object {
 
 		return buffervalue;
 	}
+
+	/**
+	 *
+	 */
+	public static String getNewFileID()
+	{
+		FileID++;
+
+		return String.valueOf(FileID);
+	}
+
 }

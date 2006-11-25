@@ -74,13 +74,23 @@ public class MpvDecoder extends Object {
 	private IDCTRefNative idct;
 	private IDCTSseNative idctsse;
 
-	private int[] pixels2 = new int[512 * 288];
+	private int preview_horizontal_size = 512;
+	private int preview_vertical_size = 288;
+	private int cutview_horizontal_size = 160;
+	private int cutview_vertical_size = 90;
+
+	private int zoomMode = 0;
+	private int[] zoomArea = new int[4];
+
+	private int[] pixels2 = new int[preview_horizontal_size * preview_vertical_size];
 	private int[] pixels = new int[250]; //full pixel data
 
 	private int Fault_Flag = 0;
 	private int BitPos = 0;
 	private int BufferPos = 0;
 	private int SequenceHeader = 0; 
+
+	private int YGain = 0;
 
 	private long StartPos = 0;
 
@@ -97,6 +107,9 @@ public class MpvDecoder extends Object {
 	private String info_3 = "";
 	private String info_2 = "";
 	private String info_1 = "";
+
+	private String processedPidAndFile = Resource.getString("CollectionPanel.Preview.offline");
+	private ArrayList PositionList = new ArrayList();
 
 	private byte[] buf = new byte[0];
 
@@ -2265,7 +2278,9 @@ public void motion_compensation(int MBA[], int macroblock_type[], int motion_typ
 					tmp[8 * i + j] = partial_product;
 				}
 			}
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			//Common.setExceptionMessage(e);
+		}
 
 		try {
 			// Transpose operation is integrated into address mapping by switching loop order of i and j
@@ -2281,7 +2296,9 @@ public void motion_compensation(int MBA[], int macroblock_type[], int motion_typ
 					block[8 * i + j] = idct_clip_table[IDCT_CLIP_TABLE_OFFSET + v];
 				}
 			}
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			//Common.setExceptionMessage(e);
+		}
 
 		if (len == 1)
 			Arrays.fill(block, block[0]);
@@ -2420,6 +2437,13 @@ public void Add_Block(int comp, int bx, int by, int dct_type[], boolean addflag)
 
 	//DM02092003+
 	int val, luma, pPos, r, g, b;
+	int gain = picture_coding_type == I_TYPE ? 128 : 0;
+
+	gain += YGain;
+
+	int chroma_value_444 = chroma_format == CHROMA444 ? 1 : 0;
+	int chroma_value_420 = chroma_format != CHROMA420 ? 1 : 0;
+	int cc_value = cc == 1 ? 8 : 0;
 
 	//DM20082004 081.7 int10 changed
 	if (cc == 0) //lumi
@@ -2429,13 +2453,14 @@ public void Add_Block(int comp, int bx, int by, int dct_type[], boolean addflag)
 			for (int x = 0; x < 8; x++)
 			{
 				pPos = rfp + x + (y * iincr);
-				val = Block_Ptr[x + (y * 8)] + ((picture_coding_type == I_TYPE) ? 128 : 0);
+				val = Block_Ptr[x + (y * 8)] + gain;
 				val = val < 0 ? 0 : (val > 255 ? 255 : val);
 
 				pixels[pPos] |= val<<16; //Y
 			}
 		}
 	}
+
 	else
 	{    //chroma cc1 = Cb, cc2=Cr
 		if (chroma_format != CHROMA444)
@@ -2448,22 +2473,17 @@ public void Add_Block(int comp, int bx, int by, int dct_type[], boolean addflag)
 		{
 			for (int x = 0; x < 16; x++)
 			{
-				pPos = rfp + (x >>(chroma_format == CHROMA444 ? 1 : 0)) + ((y >>(chroma_format != CHROMA420 ? 1 : 0)) * iincr);
+				pPos = rfp + (x >> chroma_value_444) + ((y >>(chroma_value_420)) * iincr);
 				val = 128 + Block_Ptr[(x >>1) + (8 * (chroma_format != CHROMA420 ? (y >>1) : ((y & 1) == 0 ? ((y >>1) & ~dct_type[0]) : ((y >>1) | dct_type[0]))))];
 				val = val < 0 ? 0 : (val > 255 ? 255 : val);
 
-				if (cc == 1) //U
-					pixels[pPos] |= val<<8;
+				// cc==1 -> U  else V
+				pixels[pPos] |= val << cc_value;
 
-				else  //V
-					pixels[pPos] |= val;
-
-				if (chroma_format == CHROMA444)
-					x++;
+				x += chroma_value_444;
 			}
 
-			if (chroma_format != CHROMA420)
-				y++;
+			y += chroma_value_420;
 		}
 	}
 }
@@ -2693,20 +2713,39 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 		Arrays.fill(pixels2, 0xFF505050);
 
 		int x_offset = ((aspect_ratio_information == 3 || aspect_ratio_information == 4) && profile_and_level_indication != 0) ? 0 : 64;
-		int scanline = 512;
-		int ny = 288;
-		int nx = x_offset == 0 ? scanline : scanline - x_offset;
+		int scanline = preview_horizontal_size;
+		int ny = preview_vertical_size;
+		int z_vertical_size = vertical_size;
+		int z_horizontal_size = horizontal_size;
 
-		float Y = 0, X = 0;
-		float Ydecimate = vertical_size / (float)ny;
-		float Xdecimate = horizontal_size / (float)(nx - x_offset);
+		float Y = 0, X = 0, X_Off = 0;
 
-		for (int y = 0; Y < vertical_size && y < ny; Y += Ydecimate, y++, X=0)
+		if (zoomMode == 1 && x_offset > 0) //LB zoom
+		{
+			x_offset = 0;
+			z_vertical_size = vertical_size - (vertical_size / 4);
+			Y += (vertical_size / 8);
+		}
+
+		else if (zoomMode == 2)
+		{
+			z_horizontal_size = zoomArea[2];
+			z_vertical_size = zoomArea[3];
+		//	x_offset = 0;
+			X_Off = zoomArea[0];
+			X += X_Off;
+			Y += zoomArea[1];
+		}
+
+		int nx = scanline - x_offset;
+
+		float Ydecimate = z_vertical_size / (float)ny;
+		float Xdecimate = z_horizontal_size / (float)(nx - x_offset);
+
+		for (int y = 0; Y < vertical_size && y < ny; Y += Ydecimate, y++, X = X_Off)
 			for (int x = x_offset; X < horizontal_size && x < nx; X += Xdecimate, x++)
 				pixels2[x + (y * scanline)] = YUVtoRGB(pixels[(int)X + ((int)Y * Coded_Picture_Width)]);
 
-
-		//source.newPixels();
 		Common.getGuiInterface().updatePreviewPixel();
 
 		messageStreamInfo();
@@ -2812,6 +2851,92 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	/**
 	 * 
 	 */
+	public void resetProcessedPosition()
+	{
+		PositionList.clear();
+	}
+
+	/**
+	 * 
+	 */
+	public void setProcessedPosition(long value, List previewList)
+	{
+		resetProcessedPosition();
+
+		PositionList.add(new Long(value));
+
+		for (int i = 0, j = previewList.size(); i  < j; i++)
+			PositionList.add(new Long(((PreviewObject) previewList.get(i)).getEnd()));
+	}
+
+	/**
+	 * 
+	 */
+	public List getPositions()
+	{
+		return PositionList;
+	}
+
+	/**
+	 * 
+	 */
+	public void setPidAndFileInfo(String str)
+	{
+		processedPidAndFile = str;
+	}
+
+	/**
+	 * 
+	 */
+	public String getPidAndFileInfo()
+	{
+		return processedPidAndFile;
+	}
+
+	/**
+	 * 
+	 */
+	public void setZoomMode(int value)
+	{
+		zoomMode = value;
+
+		if (info_2.length() > 0)
+			scale_Picture();
+	}
+
+	/**
+	 * 
+	 */
+	public void setZoomMode(int[] values)
+	{
+		zoomMode = 2;
+
+		zoomArea[0] = (values[0] * horizontal_size) / preview_horizontal_size;
+		zoomArea[1] = (values[1] * vertical_size) / preview_vertical_size;
+		zoomArea[2] = (values[2] * horizontal_size) / preview_horizontal_size;
+		zoomArea[3] = (values[3] * vertical_size) / preview_vertical_size;
+
+		if (info_2.length() > 0)
+			scale_Picture();
+	}
+
+	/**
+	 * 
+	 */
+	public String getZoomInfo()
+	{
+		if (zoomMode == 1 && getAspectRatio() != 3 && getAspectRatio() != 4)
+			return "LB Zoom";
+
+		else if (zoomMode == 2)
+			return ("Manual Zoom: x" + zoomArea[0] + ", y" + zoomArea[1] + " - " + zoomArea[2] + "*" + zoomArea[3]);
+
+		return "";
+	}
+
+	/**
+	 * 
+	 */
 	public String getWSSInfo()
 	{
 		return WSS.getWSS();
@@ -2854,10 +2979,10 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	 */
 	public int[] getCutImage()
 	{
-		int new_height = 126;
-		int new_width = 224;
-		int source_height = 288;
-		int source_width = 512;
+		int new_width = cutview_horizontal_size;
+		int new_height = cutview_vertical_size;
+		int source_width = preview_horizontal_size;
+		int source_height = preview_vertical_size;
 
 		float Y = 0;
 		float X = 0;
@@ -2883,9 +3008,9 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	 * @param4 - simple_fast decode
 	 * @return
 	 */
-	public long decodeArray(byte array[], boolean direction, boolean _viewGOP, boolean fast)
+	public long decodeArray(byte array[], boolean direction, boolean _viewGOP, boolean fast, int yGain)
 	{
-		return decodeArray(array, 0, direction, _viewGOP, fast);
+		return decodeArray(array, 0, direction, _viewGOP, fast, yGain);
 	}
 
 	/**
@@ -2899,10 +3024,11 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	 * @param5 - simple_fast decode
 	 * @return
 	 */
-	public long decodeArray(byte array[], int start_position, boolean direction, boolean _viewGOP, boolean fast)
+	public long decodeArray(byte[] array, int start_position, boolean direction, boolean _viewGOP, boolean fast, int yGain)
 	{
 		FAST = fast;
 		DIRECTION = direction;
+		YGain = yGain;
 
 		ERROR1 = false;
 		ERROR2 = false;
@@ -2937,14 +3063,15 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 					InitialDecoder();
 					Decode_Picture();
 					scale_Picture();
-					repaint();
+				//	repaint();
 
 					return StartPos;
 				}
 
 				else if (ERROR_CODE1 == 2 )
 				{
-					repaint();
+				//	repaint();
+
 					return 0;
 				}
 
@@ -2961,11 +3088,135 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 			ERROR1 = true;
 		}
 
+		if (ERROR1)
+			checkH264(buf, buf.length);
+
 		scale_Picture();
 
-		repaint();
+	//	repaint();
 
 		return 0;
 	}
+
+////
+
+	/**
+	 * short analyze of H.264
+	 */
+	private boolean checkH264(byte[] check, int length)
+	{ 
+		int[] BitPosition = { 0 };
+
+		for (int i = 0, flag, nal_unit, nal_ref, profile, forb_zero, level_idc, hori, vert, j = length - 50; i < j; i++)
+		{
+			if (check[i] != 0 || check[1 + i] != 0 || check[2 + i] != 0 || check[3 + i] != 1)
+				continue;
+
+			BitPosition[0] = (4 + i)<<3;
+
+			forb_zero = getBits(check, BitPosition, 1); //forb_zero = 0x80 & check[4 + i];
+			nal_ref = getBits(check, BitPosition, 2); //nal_ref  = (0xE0 & check[4 + i])>>>5;
+			nal_unit = getBits(check, BitPosition, 5); //nal_unit = 0x1F & check[4 + i];
+
+			if (forb_zero != 0 || nal_unit != 7)
+				continue;
+
+			//seq_param
+			profile = getBits(check, BitPosition, 8); //profile = 0xFF & check[5 + i];
+			getBits(check, BitPosition, 3); //constraint 0,1,2
+			getBits(check, BitPosition, 5); //5 zero_bits
+
+			level_idc = getBits(check, BitPosition, 8); //0xFF & check[7 + i];
+			flag = getCodeNum(check, BitPosition); // seq_parameter_set_id 0 ue(v)
+			flag = getCodeNum(check, BitPosition); // log2_max_frame_num_minus4 0 ue(v)
+			flag = getCodeNum(check, BitPosition); // pic_order_cnt_type 0 ue(v)
+
+			if (flag == 0)
+				getCodeNum(check, BitPosition); // log2_max_pic_order_cnt_lsb_minus4 0 ue(v)
+
+			else if (flag == 1)
+			{
+				getBits(check, BitPosition, 1); //delta_pic_order_always_zero_flag 0 u(1)
+				getSignedCodeNum(check, BitPosition); //offset_for_non_ref_pic 0 se(v)
+				getSignedCodeNum(check, BitPosition); //offset_for_top_to_bottom_field 0 se(v)
+				flag = getCodeNum(check, BitPosition); // num_ref_frames_in_pic_order_cnt_cycle 0 ue(v)
+
+				for (int k = 0; k < flag; k++)
+					getSignedCodeNum(check, BitPosition); //offset_for_ref_frame[ i ] 0 se(v)
+			}
+
+			getCodeNum(check, BitPosition); //num_ref_frames 0 ue(v)
+			getBits(check, BitPosition, 1); //gaps_in_frame_num_value_allowed_flag 0 u(1)
+			hori = 16 * (1 + getCodeNum(check, BitPosition)); //pic_width_in_mbs_minus1 0 ue(v)
+			vert = 16 * (1 + getCodeNum(check, BitPosition)); //pic_height_in_map_units_minus1 0 ue(v)
+			flag = getBits(check, BitPosition, 1); //frame_mbs_only_flag 0 u(1)
+
+			info_2 = "MPEG-4/H.264, " + hori + "*" + (flag == 0 ? vert<<1 : vert);
+
+			return true;
+		} 
+
+		return false;
+	}
+
+	/**
+	 *
+	 */
+	private int getSignedCodeNum(byte[] array, int[] BitPosition)
+	{
+		int codeNum = getCodeNum(array, BitPosition);
+
+		codeNum = (codeNum & 1) == 0 ? codeNum>>>1 : -(codeNum>>>1);
+
+		return codeNum;
+	}
+
+	/**
+	 *
+	 */
+	private int getCodeNum(byte[] array, int[] BitPosition)
+	{
+		int leadingZeroBits = -1;
+		int codeNum;
+
+		for (int b = 0; b == 0; leadingZeroBits++)
+			b = getBits(array, BitPosition, 1);
+
+		codeNum = (1<<leadingZeroBits) - 1 + getBits(array, BitPosition, leadingZeroBits);
+
+		return codeNum;
+	}
+
+	/**
+	 *
+	 */
+	private int getBits(byte[] array, int[] BitPosition, int N)
+	{
+		int Pos, Val;
+		Pos = BitPosition[0]>>>3;
+
+		if (N == 0)
+			return 0;
+
+		if (Pos >= array.length - 4)
+		{
+			BitPosition[0] += N;
+			return -1;
+		}
+
+		Val =   (0xFF & array[Pos])<<24 |
+			(0xFF & array[Pos + 1])<<16 |
+			(0xFF & array[Pos + 2])<<8 |
+			(0xFF & array[Pos + 3]);
+
+		Val <<= BitPosition[0] & 7;
+		Val >>>= 32 - N;
+
+		BitPosition[0] += N;
+
+		return Val;
+	}
+///
+
 
 }

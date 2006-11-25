@@ -99,6 +99,8 @@ public class StreamDemultiplexer extends Object {
 	private int sourcetype = 0;
 	private int[] MPGVideotype = { 0 }; // 0 =m1v, 1 = m2v, changed at goptest
 
+	private int StreamNumber = -1;
+
 	private String FileName = "";
 	private String parentname = "";
 	private String[] type = { "ac", "tt", "mp", "mv", "pc", "sp", "vp" };
@@ -278,6 +280,22 @@ public class StreamDemultiplexer extends Object {
 	}
 
 	/**
+	 * 
+	 */
+	public void setStreamNumber(int val)
+	{ 
+		StreamNumber = val; 
+	}
+
+	/**
+	 * 
+	 */
+	public int getStreamNumber()
+	{ 
+		return StreamNumber;
+	}
+
+	/**
 	 * stream type preselector
 	 */
 	public boolean StreamEnabled()
@@ -338,12 +356,22 @@ public class StreamDemultiplexer extends Object {
 	}
 
 	/**
+	 *
+	 */
+	private void setFileName()
+	{
+		FileName = parentname + source[sourcetype] + lfn + "-" + Long.toHexString(0xFFFFFFL & System.currentTimeMillis()).toUpperCase();
+	}
+
+	/**
 	 * init nonVideo streams
 	 */
 	private void initNonVideo(JobCollection collection, String _name)
 	{
 		parentname = _name;
-		FileName = parentname + source[sourcetype] + lfn;
+
+		setFileName();
+
 		target_position = 0;
 
 		getSettings(collection);
@@ -740,10 +768,7 @@ public class StreamDemultiplexer extends Object {
 			}
 
 			else if (AppendPidToFileName)
-			{
-				parentname += formatIDString(getPID(), getID(), subID());
-				parameters[3] = parentname;
-			}
+				parameters[3] = parentname + formatIDString(getPID(), getID(), subID());
 
 		} catch (IOException e) { 
 
@@ -780,7 +805,8 @@ public class StreamDemultiplexer extends Object {
 		buffersize = _buffersize;
 		sourcetype = _parsertype;
 
-		FileName = parentname + source[sourcetype] + lfn;
+		setFileName();
+
 		es_streamtype = CommonParsing.MPEG_VIDEO;
 		MPGVideotype[0] = 0;
 
@@ -810,7 +836,7 @@ public class StreamDemultiplexer extends Object {
 		getSettings(collection);
 
 		parentname = _name;
-		FileName = parentname + source[sourcetype] + lfn;
+		setFileName();
 
 		first = true;
 		MPGVideotype[0] = 0;
@@ -901,10 +927,12 @@ public class StreamDemultiplexer extends Object {
 			{ 
 				int ot = (RenameVideo || CreateD2vIndex || SplitProjectFile) ? 0 : 2;
 
-				if (AppendPidToFileName)
-					parentname += formatIDString(getPID(), getID(), subID());
+				videofile = parentname;
 
-				videofile = parentname + videoext[MPGVideotype[0] + ot];
+				if (AppendPidToFileName)
+					videofile += formatIDString(getPID(), getID(), subID());
+
+				videofile += videoext[MPGVideotype[0] + ot];
 				File newfile = new File(videofile);
 
 				if (newfile.exists()) 

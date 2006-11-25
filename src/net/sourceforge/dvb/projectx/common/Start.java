@@ -1,7 +1,7 @@
 /*
  * @(#)Start.java - main start class 
  *
- * Copyright (c) 2005 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2005-2006 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -250,12 +250,14 @@ public class Start extends Object {
 			if (readSwitches(cli_switches))
 				System.out.println("Error while reading CLI Switches ...");
 
+			System.out.println("Preparing GUI (if enabled)...");
+
 			/**
 			 * initialize the gui interface
 			 */
 			Common.prepareGui(showGUI); // access after the keys has been loaded!, separate to userinterface later
 
-			System.out.println("Checking Commons-Net library access...");
+			System.out.println("Check Commons-Net library access...");
 
 			/**
 			 * planned to disable ftp only, if commons-net is missing

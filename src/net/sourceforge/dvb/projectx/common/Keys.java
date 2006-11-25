@@ -1,7 +1,7 @@
 /*
  * @(#)Keys.java - static, fixed keys
  *
- * Copyright (c) 2005 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2006 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -48,8 +48,8 @@ public class Keys extends Object {
 	public final static String[] KEY_FtpServer_Commands = { "FtpServer.Commands", "" }; 
 	public final static String[] KEY_WindowPositionMain_X = { "WindowPosition.Main.X", "50" }; 
 	public final static String[] KEY_WindowPositionMain_Y = { "WindowPosition.Main.Y", "50" }; 
-	public final static String[] KEY_WindowPositionMain_Width = { "WindowPosition.Main.Width", "906" }; 
-	public final static String[] KEY_WindowPositionMain_Height = { "WindowPosition.Main.Height", "694" }; 
+	public final static String[] KEY_WindowPositionMain_Width = { "WindowPosition.Main.Width", "850" }; //906
+	public final static String[] KEY_WindowPositionMain_Height = { "WindowPosition.Main.Height", "666" }; //694
 
 	/**
 	 * PostCommands
@@ -158,7 +158,7 @@ public class Keys extends Object {
 	public final static String[] KEY_TS_joinPackets = { "SpecialPanel.TS.joinPackets", "1" }; //cbox[53], true
 	public final static String[] KEY_TS_HumaxAdaption = { "SpecialPanel.TS.HumaxAdaption", "0" }; //cbox[70]
 	public final static String[] KEY_TS_FinepassAdaption = { "SpecialPanel.TS.FinepassAdaption", "0" };
-	public final static String[] KEY_TS_KoscomAdaption = { "SpecialPanel.TS.KoscomAdaption", "0" };
+	public final static String[] KEY_TS_JepssenAdaption = { "SpecialPanel.TS.JepssenAdaption", "0" };
 	public final static String[] KEY_TS_generatePmt = { "SpecialPanel.TS.generatePmt", "1" }; //cbox[41], true
 	public final static String[] KEY_TS_generateTtx = { "SpecialPanel.TS.generateTtx", "0" }; //cbox[42] --ts !!
 	public final static String[] KEY_TS_setMainAudioAc3 = { "SpecialPanel.TS.setMainAudioAc3", "0" }; //cbox[37] --ts  !!
@@ -166,6 +166,7 @@ public class Keys extends Object {
 	public final static String[] KEY_Input_concatenateForeignRecords = { "SpecialPanel.Input.concatenateForeignRecords", "1" }; //cbox[49], true
 	public final static String[] KEY_Audio_ignoreErrors = { "SpecialPanel.Audio.ignoreErrors", "0" }; //cbox[24] 
 	public final static String[] KEY_Audio_limitPts = { "SpecialPanel.Audio.limitPts", "0" }; //cbox[15]
+	public final static String[] KEY_Audio_allowFormatChanges = { "SpecialPanel.Audio.allowFormatChanges", "0" };
 	public final static String[] KEY_Video_ignoreErrors = { "SpecialPanel.Video.ignoreErrors", "0" }; //cbox[39]
 	public final static String[] KEY_Video_trimPts = { "SpecialPanel.Video.trimPts", "0" }; //cbox[73]
 	public final static String[] KEY_Conversion_startWithVideo = { "SpecialPanel.Conversion.startWithVideo", "1" }; //cbox[23] -streamconv !!
@@ -317,6 +318,7 @@ public class Keys extends Object {
 	public final static String[] KEY_Preview_fastDecode = { "CollectionPanel.Preview.fastDecode", "0" }; //rbutton[10] 
 	public final static String[] KEY_Preview_LiveUpdate = { "CollectionPanel.Preview.LiveUpdate", "1" }; //rbutton[16] 
 	public final static String[] KEY_Preview_AllGops = { "CollectionPanel.Preview.AllGops", "0" }; //rbutton[6] 
+	public final static String[] KEY_Preview_YGain = { "CollectionPanel.Preview.YGain", "0" };
 	public final static String[] KEY_OptionHorizontalResolution = { "CollectionPanel.OptionHorizontalResolution", "0" }; //cbox[52]
 	public final static String[] KEY_OptionDAR = { "CollectionPanel.OptionDAR", "0" }; //cbox[47]
 
@@ -415,7 +417,8 @@ public class Keys extends Object {
 			Resource.getString("AudioPanel.losslessMpaConversionMode1"),
 			Resource.getString("AudioPanel.losslessMpaConversionMode2"),
 			Resource.getString("AudioPanel.losslessMpaConversionMode3"),
-			Resource.getString("AudioPanel.losslessMpaConversionMode4")
+			Resource.getString("AudioPanel.losslessMpaConversionMode4"),
+			Resource.getString("AudioPanel.losslessMpaConversionMode5")
 		};
 		this.ITEMS_losslessMpaConversionMode = ITEMS_losslessMpaConversionMode;
 
@@ -450,7 +453,7 @@ public class Keys extends Object {
 			"PES (incl. MPEG Video)",
 			"MPEG-1 PS/SS (PES Container)",
 			"MPEG-2 PS/SS (PES Container)",
-			"PVA (PES Container of TT®)",
+			"PVA (TT® PES Container)",
 			"TS (generic PES Container)",
 			"PES (MPEG Audio first)",
 			"PES (private stream 1 first)",

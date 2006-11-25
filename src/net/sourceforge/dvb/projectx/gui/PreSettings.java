@@ -257,7 +257,7 @@ public class PreSettings extends JFrame {
 			Keys.KEY_TS_joinPackets,
 			Keys.KEY_TS_HumaxAdaption,
 			Keys.KEY_TS_FinepassAdaption,
-			Keys.KEY_TS_KoscomAdaption,
+			Keys.KEY_TS_JepssenAdaption,
 			Keys.KEY_TS_generatePmt,
 			Keys.KEY_TS_generateTtx,
 			Keys.KEY_TS_setMainAudioAc3
@@ -320,6 +320,7 @@ public class PreSettings extends JFrame {
 			Keys.KEY_Input_concatenateForeignRecords,
 			Keys.KEY_Audio_ignoreErrors,
 			Keys.KEY_Audio_limitPts,
+			Keys.KEY_Audio_allowFormatChanges,
 			Keys.KEY_Video_ignoreErrors,
 			Keys.KEY_Video_trimPts
 		};
@@ -334,7 +335,7 @@ public class PreSettings extends JFrame {
 			box.setSelected(Common.getSettings().getBooleanProperty(objects_2[i]));
 			box.addActionListener(_CheckBoxListener);
 
-			if (i == 2 || i == 4)
+			if (i == 2 || i == 5)
 				idPanel2.add(Box.createRigidArea(new Dimension(1, 10)));
 
 			idPanel2.add(box);
@@ -420,6 +421,8 @@ public class PreSettings extends JFrame {
 			Keys.KEY_Streamtype_Vbi,
 			Keys.KEY_WriteOptions_writeVideo,
 			Keys.KEY_WriteOptions_writeAudio,
+			Keys.KEY_OptionHorizontalResolution,
+			Keys.KEY_OptionDAR,
 			Keys.KEY_additionalOffset,
 			Keys.KEY_ExportPanel_Export_Overlap
 		};
@@ -460,7 +463,7 @@ public class PreSettings extends JFrame {
 
 		JPanel sp2 = new JPanel();
 		sp2.setLayout(new BoxLayout(sp2, BoxLayout.X_AXIS));
-		sp2.add(box[11]);  
+		sp2.add(box[13]);  
 		sp2.add(overlap);  
 
 		op1.add(sp2);
@@ -514,6 +517,51 @@ public class PreSettings extends JFrame {
 		op4.add(box[8]);
 		op4.add(box[9]);
 
+		op4.add(Box.createRigidArea(new Dimension(1, 5)));
+
+		/**
+		 *
+		 */
+		JPanel CL2 = new JPanel();
+		CL2.setLayout(new BoxLayout(CL2, BoxLayout.X_AXIS));
+
+		box[10].setPreferredSize(new Dimension(110, 20));
+		box[10].setMaximumSize(new Dimension(110, 20));
+		CL2.add(box[10]);  
+
+
+		JComboBox combobox_34 = new JComboBox(Keys.ITEMS_ExportHorizontalResolution);
+		combobox_34.setMaximumRowCount(7);
+		combobox_34.setPreferredSize(new Dimension(90, 20));
+		combobox_34.setMaximumSize(new Dimension(90, 20));
+		combobox_34.setActionCommand(Keys.KEY_ExportHorizontalResolution[0]);
+		combobox_34.setEditable(true);
+		combobox_34.setSelectedItem(Common.getSettings().getProperty(Keys.KEY_ExportHorizontalResolution));
+		combobox_34.addActionListener(_ComboBoxItemListener);
+		CL2.add(combobox_34);
+
+		op4.add(CL2);
+
+		/**
+		 *
+		 */
+		JPanel CL3 = new JPanel();
+		CL3.setLayout(new BoxLayout(CL3, BoxLayout.X_AXIS));
+
+		box[11].setPreferredSize(new Dimension(80, 20));
+		box[11].setMaximumSize(new Dimension(80, 20));
+		CL3.add(box[11]);  
+
+		JComboBox combobox_24 = new JComboBox(Keys.ITEMS_ExportDAR);
+		combobox_24.setMaximumRowCount(7);
+		combobox_24.setPreferredSize(new Dimension(120, 20));
+		combobox_24.setMaximumSize(new Dimension(120, 20));
+		combobox_24.setActionCommand(Keys.KEY_ExportDAR[0]);
+		combobox_24.setSelectedIndex(Common.getSettings().getIntProperty(Keys.KEY_ExportDAR));
+		combobox_24.addActionListener(_ComboBoxIndexListener);
+		CL3.add(combobox_24);
+
+		op4.add(CL3);
 
 		exportPanel.add(op4);
 
@@ -524,7 +572,7 @@ public class PreSettings extends JFrame {
 		JPanel op7 = new JPanel();
 		op7.setLayout(new BoxLayout(op7, BoxLayout.X_AXIS));
 
-		op7.add(box[10]);
+		op7.add(box[12]);
 
 		JTextField offset_value = new JTextField(Common.getSettings().getProperty(Keys.KEY_ExportPanel_additionalOffset_Value));
 		offset_value.setPreferredSize(new Dimension(80, 22));
@@ -1359,7 +1407,6 @@ public class PreSettings extends JFrame {
 
 		String[][] objects = {
 			Keys.KEY_dumpDroppedGop,
-			Keys.KEY_holdStreamInfoOnOSD,
 			Keys.KEY_additionalInputBuffer
 		};
 
@@ -1375,7 +1422,7 @@ public class PreSettings extends JFrame {
 			box[i].setSelected(Common.getSettings().getBooleanProperty(objects[i]));
 			box[i].addActionListener(_CheckBoxListener);
 
-			if (i < 2)
+			if (i < 1)
 				op0.add(box[i]);
 		}
 
@@ -1398,18 +1445,16 @@ public class PreSettings extends JFrame {
 		op2.setLayout( new ColumnLayout() );
 		op2.setBorder( BorderFactory.createTitledBorder(Resource.getString("OptionPanel.Buffer.Title")) );
 
-		op2.add(box[2]);
+		op2.add(box[1]);
 
 		String[][] keys = {
 			Keys.KEY_MainBuffer,
-			Keys.KEY_ScanBuffer,
-			Keys.KEY_PreviewBuffer
+			Keys.KEY_ScanBuffer
 		};
 
 		Object[][] buffersizes = {
 			{ "10240000", "8192000", "7168000", "6144000", "5120000", "4096000", "3072000", "2048000", "1024000" },
 			{ "384000", "512000", "1024000", "1536000", "2048000", "2560000", "3072000" },
-			{ "auto", "256000", "384000", "512000", "768000", "1024000", "1536000", "2048000", "2560000", "3072000" }
 		};
 
 		for (int i = 0; i < keys.length; i++)

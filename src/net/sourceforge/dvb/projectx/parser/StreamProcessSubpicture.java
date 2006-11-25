@@ -273,7 +273,7 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 				export_type = 1;
 			}
 
-			Common.setMessage("");
+		//	Common.setMessage("");
 			Common.setMessage(Resource.getString("subpicture.msg.output") + " " + subfile.substring(subfile.length() - 3));
 
 			PushbackInputStream in = new PushbackInputStream(xInputFile.getInputStream(), 65536);

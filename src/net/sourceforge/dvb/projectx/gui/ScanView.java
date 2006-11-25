@@ -1,7 +1,7 @@
 /*
- * @(#)CutPanel
+ * @(#)CutView
  *
- * Copyright (c) 2006 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2005-2006 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -33,20 +33,17 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.image.MemoryImageSource;
 import java.awt.Font;
-import java.awt.GridLayout;
 
 import java.util.Arrays;
 
-import javax.swing.BoxLayout;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
 
-/**
- *
- */
-public class CutView extends JPanel {
+
+public class ScanView extends JPanel {
 
 	private final int Top = 20;
-	private final int Bottom = 174;
+	private final int Bottom = 184;
 
 	private int[] image_data;
 
@@ -58,7 +55,6 @@ public class CutView extends JPanel {
 	private boolean cut_top = true;
 	private boolean cut_bottom = false;
 	private boolean cut_match = false;
-	private boolean action = false;
 
 	private String string_bottom = "Next:";
 	private String string_top = "Prev:";
@@ -72,16 +68,15 @@ public class CutView extends JPanel {
 	private MemoryImageSource source_top;
 	private MemoryImageSource source_bottom;
 
-	private Color BackgroundColor;
-	private Color RedColor;
+	private final Color BackgroundColor;
+	private final Color RedColor;
 
-	private Font font;
-
+	private final Font font;
 
 	/**
 	 *
 	 */
-	public CutView()
+	public ScanView()
 	{ 
 		image_data = new int[width * height];
 
@@ -96,14 +91,33 @@ public class CutView extends JPanel {
 		BackgroundColor = new Color(0, 35, 110);
 		RedColor = new Color(255, 100, 100);
 
-		font = new Font("Tahoma", Font.PLAIN, 12);
+		font = new Font("Tahoma", Font.PLAIN, 14);
 
-		setPreferredSize(new Dimension(340, 120));
-		setMaximumSize(new Dimension(340, 120));
-		setMinimumSize(new Dimension(340, 120));
+		setLayout(new BorderLayout());
+		add(buildScanViewPanel(), BorderLayout.SOUTH);
 
 		setBackground(Color.black);
 		setVisible(true);
+	}
+
+
+	/**
+	 *
+	 */
+	protected JPanel buildScanViewPanel()
+	{
+		JPanel panel = new JPanel(new BorderLayout());
+
+		JSlider scanSlider = new JSlider();
+		scanSlider.setMaximum(100);
+		scanSlider.setMajorTickSpacing(10);
+		scanSlider.setMinorTickSpacing(1);
+		scanSlider.setPaintTicks(true);
+		scanSlider.setValue(0);
+
+		panel.add(scanSlider, BorderLayout.SOUTH);
+
+		return panel;
 	}
 
 	/**
@@ -158,14 +172,14 @@ public class CutView extends JPanel {
 		if (position < 100)
 		{
 			source_top.newPixels();
-			string_top = "Prev: " + (object != null ? "#" + (index + 1) + " - " + object[index] + string_in_out[index & 1] : "= Collection Begin");
+			string_top = "Prev: " + (object != null ? "#" + index + " @ " + object[index] + string_in_out[index & 1] : "= Collection Begin");
 			cut_top = object != null ? (index & 1) == 0 : (!matchingPoint ? !cut_bottom : false);
 		}
 
 		else
 		{
 			source_bottom.newPixels();
-			string_bottom = "Next: " + (object != null ? "#" + (index + 1) + " - " + object[index] + string_in_out[index & 1] : "= Collection End");
+			string_bottom = "Next: " + (object != null ? "#" + index + " @ " + object[index] + string_in_out[index & 1] : "= Collection End");
 			cut_bottom = object != null ? (index & 1) == 0 : false;
 		}
 
@@ -194,40 +208,36 @@ public class CutView extends JPanel {
 	public void setMatchingPoint(boolean b, Object[] object, int index)
 	{
 		matchingPoint = b;
-		string_matchingpoint = matchingPoint ? "This: #" + (index + 1) + " @ " + object[index] + string_in_out[index & 1] : "";
+		string_matchingpoint = matchingPoint ? "This: #" + index + " @ " + object[index] + string_in_out[index & 1] : "";
 		cut_match = (index & 1) == 0;
 	}
 
 	/**
 	 *
 	 */
-	public void paint(Graphics g)
+	public void paint2(Graphics g)
 	{
 		g.setColor(BackgroundColor);
-		g.fillRect(0, 0, 900, 120);
-
+		g.fillRect(0, 0, 900, 90);
+/**
 		g.setFont(font);
 
 		g.setColor(cut_top ? Color.green : RedColor);
 		g.drawRect(0, Top - 1, width - 1, height + 1);
-		g.drawString(string_top, 2, Top - 4);
+		g.drawString(string_top, 8, Top - 4);
 
 		g.setColor(cut_bottom ? Color.green : RedColor);
-	//	g.drawRect(0, Bottom - 1, width - 1, height + 1);
-	//	g.drawString(string_bottom, 8, Bottom - 4);
 		g.drawRect(Bottom, Top - 1, width - 1, height + 1);
-		g.drawString(string_bottom, Bottom + 2, Top - 4);
+		g.drawString(string_bottom, Bottom + 8, Top - 4);
 
 		if (matchingPoint)
 		{
 			g.setColor(cut_match ? Color.green : RedColor);
-			g.drawString(string_matchingpoint, 2, Bottom - 21);
+			g.drawString(string_matchingpoint, 8, Bottom - 21);
 		}
 
 		g.drawImage(image_top, 0, Top, this);
-	//	g.drawImage(image_bottom, 0, Bottom, this);
 		g.drawImage(image_bottom, Bottom, Top, this);
-
+**/
 	}
-
 }

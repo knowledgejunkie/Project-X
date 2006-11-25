@@ -149,6 +149,8 @@ public class StreamParserPESPrimary extends StreamParserBase {
 
 		vptslog = "-1"; //fix
 
+		String file_id = aXInputFile.getStreamInfo().getFileID();
+
 		streamconverter = new StreamConverter();
 
 		Hashtable substreams = new Hashtable();

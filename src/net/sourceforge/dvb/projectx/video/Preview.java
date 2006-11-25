@@ -1,7 +1,7 @@
 /*
  * @(#)Preview.java - prepare files for previewing
  *
- * Copyright (c) 2004-2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2004-2006 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -70,12 +70,12 @@ public class Preview extends Object {
 	public String getProcessedPID()
 	{
 		if (processed_PID < 0)
-			return "---";
+			return "no (P)ID";
 
-		return (Integer.toHexString(processed_PID).toUpperCase());
+		return ("(P)ID 0x" + Common.adaptString(Integer.toHexString(processed_PID).toUpperCase(), 4));
 	}
 
-	public long load(long startposition, int size, List previewList, boolean direction, boolean all_gops, boolean fast_decode, Object[] _predefined_Pids, int _active_collection) throws IOException
+	public long load(long startposition, int size, List previewList, boolean direction, boolean all_gops, boolean fast_decode, int y_gain, Object[] _predefined_Pids, int _active_collection) throws IOException
 	{
 		predefined_Pids = _predefined_Pids;
 		active_collection = _active_collection;
@@ -120,7 +120,7 @@ public class Preview extends Object {
 
 		preview_data = search(preview_data, startposition, filetype);
 
-		long newposition = Common.getMpvDecoderClass().decodeArray(preview_data, direction, all_gops, fast_decode);
+		long newposition = Common.getMpvDecoderClass().decodeArray(preview_data, direction, all_gops, fast_decode, y_gain);
 
 		for (int i = positionList.size() - 1; i >= 0; i--)
 		{
@@ -141,13 +141,18 @@ public class Preview extends Object {
 
 			if (startposition < preview_object.getEnd())
 			{
-				processed_file = "" + (i + 1) + "/" + previewList.size() + " - " + preview_object.getFile().getName();
+			//	processed_file = "" + (i + 1) + "/" + previewList.size() + " - " + preview_object.getFile().getName();
+				processed_file = "" + i + "/" + (previewList.size() - 1) + " - " + preview_object.getFile().getName();
 				break;
 			}
 		}
 
 		preview_data = null;
 		//System.gc();
+
+		Common.getMpvDecoderClass().setProcessedPosition(startposition, previewList);
+		Common.getMpvDecoderClass().setPidAndFileInfo(getProcessedPID() + " : " + getProcessedFile());
+		Common.getGuiInterface().repaintPicturePanel();
 
 		return startposition;
 	}

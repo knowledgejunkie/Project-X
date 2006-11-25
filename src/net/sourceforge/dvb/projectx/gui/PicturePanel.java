@@ -33,6 +33,9 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Font;
 
+import java.awt.Rectangle;
+
+import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -89,6 +92,11 @@ public class PicturePanel extends JPanel {
 	private boolean isOSDInfoAvailable = false;
 	private boolean isOSDErrorInfo = false;
 	private boolean PLAY = true;
+
+	private boolean manualzoom = false;
+	private boolean definezoom = false;
+	private int[] zoomrect = new int[4];
+
 
 	private StreamInfo streamInfo = null;
 
@@ -223,7 +231,51 @@ public class PicturePanel extends JPanel {
 				if (e.getClickCount() >= 1 && e.getModifiers() == MouseEvent.BUTTON3_MASK)
 					popup.show(getParent(), e.getX(), e.getY());
 			}
+
+			public void mouseEntered(MouseEvent e)
+			{}
+
+			public void mouseExited(MouseEvent e)
+			{}
+
+			public void mousePressed(MouseEvent e)
+			{}
+
+			public void mouseReleased(MouseEvent e)
+			{
+				if (!definezoom)
+					return;
+
+				definezoom = false;
+				manualzoom = false;
+				Common.getMpvDecoderClass().setZoomMode(zoomrect);
+			}
 		});
+
+		addMouseMotionListener(new MouseMotionAdapter() {
+			public void mouseDragged(MouseEvent e)
+			{
+				if (!definezoom)
+					return;
+
+				if (!manualzoom)
+				{
+					manualzoom = true;
+					zoomrect[0] = e.getX();
+					zoomrect[1] = e.getY();
+				}
+
+				else
+				{
+					zoomrect[2] = e.getX() - zoomrect[0];
+					zoomrect[3] = (int) ((9.0 * zoomrect[2]) / 16.0);
+			//		zoomrect[3] = e.getY() - zoomrect[1];
+				}
+
+				repaint();
+			}
+		});
+
 
 		clock = new Clock();
 	}
@@ -233,27 +285,53 @@ public class PicturePanel extends JPanel {
 	 */
 	protected void buildPopupMenu()
 	{
+		final String[] popup_modes = { "normalzoom", "lbzoom", "manualzoom", "save_1", "save_2" };
+
 		ActionListener al = new ActionListener()
 		{
 			public void actionPerformed(ActionEvent e)
 			{
 				String actName = e.getActionCommand();
 
-				if (actName.equals("save_1"))
+				if (actName.equals(popup_modes[3]))
 					saveBMP(Common.getMpvDecoderClass().getPixels(), Common.getMpvDecoderClass().getWidth(), Common.getMpvDecoderClass().getHeight(), 0, false);
 
-				else if (actName.equals("save_2"))
+				else if (actName.equals(popup_modes[4]))
 					saveBMP(Common.getMpvDecoderClass().getPixels(), Common.getMpvDecoderClass().getWidth(), Common.getMpvDecoderClass().getHeight(), Common.getMpvDecoderClass().getAspectRatio(), true);
+
+				else if (actName.equals(popup_modes[0]))
+					Common.getMpvDecoderClass().setZoomMode(0);
+
+				else if (actName.equals(popup_modes[1]))
+					Common.getMpvDecoderClass().setZoomMode(1);
+
+				else if (actName.equals(popup_modes[2]))
+				{
+					definezoom = true;
+					Arrays.fill(zoomrect, 0);
+				}
 			}
 		};
 
 		popup = new JPopupMenu("save");
 
-		JMenuItem menuitem_1 = popup.add(Resource.getString("PreviewPanel.saveCurrentPicture"));
-		menuitem_1.setActionCommand("save_1");
 
-		JMenuItem menuitem_2 = popup.add(Resource.getString("PreviewPanel.saveCurrentPictureDAR"));
-		menuitem_2.setActionCommand("save_2");
+		JMenuItem menuitem_1 = popup.add("Normal Zoom");
+		menuitem_1.setActionCommand(popup_modes[0]);
+
+		JMenuItem menuitem_2 = popup.add("LB Zoom");
+		menuitem_2.setActionCommand(popup_modes[1]);
+
+		JMenuItem menuitem_3 = popup.add("Manual Zoom");
+		menuitem_3.setActionCommand(popup_modes[2]);
+
+		popup.addSeparator();
+
+		JMenuItem menuitem_4 = popup.add(Resource.getString("PreviewPanel.saveCurrentPicture"));
+		menuitem_4.setActionCommand(popup_modes[3]);
+
+		JMenuItem menuitem_5 = popup.add(Resource.getString("PreviewPanel.saveCurrentPictureDAR"));
+		menuitem_5.setActionCommand(popup_modes[4]);
 
 		popup.pack();
 
@@ -261,6 +339,9 @@ public class PicturePanel extends JPanel {
 
 		menuitem_1.addActionListener(al);
 		menuitem_2.addActionListener(al);
+		menuitem_3.addActionListener(al);
+		menuitem_4.addActionListener(al);
+		menuitem_5.addActionListener(al);
 	}
 
 	/**
@@ -285,7 +366,7 @@ public class PicturePanel extends JPanel {
 	public void paint(Graphics g)
 	{
 		g.setColor(Color.black);
-		g.fillRect(0, 0, 600, 600);
+		g.fillRect(0, 0, 800, 600);
 
 		g.setColor(new Color(0, 35, 110));
 		g.fillRect(0, 290, 514, 340);
@@ -294,8 +375,9 @@ public class PicturePanel extends JPanel {
 
 		g.drawImage(image, 2, 2, this);
 
-		g.setFont(font_1);
+		paintZoomInfo(g);
 
+		g.setFont(font_1);
 		g.setColor(Color.white);
 		g.drawString(Common.getMpvDecoderClass().getInfo_1(), 36, 303);
 		g.drawString(Common.getMpvDecoderClass().getInfo_2(), 36, 317);
@@ -307,12 +389,17 @@ public class PicturePanel extends JPanel {
 		g.setFont(font_2);
 
 		paintCutInfo(g);
+//
+		paintPositionInfo(g);
+
 		paintChapterInfo(g);
 		paintSubpicture(g);
 		paintOSDInfo(g);
 		paintFileInfo(g);
 
 		paintCollectionNumber(g);
+
+		paintZoomRect(g);
 	}
 
 	/**
@@ -354,6 +441,28 @@ public class PicturePanel extends JPanel {
 		g.setFont(font_3);
 		g.setColor(Color.green);
 		g.drawString(String.valueOf(collection_number), 474, 38);
+	}
+
+	/**
+	 * paint 
+	 */
+	private void paintZoomInfo(Graphics g)
+	{
+		g.setFont(font_2);
+		g.setColor(Color.green);
+		g.drawString(Common.getMpvDecoderClass().getZoomInfo(), 20, 280);
+	}
+
+	/**
+	 * paint 
+	 */
+	private void paintZoomRect(Graphics g)
+	{
+		if (!definezoom)
+			return;
+
+		g.setColor(new Color(255, 100, 100, 120));
+		g.fillRect(zoomrect[0], zoomrect[1], zoomrect[2], zoomrect[3]);
 	}
 
 	/**
@@ -475,7 +584,13 @@ public class PicturePanel extends JPanel {
 				int[] x = { x1 + p1 - 1, x1 + p1 - 5, x1 + p1 + 5 };
 				int[] y = { y1 - 3, y1 - 3 - 5, y1 - 3 - 5 };
 
-				g.fillPolygon(x, y, 3);
+				int[] x_1 = { x1 + p1 - 1, x1 + p1 - 1, x1 + p1 + 5 };
+				int[] x_2 = { x1 + p1 + 1, x1 + p1 - 5, x1 + p1 + 1 };
+
+				if (i % 2 == 0)
+					g.fillPolygon(x_1, y, 3);
+				else
+					g.fillPolygon(x_2, y, 3);
 			}
 
 			if ((cutfiles_points.length & 1) == 0)
@@ -486,6 +601,47 @@ public class PicturePanel extends JPanel {
 				g.fillRect(x1 + p0, y1, w1 - p0, h1);
 			}
 		}
+	}
+
+	/**
+	 * paint position info
+	 */
+	private void paintPositionInfo(Graphics g)
+	{
+		int x1 = 10, y1 = 346, w1 = 492, h1 = 8;
+		List positions = Common.getMpvDecoderClass().getPositions();
+
+		/**
+		 * paint current position
+		 */
+		g.setColor(Color.white);
+		g.fillRect(x1, y1, 2, h1); //start
+		g.fillRect(x1 + w1, y1, 2, h1); //end
+		g.fillRect(x1, y1 + 3, w1, 2); //axis
+
+		if (!positions.isEmpty())
+		{
+			long pos;
+			long max = ((Long) positions.get(positions.size() - 1)).longValue();
+			int mark;
+
+			for (int i = 1, j = positions.size() - 1; i < j; i++)
+			{
+				pos = (((Long) positions.get(i)).longValue());
+				mark = (int) ((pos * w1) / max);
+				g.fillRect(x1 + mark, y1, 2, h1); //mark
+			}
+
+			pos = (((Long) positions.get(0)).longValue());
+			mark = (int) ((pos * w1) / max);
+			g.setColor(Color.red);
+			g.fillRect(x1 + mark, y1, 2, h1); //mark
+		}
+
+		g.setFont(font_2);
+		g.setColor(Color.green);
+		g.drawString(Common.getMpvDecoderClass().getPidAndFileInfo(), 10, 370);
+
 	}
 
 	/**

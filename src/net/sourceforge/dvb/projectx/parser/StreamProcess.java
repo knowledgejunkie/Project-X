@@ -56,6 +56,14 @@ public class StreamProcess extends Object {
 	/**
 	 * 
 	 */
+	public StreamProcess(int es_streamtype, JobCollection collection, String[] values)
+	{
+		process(es_streamtype, collection, new XInputFile(new File(values[0])), values[1], values[2], values[3], 0);
+	}
+
+	/**
+	 * 
+	 */
 	public StreamProcess(int es_streamtype, JobCollection collection, String filename, String filename_pts, String filename_type, String videofile_pts)
 	{
 		process(es_streamtype, collection, new XInputFile(new File(filename)), filename_pts, filename_type, videofile_pts, 0);

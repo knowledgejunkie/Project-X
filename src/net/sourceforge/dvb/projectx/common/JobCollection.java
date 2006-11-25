@@ -856,23 +856,24 @@ public class JobCollection extends Object {
 	{
 		int size = getInputFilesCount();
 
-		Object[][] table = new Object[size > 5 ? size : 5][11];
+		Object[][] table = new Object[size > 10 ? size : 10][12];
 
 		for (int i = 0; i < size; i++)
 		{
 			XInputFile xInputFile = (XInputFile) getInputFile(i);
 
-			table[i][0] = new Integer(i);
+			table[i][0] = xInputFile.getStreamInfo().getFileID();
 			table[i][1] = xInputFile.getStreamInfo().getFileSourceBase();
-			table[i][2] = xInputFile.getName();
-			table[i][3] = (xInputFile.getParent().length() > 0 ? xInputFile.getParent() : xInputFile.toString().substring(0, xInputFile.toString().indexOf(xInputFile.getName())));
-			table[i][4] = String.valueOf(xInputFile.length() / 1048576L) + " MB";
-			table[i][5] = Common.formatTime_3(xInputFile.lastModified());
-			table[i][6] = new Integer(xInputFile.getStreamInfo().getVideoStreams().length);
-			table[i][7] = new Integer(xInputFile.getStreamInfo().getAudioStreams().length);
-			table[i][8] = new Integer(xInputFile.getStreamInfo().getTeletextStreams().length);
-			table[i][9] = new Integer(xInputFile.getStreamInfo().getSubpictureStreams().length);
-			table[i][10] = xInputFile.getStreamInfo().getFileType();
+			table[i][2] = new Integer(i);
+			table[i][3] = xInputFile.getName();
+			table[i][4] = (xInputFile.getParent().length() > 0 ? xInputFile.getParent() : xInputFile.toString().substring(0, xInputFile.toString().indexOf(xInputFile.getName())));
+			table[i][5] = String.valueOf(xInputFile.length() / 1048576L) + " MB";
+			table[i][6] = Common.formatTime_3(xInputFile.lastModified());
+			table[i][7] = new Integer(xInputFile.getStreamInfo().getVideoStreams().length);
+			table[i][8] = new Integer(xInputFile.getStreamInfo().getAudioStreams().length);
+			table[i][9] = new Integer(xInputFile.getStreamInfo().getTeletextStreams().length);
+			table[i][10] = new Integer(xInputFile.getStreamInfo().getSubpictureStreams().length);
+			table[i][11] = xInputFile.getStreamInfo().getFileType();
 		}
 
 		return table;

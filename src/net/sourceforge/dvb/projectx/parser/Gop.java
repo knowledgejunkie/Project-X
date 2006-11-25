@@ -86,6 +86,7 @@ public class Gop extends Object {
 	private int ExportDAR;
 	private int ChangeAspectRatio;
 	private int ChangeVbvBuffer;
+	private int Preview_YGain;
 
 	private String ExportHorizontalResolution;
 	private String SDE_Value;
@@ -126,6 +127,7 @@ public class Gop extends Object {
 		ExportDAR = collection.getSettings().getIntProperty(Keys.KEY_ExportDAR);
 		ChangeAspectRatio = collection.getSettings().getIntProperty(Keys.KEY_ChangeAspectRatio);
 		ChangeVbvBuffer = collection.getSettings().getIntProperty(Keys.KEY_ChangeVbvBuffer);
+		Preview_YGain = collection.getSettings().getIntProperty(Keys.KEY_Preview_YGain);
 
 		ExportHorizontalResolution = collection.getSettings().getProperty(Keys.KEY_ExportHorizontalResolution);
 		SDE_Value = collection.getSettings().getProperty(Keys.KEY_VideoPanel_SdeValue);
@@ -487,7 +489,7 @@ public class Gop extends Object {
 				{
 					String str = Resource.getString("video.msg.basics", vbasics[0] + "*" + vbasics[1] + " @ " + vbasics[2] + " @ " + vbasics[3] + " @ " + ( ((255&gop[s+8])<<10 | (255&gop[s+9])<<2 | (192 & gop[s+10])>>>6)*400  )) + " " + ( (31&gop[s+10])<<5 | (248&gop[s+11])>>>3 );
 
-					Common.setMessage(Resource.getString("video.msg.newformat", "" + clv[6]) + " (" + ct + ")");
+					Common.setMessage("-> " + Resource.getString("video.msg.newformat", "" + clv[6]) + " (" + ct + ")");
 					Common.setMessage(str);
 
 					job_processing.getChapters().addChapter(ct, str);
@@ -968,7 +970,7 @@ public class Gop extends Object {
 			 */
 			if (Save1stFrameOfGop)
 			{
-				Common.getMpvDecoderClass().decodeArray(gop, false, Preview_AllGops, Preview_fastDecode);
+				Common.getMpvDecoderClass().decodeArray(gop, false, Preview_AllGops, Preview_fastDecode, Preview_YGain);
 				//CommonGui.getPicturePanel().saveBMP(true, job_processing.isRunningFromCLI());
 			}
 

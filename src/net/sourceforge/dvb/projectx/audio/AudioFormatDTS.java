@@ -164,23 +164,26 @@ public class AudioFormatDTS extends AudioFormat {
 	 */ 
 	public int compareHeader()
 	{ 
-		if (lLayer != Layer) 
-			return 1; 
+		if (lID != ID) 
+			return 0x1; 
 
-		else if (lBitrate != Bitrate) 
-			return 2; 
+		else if (lLayer != Layer) 
+			return 0x2; 
 
 		else if (lSampling_frequency != Sampling_frequency) 
-			return 3; 
+			return 0x4; 
+
+		else if (lBitrate != Bitrate) 
+			return 0x8; 
 
 		else if (lMode != Mode) 
-			return 4; 
+			return 0x10; 
 
 		else if (lMode_extension != Mode_extension) 
-			return 5; 
+			return 0x20; 
 
 		else if (lSize != Size) 
-			return 6; 
+			return 0x40; 
 
 		else 
 			return 0; 

@@ -39,6 +39,7 @@ public class StreamInfo extends Object {
 	private Object[] teletextstreams;
 	private Object[] subpicturestreams;
 
+	private String file_id;
 	private String file_name;
 	private String file_date;
 	private String file_size;
@@ -60,55 +61,56 @@ public class StreamInfo extends Object {
 	 */
 	public StreamInfo()
 	{
-		setStreamInfo("", "", "", "", "", "", "");
+		setStreamInfo("", "", "", "", "", "", "", "");
 	}
 
 	/**
 	 *
 	 */
-	public StreamInfo(String _file_source, String _file_type, String _file_name, String _file_location, String _file_date, String _file_size, String _file_playtime)
+	public StreamInfo(String _file_id, String _file_source, String _file_type, String _file_name, String _file_location, String _file_date, String _file_size, String _file_playtime)
 	{
-		setStreamInfo(_file_source, _file_type, _file_name, _file_location, _file_date, _file_size, _file_playtime);
+		setStreamInfo(_file_id, _file_source, _file_type, _file_name, _file_location, _file_date, _file_size, _file_playtime);
 	}
 
 	/**
 	 *
 	 */
-	public StreamInfo(String _file_source, String _file_type, String _file_name, String _file_location, String _file_date, String _file_size, String _file_playtime, Object[] _videostreams, Object[] _audiostreams, Object[] _teletextstreams, Object[] _subpicturestreams)
+	public StreamInfo(String _file_id, String _file_source, String _file_type, String _file_name, String _file_location, String _file_date, String _file_size, String _file_playtime, Object[] _videostreams, Object[] _audiostreams, Object[] _teletextstreams, Object[] _subpicturestreams)
 	{
-		setStreamInfo(_file_source, _file_type, _file_name, _file_location, _file_date, _file_size, _file_playtime, _videostreams, _audiostreams, _teletextstreams, _subpicturestreams);
+		setStreamInfo(_file_id, _file_source, _file_type, _file_name, _file_location, _file_date, _file_size, _file_playtime, _videostreams, _audiostreams, _teletextstreams, _subpicturestreams);
 	}
 
 	/**
 	 *
 	 */
-	public StreamInfo(int _streamtype, String _file_source, String _file_type, String _file_name, String _file_location, String _file_date, String _file_size, String _file_playtime, Object[] _videostreams, Object[] _audiostreams, Object[] _teletextstreams, Object[] _subpicturestreams, Object[] _pids, byte[] _videoheader)
+	public StreamInfo(int _streamtype, String _file_id, String _file_source, String _file_type, String _file_name, String _file_location, String _file_date, String _file_size, String _file_playtime, Object[] _videostreams, Object[] _audiostreams, Object[] _teletextstreams, Object[] _subpicturestreams, Object[] _pids, byte[] _videoheader)
 	{
 		streamtype = _streamtype;
 		pids = _pids;
 		videoheader = _videoheader;
 
-		setStreamInfo(_file_source, _file_type, _file_name, _file_location, _file_date, _file_size, _file_playtime, _videostreams, _audiostreams, _teletextstreams, _subpicturestreams);
+		setStreamInfo(_file_id, _file_source, _file_type, _file_name, _file_location, _file_date, _file_size, _file_playtime, _videostreams, _audiostreams, _teletextstreams, _subpicturestreams);
 	}
 
 	/**
 	 *
 	 */
-	public void setStreamInfo(String _file_source, String _file_type, String _file_name, String _file_location, String _file_date, String _file_size, String _file_playtime)
+	public void setStreamInfo(String _file_id, String _file_source, String _file_type, String _file_name, String _file_location, String _file_date, String _file_size, String _file_playtime)
 	{
-		setStreamInfo(_file_source, _file_type, _file_name, _file_location, _file_date, _file_size, _file_playtime, null, null, null, null);
+		setStreamInfo(_file_id, _file_source, _file_type, _file_name, _file_location, _file_date, _file_size, _file_playtime, null, null, null, null);
 	}
 
 	/**
 	 *
 	 */
-	public void setStreamInfo(String _file_source, String _file_type, String _file_name, String _file_location, String _file_date, String _file_size, String _file_playtime, Object[] _videostreams, Object[] _audiostreams, Object[] _teletextstreams, Object[] _subpicturestreams)
+	public void setStreamInfo(String _file_id, String _file_source, String _file_type, String _file_name, String _file_location, String _file_date, String _file_size, String _file_playtime, Object[] _videostreams, Object[] _audiostreams, Object[] _teletextstreams, Object[] _subpicturestreams)
 	{
 		videostreams = _videostreams;
 		audiostreams = _audiostreams;
 		teletextstreams = _teletextstreams;
 		subpicturestreams = _subpicturestreams;
 
+		file_id = _file_id;
 		file_name = _file_name;
 		file_date = _file_date;
 		file_size = _file_size;
@@ -116,6 +118,14 @@ public class StreamInfo extends Object {
 		file_location = _file_location;
 		file_playtime = _file_playtime;
 		file_source = _file_source;
+	}
+
+	/**
+	 *
+	 */
+	public String getFileID()
+	{
+		return file_id;
 	}
 
 	/**
@@ -147,7 +157,7 @@ public class StreamInfo extends Object {
 	 */
 	public String getFileSourceAndName()
 	{
-		return getFileSource() + " - " + getFileName();
+		return getFileSource() + " - ID " + getFileID() + " - " + getFileName();
 	}
 
 	/**
@@ -434,7 +444,7 @@ public class StreamInfo extends Object {
 	 */
 	public StreamInfo getNewInstance()
 	{
-		return new StreamInfo(streamtype, file_source, file_type, file_name, file_location, file_date, file_size, file_playtime, copyContent(videostreams), copyContent(audiostreams), copyContent(teletextstreams), copyContent(subpicturestreams), copyContent(pids), copyContent(videoheader));
+		return new StreamInfo(streamtype, file_id, file_source, file_type, file_name, file_location, file_date, file_size, file_playtime, copyContent(videostreams), copyContent(audiostreams), copyContent(teletextstreams), copyContent(subpicturestreams), copyContent(pids), copyContent(videoheader));
 	}
 
 }

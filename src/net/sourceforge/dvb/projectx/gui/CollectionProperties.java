@@ -35,6 +35,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.Color;
 
 import javax.swing.BorderFactory;
@@ -54,6 +56,8 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
+import javax.swing.JList;
+import javax.swing.JScrollPane;
 
 import net.sourceforge.dvb.projectx.gui.UISwitchListener;
 import net.sourceforge.dvb.projectx.gui.CommonGui;
@@ -85,6 +89,7 @@ public class CollectionProperties extends JFrame {
 
 	private JPanel container;
 	private JPanel tabPanel;
+
 
 	/**
 	 * Constructor
@@ -339,6 +344,7 @@ public class CollectionProperties extends JFrame {
 		JTabbedPane logtab = new JTabbedPane(SwingConstants.LEFT);
 
 		logtab.addTab( "Main", buildMainPanel());
+		logtab.addTab( "PIDs", buildPidPanel());
 		logtab.addTab( Resource.getString("TabPanel.ExportPanel"), buildExportPanel());
 		logtab.addTab( Resource.getString("TabPanel.SpecialPanel"), buildSpecialPanel());
 		logtab.addTab( Resource.getString("TabPanel.VideoPanel"), buildVideoPanel());
@@ -388,6 +394,150 @@ public class CollectionProperties extends JFrame {
 	/**
 	 *
 	 */
+	protected JPanel buildPidPanel()
+	{
+		final JList includeList = new JList();
+		includeList.setToolTipText(Resource.getString("CollectionPanel.PidList.Tip2"));
+		includeList.setBackground(new Color(190, 225, 255));
+		includeList.setListData(collection.getPIDs());
+
+		final JTextField includeField = new JTextField("");
+		includeField.setPreferredSize(new Dimension(80, 25));
+		includeField.setMaximumSize(new Dimension(80, 25));
+		includeField.setEditable(true);
+		includeField.setActionCommand("ID");
+		includeField.setToolTipText(Resource.getString("CollectionPanel.PidList.Tip1"));
+
+		includeField.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				if (collection == null)
+					return;
+
+				if (collection.isActive())
+					return;
+
+				String actName = e.getActionCommand();
+
+				try {
+
+					String value = includeField.getText();
+
+					if (!value.equals(""))
+					{
+						if (!value.startsWith("0x")) 
+							value = "0x" + Integer.toHexString(0x1FFF & Integer.parseInt(value));
+
+						value = value.toUpperCase().replace('X', 'x');
+
+						collection.addPID(value);
+						includeList.setListData(collection.getPIDs());
+						includeList.ensureIndexIsVisible(collection.getPIDs().length - 1);
+					}
+
+				} catch (NumberFormatException ne) {
+
+					Common.setOSDErrorMessage(Resource.getString("cutlistener.wrongnumber"));
+				}
+
+				includeField.setText("");
+
+				return;
+			}
+		});
+
+
+		JScrollPane scrollList = new JScrollPane();
+		scrollList.setPreferredSize(new Dimension(80, 180));
+		scrollList.setMaximumSize(new Dimension(80, 180));
+		scrollList.setViewportView(includeList);
+
+		includeList.addMouseListener( new MouseAdapter() {
+			public void mouseClicked(MouseEvent e)
+			{
+				if (collection == null)
+					return;
+
+				if (e.getClickCount() >= 2)
+				{
+					Object[] val = includeList.getSelectedValues();
+
+					collection.removePID(val);
+					includeList.setListData(collection.getPIDs());
+				}
+			}
+		});
+
+
+		JButton pids = new JButton(Resource.getString("CollectionPanel.transferPids1"));
+		pids.setPreferredSize(new Dimension(240, 20));
+		pids.setMaximumSize(new Dimension(240, 20));
+		pids.setActionCommand("transferPIDs");
+		pids.setToolTipText(Resource.getString("CollectionPanel.transferPids1.Tip"));
+		pids.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				if (collection == null)
+					return;
+
+				if (collection.isActive())
+					return;
+
+				String actName = e.getActionCommand();
+
+				try {
+
+					Object[] values = includeList.getSelectedValues();
+
+					if (values.length > 0)
+					{
+						JobCollection new_collection = Common.addCollection(collection.getNewInstance());
+
+						collection.removePID(values);
+
+						new_collection.clearPIDs();
+						new_collection.addPID(values);
+
+						new_collection.determinePrimaryFileSegments();
+
+						includeList.setListData(collection.getPIDs());
+				//		entry(Common.getActiveCollection());
+					}
+
+				} catch (Exception e2) {
+
+					Common.setExceptionMessage(e2);
+				}
+
+				return;
+			}
+		});
+
+		/**
+		 *
+		 */
+		JPanel CL4 = new JPanel();
+		CL4.setLayout(new ColumnLayout());
+		CL4.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), Resource.getString("CollectionPanel.PidList")));
+
+		CL4.add(includeField);
+		CL4.add(Box.createRigidArea(new Dimension(1, 10)));
+
+		CL4.add(scrollList);
+		CL4.add(Box.createRigidArea(new Dimension(1, 10)));
+
+		CL4.add(pids);
+
+		JPanel panel = new JPanel();
+		panel.setLayout( new GridLayout(1, 1) );
+		panel.add(CL4);
+
+		return buildHeadPanel(panel, "PIDs");
+	}
+
+	/**
+	 *
+	 */
 	protected JPanel buildSpecialPanel()
 	{
 		JPanel idbigPanel = new JPanel();
@@ -406,6 +556,7 @@ public class CollectionProperties extends JFrame {
 			Keys.KEY_TS_joinPackets,
 			Keys.KEY_TS_HumaxAdaption,
 			Keys.KEY_TS_FinepassAdaption,
+			Keys.KEY_TS_JepssenAdaption,
 			Keys.KEY_TS_generatePmt,
 			Keys.KEY_TS_generateTtx,
 			Keys.KEY_TS_setMainAudioAc3
@@ -468,6 +619,7 @@ public class CollectionProperties extends JFrame {
 			Keys.KEY_Input_concatenateForeignRecords,
 			Keys.KEY_Audio_ignoreErrors,
 			Keys.KEY_Audio_limitPts,
+			Keys.KEY_Audio_allowFormatChanges,
 			Keys.KEY_Video_ignoreErrors,
 			Keys.KEY_Video_trimPts
 		};
@@ -482,7 +634,7 @@ public class CollectionProperties extends JFrame {
 			box.setSelected(getBooleanProperty(objects_2[i]));
 			box.addActionListener(_CheckBoxListener);
 
-			if (i == 2 || i == 4)
+			if (i == 2 || i == 5)
 				idPanel2.add(Box.createRigidArea(new Dimension(1, 10)));
 
 			idPanel2.add(box);

@@ -53,6 +53,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
+import javax.swing.JSlider;
 
 import net.sourceforge.dvb.projectx.gui.UISwitchListener;
 import net.sourceforge.dvb.projectx.gui.CommonGui;
@@ -193,11 +194,22 @@ public class FileProperties extends JFrame {
 	protected JPanel buildMainPanel()
 	{
 		JPanel panel = new JPanel();
-		panel.setLayout( new BorderLayout() );
-		panel.setBorder( BorderFactory.createTitledBorder("") );
+		panel.setLayout( new GridLayout(2, 2) );
 
-		return panel;
+		JPanel op1 = new JPanel();
+		op1.setLayout( new ColumnLayout() );
+		op1.setBorder( BorderFactory.createTitledBorder("Preview") );
+
+		JSlider slider = new JSlider();
+		slider.setMaximum(100);
+		slider.setValue(0);
+		op1.add(slider);
+
+		panel.add(op1);
+
+		return buildHeadPanel(panel, "Main");
 	}
+
 
 	/**
 	 *

@@ -108,22 +108,29 @@ class HtmlPane extends JScrollPane implements HyperlinkListener
 				html = new JEditorPane(url_str);
 
 			else
+			{
+				url_str = "htmls/index.html";
 				html = new JEditorPane(Resource.getLocalizedResourceURL("htmls", "index.html"));
-
-			html.setEditable(false);
-			html.addHyperlinkListener(this);
-
-			JViewport vp = getViewport();
-			vp.add(html);
+			}
 		}
 		catch (MalformedURLException e)
 		{
 			Common.setMessage("Malformed URL: " + e);
+			html = new JEditorPane();
+			html.setText("wrong url ! :\n" + url_str);
 		}
 		catch (IOException e)
 		{
 			Common.setMessage("IOException: " + e);
+			html = new JEditorPane();
+			html.setText("missing resource ! :\n" + url_str);
 		}	
+
+		html.setEditable(false);
+		html.addHyperlinkListener(this);
+
+		JViewport vp = getViewport();
+		vp.add(html);
 	}
 
 	/**

@@ -88,6 +88,7 @@ public class MpaConverter extends Object {
 	private final int SINGLE_TO_STEREO  = 2;
 	private final int SINGLE_TO_JSTEREO = 3;
 	private final int SPLIT_INTO_SINGLE = 4;
+	private final int SPLIT_INTO_SINGLE_DOUBLED = 5;
 
 	private boolean[] framebuffer;
 
@@ -165,8 +166,9 @@ public class MpaConverter extends Object {
 				break;
 
 			case SPLIT_INTO_SINGLE: //dual-stereo-jointstereo to 2 x mono
+			case SPLIT_INTO_SINGLE_DOUBLED: //dual-stereo-jointstereo to 2 x jstereo - doubled mono
 				if (Audio.getChannel() == 2)
-					newAudioFrames = createByteArrays(splitTwoChannel(createBitArray(AudioFrame),MpaConversionMode));
+					newAudioFrames = createByteArrays(splitTwoChannel(createBitArray(AudioFrame), MpaConversionMode));
 
 				else
 					newAudioFrames = adaptSourceFrame(AudioFrame, newAudioFrames, MpaConversionMode);  //check to pass BR
@@ -199,7 +201,7 @@ public class MpaConverter extends Object {
 		int[] size = new int[2];
 		size[1] = size[0] = (0xF0 & AudioFrame[2])>>>4;
 
-		if (MpaConversionMode != SPLIT_INTO_SINGLE)
+		if (MpaConversionMode != SPLIT_INTO_SINGLE || MpaConversionMode != SPLIT_INTO_SINGLE_DOUBLED)
 		{
 			if (size[0] == BRindex[0]) //same size
 				return input;
@@ -253,7 +255,7 @@ public class MpaConverter extends Object {
 			output[ch][2] &= (byte)~0xF0;
 			output[ch][2] |= (byte)BRindex[ch + (MpaConversionMode>>>2)]<<4;
 
-			if (MpaConversionMode != SPLIT_INTO_SINGLE)
+			if (MpaConversionMode != SPLIT_INTO_SINGLE || MpaConversionMode != SPLIT_INTO_SINGLE_DOUBLED)
 				break;
 
 			else if (BRindex[ch+1] > 10)
@@ -879,7 +881,7 @@ public class MpaConverter extends Object {
 			setChannelMode(output[ch], SINGLE); //set to mono
 			setBitRateIndex(output[ch], o[ch], ch + 1); //set BR_index 
 
-			if (getSizeFromIndex(output[ch]) > Sizes[10])
+			if (getSizeFromIndex(output[ch]) > Sizes[10] || MpaConversionMode == SPLIT_INTO_SINGLE_DOUBLED)
 				output[ch] = makeTwoChannel(output[ch], 3, ch + 1);
 		}
 

@@ -109,6 +109,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 	private boolean Patch1stAc3Header;
 	private boolean FillGapsWithLastFrame;
 	private boolean LimitPts;
+	private boolean AllowFormatChanges;
 	private boolean AddFrames;
 	private boolean DownMix;
 	private boolean ChangeByteorder;
@@ -137,6 +138,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 	private final int MpaConversion_Mode2 = 2; //single to jst
 	private final int MpaConversion_Mode3 = 3; //single to st
 	private final int MpaConversion_Mode4 = 4; //st-dual to 2 single
+	private final int MpaConversion_Mode5 = 5; //st-dual to 2 jst - doubled single
 
 	private long FileLength;
 	private final long FileLength_Min = 100;
@@ -191,7 +193,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 		 */
 		MpaConversionMode = collection.getSettings().getIntProperty(Keys.KEY_AudioPanel_losslessMpaConversionMode);
 
-		if (MpaConversionMode > 0)
+		if (MpaConversionMode > MpaConversion_None)
 			Common.setMessage(Resource.getString("audio.convert") + " " + Keys.ITEMS_losslessMpaConversionMode[MpaConversionMode]);
 
 		if (DecodeMpgAudio)
@@ -232,7 +234,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 				Common.setMessage("-> normalize: multiply factor: " + MpaDecoder.MULTIPLY);
 
 			if ( (0x10000L & CommonParsing.getAudioProcessingFlags()) != 0) 
-				MpaConversionMode = 0;
+				MpaConversionMode = MpaConversion_None;
 
 			MPAConverter.resetBuffer();
 		}
@@ -1252,6 +1254,22 @@ public class StreamProcessAudio extends StreamProcessBase {
 						continue readloop;
 					}
 
+					/**
+					 * check for change in frametype
+					 */
+					// new pos
+					if (!determineFormatChange(audio, es_streamtype))
+					{
+						if (!missing_syncword)
+							Common.setMessage("!> change in frame type not accepted @ " + CurrentFramePosition);
+
+						unreadInputStream(frame, 2, frame.length - 2);
+
+						FramePosition = CurrentFramePosition + 2;
+
+						continue readloop;
+					}
+
 					if (Message_2 && missing_syncword)
 						Common.setMessage(Resource.getString("audio.msg.syncword.found") + " " + CurrentFramePosition);
 
@@ -1260,10 +1278,10 @@ public class StreamProcessAudio extends StreamProcessBase {
 					/**
 					 * check for change in frametype 
 					 */
-					determineFormatChange(audio, es_streamtype);
+			//		determineFormatChange(audio, es_streamtype);
 
 					audio.saveHeader();
-					audio.decodeAncillaryData(frame);
+					audio.decodeAncillaryData(frame, formatFrameTime(TimeCounter));
 
 					// TimePosition ist hier aktuelle audiopts
 
@@ -1396,7 +1414,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 									if (audio.getLayer() > 0 && DecodeMpgAudio)
 										writeChannels(MpaDecoder.decodeArray(copyframe[0]), MpaDecoder.get2ndArray());
 
-									else if (MpaConversionMode > 0)
+									else if (MpaConversionMode > MpaConversion_None)
 									{
 										newframes = MPAConverter.modifyframe(copyframe[0], MpaConversionMode); 
 
@@ -1404,7 +1422,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 										audio.parseRiffData(newframes[0], 1); 
 
-										if (MpaConversionMode >= 4) 
+										if (MpaConversionMode >= MpaConversion_Mode4) 
 												audio.parseRiffData(newframes[1], 2);
 									}
 
@@ -1423,7 +1441,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 									if (audio.getLayer() > 0 && DecodeMpgAudio)
 										writeChannels(MpaDecoder.decodeArray(silent_Frame[(padding_counter > 0) ? 0 : 1]), MpaDecoder.get2ndArray());
 
-									else if (MpaConversionMode > 0)
+									else if (MpaConversionMode > MpaConversion_None)
 									{
 										newframes = MPAConverter.modifyframe(silent_Frame[(padding_counter > 0) ? 0 : 1], MpaConversionMode);
 
@@ -1431,7 +1449,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 										audio.parseRiffData(newframes[0], 1); 
 
-										if (MpaConversionMode >= 4) 
+										if (MpaConversionMode >= MpaConversion_Mode4) 
 											audio.parseRiffData(newframes[1], 2);
 									}
 
@@ -2566,15 +2584,19 @@ public class StreamProcessAudio extends StreamProcessBase {
 	/**
 	 * check for change in frametype 
 	 */
-	private void determineFormatChange(AudioFormat audio, int es_streamtype)
+	private boolean determineFormatChange(AudioFormat audio, int es_streamtype)
 	{
+		boolean accept = true;
 		int returncode = audio.compareHeader();
 
 		if (returncode > 0)
 		{
+			if (!AllowFormatChanges && (returncode & 0x7) != 0 && FrameExportInfo.getWrittenFrames() > 0)
+				return !accept;
+
 			HasNewFormat = true;
 
-			if (es_streamtype == CommonParsing.MPEG_AUDIO && returncode == 6)
+			if (es_streamtype == CommonParsing.MPEG_AUDIO && returncode == 0x20)
 			{
 				ModeChangeCount_JSS++;
 				HasNewFormat = false;
@@ -2583,6 +2605,8 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 		if (FrameExportInfo.getWrittenFrames() == 0) 
 			HasNewFormat = true;
+
+		return accept;
 	}
 
 	/**
@@ -2752,6 +2776,9 @@ public class StreamProcessAudio extends StreamProcessBase {
 		if (LimitPts)
 			Common.setMessage("-> " + Resource.getString(Keys.KEY_Audio_limitPts[0]));
 
+		if (AllowFormatChanges)
+			Common.setMessage("-> " + Resource.getString(Keys.KEY_Audio_allowFormatChanges[0]));
+
 		if (ValidateCRC)
 			Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_validateCRC[0]));
 
@@ -2794,6 +2821,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 		Patch1stAc3Header = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_patch1stAc3Header);
 		FillGapsWithLastFrame = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_fillGapsWithLastFrame);
 		LimitPts = collection.getSettings().getBooleanProperty(Keys.KEY_Audio_limitPts);
+		AllowFormatChanges = collection.getSettings().getBooleanProperty(Keys.KEY_Audio_allowFormatChanges);
 		AddFrames = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addFrames);
 		DownMix = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_Downmix);
 		ChangeByteorder = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_changeByteorder);

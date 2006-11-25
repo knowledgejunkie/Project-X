@@ -94,6 +94,7 @@ public class BitrateMonitor extends JPanel {
 	private boolean greatgop = false;
 	private Color[] GOP = { Color.black, Color.cyan, Color.magenta, Color.white, Color.green, Color.red, Color.red, Color.red, Color.yellow };
 	private byte[] frame = new byte[0];
+	private int maxbitrate_index = 22500;
 
 	/**
 	 *
@@ -168,15 +169,18 @@ public class BitrateMonitor extends JPanel {
 		big.drawString(timeStr, 60, h - descent);
 
 		// .. Draw History Graph ..
-		big.setColor(graphColor);
 		int graphX = 2;
 		int graphY = 1;
 		int graphW = 50;   // w =55
 		int graphH = 30;  // h=55. 48
+
+		big.setColor(graphColor);
 		graphOutlineRect.setRect(graphX, graphY, graphW, graphH);
 		big.draw(graphOutlineRect);
 
 		int graphRow = graphH / 5;
+
+		big.setColor(graphColor);
 
 		// .. Draw row ..
 		for (int j = graphY; j <= graphH + graphY; j += graphRow)
@@ -187,19 +191,6 @@ public class BitrateMonitor extends JPanel {
 
 		for (int j = graphX; j < graphW + graphX; j += graphColumn)
 			big.drawLine(j, graphY, j, graphY + graphH);
-
-		//.. 9Mbps
-		big.setColor(Color.red);
-		big.drawLine(2, 5, 52, 5);
-
-		//.. 2.5Mbps
-		big.setColor(Color.magenta);
-		big.drawLine(2, 28, 52, 28);
-
-		//.. max,min Mbps
-		big.setColor(Color.white);
-		big.drawLine(52, (graphY + graphH - (maxbitrate / divisor)), 56, (graphY + graphH - (maxbitrate / 695)));
-		big.drawLine(52, (graphY + graphH - (minbitrate / divisor)), 56, (graphY + graphH - (minbitrate / 695)));
 
 		//.. frametypegraph
 		int b = frame.length > 17 ? 17 : frame.length;
@@ -242,15 +233,8 @@ public class BitrateMonitor extends JPanel {
 				pts[ptNum] = 0;
 
 			for (int j = graphX + graphW - ptNum, k = 0; k < ptNum; k++, j++)
-			{
 				if (k != 0)
-				{
-					if (pts[k] != pts[k - 1])
-						big.drawLine(j - 1, pts[k - 1], j, pts[k]);
-					else
-						big.fillRect(j, pts[k], 1, 1);
-				}
-			}
+					big.drawLine(j - 1, graphH, j - 1, pts[k]);
 
 			if (ptNum + 2 == pts.length)
 			{
@@ -263,6 +247,19 @@ public class BitrateMonitor extends JPanel {
 			else
 				ptNum++;
 		}
+
+		//.. 9Mbps
+		big.setColor(Color.red);
+		big.drawLine(2, 5, 52, 5);
+
+		//.. 2.5Mbps
+		big.setColor(Color.magenta);
+		big.drawLine(2, 28, 52, 28);
+
+		//.. max,min Mbps
+		big.setColor(Color.white);
+		big.drawLine(52, (graphY + graphH - (maxbitrate / divisor)), 56, (graphY + graphH - (maxbitrate / 695)));
+		big.drawLine(52, (graphY + graphH - (minbitrate / divisor)), 56, (graphY + graphH - (minbitrate / 695)));
 	}
 
 	/**

@@ -68,7 +68,7 @@ public class StreamParserTS extends StreamParserBase {
 
 	private boolean HumaxAdaption;
 	private boolean HandanAdaption;
-	private boolean KoscomAdaption;
+	private boolean JepssenAdaption;
 	private boolean Debug;
 
 	private long count;
@@ -94,11 +94,11 @@ public class StreamParserTS extends StreamParserBase {
 	/**
 	 * ts Parser
 	 */
-	public String parseStream(JobCollection collection, XInputFile xInputFile, int pes_streamtype, int action, String vptslog)
+	public String parseStream(JobCollection collection, XInputFile aXInputFile, int pes_streamtype, int action, String vptslog)
 	{
 		JobProcessing job_processing = collection.getJobProcessing();
 
-		setFileName(collection, job_processing, xInputFile);
+		setFileName(collection, job_processing, aXInputFile);
 
 		vptslog = "-1"; //fix
 
@@ -121,7 +121,7 @@ public class StreamParserTS extends StreamParserBase {
 
 		HumaxAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_HumaxAdaption);
 		HandanAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_FinepassAdaption);
-		KoscomAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_KoscomAdaption);
+		JepssenAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_JepssenAdaption);
 
 
 		boolean ts_isIncomplete = false;
@@ -181,6 +181,8 @@ public class StreamParserTS extends StreamParserBase {
 
 		usedPIDs = new ArrayList();
 
+		String file_id = aXInputFile.getStreamInfo().getFileID();
+	
 		demuxList = job_processing.getTSDemuxList();
 		TSPidlist = job_processing.getTSPidList();
 
@@ -225,7 +227,7 @@ public class StreamParserTS extends StreamParserBase {
 		 */
 		if (job_processing.getSplitPart() == 0)
 		{
-			StreamInfo streamInfo = xInputFile.getStreamInfo();
+			StreamInfo streamInfo = aXInputFile.getStreamInfo();
 
 			int[] pids = streamInfo.getPIDs();
 
@@ -284,7 +286,7 @@ public class StreamParserTS extends StreamParserBase {
 		/**
 		 * pid inclusion 
 		 */
-		int[] predefined_Pids = UseAutoPidFilter ? xInputFile.getStreamInfo().getMediaPIDs() : collection.getPIDsAsInteger();
+		int[] predefined_Pids = UseAutoPidFilter ? aXInputFile.getStreamInfo().getMediaPIDs() : collection.getPIDsAsInteger();
 
 		int[] include = new int[predefined_Pids.length];
 
@@ -313,18 +315,18 @@ public class StreamParserTS extends StreamParserBase {
 			 */
 			for (int i = 0; i < starts.length; i++)
 			{
-				xInputFile = (XInputFile) collection.getInputFile(i);
+				aXInputFile = (XInputFile) collection.getInputFile(i);
 				starts[i] = size;
-				size += xInputFile.length();
+				size += aXInputFile.length();
 			}
 
-			xInputFile = (XInputFile) collection.getInputFile(job_processing.getFileNumber());
+			aXInputFile = (XInputFile) collection.getInputFile(job_processing.getFileNumber());
 
 			/**
 			 * set start & end byte pos. of first file segment
 			 */
 			count = starts[job_processing.getFileNumber()];
-			size = count + xInputFile.length();
+			size = count + aXInputFile.length();
 
 			/**
 			 * split skipping first, for next split part
@@ -370,20 +372,20 @@ public class StreamParserTS extends StreamParserBase {
 				}
 			}
 
-			xInputFile = (XInputFile) collection.getInputFile(job_processing.getFileNumber());
+			aXInputFile = (XInputFile) collection.getInputFile(job_processing.getFileNumber());
 			count = starts[job_processing.getFileNumber()];
 
 			if (job_processing.getFileNumber() > 0)
-				Common.setMessage(Resource.getString("parseTS.continue") + " " + xInputFile);
+				Common.setMessage(Resource.getString("parseTS.continue") + " " + aXInputFile);
 
 			base = count;
-			size = count + xInputFile.length();
+			size = count + aXInputFile.length();
 
-			inputstream = new PushbackInputStream(xInputFile.getInputStream(startPoint - base), PushbackBufferSize);
+			inputstream = new PushbackInputStream(aXInputFile.getInputStream(startPoint - base), PushbackBufferSize);
 
 			count += (startPoint - base);
 
-			Common.updateProgressBar((action == CommonParsing.ACTION_DEMUX ? Resource.getString("parseTS.demuxing") : Resource.getString("parseTS.converting")) + " " + Resource.getString("parseTS.dvb.mpeg") + " " + xInputFile.getName(), (count - base), (size - base));
+			Common.updateProgressBar((action == CommonParsing.ACTION_DEMUX ? Resource.getString("parseTS.demuxing") : Resource.getString("parseTS.converting")) + " " + Resource.getString("parseTS.dvb.mpeg") + " " + aXInputFile.getName(), (count - base), (size - base));
 
 			qexit = count + (0x100000L * Infoscan_Value);
 
@@ -454,9 +456,9 @@ public class StreamParserTS extends StreamParserBase {
 					skipLeadingHumaxDataChunk(ts_packet);
 
 					/**
-					 * koscom .vid workaround, skip special data chunk
+					 * Jepssen .vid workaround, skip special data chunk
 					 */
-					skipLeadingKoscomDataChunk(ts_packet);
+					skipLeadingJepssenDataChunk(ts_packet);
 
 					/**
 					 * handan+finepass .hav workaround, chunks fileposition index (hdd sectors) unused, because a file can be hard-cut anywhere
@@ -464,9 +466,9 @@ public class StreamParserTS extends StreamParserBase {
 					skipLeadingHandanDataChunk(ts_packet);
 
 					/**
-					 * koscom .vid workaround, skip special data chunk
+					 * Jepssen .vid workaround, skip special data chunk
 					 */
-					if (skipKoscomDataChunk(ts_packet))
+					if (skipJepssenDataChunk(ts_packet))
 					{}
 
 		 			else if (skipHumaxDataChunk(ts_packet))
@@ -1111,7 +1113,7 @@ public class StreamParserTS extends StreamParserBase {
 					inputstream.close();
 					//System.gc();
 
-					long startoffset = checkNextKoscomSegment(collection, job_processing.getFileNumber(), bytes_read);
+					long startoffset = checkNextJepssenSegment(collection, job_processing.getFileNumber(), bytes_read);
 
 					XInputFile nextXInputFile = (XInputFile) collection.getInputFile(job_processing.countFileNumber(+1));
 					count = size + startoffset;
@@ -1150,7 +1152,6 @@ public class StreamParserTS extends StreamParserBase {
 				job_processing.setSplitLoopActive(false);
 
 			inputstream.close(); 
-
 
 			vptslog = processElementaryStreams(vptslog, action, clv, collection, job_processing);
 
@@ -1210,15 +1211,15 @@ public class StreamParserTS extends StreamParserBase {
 	}
 
 	/**
-	 * koscom .vid workaround, skip special data chunk
+	 * Jepssen .vid workaround, skip special data chunk
 	 */
-	private boolean skipLeadingKoscomDataChunk(byte[] ts_packet)
+	private boolean skipLeadingJepssenDataChunk(byte[] ts_packet)
 	{
 		boolean b = false;
 		int chunk_size = 36;
 		int value;
 
-		if (!KoscomAdaption)
+		if (!JepssenAdaption)
 			return b;
 
 		if (ts_packet[2] != 0 || ts_packet[3] != 0 || ts_packet[4] != 0 || ts_packet[36] != TS_SyncByte)
@@ -1228,7 +1229,7 @@ public class StreamParserTS extends StreamParserBase {
 			if (Debug)
 			{
 				value = CommonParsing.getIntValue(ts_packet, 0, 3, !CommonParsing.BYTEREORDERING);
-				System.out.println("koscom hd chunk: " + value);
+				System.out.println("Jepssen hd chunk: " + value);
 			}
 
 			inputstream.unread(ts_packet, chunk_size, TS_BufferSize - chunk_size);
@@ -1321,15 +1322,15 @@ public class StreamParserTS extends StreamParserBase {
 	}
 
 	/**
-	 * koscom .vid workaround, skip special data chunk
+	 * Jepssen .vid workaround, skip special data chunk
 	 */
-	private boolean skipKoscomDataChunk(byte[] ts_packet)
+	private boolean skipJepssenDataChunk(byte[] ts_packet)
 	{
 		boolean b = false;
 		int value;
 		int chunk_size = 36;
 
-		if (!KoscomAdaption)
+		if (!JepssenAdaption)
 			return b;
 
 		if (ts_packet[188] == TS_SyncByte)
@@ -1344,7 +1345,7 @@ public class StreamParserTS extends StreamParserBase {
 				if (Debug)
 				{
 					value = (0xFF & tmp_chunk[1])<<16 | (0xFF & tmp_chunk[0])<<8 | (0xFF & ts_packet[188]);
-					System.out.println("koscom hd chunk: " + value);
+					System.out.println("Jepssen hd chunk: " + value);
 				}
 
 				ts_packet[188] = TS_SyncByte;
@@ -1366,9 +1367,9 @@ public class StreamParserTS extends StreamParserBase {
 	/**
 	 *
 	 */
-	private long checkNextKoscomSegment(JobCollection collection, int filenumber, int bytes_read)
+	private long checkNextJepssenSegment(JobCollection collection, int filenumber, int bytes_read)
 	{
-		if (!KoscomAdaption)
+		if (!JepssenAdaption)
 			return 0;
 
 		byte[] nextsegment = new byte[200];
