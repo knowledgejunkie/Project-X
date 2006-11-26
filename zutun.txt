@@ -285,6 +285,11 @@ danach:
 --schnittpunkte verschiebbar
 --ts-scan erhöht
 
+0.90.4.00b08:
+--fix split mpa, 6.option split dual/copy mono zu doppel-mono/jst, stereo bleibt
+--process-actions jetzt checkboxen
+
+
 !-test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding
 !-pid in dateinamen - problem split
 

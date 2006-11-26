@@ -784,11 +784,11 @@ public class ProcessWindow extends JFrame {
 
 		int index = Common.getSettings().getIntProperty(Keys.KEY_ConversionMode);
 
-		ActionListener _RadioListener = new ActionListener() {
+		ActionListener _BoxListener = new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				JRadioButton radio = (JRadioButton) e.getSource();
-				String str = radio.getActionCommand();
+				JCheckBox box = (JCheckBox) e.getSource();
+				String str = box.getActionCommand();
 
 				for (int i = 0; i < objects.length; i++)
 				{
@@ -813,10 +813,10 @@ public class ProcessWindow extends JFrame {
 
 		for (int i = 0; i < objects.length; i++)
 		{
-			JRadioButton action = new JRadioButton(objects[i].toString());
+			JCheckBox action = new JCheckBox(objects[i].toString());
 			action.setActionCommand(objects[i].toString());
 			action.setSelected(i == index);
-			action.addActionListener(_RadioListener);
+			action.addActionListener(_BoxListener);
 
 			group.add(action);
 			panel.add(action);

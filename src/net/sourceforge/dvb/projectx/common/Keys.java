@@ -418,7 +418,8 @@ public class Keys extends Object {
 			Resource.getString("AudioPanel.losslessMpaConversionMode2"),
 			Resource.getString("AudioPanel.losslessMpaConversionMode3"),
 			Resource.getString("AudioPanel.losslessMpaConversionMode4"),
-			Resource.getString("AudioPanel.losslessMpaConversionMode5")
+			Resource.getString("AudioPanel.losslessMpaConversionMode5"),
+			Resource.getString("AudioPanel.losslessMpaConversionMode6")
 		};
 		this.ITEMS_losslessMpaConversionMode = ITEMS_losslessMpaConversionMode;
 
