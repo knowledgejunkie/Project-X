@@ -107,9 +107,9 @@ public class CollectionPanel extends JPanel {
 
 	private boolean ToggleControls;
 
-	ComboBoxIndexListener _ComboBoxIndexListener = new ComboBoxIndexListener();
-	ComboBoxItemListener _ComboBoxItemListener = new ComboBoxItemListener();
-	CheckBoxListener _CheckBoxListener = new CheckBoxListener();
+	private ComboBoxIndexListener _ComboBoxIndexListener;
+	private ComboBoxItemListener _ComboBoxItemListener;
+	private CheckBoxListener _CheckBoxListener;
 
 	/**
 	 *
@@ -119,6 +119,61 @@ public class CollectionPanel extends JPanel {
 		initialize();
 	}
 
+	/**
+	 *
+	 */
+	private void initialize()
+	{
+		_ComboBoxIndexListener = new ComboBoxIndexListener();
+		_ComboBoxItemListener = new ComboBoxItemListener();
+		_CheckBoxListener = new CheckBoxListener();
+
+		chooser = CommonGui.getMainFileChooser();
+
+		setLayout( new BorderLayout() );
+
+		JPanel grid = new JPanel();
+		grid.setLayout(new BorderLayout());
+
+		/**
+		 *
+		 */
+		final JPanel previewPanel = new JPanel();
+		previewPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLoweredBevelBorder(), Resource.getString("CollectionPanel.CutPanel")));
+		previewPanel.setLayout ( new BorderLayout() );
+		previewPanel.setToolTipText(Resource.getString("CollectionPanel.CutPanel.Tip1"));
+		previewPanel.add(CommonGui.getPicturePanel());
+
+		/**
+		 *
+		 */
+		final JPanel previewControlPanel = buildPreviewControlPanel();
+
+        previewPanel.addMouseListener(new MouseAdapter()
+		{
+            public void mouseClicked(MouseEvent e)
+			{
+				previewPanel.removeAll();
+
+                if ((ToggleControls = !ToggleControls))
+                   previewPanel.add(previewControlPanel);
+
+				else
+				{
+					previewPanel.add(CommonGui.getPicturePanel());
+				}
+
+				previewPanel.validate();
+				previewPanel.repaint();
+            }
+        });
+
+
+		grid.add(previewPanel);
+		grid.add(CommonGui.getPicturePanel().getSliderPanel(), BorderLayout.EAST);
+
+		add(grid);
+	}
 
 	/**
 	 *
@@ -184,82 +239,6 @@ public class CollectionPanel extends JPanel {
 		}
 
 	//	panel.add(Box.createRigidArea(new Dimension(1, 4)));
-
-		return panel;
-	}
-
-	/**
-	 *
-	 */
-	private void initialize()
-	{
-		chooser = CommonGui.getMainFileChooser();
-
-		setLayout( new BorderLayout() );
-
-		JPanel grid = new JPanel();
-		grid.setLayout(new BorderLayout());
-
-		/**
-		 *
-		 */
-		final JPanel previewPanel = new JPanel();
-		previewPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLoweredBevelBorder(), Resource.getString("CollectionPanel.CutPanel")));
-		previewPanel.setLayout ( new BorderLayout() );
-		previewPanel.setToolTipText(Resource.getString("CollectionPanel.CutPanel.Tip1"));
-		previewPanel.add(CommonGui.getPicturePanel());
-
-		/**
-		 *
-		 */
-		final JPanel previewControlPanel = buildPreviewControlPanel();
-
-        previewPanel.addMouseListener(new MouseAdapter()
-		{
-            public void mouseClicked(MouseEvent e)
-			{
-				previewPanel.removeAll();
-
-                if ((ToggleControls = !ToggleControls))
-                   previewPanel.add(previewControlPanel);
-
-				else
-				{
-					previewPanel.add(CommonGui.getPicturePanel());
-				}
-
-				previewPanel.validate();
-				previewPanel.repaint();
-            }
-        });
-
-
-		grid.add(previewPanel);
-		grid.add(buildScanViewPanel(), BorderLayout.EAST);
-
-		add(grid);
-	}
-
-	/**
-	 *
-	 */
-	protected JPanel buildScanViewPanel()
-	{
-		JPanel panel = new JPanel(new BorderLayout());
-
-		JSlider scanSlider = new JSlider();
-		scanSlider.setOrientation(JSlider.VERTICAL);
-		scanSlider.setInverted(true);
-		scanSlider.setMaximum(100);
-		scanSlider.setMajorTickSpacing(10);
-		scanSlider.setMinorTickSpacing(1);
-		scanSlider.setPaintTicks(true);
-		scanSlider.setValue(0);
-		scanSlider.setPreferredSize(new Dimension(30, 400));
-		scanSlider.setMaximumSize(new Dimension(30, 400));
-		scanSlider.setMinimumSize(new Dimension(30, 400));
-
-		panel.add(scanSlider, BorderLayout.SOUTH);
 
 		return panel;
 	}

@@ -96,6 +96,8 @@ public class StreamParserPESPrimary extends StreamParserBase {
 		SplitProjectFile = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
 		Overlap = collection.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
 
+		setOverheadSize(collection);
+
 		boolean isTeletext = false;
 		boolean missing_startcode = false;
 		boolean scrambling_messaged = false;
@@ -275,7 +277,7 @@ public class StreamParserPESPrimary extends StreamParserBase {
 			 * jump near to first cut-in point to collect more audio
 			 */
 			if (CutMode == CommonParsing.CUTMODE_BYTE && CutpointList.size() > 0 && CommonParsing.getCutCounter() == 0  && (!PreviewAllGops || action != CommonParsing.ACTION_DEMUX))
-				startPoint = Long.parseLong(CutpointList.get(CommonParsing.getCutCounter()).toString()) - ((action == CommonParsing.ACTION_DEMUX) ? 2048000: 0);
+				startPoint = Long.parseLong(CutpointList.get(CommonParsing.getCutCounter()).toString()) - ((action == CommonParsing.ACTION_DEMUX) ? OverheadSize : 0);
 
 			if (startPoint < 0)
 				startPoint = count;  // =0
@@ -355,7 +357,7 @@ public class StreamParserPESPrimary extends StreamParserBase {
 					if (CutMode == CommonParsing.CUTMODE_BYTE && CutpointList.size() > 0)
 					{
 						if (CommonParsing.getCutCounter() == CutpointList.size() && (CommonParsing.getCutCounter() & 1) == 0)
-							if (count > Long.parseLong(CutpointList.get(CommonParsing.getCutCounter() - 1).toString()) + (action == CommonParsing.ACTION_DEMUX ? 2048000 : 64000))
+							if (count > Long.parseLong(CutpointList.get(CommonParsing.getCutCounter() - 1).toString()) + (action == CommonParsing.ACTION_DEMUX ? OverheadSize : 64000))
 							{
 								ende = true;
 								break bigloop;

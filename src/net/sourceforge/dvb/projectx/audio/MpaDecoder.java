@@ -1024,6 +1024,8 @@ private static int LEFT_RIGHT = 0;
 public static boolean MOTOROLA=false, DOWNSAMPLE=false, DOWNMIX=false, 
 		WAVE=true, MONO=false, RESET=false, NORMALIZE=false;
 
+public static boolean LEVELSCAN = false; 
+
 public static double MULTIPLY = 1; //DM10042004 081.7 int01 changed
 public static int MAX_VALUE = 32767; //DM10042004 081.7 int01 add
 
@@ -1436,6 +1438,13 @@ public static int decode_layer2() throws IOException
 
 	}
 
+//
+	if (LEVELSCAN)
+	{
+		getFrameLevel(sample);
+		return 4;
+	}
+//
 	/** downmix */
 	if (DOWNMIX && head.channel==2) 
 		head.newchannel=1;
@@ -1737,6 +1746,14 @@ public static int decode_layer1() throws IOException
 
 	}
 
+
+//
+	if (LEVELSCAN)
+	{
+		getFrameLevel(sample);
+		return 4;
+	}
+//
 	/** downmix */
 	if (DOWNMIX && head.channel==2) head.newchannel=1;
 	else head.newchannel=2;
@@ -2020,7 +2037,8 @@ public static int decode_layer1() throws IOException
 			expon = 0;
 			hiMant = 0;
 			loMant = 0;
-			}
+		}
+
 		else
 		{
 			for (int a = 1; a < 32; a++)
@@ -2037,6 +2055,7 @@ public static int decode_layer1() throws IOException
 				hiMant = 0;
 				loMant = 0; /* infinity */
 			}
+
 			else
 			{    /* Finite */
 				expon += 16382;
@@ -2271,5 +2290,43 @@ public static int decode_layer1() throws IOException
 		pcm_file.seek(seek_position);
 		pcm_file.write(array);
 	}
+
+	/**
+	 *
+	 */
+	private static void getFrameLevel(double[][][][] sample)
+	{
+		double[] sample_level = new double[2];
+
+		for (int gr = 0; gr < 12; gr++)
+			for (int sb = 0; sb < 32; sb++)
+				for (int i = 0; i < 3; i++)
+					for(int ch = 0; ch < 2; ch++)
+						if (Math.abs(sample[gr][i][sb][ch]) > sample_level[ch])
+							sample_level[ch] = Math.abs(sample[gr][i][sb][ch]);
+
+		out1.reset();
+		out1.write((byte) (sample_level[0] * 100.0));
+		out1.write((byte) (sample_level[1] * 100.0));
+	}
+
+	/**
+	 *
+	 */
+	private static void getFrameLevel(int[][][] sample)
+	{
+		int[] sample_level = new int[2];
+
+		for (int gr = 0; gr < 12; gr++)
+			for (int sb = 0; sb < 32; sb++)
+				for(int ch = 0; ch < 2; ch++)
+					if (Math.abs(sample[gr][sb][ch]) > sample_level[ch])
+						sample_level[ch] = Math.abs(sample[gr][sb][ch]);
+
+		out1.reset();
+		out1.write((byte) (sample_level[0] * 100.0));
+		out1.write((byte) (sample_level[1] * 100.0));
+	}
+
 }
 

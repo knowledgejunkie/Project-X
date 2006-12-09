@@ -116,6 +116,8 @@ public class StreamParserTS extends StreamParserBase {
 		CreateD2vIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
 		SplitProjectFile = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_splitProjectFile);
 
+		setOverheadSize(collection);
+
 		boolean UseAutoPidFilter = collection.getSettings().getBooleanProperty(Keys.KEY_useAutoPidFilter);
 		boolean Overlap = collection.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_Export_Overlap);
 
@@ -348,7 +350,7 @@ public class StreamParserTS extends StreamParserBase {
 			 * jump near to first cut-in point to collect more audio
 			 */
 			if (CutMode == CommonParsing.CUTMODE_BYTE && CutpointList.size() > 0 && CommonParsing.getCutCounter() == 0)
-				startPoint = Long.parseLong(CutpointList.get(CommonParsing.getCutCounter()).toString()) - ((action == CommonParsing.ACTION_DEMUX) ? 2048000: 0);
+				startPoint = Long.parseLong(CutpointList.get(CommonParsing.getCutCounter()).toString()) - ((action == CommonParsing.ACTION_DEMUX) ? OverheadSize : 0);
 
 			if (startPoint < 0)
 				startPoint = count;
@@ -422,7 +424,7 @@ public class StreamParserTS extends StreamParserBase {
 					if (CutMode == CommonParsing.CUTMODE_BYTE && CutpointList.size() > 0)
 					{
 						if (CommonParsing.getCutCounter() == CutpointList.size() && (CommonParsing.getCutCounter() & 1) == 0)
-							if (count > Long.parseLong(CutpointList.get(CommonParsing.getCutCounter() - 1).toString()) + 2048000)
+							if (count > Long.parseLong(CutpointList.get(CommonParsing.getCutCounter() - 1).toString()) + OverheadSize)
 							{
 								ende = true;
 								break bigloop;

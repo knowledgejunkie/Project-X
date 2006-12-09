@@ -617,6 +617,7 @@ public class CollectionProperties extends JFrame {
 		String[][] objects_2 = {
 			Keys.KEY_Input_getEnclosedPackets,
 			Keys.KEY_Input_concatenateForeignRecords,
+			Keys.KEY_Input_useReadOverhead,
 			Keys.KEY_Audio_ignoreErrors,
 			Keys.KEY_Audio_limitPts,
 			Keys.KEY_Audio_allowFormatChanges,
@@ -634,8 +635,8 @@ public class CollectionProperties extends JFrame {
 			box.setSelected(getBooleanProperty(objects_2[i]));
 			box.addActionListener(_CheckBoxListener);
 
-			if (i == 2 || i == 5)
-				idPanel2.add(Box.createRigidArea(new Dimension(1, 10)));
+			if (i == 3 || i == 6)
+				idPanel2.add(Box.createRigidArea(new Dimension(1, 6)));
 
 			idPanel2.add(box);
 		}

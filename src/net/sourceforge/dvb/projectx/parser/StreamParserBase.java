@@ -68,6 +68,9 @@ public class StreamParserBase extends Object {
 	public static String fchild;
 	public static String fparent;
 
+	public static long OverheadSize;
+
+
 //
 
 	/**
@@ -96,6 +99,8 @@ public class StreamParserBase extends Object {
 
 		CreateD2vIndex = false;
 		SplitProjectFile = false;
+
+		OverheadSize = 2048000;
 
 		fchild = "";
 		fparent = "";
@@ -639,4 +644,11 @@ Common.setMessage("tmpfiles " + tempfiles.size());
 		}
 	}
 
+	/**
+	 * getOverhead to collect more samples
+	 */
+	public void setOverheadSize(JobCollection collection)
+	{
+		OverheadSize = collection.getSettings().getBooleanProperty(Keys.KEY_Input_useReadOverhead) ? 2048000 : 0;
+	}
 }

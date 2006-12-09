@@ -86,8 +86,8 @@ import net.sourceforge.dvb.projectx.net.WebInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90.4.00.b08";
-	private static String version_date = "26.11.2006";
+	private static String version_name = "ProjectX 0.90.4.00.b09";
+	private static String version_date = "09.12.2006";
 
 	private static String line_separator = System.getProperty("line.separator");
 
@@ -743,9 +743,9 @@ public final class Common extends Object {
 	/**
 	 *
 	 */
-	public static String adaptString(int str, int len)
+	public static String adaptString(int value, int len)
 	{
-		return adaptString(String.valueOf(str), len);
+		return adaptString(String.valueOf(value), len);
 	}
 
 	/**

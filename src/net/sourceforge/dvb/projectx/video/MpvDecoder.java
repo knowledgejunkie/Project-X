@@ -74,10 +74,10 @@ public class MpvDecoder extends Object {
 	private IDCTRefNative idct;
 	private IDCTSseNative idctsse;
 
-	private int preview_horizontal_size = 512;
-	private int preview_vertical_size = 288;
-	private int cutview_horizontal_size = 160;
-	private int cutview_vertical_size = 90;
+	private final int preview_horizontal_size = 512;
+	private final int preview_vertical_size = 288;
+	private final int cutview_horizontal_size = 160;
+	private final int cutview_vertical_size = 90;
 
 	private int zoomMode = 0;
 	private int[] zoomArea = new int[4];
@@ -1373,11 +1373,11 @@ public void resetDecoder(){
 
 public void InitialDecoder(){
 
-	mb_width = (horizontal_size+15)/16;
-	mb_height = (progressive_sequence>0) ? (vertical_size+15)/16 : 2*((vertical_size+31)/32);
+	mb_width = (horizontal_size + 15)>>>4;
+	mb_height = (progressive_sequence>0) ? (vertical_size+15)>>>4 : ((vertical_size + 31)>>>5)<<1;
 
-	Coded_Picture_Width = 16 * mb_width;
-	Coded_Picture_Height = 16 * mb_height;
+	Coded_Picture_Width = mb_width<<4;
+	Coded_Picture_Height = mb_height<<4;
 
 	Chroma_Width = (chroma_format==CHROMA444) ? Coded_Picture_Width : Coded_Picture_Width>>1;
 	Chroma_Height = (chroma_format!=CHROMA420) ? Coded_Picture_Height : Coded_Picture_Height>>1;
@@ -2206,8 +2206,8 @@ public void motion_compensation(int MBA[], int macroblock_type[], int motion_typ
 
 	/* derive current macroblock position within picture */
 	/* ISO/IEC 13818-2 section 6.3.1.6 and 6.3.1.7 */
-	bx = 16*(MBA[0]%mb_width);
-	by = 16*(MBA[0]/mb_width);
+	bx = (MBA[0] % mb_width)<<4;
+	by = (MBA[0] / mb_width)<<4;
 
 	/* motion compensation */
 	//if ((macroblock_type[0] & MACROBLOCK_INTRA)<1)
@@ -2444,16 +2444,23 @@ public void Add_Block(int comp, int bx, int by, int dct_type[], boolean addflag)
 	int chroma_value_444 = chroma_format == CHROMA444 ? 1 : 0;
 	int chroma_value_420 = chroma_format != CHROMA420 ? 1 : 0;
 	int cc_value = cc == 1 ? 8 : 0;
+	int x, y;
+	int tmp1, tmp2, tmp3;
 
 	//DM20082004 081.7 int10 changed
 	if (cc == 0) //lumi
 	{   
-		for (int y = 0; y < 8; y++)
+	//	for (y = 0; y < 8; y++)
+		for (y = 8; --y >= 0; )
 		{
-			for (int x = 0; x < 8; x++)
+			tmp1 = rfp + (y * iincr);
+			tmp2 = y<<3;
+
+	//		for (x = 0; x < 8; x++)
+			for (x = 8; --x >= 0; )
 			{
-				pPos = rfp + x + (y * iincr);
-				val = Block_Ptr[x + (y * 8)] + gain;
+				pPos = x + tmp1;
+				val = Block_Ptr[x + tmp2] + gain;
 				val = val < 0 ? 0 : (val > 255 ? 255 : val);
 
 				pixels[pPos] |= val<<16; //Y
@@ -2469,12 +2476,16 @@ public void Add_Block(int comp, int bx, int by, int dct_type[], boolean addflag)
 			iincr <<= 1;
 		}
 
-		for (int y = 0; y < 16; y++)
+		for (y = 0; y < 16; y++)
 		{
-			for (int x = 0; x < 16; x++)
+			tmp1 = rfp + (y >>(chroma_value_420)) * iincr;
+			tmp3 = y >>1;
+			tmp2 = (chroma_format != CHROMA420 ? tmp3 : ((y & 1) == 0 ? (tmp3 & ~dct_type[0]) : (tmp3 | dct_type[0])))<<3;
+
+			for (x = 0; x < 16; x++)
 			{
-				pPos = rfp + (x >> chroma_value_444) + ((y >>(chroma_value_420)) * iincr);
-				val = 128 + Block_Ptr[(x >>1) + (8 * (chroma_format != CHROMA420 ? (y >>1) : ((y & 1) == 0 ? ((y >>1) & ~dct_type[0]) : ((y >>1) | dct_type[0]))))];
+				pPos = (x >> chroma_value_444) + tmp1;
+				val = 128 + Block_Ptr[(x >>1) + tmp2];
 				val = val < 0 ? 0 : (val > 255 ? 255 : val);
 
 				// cc==1 -> U  else V
@@ -2712,39 +2723,67 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	{
 		Arrays.fill(pixels2, 0xFF505050);
 
-		int x_offset = ((aspect_ratio_information == 3 || aspect_ratio_information == 4) && profile_and_level_indication != 0) ? 0 : 64;
-		int scanline = preview_horizontal_size;
-		int ny = preview_vertical_size;
-		int z_vertical_size = vertical_size;
+		int x_offset = getMpg2AspectRatioOffset();
 		int z_horizontal_size = horizontal_size;
+		int z_vertical_size = vertical_size;
+		int new_x = zoomArea[0];
 
 		float Y = 0, X = 0, X_Off = 0;
 
-		if (zoomMode == 1 && x_offset > 0) //LB zoom
+		switch (zoomMode)
 		{
-			x_offset = 0;
-			z_vertical_size = vertical_size - (vertical_size / 4);
-			Y += (vertical_size / 8);
+		case 1:
+			if (x_offset > 0) //LB zoom 4:3
+			{
+				x_offset = 0;
+				z_vertical_size = vertical_size - (vertical_size>>>2);
+				Y += vertical_size>>>3;
+			}
+
+			break;
+
+		case 2:
+			if (x_offset == 0) //zoom anamorphics
+			{
+				X_Off = (new_x * horizontal_size) / preview_horizontal_size;
+				X += X_Off;
+				Y += (zoomArea[1] * vertical_size) / preview_vertical_size;
+				z_horizontal_size = (zoomArea[2] * horizontal_size) / preview_horizontal_size;
+				z_vertical_size = (zoomArea[3] * vertical_size) / preview_vertical_size;
+			}
+
+			else //zoom 4:3
+			{
+				if (new_x < x_offset)
+					new_x = x_offset = 0;
+
+				else
+					new_x -= x_offset;
+
+				X_Off = (int) ((new_x * horizontal_size) / (preview_vertical_size * 1.33333));
+				X += X_Off;
+				Y += (zoomArea[1] * vertical_size) / preview_vertical_size;
+
+				z_horizontal_size = (int) ((zoomArea[2] * horizontal_size) / (preview_vertical_size * 1.33333));
+				z_vertical_size = (zoomArea[3] * vertical_size) / preview_vertical_size;
+
+				x_offset = 0;
+			}
 		}
 
-		else if (zoomMode == 2)
+		int nx = preview_horizontal_size - x_offset;
+
+		float Xdecimate = z_horizontal_size / (float) (nx - x_offset);
+		float Ydecimate = z_vertical_size / (float) preview_vertical_size;
+
+		for (int y = 0, tmp1, tmp2; Y < vertical_size && y < preview_vertical_size; Y += Ydecimate, y++, X = X_Off)
 		{
-			z_horizontal_size = zoomArea[2];
-			z_vertical_size = zoomArea[3];
-		//	x_offset = 0;
-			X_Off = zoomArea[0];
-			X += X_Off;
-			Y += zoomArea[1];
-		}
+			tmp1 = y * preview_horizontal_size;
+			tmp2 = (int)Y * Coded_Picture_Width;
 
-		int nx = scanline - x_offset;
-
-		float Ydecimate = z_vertical_size / (float)ny;
-		float Xdecimate = z_horizontal_size / (float)(nx - x_offset);
-
-		for (int y = 0; Y < vertical_size && y < ny; Y += Ydecimate, y++, X = X_Off)
 			for (int x = x_offset; X < horizontal_size && x < nx; X += Xdecimate, x++)
-				pixels2[x + (y * scanline)] = YUVtoRGB(pixels[(int)X + ((int)Y * Coded_Picture_Width)]);
+				pixels2[x + tmp1] = YUVtoRGB(pixels[(int)X + tmp2]);
+		}
 
 		Common.getGuiInterface().updatePreviewPixel();
 
@@ -2835,6 +2874,16 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	/**
 	 * 
 	 */
+	public int getMpg2AspectRatioOffset()
+	{
+		int value = ((getAspectRatio() == 3 || getAspectRatio() == 4) && profile_and_level_indication != 0) ? 0 : 64;
+
+		return value;
+	}
+
+	/**
+	 * 
+	 */
 	public String getInfo_1()
 	{
 		return info_1;
@@ -2911,10 +2960,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	{
 		zoomMode = 2;
 
-		zoomArea[0] = (values[0] * horizontal_size) / preview_horizontal_size;
-		zoomArea[1] = (values[1] * vertical_size) / preview_vertical_size;
-		zoomArea[2] = (values[2] * horizontal_size) / preview_horizontal_size;
-		zoomArea[3] = (values[3] * vertical_size) / preview_vertical_size;
+		System.arraycopy(values, 0, zoomArea, 0, zoomArea.length);
 
 		if (info_2.length() > 0)
 			scale_Picture();
@@ -2929,7 +2975,17 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 			return "LB Zoom";
 
 		else if (zoomMode == 2)
-			return ("Manual Zoom: x" + zoomArea[0] + ", y" + zoomArea[1] + " - " + zoomArea[2] + "*" + zoomArea[3]);
+		{
+		/**
+			String str = "Manual Zoom: x" + ((zoomArea[0] * horizontal_size) / preview_horizontal_size) +
+			", y" + ((zoomArea[1] * vertical_size) / preview_vertical_size) +
+			" - " + ((zoomArea[2] * horizontal_size) / preview_horizontal_size) +
+			"*" + ((zoomArea[3] * vertical_size) / preview_vertical_size);
+		**/
+			String str = "Manual Zoom: x" + zoomArea[0] + ", y" + zoomArea[1] + " - " + zoomArea[2] + "*" + zoomArea[3];
+
+			return str;
+		}
 
 		return "";
 	}
@@ -2978,6 +3034,18 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	 * create new smaller cutimage pixel data
 	 */
 	public int[] getCutImage()
+	{
+		int[] cut_image = new int[pixels2.length];
+
+		System.arraycopy(pixels2, 0, cut_image, 0, pixels2.length);
+
+		return cut_image;
+	}
+
+	/**
+	 * create new smaller cutimage pixel data
+	 */
+	public int[] getScaledCutImage()
 	{
 		int new_width = cutview_horizontal_size;
 		int new_height = cutview_vertical_size;

@@ -39,7 +39,7 @@ public class AudioFormatAC3 extends AudioFormat {
 	{
 		super();
 
-		ac3_crc_init();
+		initCRCTable();
 	}
 
 	private int CRC16_POLY = 0x18005; //((1 << 0) | (1 << 2) | (1 << 15) | (1 << 16));
@@ -54,7 +54,7 @@ public class AudioFormatAC3 extends AudioFormat {
 		320000, 384000, 448000, 512000, 576000, 640000,
 		0,0,0,0,0,0,0,0,0,0,0,0,0  // (fix4)
 	};
-	
+
 	private int[][] ac3_size_table = {
 		{ 128,160,192,224,256,320,384,448,512,640,768,896,1024,1280,1536,1792,2080,2304,2560 },
 		{ 138,174,208,242,278,348,416,486,556,696,834,974,1114,1392,1670,1950,2228,2506,2786 },
@@ -121,11 +121,12 @@ public class AudioFormatAC3 extends AudioFormat {
 	        Mode_extension |= 1 & mode>>>(12 - (2 * skip)); //lfe
 			Original = 0x1F & mode>>>(7 - (2 * skip)); //dialnorm
 		}
-	
+
 		Channel = ac3_channels[Mode] + (1 & Mode_extension);
 		Copyright = 0;
 		Time_length = 138240000.0 / Sampling_frequency;
-		Size = (Size_base = ac3_size_table[3 & frame[pos + 4]>>>6][0x1F & frame[pos + 4]>>>1]) + Padding_bit * 2;
+		Size_base = ac3_size_table[3 & frame[pos + 4]>>>6][0x1F & frame[pos + 4]>>>1];
+		Size = Sampling_frequency == ac3_frequency_index[1] ? Size_base + (Padding_bit * 2) : Size_base;
 
 		return 1;
 	}
@@ -185,7 +186,8 @@ public class AudioFormatAC3 extends AudioFormat {
 		nChannel = ac3_channels[nMode] + (1 & nMode_extension);
 		nCopyright = 0;
 		nTime_length = 138240000.0 / nSampling_frequency;
-		nSize = (nSize_base = ac3_size_table[3 & frame[pos+4]>>>6][5 & frame[pos+4]>>>1]) + nPadding_bit * 2;
+		nSize_base = ac3_size_table[3 & frame[pos + 4]>>>6][0x1F & frame[pos + 4]>>>1];
+		nSize = nSampling_frequency == ac3_frequency_index[1] ? nSize_base + (nPadding_bit * 2) : nSize_base;
 
 		return 1;
 	}
@@ -246,36 +248,22 @@ public class AudioFormatAC3 extends AudioFormat {
 	}
 
 	/**
-	 * validate crc16 1 + 2
-	 */
-	public int validateCRC(byte[] frame, int offset, int frame_size)
-	{
-		// frame_size is BYTE
-		int words = frame_size>>>1; //to word
-		int frame_size_58 = 2* ((words>>>1) + (words>>>3)); //frame_size_58
-
-		int crc = -1;
-
-		//crc1
-		if ((crc = ac3_crc(frame, 2, frame_size_58, 0)) != 0)
-			return 1;
-
-		//crc2
-		if ((crc = ac3_crc(frame, frame_size_58, frame_size, crc)) != 0)
-			return 2;
-
-		return 0;
-	}
-
-	/**
 	 *
 	 */
 	public byte[] editFrame(byte[] frame, int framesize, int mode)
 	{
-		if (mode == 1)
+		switch (mode)
 		{
+		case 1: //patch only
 			setChannelFlags(frame);
 		//	computeCRC(frame, framesize);
+			break;
+
+		case 2:
+			framesize = setBitrateFlags(frame, framesize);
+			computeCRC(frame, framesize);
+
+			break;
 		}
 
 		return frame;
@@ -287,6 +275,41 @@ public class AudioFormatAC3 extends AudioFormat {
 	private void setChannelFlags(byte[] frame)
 	{
 		frame[6] = (byte)((0xF & frame[6]) | 0xE0);
+	}
+
+	/**
+	 * bitrate edit
+	 */
+	private int setBitrateFlags(byte[] frame, int framesize)
+	{
+		int src = 0xC1 & frame[4];
+		int src_idx = (0x3E & frame[4])>>>1;
+
+		frame[4] = (byte)(src | src_idx<<1);
+
+		return framesize;
+	}
+
+	/**
+	 * validate crc16 1 + 2
+	 */
+	public int validateCRC(byte[] frame, int offset, int frame_size)
+	{
+		// frame_size is BYTE
+		int words = frame_size>>>1; //to word
+		int frame_size_58 = 2* ((words>>>1) + (words>>>3)); //frame_size_58
+
+		int crc = -1;
+
+		//crc1
+		if ((crc = determineCRC(frame, 2, frame_size_58, 0)) != 0)
+			return 1;
+
+		//crc2
+		if ((crc = determineCRC(frame, frame_size_58, frame_size, crc)) != 0)
+			return 2;
+
+		return 0;
 	}
 
 	/**
@@ -303,7 +326,7 @@ public class AudioFormatAC3 extends AudioFormat {
 		int crc2 = -1;
 		int crc_inv = -1;
 
-		crc1 = ac3_crc(frame, 4, 2 * frame_size_58, 0);
+		crc1 = determineCRC(frame, 4, 2 * frame_size_58, 0);
 
 		crc_inv = pow_poly((CRC16_POLY >>> 1), (16 * frame_size_58) - 16, CRC16_POLY);
 
@@ -313,7 +336,7 @@ public class AudioFormatAC3 extends AudioFormat {
 		frame[3] = (byte)(0xFF & crc1);
 
 		//crc2
-		crc2 = ac3_crc(frame, 2 * frame_size_58, (2 * frame_size) - 2, 0);
+		crc2 = determineCRC(frame, 2 * frame_size_58, (2 * frame_size) - 2, 0);
 		frame[(2* frame_size) - 2] = (byte)(0xFF & (crc2 >> 8));
 		frame[(2* frame_size) - 1] = (byte)(0xFF & crc2);
 	}
@@ -321,7 +344,7 @@ public class AudioFormatAC3 extends AudioFormat {
 	/**
 	 * ac3 crc init table
 	 */
-	private void ac3_crc_init()
+	private void initCRCTable()
 	{
 		for (int n = 0, c, k; n < 256; n++)
 		{
@@ -343,11 +366,9 @@ public class AudioFormatAC3 extends AudioFormat {
 	/**
 	 * ac3 crc
 	 */
-	private int ac3_crc(byte[] data, int offs, int len, int crc)
+	private int determineCRC(byte[] data, int offs, int len, int crc)
 	{
-		int i;
-
-		for (i = offs; i < len; i++)
+		for (int i = offs; i < len; i++)
 			crc = (crc_table[(0xFF & data[i]) ^ (crc >> 8)] ^ (crc << 8)) & 0xFFFF;
 
 		return crc;

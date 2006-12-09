@@ -1,7 +1,7 @@
 /*
  * @(#)WebInterface.java - provides simple remote http access
  *
- * Copyright (C) 2005 by dvb.matt, All Rights Reserved.
+ * Copyright (C) 2005-2006 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -82,14 +82,14 @@ public class WebInterface implements Runnable {
 
 	public void start()
 	{
-		if (thread == null)
-		{
-			thread = new Thread(this, "WebIF");
-			thread.setPriority(Thread.MIN_PRIORITY);
-			thread.start();
+		if (thread != null)
+			return;
 
-			Common.setMessage("-> re-/start WebIFServer on Port: " + Common.getSettings().getProperty(Keys.KEY_WebServerPort));
-		}
+		thread = new Thread(this, "WebIF");
+		thread.setPriority(Thread.MIN_PRIORITY);
+		thread.start();
+
+		Common.setMessage("-> re-/start WebIFServer on Port: " + Common.getSettings().getProperty(Keys.KEY_WebServerPort));
 	}
 
 	/**

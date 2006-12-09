@@ -638,7 +638,7 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 
 				Common.setMessage(Resource.getString("msg.newfile") + " " + subfile);
 				job_processing.countMediaFilesExportLength(subfile1.length());
-				job_processing.addSummaryInfo(Resource.getString("subpicture.summary", "" + job_processing.countPictureStream(), "" + pics, infoPTSMatch(filename_pts, videofile_pts, vptsdata, ptsdata)) + "'" + subfile1 + "'");
+				job_processing.addSummaryInfo(Resource.getString("subpicture.summary", Common.adaptString(job_processing.countPictureStream(), 2), "" + pics, infoPTSMatch(filename_pts, videofile_pts, vptsdata, ptsdata)) + "'" + subfile1 + "'");
 
 				//vobsub
 				if (export_type == 0 && ExportAsVobSub)

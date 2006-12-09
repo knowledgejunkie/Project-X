@@ -48,8 +48,8 @@ public class Keys extends Object {
 	public final static String[] KEY_FtpServer_Commands = { "FtpServer.Commands", "" }; 
 	public final static String[] KEY_WindowPositionMain_X = { "WindowPosition.Main.X", "50" }; 
 	public final static String[] KEY_WindowPositionMain_Y = { "WindowPosition.Main.Y", "50" }; 
-	public final static String[] KEY_WindowPositionMain_Width = { "WindowPosition.Main.Width", "850" }; //906
-	public final static String[] KEY_WindowPositionMain_Height = { "WindowPosition.Main.Height", "666" }; //694
+	public final static String[] KEY_WindowPositionMain_Width = { "WindowPosition.Main.Width", "866" }; //906
+	public final static String[] KEY_WindowPositionMain_Height = { "WindowPosition.Main.Height", "670" }; //694
 
 	/**
 	 * PostCommands
@@ -164,6 +164,7 @@ public class Keys extends Object {
 	public final static String[] KEY_TS_setMainAudioAc3 = { "SpecialPanel.TS.setMainAudioAc3", "0" }; //cbox[37] --ts  !!
 	public final static String[] KEY_Input_getEnclosedPackets = { "SpecialPanel.Input.getEnclosedPackets", "1" }; //cbox[33], true
 	public final static String[] KEY_Input_concatenateForeignRecords = { "SpecialPanel.Input.concatenateForeignRecords", "1" }; //cbox[49], true
+	public final static String[] KEY_Input_useReadOverhead = { "SpecialPanel.Input.useReadOverhead", "1" };
 	public final static String[] KEY_Audio_ignoreErrors = { "SpecialPanel.Audio.ignoreErrors", "0" }; //cbox[24] 
 	public final static String[] KEY_Audio_limitPts = { "SpecialPanel.Audio.limitPts", "0" }; //cbox[15]
 	public final static String[] KEY_Audio_allowFormatChanges = { "SpecialPanel.Audio.allowFormatChanges", "0" };

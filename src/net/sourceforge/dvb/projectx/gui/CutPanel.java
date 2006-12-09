@@ -56,6 +56,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Comparator;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -242,8 +243,6 @@ public class CutPanel extends JPanel {
 					if (Common.getSettings().getIntProperty(Keys.KEY_CutMode) == CommonParsing.CUTMODE_BYTE)
 						collection.setCutImage(value, Common.getMpvDecoderClass().getCutImage());
 				}
-
-				//positionField.setText("");
 			}
 
 			else if (actName.equals("delchapter"))
@@ -491,7 +490,6 @@ public class CutPanel extends JPanel {
 
 		private long value = 0;
 		private long skip = 50;
-	//	private long skip = 50000;
 
 		private Object[] cutpoints = null;
 
@@ -506,7 +504,7 @@ public class CutPanel extends JPanel {
 				clockThread.setPriority(Thread.MIN_PRIORITY);
 
 				value = _value;
-				skip = getLoadSize() / 8;
+				skip = getLoadSize()>>>5;
 
 				getCutPoints();
 
@@ -627,6 +625,30 @@ public class CutPanel extends JPanel {
 		panel.add(buildNavigationPanel());
 		panel.add(cutview = new CutView());
 
+		cutview.addMouseListener(new MouseAdapter()
+		{
+			public void mouseClicked(MouseEvent e)
+			{
+				if (e.getClickCount() < 2)
+					return;
+
+				try {
+					if (e.getX() < cutview.getBottom() - 20)
+					{
+						if (cutview.getTopIndex() != null)
+							preview(Long.parseLong(cutview.getTopIndex().toString()));
+					}
+
+					else if (e.getX() > cutview.getBottom())
+					{
+						if (cutview.getBottomIndex() != null)
+							preview(Long.parseLong(cutview.getBottomIndex().toString()));
+					}
+
+				} catch (Exception exc) {}
+			}
+		});
+
 		add(panel);
 
 		setVisible(true);
@@ -640,8 +662,8 @@ public class CutPanel extends JPanel {
 		JPanel panel = new JPanel(new BorderLayout());
 
 		slider = new JSlider(0, (int)(10240000L / divisor), 0);
-		slider.setPreferredSize(new Dimension(840, 30));
-		slider.setMaximumSize(new Dimension(840, 30));
+		slider.setPreferredSize(new Dimension(860, 30));
+		slider.setMaximumSize(new Dimension(860, 30));
 		slider.setMaximum(1);
 		slider.setMajorTickSpacing(1);
 		slider.setMinorTickSpacing(1);
@@ -964,23 +986,32 @@ public class CutPanel extends JPanel {
 		/**
 		 * row 4
 		 */
-		JButton cut_loadlist = new JButton("load");
-		cut_loadlist.setPreferredSize(new Dimension(60, 24));
-		cut_loadlist.setMaximumSize(new Dimension(60, 24));
+		JButton cut_loadlist = new JButton(CommonGui.loadIcon("open.gif"));
+		cut_loadlist.setPreferredSize(new Dimension(32, 24));
+		cut_loadlist.setMaximumSize(new Dimension(32, 24));
 		cut_loadlist.setToolTipText(Resource.getString("CollectionPanel.loadCutpointList.Tip")); //DM18022004 081.6 int17 new
 		cut_loadlist.setActionCommand("load_cutlist");
 		cut_loadlist.addActionListener(jumpAction);
 
-		JButton cut_savelist = new JButton("save");
-		cut_savelist.setPreferredSize(new Dimension(60, 24));
-		cut_savelist.setMaximumSize(new Dimension(60, 24));
+	//	JButton cut_savelist = new JButton("save");
+		JButton cut_savelist = new JButton(CommonGui.loadIcon("save.gif"));
+		cut_savelist.setPreferredSize(new Dimension(32, 24));
+		cut_savelist.setMaximumSize(new Dimension(32, 24));
 		cut_savelist.setActionCommand("save_cutlist");
 		cut_savelist.addActionListener(jumpAction);
+
+		JButton cut_scan = new JButton("scan");
+		cut_scan.setPreferredSize(new Dimension(50, 24));
+		cut_scan.setMaximumSize(new Dimension(50, 24));
+		cut_scan.setActionCommand("cut_scan");
+		cut_scan.addActionListener(jumpAction);
 
 		JPanel panel_4 = new JPanel();
 		panel_4.setLayout(new BoxLayout(panel_4, BoxLayout.X_AXIS));
 		panel_4.add(cut_loadlist);
 		panel_4.add(cut_savelist);
+		panel_4.add(Box.createRigidArea(new Dimension(6, 1)));
+		panel_4.add(cut_scan);
 
 
 		/**
@@ -995,9 +1026,10 @@ public class CutPanel extends JPanel {
 		panel.add(panel_4);
 
 		Color c = new Color(212, 175, 212); //new Color(200, 150, 200);
-		setComponentColor(cutAdd, c);
-		setComponentColor(cutDelete, c);
+	//	setComponentColor(cutAdd, c);
+	//	setComponentColor(cutDelete, c);
 		setComponentColor(panel, c);
+		setComponentColor(panel_4, c);
 
 		return panel;
 	}
@@ -1084,24 +1116,32 @@ public class CutPanel extends JPanel {
 		/**
 		 * row 4
 		 */
-		JButton chapter_loadlist = new JButton("load");
-		chapter_loadlist.setPreferredSize(new Dimension(60, 24));
-		chapter_loadlist.setMaximumSize(new Dimension(60, 24));
+		JButton chapter_loadlist = new JButton(CommonGui.loadIcon("open.gif"));
+		chapter_loadlist.setPreferredSize(new Dimension(32, 24));
+		chapter_loadlist.setMaximumSize(new Dimension(32, 24));
 		chapter_loadlist.setToolTipText(Resource.getString("CollectionPanel.loadCutpointList.Tip")); //DM18022004 081.6 int17 new
 		chapter_loadlist.setActionCommand("load_chapterlist");
 		chapter_loadlist.addActionListener(jumpAction);
 
-		JButton chapter_savelist = new JButton("save");
-		chapter_savelist.setPreferredSize(new Dimension(60, 24));
-		chapter_savelist.setMaximumSize(new Dimension(60, 24));
+	//	JButton chapter_savelist = new JButton("save");
+		JButton chapter_savelist = new JButton(CommonGui.loadIcon("save.gif"));
+		chapter_savelist.setPreferredSize(new Dimension(32, 24));
+		chapter_savelist.setMaximumSize(new Dimension(32, 24));
 		chapter_savelist.setActionCommand("save_chapterlist");
 		chapter_savelist.addActionListener(jumpAction);
+
+		JButton chapter_scan = new JButton("scan");
+		chapter_scan.setPreferredSize(new Dimension(50, 24));
+		chapter_scan.setMaximumSize(new Dimension(50, 24));
+		chapter_scan.setActionCommand("chapter_scan");
+		chapter_scan.addActionListener(jumpAction);
 
 		JPanel panel_4 = new JPanel();
 		panel_4.setLayout(new BoxLayout(panel_4, BoxLayout.X_AXIS));
 		panel_4.add(chapter_loadlist);
 		panel_4.add(chapter_savelist);
-
+		panel_4.add(Box.createRigidArea(new Dimension(6, 1)));
+		panel_4.add(chapter_scan);
 
 		/**
 		 *
@@ -1115,9 +1155,10 @@ public class CutPanel extends JPanel {
 		panel.add(panel_4);
 
 		Color c = new Color(210, 217, 255); //new Color(195, 205, 255);
-		setComponentColor(chapterAdd, c);
-		setComponentColor(chapterDelete, c);
+	//	setComponentColor(chapterAdd, c);
+	//	setComponentColor(chapterDelete, c);
 		setComponentColor(panel, c);
+		setComponentColor(panel_4, c);
 
 		return panel;
 	}
@@ -1571,7 +1612,6 @@ public class CutPanel extends JPanel {
 			lastPosition = position;
 
 			slider.setValue((int)(lastPosition / divisor));
-	//		positionField.setText(String.valueOf(lastPosition));
 			setPositionField(lastPosition);
 			slider.requestFocus();
 
@@ -1760,7 +1800,7 @@ public class CutPanel extends JPanel {
 
 		action = false;
 
-		// reduce slider max
+		// reduce slider maximum, fit int requirements
 		for (divisor = 16L; ; divisor += 16L)
 		{
 			maximum = end / divisor;
@@ -1786,6 +1826,8 @@ public class CutPanel extends JPanel {
 		}
 
 		action = true;
+
+		Common.setLastPreviewBitrate(CommonParsing.MAX_SD_BITRATE_VALUE);
 
 		if (Common.getSettings().getIntProperty(Keys.KEY_CutMode) == CommonParsing.CUTMODE_BYTE && !previewList.isEmpty())
 			preview(0);

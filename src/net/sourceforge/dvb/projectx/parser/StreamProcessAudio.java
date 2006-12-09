@@ -181,7 +181,9 @@ public class StreamProcessAudio extends StreamProcessBase {
 		MpaDecoder.MULTIPLY = Normalize ? 32767 : 1;
 		MpaDecoder.NORMALIZE = Normalize;
 		MpaDecoder.PRESCAN = MpaDecoder.NORMALIZE;
-
+//
+		MpaDecoder.LEVELSCAN = false;
+//
 		if (MpaDecoder.MAX_VALUE > 32767)
 		{
 			MpaDecoder.MAX_VALUE = 32767;
@@ -290,6 +292,9 @@ public class StreamProcessAudio extends StreamProcessBase {
 		long[] ptspos = {0};
 		long[] vptsval = {0};
 		long[] vtime = {0};
+
+		double sync_value_1;
+		double sync_value_2;
 
 		FramePosition = 0;
 		CurrentFramePosition = 0;
@@ -665,16 +670,16 @@ public class StreamProcessAudio extends StreamProcessBase {
 							 */
 							if (ContainsVideoPTS && w < vptsval.length)
 							{ 
-								double ms1 = (double) (precount - vptsval[w + 1]);
-								double ms2 = (double) (TimeCounter - vtime[w + 1]);
+								sync_value_1 = (double) (precount - vptsval[w + 1]);
+								sync_value_2 = (double) (TimeCounter - vtime[w + 1]);
 
-								if ((double) Math.abs(ms2) <= audio.getFrameTimeLength() / 2.0 )
+								if ((double) Math.abs(sync_value_2) <= audio.getFrameTimeLength() / 2.0 )
 								{
 									WriteEnabled = false;
 									w += 2;
 								}
 
-								else if ((double) Math.abs(ms1) <= audio.getFrameTimeLength() / 2.0 )
+								else if ((double) Math.abs(sync_value_1) <= audio.getFrameTimeLength() / 2.0 )
 								{
 									WriteEnabled = false;
 									w += 2;
@@ -697,13 +702,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 									WriteEnabled = true;
 									v += 2;
 
-									double ms1 = precount - vptsval[v - 2];
-									double ms2 = TimeCounter - vtime[v - 2];
+									sync_value_1 = precount - vptsval[v - 2];
+									sync_value_2 = TimeCounter - vtime[v - 2];
 
-									Common.getGuiInterface().showAVOffset("" + (int)(ms1 / 90) + "/" + (int)(ms2 / 90) + "/" + (int)((ms2 - ms1) / 90));
+									Common.getGuiInterface().showAVOffset("" + (int)(sync_value_1 / 90) + "/" + (int)(sync_value_2 / 90) + "/" + (int)((sync_value_2 - sync_value_1) / 90));
 
 									if (Debug) 
-										System.out.println(" ä" + ms1 + "/" + ms2 + "/" + (ms2 - ms1));
+										System.out.println(" ä" + sync_value_1 + "/" + sync_value_2 + "/" + (sync_value_2 - sync_value_1));
 								}
 							} 
 
@@ -717,13 +722,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 									WriteEnabled = true;
 									v += 2;
 
-									double ms1 = precount - vptsval[v - 2];
-									double ms2 = TimeCounter - vtime[v - 2];
+									sync_value_1 = precount - vptsval[v - 2];
+									sync_value_2 = TimeCounter - vtime[v - 2];
 
-									Common.getGuiInterface().showAVOffset("" + (int)(ms1 / 90) + "/" + (int)(ms2 / 90) + "/" + (int)((ms2 - ms1) / 90));
+									Common.getGuiInterface().showAVOffset("" + (int)(sync_value_1 / 90) + "/" + (int)(sync_value_2 / 90) + "/" + (int)((sync_value_2 - sync_value_1) / 90));
 
 									if (Debug) 
-										System.out.println(" ü" + ms1 + "/" + ms2 + "/" + (ms2 - ms1));
+										System.out.println(" ü" + sync_value_1 + "/" + sync_value_2 + "/" + (sync_value_2 - sync_value_1));
 								}
 
 								/**
@@ -923,16 +928,16 @@ public class StreamProcessAudio extends StreamProcessBase {
 						{
 							if (ContainsVideoPTS && w < vptsval.length)
 							{ 
-								double ms1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[w + 1]);
-								double ms2 = (double) (TimeCounter - vtime[w + 1]);
+								sync_value_1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[w + 1]);
+								sync_value_2 = (double) (TimeCounter - vtime[w + 1]);
 
-								if ((double) Math.abs(ms2) <= audio.getFrameTimeLength() / 2.0 )
+								if ((double) Math.abs(sync_value_2) <= audio.getFrameTimeLength() / 2.0 )
 								{
 									WriteEnabled = false;
 									w += 2;
 								}
 
-								else if ((double) Math.abs(ms1) <= audio.getFrameTimeLength() / 2.0 )
+								else if ((double) Math.abs(sync_value_1) <= audio.getFrameTimeLength() / 2.0 )
 								{
 									WriteEnabled = false;
 									w += 2;
@@ -944,13 +949,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 								if (!WriteEnabled && (double) Math.abs((TimeCounter - vtime[v]) -
 										(TimePosition - audio.getFrameTimeLength() - vptsval[v]) ) <= (double) audio.getFrameTimeLength() / 2.0 )
 								{
-									double ms1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[v]);
-									double ms2 = (double) (TimeCounter - vtime[v]);
+									sync_value_1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[v]);
+									sync_value_2 = (double) (TimeCounter - vtime[v]);
 
-									Common.getGuiInterface().showAVOffset("" + (int)(ms1 / 90) + "/" + (int)(ms2 / 90) + "/" + (int)((ms2 - ms1) / 90));
+									Common.getGuiInterface().showAVOffset("" + (int)(sync_value_1 / 90) + "/" + (int)(sync_value_2 / 90) + "/" + (int)((sync_value_2 - sync_value_1) / 90));
 
 									if (Debug) 
-										System.out.println(" §" + ms1 + "/" + ms2 + "/" + (ms2 - ms1));
+										System.out.println(" §" + sync_value_1 + "/" + sync_value_2 + "/" + (sync_value_2 - sync_value_1));
 
 									WriteEnabled = true;
 									v += 2;
@@ -961,13 +966,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 							{
 								if ((double) Math.abs(vptsval[v] - (TimePosition - audio.getFrameTimeLength())) <= ((double) audio.getFrameTimeLength() / 2.0) )
 								{
-									double ms1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[v]);
-									double ms2 = (double) (TimeCounter - vtime[v]);
+									sync_value_1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[v]);
+									sync_value_2 = (double) (TimeCounter - vtime[v]);
 
-									Common.getGuiInterface().showAVOffset("" + (int)(ms1 / 90) + "/" + (int)(ms2 / 90) + "/" + (int)((ms2 - ms1) / 90));
+									Common.getGuiInterface().showAVOffset("" + (int)(sync_value_1 / 90) + "/" + (int)(sync_value_2 / 90) + "/" + (int)((sync_value_2 - sync_value_1) / 90));
 
 									if (Debug) 
-										System.out.println(" ß" + ms1 + "/" + ms2 + "/" + (ms2 - ms1));
+										System.out.println(" ß" + sync_value_1 + "/" + sync_value_2 + "/" + (sync_value_2 - sync_value_1));
 
 									WriteEnabled = true;
 									v += 2;
@@ -1281,7 +1286,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 			//		determineFormatChange(audio, es_streamtype);
 
 					audio.saveHeader();
-					audio.decodeAncillaryData(frame, formatFrameTime(TimeCounter));
+					audio.decodeAncillaryData(frame, TimeCounter);
 
 					// TimePosition ist hier aktuelle audiopts
 
@@ -1309,7 +1314,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 						{
 							System.arraycopy(header_copy, 0, silent_Frame[a], 0, 4);	//copy last header data
 							silent_Frame[a][1] |= 1;				//mark noCRC
-							silent_Frame[a][2] |= (a * 2);				//set padding bit
+							silent_Frame[a][2] |= (a<<1);				//set padding bit
 						}
 
 						int padding_counter = 1;						//count padding
@@ -1323,15 +1328,15 @@ public class StreamProcessAudio extends StreamProcessBase {
 							 */
 							if (ContainsVideoPTS && w < vptsval.length)
 							{ 
-								double ms1 = (double) (precount - vptsval[w + 1]);
-								double ms2 = (double) (TimeCounter - vtime[w + 1]);
+								sync_value_1 = (double) (precount - vptsval[w + 1]);
+								sync_value_2 = (double) (TimeCounter - vtime[w + 1]);
 
-								if ( (double) Math.abs(ms2) <= audio.getFrameTimeLength() / 2.0 )
+								if ( (double) Math.abs(sync_value_2) <= audio.getFrameTimeLength() / 2.0 )
 								{
 									WriteEnabled = false;
 									w += 2;
 								}
-								else if ((double) Math.abs(ms1) <= audio.getFrameTimeLength() / 2.0 )
+								else if ((double) Math.abs(sync_value_1) <= audio.getFrameTimeLength() / 2.0 )
 								{
 									WriteEnabled = false;
 									w += 2;
@@ -1355,13 +1360,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 									WriteEnabled = true;
 									v += 2;
 
-									double ms1 = precount - vptsval[v - 2];
-									double ms2 = TimeCounter - vtime[v - 2];
+									sync_value_1 = precount - vptsval[v - 2];
+									sync_value_2 = TimeCounter - vtime[v - 2];
 
-									Common.getGuiInterface().showAVOffset("" + (int)(ms1 / 90) + "/" + (int)(ms2 / 90) + "/" + (int)((ms2 - ms1) / 90));
+									Common.getGuiInterface().showAVOffset("" + (int)(sync_value_1 / 90) + "/" + (int)(sync_value_2 / 90) + "/" + (int)((sync_value_2 - sync_value_1) / 90));
 
 									if (Debug) 
-										System.out.println(" ä" + ms1 + "/" + ms2 + "/" + (ms2 - ms1));
+										System.out.println(" ä" + sync_value_1 + "/" + sync_value_2 + "/" + (sync_value_2 - sync_value_1));
 								}
 							} 
 
@@ -1375,13 +1380,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 									WriteEnabled = true;
 									v += 2;
 
-									double ms1 = precount - vptsval[v - 2];
-									double ms2 = TimeCounter - vtime[v - 2];
+									sync_value_1 = precount - vptsval[v - 2];
+									sync_value_2 = TimeCounter - vtime[v - 2];
 
-									Common.getGuiInterface().showAVOffset("" + (int)(ms1 / 90) + "/" + (int)(ms2 / 90) + "/" + (int)((ms2 - ms1) / 90));
+									Common.getGuiInterface().showAVOffset("" + (int)(sync_value_1 / 90) + "/" + (int)(sync_value_2 / 90) + "/" + (int)((sync_value_2 - sync_value_1) / 90));
 
 									if (Debug) 
-										System.out.println(" ü" + ms1 + "/" + ms2 + "/" + (ms2 - ms1));
+										System.out.println(" ü" + sync_value_1 + "/" + sync_value_2 + "/" + (sync_value_2 - sync_value_1));
 								}
 
 								/**
@@ -1606,7 +1611,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 						{
 							System.arraycopy(header_copy, 0, silent_Frame[a], 0, 4);	//copy last header data
 							silent_Frame[a][1] |= 1;				//mark noCRC
-							silent_Frame[a][2] |= (a * 2);				//set padding bit
+							silent_Frame[a][2] |= (a<<1);				//set padding bit
 						}
 
 						int padding_counter = 1;						//count padding
@@ -1617,15 +1622,15 @@ public class StreamProcessAudio extends StreamProcessBase {
 						{
 							if (ContainsVideoPTS && w < vptsval.length)
 							{ 
-								double ms1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[w + 1]);
-								double ms2 = (double) (TimeCounter - vtime[w + 1]);
+								sync_value_1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[w + 1]);
+								sync_value_2 = (double) (TimeCounter - vtime[w + 1]);
 
-								if ((double) Math.abs(ms2) <= audio.getFrameTimeLength() / 2.0)
+								if ((double) Math.abs(sync_value_2) <= audio.getFrameTimeLength() / 2.0)
 								{
 									WriteEnabled = false;
 									w += 2;
 								}
-								else if ((double) Math.abs(ms1) <= audio.getFrameTimeLength() / 2.0)
+								else if ((double) Math.abs(sync_value_1) <= audio.getFrameTimeLength() / 2.0)
 								{
 									WriteEnabled = false;
 									w += 2;
@@ -1637,13 +1642,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 								if (!WriteEnabled && (double) Math.abs((TimeCounter - vtime[v]) -
 									(TimePosition - audio.getFrameTimeLength() - vptsval[v]) ) <= (double) audio.getFrameTimeLength() / 2.0 )
 								{
-									double ms1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[v]);
-									double ms2 = (double) (TimeCounter - vtime[v]);
+									sync_value_1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[v]);
+									sync_value_2 = (double) (TimeCounter - vtime[v]);
 
-									Common.getGuiInterface().showAVOffset("" + (int)(ms1 / 90) + "/" + (int)(ms2 / 90) + "/" + (int)((ms2 - ms1) / 90));
+									Common.getGuiInterface().showAVOffset("" + (int)(sync_value_1 / 90) + "/" + (int)(sync_value_2 / 90) + "/" + (int)((sync_value_2 - sync_value_1) / 90));
 
 									if (Debug) 
-										System.out.println(" §" + ms1 + "/" + ms2 + "/" + (ms2 - ms1));
+										System.out.println(" §" + sync_value_1 + "/" + sync_value_2 + "/" + (sync_value_2 - sync_value_1));
 
 									WriteEnabled = true;
 									v += 2;
@@ -1654,13 +1659,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 							{
 								if ((double) Math.abs(vptsval[v] - (TimePosition - audio.getFrameTimeLength())) <= ((double) audio.getFrameTimeLength() / 2.0) )
 								{
-									double ms1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[v]);
-									double ms2 = (double) (TimeCounter - vtime[v]);
+									sync_value_1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[v]);
+									sync_value_2 = (double) (TimeCounter - vtime[v]);
 
-									Common.getGuiInterface().showAVOffset("" + (int)(ms1 / 90) + "/" + (int)(ms2 / 90) + "/" + (int)((ms2 - ms1) / 90));
+									Common.getGuiInterface().showAVOffset("" + (int)(sync_value_1 / 90) + "/" + (int)(sync_value_2 / 90) + "/" + (int)((sync_value_2 - sync_value_1) / 90));
 
 									if (Debug) 
-										System.out.println(" ß" + ms1 + "/" + ms2 + "/" + (ms2 - ms1));
+										System.out.println(" ß" + sync_value_1 + "/" + sync_value_2 + "/" + (sync_value_2 - sync_value_1));
 
 									WriteEnabled = true;
 									v += 2;
@@ -2003,7 +2008,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 				AudioType = NO_AUDIOSTREAM;
 
 			else
-				comparedata = Resource.getString("audio.msg.audio") + " " + job_processing.countAudioStream() + " " + audio_type[AudioType] + ":\t" + FrameExportInfo.getWrittenFrames() + " Frames\t" + tc + "\t" + infoPTSMatch(filename_pts, videofile_pts, ContainsVideoPTS, ContainsAudioPTS) + FrameExportInfo.getShortSummary();
+				comparedata = Resource.getString("audio.msg.audio") + " " + Common.adaptString(job_processing.countAudioStream(), 2) + " " + audio_type[AudioType] + ":\t" + FrameExportInfo.getWrittenFrames() + " Frames\t" + tc + "\t" + infoPTSMatch(filename_pts, videofile_pts, ContainsVideoPTS, ContainsAudioPTS) + FrameExportInfo.getShortSummary();
 
 			/**
 			 *
@@ -2240,14 +2245,6 @@ public class StreamProcessAudio extends StreamProcessBase {
 	/**
 	 * pts value to time value
 	 */
-	private String formatFrameTime(double time_value)
-	{
-		return Common.formatTime_1((long) (time_value / 90.0));
-	}
-
-	/**
-	 * pts value to time value
-	 */
 	private String formatFrameTime(long time_value)
 	{
 		return Common.formatTime_1(time_value / 90L);
@@ -2433,11 +2430,16 @@ public class StreamProcessAudio extends StreamProcessBase {
 	private void writeChannel(byte[] array, int index)
 	{
 		try {
-			if (index == 1)
+			switch (index)
+			{
+			case 1:
 				OutputStream_Ch1.write(array);
+				return;
 
-			else if (index == 2)
+			case 2:
 				OutputStream_Ch2.write(array);
+				return;
+			}
 
 		} catch (Exception e) {
 			Common.setExceptionMessage(e);
@@ -2614,28 +2616,33 @@ public class StreamProcessAudio extends StreamProcessBase {
 	 */
 	private void addWaveHeader(AudioFormat audio, int es_streamtype)
 	{
-		if (es_streamtype == CommonParsing.MPEG_AUDIO)
+		switch (es_streamtype)
 		{
+		case CommonParsing.MPEG_AUDIO:
+
 			writeChannel1(audio.getExtraWaveHeader(1, true));
 
 			if (MpaConversionMode >= MpaConversion_Mode4) 
 				writeChannel2(audio.getExtraWaveHeader(2, true));
 
-		//	Common.setMessage(Resource.getString("audio.msg.addriff.acm"));
-		//	Common.setMessage(Resource.getString("audio.msg.addriff.bwf"));
-		} 
+			return;
 
-		else if (AddWaveHeaderAC3 && es_streamtype == CommonParsing.AC3_AUDIO)
-		{
-			writeChannel1(audio.getExtraWaveHeader(1, true));
-			Common.setMessage(Resource.getString("audio.msg.addriff.ac3"));
+		case CommonParsing.AC3_AUDIO:
+			if (AddWaveHeaderAC3)
+			{
+				writeChannel1(audio.getExtraWaveHeader(1, true));
+				Common.setMessage(Resource.getString("audio.msg.addriff.ac3"));
+			}
+
+			else if (CreateDDWave)
+				writeChannel1(audio.getRiffHeader());
+
+			return;
+
+		case CommonParsing.DTS_AUDIO:
+			if (CreateDDWave)
+				writeChannel1(audio.getRiffHeader());
 		}
-
-		else if (CreateDDWave && es_streamtype == CommonParsing.AC3_AUDIO)
-			writeChannel1(audio.getRiffHeader());
-
-		else if (CreateDDWave && es_streamtype == CommonParsing.DTS_AUDIO)
-			writeChannel1(audio.getRiffHeader());
 	}
 
 	/**
@@ -3072,24 +3079,28 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 		public String getSummary()
 		{
-			String str = head;
+			StringBuffer sb = new StringBuffer(head);
 
-			str += String.valueOf(writtenFrames) + delim;
-			str += getShortSummary();
+			sb.append(writtenFrames);
+			sb.append(delim);
+			sb.append(getShortSummary());
 
-			return str;
+			return sb.toString();
 		}
 
 		public String getShortSummary()
 		{
-			String str = "";
+			StringBuffer sb = new StringBuffer();
 
-			str += String.valueOf(preInsertedFrames) + delim;
-			str += String.valueOf(skippedFrames) + delim;
-			str += String.valueOf(insertedFrames) + delim;
-			str += String.valueOf(addedFrames);
+			sb.append(preInsertedFrames);
+			sb.append(delim);
+			sb.append(skippedFrames);
+			sb.append(delim);
+			sb.append(insertedFrames);
+			sb.append(delim);
+			sb.append(addedFrames);
 
-			return str;
+			return sb.toString();
 		}
 
 		public void countWrittenFrames(long value)

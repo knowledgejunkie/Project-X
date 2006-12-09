@@ -113,7 +113,7 @@ public class ScanView extends JPanel {
 		scanSlider.setMajorTickSpacing(10);
 		scanSlider.setMinorTickSpacing(1);
 		scanSlider.setPaintTicks(true);
-		scanSlider.setValue(0);
+		scanSlider.setValue(50);
 
 		panel.add(scanSlider, BorderLayout.SOUTH);
 

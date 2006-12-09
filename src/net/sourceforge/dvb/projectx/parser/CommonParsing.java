@@ -134,6 +134,7 @@ public class CommonParsing extends Object {
 	public final static int FRAME_D_TYPE = 4;
 
 	public final static int MAX_BITRATE_VALUE = 262143; //3FFFF *400 = 104857200 bps
+	public final static int MAX_SD_BITRATE_VALUE = 37500; // *400 = 15000000 bps
 
 	private static int Pva_PidToExtract = -1;
 

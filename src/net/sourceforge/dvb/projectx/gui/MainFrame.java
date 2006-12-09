@@ -114,6 +114,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
 import java.net.URL;
+import java.net.URLDecoder;
 
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
 import net.sourceforge.dvb.projectx.parser.MainProcess;
@@ -237,43 +238,70 @@ public class MainFrame extends JPanel {
 					DataFlavor[] df = tr.getTransferDataFlavors();
 
 					// Get list with one or more File objects
-					// List li = (java.util.List)tr.getTransferData(df[0]);
-					List list = null;
+					List list = new ArrayList();
 
-					Object obj = tr.getTransferData(df[0]);
+					Object obj = df.length == 0 ? new Object() : tr.getTransferData(df[0]);
 
-					try {
+					if (obj instanceof java.util.List)
+					{
 						list = (java.util.List) obj;
 
-					} catch (Exception ce1) {
+						Collections.sort(list);
 
+						// Replace dropped File objects by XInputFile objects
+						ArrayList tempList = new ArrayList();
+
+						for (int i = 0; i < list.size(); i++)
+							tempList.add(new XInputFile((File)list.get(i)));
+
+						list = tempList;
+					}
+
+					else if (obj instanceof URL)
+					{
 						// MacOsX tiger returns one Url instead of a file list, works only without host specification of the file
-						try {
-							URL url = (URL) obj;
+						URL url = (URL) obj;
 
-						//	File f = new File(url.getFile());
-							File f = new File(java.net.URLDecoder.decode(url.getFile()));
+						String protocol = url.getProtocol();
 
-							list = new ArrayList();
-							list.add(f);
+						if (protocol.equals("file"))
+						{
+							File f = new File(URLDecoder.decode(url.getFile()));
 
-						} catch (Exception ce2) {
+							if (f.exists())
+								list.add(new XInputFile(f));
 
-							e.dropComplete(true);
-							return;
+							else
+								Common.setOSDErrorMessage("dropped File Object(s) not accessible.. : " + url.toString());
+						}
+
+						else if (protocol.equals("ftp"))
+						{
+							XInputDirectory xid = new XInputDirectory(url);
+							XInputFile[] xif = xid.getFiles();
+
+							int i = 0;
+							for (; i < xif.length; i++)
+								if ( new URL(xif[i].toString()).getFile().equals(url.getFile()) )
+								{
+									list.add(xif[i]);
+									break;
+								}
+
+							if (i >= xif.length)
+								Common.setOSDErrorMessage("File Object not accessible: " + url.toString());
 						}
 					}
 
-	//
-					Collections.sort(list);
+					else
+					{
+						e.dropComplete(true);
+						tableView.setBackground(Color.white);
+						Common.setOSDErrorMessage("can't drop Object(s) to Collection.. : " + obj.getClass().getName());
 
-					// Replace dropped File objects by XInputFile objects
-					ArrayList tempList = new ArrayList();
+						return;
+					}
 
-					for (int i = 0; i < list.size(); i++)
-						tempList.add(new XInputFile((File)list.get(i)));
-
-					list = tempList;
 
 					if (dropaction == 1)        // copy = new coll each
 					{
@@ -293,12 +321,12 @@ public class MainFrame extends JPanel {
 
 					else if (dropaction == 2)    // move = one coll
 					{
-						Common.addCollection(false);
-
 						Object[] val = list.toArray();
 
 						if (val.length > 0)
 						{
+							Common.addCollection(false);
+
 							JobCollection collection = Common.getCollection(comboBox_0.getSelectedIndex());
 							collection.addInputFile(val);
 
@@ -422,8 +450,13 @@ public class MainFrame extends JPanel {
 						 * from selection is NOT of java.io.File!!
 						 */
 	 					for (int i = 0; i < theFiles.length; i++)
+						{
 							if (theFiles[i].isFile())
 								collection.addInputFile( new XInputFile(theFiles[i].getAbsoluteFile()));
+
+							else
+								Common.setOSDErrorMessage("File Object not accessible.. : " + theFiles[i].toString());
+						}
 
 						updateCollectionTable(collection.getCollectionAsTable());
 						updateCollectionPanel(Common.getActiveCollection());
@@ -833,7 +866,14 @@ public class MainFrame extends JPanel {
 
 						else if (protocol.equals("file"))
 						{
-							inputValue = new XInputFile(new File(url.getHost() + url.getFile()));
+							File f = new File(url.getHost() + url.getFile());
+
+							if (!f.exists())
+								f = new File(url.getFile());
+
+							if (f.exists())
+								inputValue = new XInputFile(f);
+
 							break;
 						}
 
@@ -1604,8 +1644,7 @@ public class MainFrame extends JPanel {
 			{
 				FileObjectTable[row][column] = aValue;
 			}
-         };
-
+		};
 
         // Create the table
         tableView = new JTable(dataModel);
@@ -1625,18 +1664,16 @@ public class MainFrame extends JPanel {
 		tableView.setSelectionBackground(new Color(220, 220, 255));
 		tableView.setSelectionForeground(Color.black);
 
-		tableView.getColumn("#").setCellRenderer(renderer_2);
-		tableView.getColumn("#").setMaxWidth(20);
+		tableView.getColumn(names[2]).setCellRenderer(renderer_2);
+		tableView.getColumn(names[2]).setMaxWidth(20);
 
-		tableView.getColumn("ID").setCellRenderer(renderer_2);
-		tableView.getColumn("ID").setMaxWidth(25);
+		tableView.getColumn(names[0]).setCellRenderer(renderer_2);
+		tableView.getColumn(names[0]).setMaxWidth(25);
 
 		tableView.getColumn(names[1]).setCellRenderer(renderer_2);
 		tableView.getColumn(names[1]).setMinWidth(32);
 		tableView.getColumn(names[1]).setMaxWidth(32);
 
-		//tableView.getColumn(names[3]).setPreferredWidth(165); //200
-		//tableView.getColumn(names[4]).setPreferredWidth(165);
 		tableView.getColumn(names[3]).setMinWidth(165); //200
 		tableView.getColumn(names[4]).setMinWidth(165);
 
@@ -1645,8 +1682,8 @@ public class MainFrame extends JPanel {
 		tableView.getColumn(names[5]).setMaxWidth(62);
 
 		tableView.getColumn(names[6]).setCellRenderer(renderer_2);
-		tableView.getColumn(names[6]).setMinWidth(96);
-		tableView.getColumn(names[6]).setMaxWidth(96);
+		tableView.getColumn(names[6]).setMinWidth(100);
+		tableView.getColumn(names[6]).setMaxWidth(100);
 
 		for (int i = 7; i < 11; i++)
 		{
@@ -1693,7 +1730,6 @@ public class MainFrame extends JPanel {
 					getScanInfo((XInputFile) Common.getCollection(index).getInputFile(row));
 
 				if (e.getClickCount() >= 2 && e.getModifiers() == MouseEvent.BUTTON1_MASK && !Common.isCollectionListEmpty() && row >= 0)
-				//	CommonGui.getCollectionProperties().open(Common.getCollection(), Common.getActiveCollection());
 					CommonGui.getFileProperties().open((XInputFile) Common.getCollection(index).getInputFile(row), Common.getActiveCollection());
 			}
 		});
@@ -1716,7 +1752,8 @@ public class MainFrame extends JPanel {
 		/**
 		 * autoload
 		 */
-		JButton open_autoload = new JButton(CommonGui.loadIcon("fwd_10.gif"));
+		JButton open_autoload = new JButton(CommonGui.loadIcon("openmulti.gif"));
+	//	JButton open_autoload = new JButton(CommonGui.loadIcon("fwd_10.gif"));
 		open_autoload.setPreferredSize(new Dimension(30, 22));
 		open_autoload.setMaximumSize(new Dimension(30, 22));
 		open_autoload.setToolTipText(Resource.getString("FilePanel.openAutoloadPanel.Tip"));
@@ -1732,7 +1769,8 @@ public class MainFrame extends JPanel {
 		/**
 		 * add
 		 */
-		JButton file_add = new JButton(CommonGui.loadIcon("add.gif"));
+		JButton file_add = new JButton(CommonGui.loadIcon("open.gif"));
+	//	JButton file_add = new JButton(CommonGui.loadIcon("add.gif"));
 		file_add.setPreferredSize(new Dimension(30, 22));
 		file_add.setMaximumSize(new Dimension(30, 22));
 		file_add.setToolTipText(Resource.getString("FilePanel.FileAdd.Tip"));
@@ -1743,7 +1781,8 @@ public class MainFrame extends JPanel {
 		/**
 		 * remove
 		 */
-		JButton file_remove = new JButton(CommonGui.loadIcon("rem.gif"));
+		JButton file_remove = new JButton(CommonGui.loadIcon("remove.gif"));
+	//	JButton file_remove = new JButton(CommonGui.loadIcon("rem.gif"));
 		file_remove.setPreferredSize(new Dimension(30, 22));
 		file_remove.setMaximumSize(new Dimension(30, 22));
 		file_remove.setToolTipText(Resource.getString("FilePanel.FileRemove.Tip"));
@@ -1754,7 +1793,8 @@ public class MainFrame extends JPanel {
 		/**
 		 * up
 		 */
-		JButton file_up = new JButton(CommonGui.loadIcon("up.gif"));
+		JButton file_up = new JButton(CommonGui.loadIcon("up2.gif"));
+	//	JButton file_up = new JButton(CommonGui.loadIcon("up.gif"));
 		file_up.setPreferredSize(new Dimension(30, 22));
 		file_up.setMaximumSize(new Dimension(30, 22));
 		file_up.setToolTipText(Resource.getString("FilePanel.FileUp.Tip"));
@@ -1795,7 +1835,8 @@ public class MainFrame extends JPanel {
 		/**
 		 * down
 		 */
-		JButton file_down = new JButton(CommonGui.loadIcon("dn.gif"));
+		JButton file_down = new JButton(CommonGui.loadIcon("down.gif"));
+	//	JButton file_down = new JButton(CommonGui.loadIcon("dn.gif"));
 		file_down.setPreferredSize(new Dimension(30, 22));
 		file_down.setMaximumSize(new Dimension(30, 22));
 		file_down.setToolTipText(Resource.getString("FilePanel.FileDown.Tip"));
@@ -1996,9 +2037,9 @@ public class MainFrame extends JPanel {
 
 		panel.add(control_2);
 
-		panel.setPreferredSize(new Dimension(846, 114));
-		panel.setMaximumSize(new Dimension(846, 114));
-		panel.setMinimumSize(new Dimension(846, 114));
+		panel.setPreferredSize(new Dimension(860, 114));
+		panel.setMaximumSize(new Dimension(860, 114));
+		panel.setMinimumSize(new Dimension(860, 114));
 
 		return panel;
 	}
@@ -2446,9 +2487,9 @@ public class MainFrame extends JPanel {
 		panel_2.add(panel_1, BorderLayout.WEST);
 		panel_2.add(collection_panel = new CollectionPanel(), BorderLayout.CENTER);
 
-		panel_2.setPreferredSize(new Dimension(846, 406));
-		panel_2.setMaximumSize(new Dimension(846, 406));
-		panel_2.setMinimumSize(new Dimension(846, 406));
+		panel_2.setPreferredSize(new Dimension(860, 406));
+		panel_2.setMaximumSize(new Dimension(860, 406));
+		panel_2.setMinimumSize(new Dimension(860, 406));
 
 		/**
 		 *

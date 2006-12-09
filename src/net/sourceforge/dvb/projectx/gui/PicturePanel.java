@@ -32,7 +32,6 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Font;
-
 import java.awt.Rectangle;
 
 import java.awt.event.MouseMotionAdapter;
@@ -60,6 +59,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.UIManager;
 
+import javax.swing.JSlider;
+
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.common.Keys;
@@ -84,6 +85,9 @@ public class PicturePanel extends JPanel {
 	private Image PalPlusImage = Resource.loadImage("_ppl.gif");
 	private Image SubpictureImage;
 	private Image image;
+//
+	private Image InfoBackground = Resource.loadImage("ibg.gif");
+	private Image SlideBackground = Resource.loadImage("sbg.gif");
 
 	private MemoryImageSource source;
 
@@ -118,6 +122,7 @@ public class PicturePanel extends JPanel {
 	private Object[] OSDInfo;
 
 	private JPopupMenu popup;
+	private JPanel sliderPanel;
 
 	private Clock clock;
 
@@ -218,6 +223,8 @@ public class PicturePanel extends JPanel {
 
 		buildPopupMenu();
 
+		sliderPanel = buildSliderPanel();
+
 		addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e)
 			{
@@ -248,6 +255,7 @@ public class PicturePanel extends JPanel {
 
 				definezoom = false;
 				manualzoom = false;
+
 				Common.getMpvDecoderClass().setZoomMode(zoomrect);
 			}
 		});
@@ -269,7 +277,6 @@ public class PicturePanel extends JPanel {
 				{
 					zoomrect[2] = e.getX() - zoomrect[0];
 					zoomrect[3] = (int) ((9.0 * zoomrect[2]) / 16.0);
-			//		zoomrect[3] = e.getY() - zoomrect[1];
 				}
 
 				repaint();
@@ -285,7 +292,7 @@ public class PicturePanel extends JPanel {
 	 */
 	protected void buildPopupMenu()
 	{
-		final String[] popup_modes = { "normalzoom", "lbzoom", "manualzoom", "save_1", "save_2" };
+		final String[] popup_modes = { "normalzoom", "lbzoom", "zoomarea", "save_1", "save_2" };
 
 		ActionListener al = new ActionListener()
 		{
@@ -322,7 +329,7 @@ public class PicturePanel extends JPanel {
 		JMenuItem menuitem_2 = popup.add("LB Zoom");
 		menuitem_2.setActionCommand(popup_modes[1]);
 
-		JMenuItem menuitem_3 = popup.add("Manual Zoom");
+		JMenuItem menuitem_3 = popup.add("Zoom Area..");
 		menuitem_3.setActionCommand(popup_modes[2]);
 
 		popup.addSeparator();
@@ -342,6 +349,38 @@ public class PicturePanel extends JPanel {
 		menuitem_3.addActionListener(al);
 		menuitem_4.addActionListener(al);
 		menuitem_5.addActionListener(al);
+	}
+
+	/**
+	 *
+	 */
+	protected JPanel buildSliderPanel()
+	{
+		JPanel panel = new JPanel();
+
+		JSlider scanSlider = new JSlider();
+		scanSlider.setOrientation(JSlider.VERTICAL);
+		scanSlider.setInverted(true);
+		scanSlider.setMaximum(100);
+		scanSlider.setMajorTickSpacing(10);
+		scanSlider.setMinorTickSpacing(1);
+		scanSlider.setPaintTicks(true);
+		scanSlider.setValue(50);
+		scanSlider.setPreferredSize(new Dimension(30, 400));
+		scanSlider.setMaximumSize(new Dimension(30, 400));
+		scanSlider.setMinimumSize(new Dimension(30, 400));
+
+		panel.add(scanSlider);
+
+		return panel;
+	}
+
+	/**
+	 *
+	 */
+	public JPanel getSliderPanel()
+	{
+		return sliderPanel;
 	}
 
 	/**
@@ -365,23 +404,12 @@ public class PicturePanel extends JPanel {
 	 */
 	public void paint(Graphics g)
 	{
-		g.setColor(Color.black);
-		g.fillRect(0, 0, 800, 600);
-
-		g.setColor(new Color(0, 35, 110));
-		g.fillRect(0, 290, 514, 340);
-
+		paintInfoBackground(g);
 		paintOutline(g);
-
-		g.drawImage(image, 2, 2, this);
-
+		paintPreviewPicture(g);
 		paintZoomInfo(g);
-
-		g.setFont(font_1);
-		g.setColor(Color.white);
-		g.drawString(Common.getMpvDecoderClass().getInfo_1(), 36, 303);
-		g.drawString(Common.getMpvDecoderClass().getInfo_2(), 36, 317);
-
+		paintVideoInfo(g);
+		paintSlideBackground(g);
 		paintWSSInfo(g);
 		paintErrorInfo(g);
 		paintPlayInfo(g);
@@ -389,17 +417,42 @@ public class PicturePanel extends JPanel {
 		g.setFont(font_2);
 
 		paintCutInfo(g);
-//
 		paintPositionInfo(g);
-
 		paintChapterInfo(g);
 		paintSubpicture(g);
 		paintOSDInfo(g);
 		paintFileInfo(g);
-
 		paintCollectionNumber(g);
-
 		paintZoomRect(g);
+	}
+
+	/**
+	 * paint background
+	 */
+	private void paintInfoBackground(Graphics g)
+	{
+		g.setColor(new Color(0, 35, 110));
+		g.fillRect(0, 0, 800, 600);
+		g.drawImage(InfoBackground, 0, 290, this);
+	}
+
+	/**
+	 * paint background
+	 */
+	private void paintSlideBackground(Graphics g)
+	{
+		g.drawImage(SlideBackground, 516, 0, this);
+	}
+
+	/**
+	 * paint preview
+	 */
+	private void paintPreviewPicture(Graphics g)
+	{
+		g.setColor(Color.black);
+		g.fillRect(0, 0, 514, 290);
+
+		g.drawImage(image, 2, 2, this);
 	}
 
 	/**
@@ -424,6 +477,17 @@ public class PicturePanel extends JPanel {
 		g.drawLine(0, 0, 0, 400);
 		g.drawLine(0, 291, 515, 291);
 		g.drawLine(515, 0, 515, 400);
+	}
+
+	/**
+	 * paint videoinfo
+	 */
+	private void paintVideoInfo(Graphics g)
+	{
+		g.setFont(font_1);
+		g.setColor(Color.white);
+		g.drawString(Common.getMpvDecoderClass().getInfo_1(), 36, 303);
+		g.drawString(Common.getMpvDecoderClass().getInfo_2(), 36, 317);
 	}
 
 	/**
@@ -461,8 +525,11 @@ public class PicturePanel extends JPanel {
 		if (!definezoom)
 			return;
 
-		g.setColor(new Color(255, 100, 100, 120));
+		g.setColor(new Color(100, 100, 255, 120));
 		g.fillRect(zoomrect[0], zoomrect[1], zoomrect[2], zoomrect[3]);
+
+		g.setColor(new Color(255, 255, 255, 255));
+		g.drawRect(zoomrect[0], zoomrect[1], zoomrect[2], zoomrect[3]);
 	}
 
 	/**
@@ -1045,8 +1112,8 @@ public class PicturePanel extends JPanel {
 	 */
 	private void littleEndian(byte[] array, int aPos, int value)
 	{
-		for (int a = 0; a < 4; a++)
-			array[aPos + a] = (byte)(value>>(a * 8) & 0xFF);
+		for (int i = 0; i < 4; i++)
+			array[aPos + i] = (byte)(value>>(i <<3) & 0xFF);
 	}
 
 	/**
@@ -1135,20 +1202,24 @@ public class PicturePanel extends JPanel {
 			BufferedOutputStream BMPfile = new BufferedOutputStream(new FileOutputStream(newfile), 2048000);
 			BMPfile.write(bmpHead);
 
-			for (int a = vertical_size - 1; a >= 0; a--)
+			byte[] padding_bytes = new byte[padding];
+
+			for (int a = vertical_size - 1, tmp1; a >= 0; a--)
 			{
+				tmp1 = a * source_mb_width;
+
 				for (int b = 0, pixel = 0; b < horizontal_size; b++)
 				{
-					pixel = YUVtoRGB(sourcepixel[b + (a * source_mb_width)]);
+					pixel = YUVtoRGB(sourcepixel[b + tmp1]);
 
 					for (int c = 0; c < 3; c++)
-						bmp24[c] = (byte)(pixel >>(c * 8) & 0xFF);
+						bmp24[c] = (byte)(pixel >>(c <<3) & 0xFF);
 
 					BMPfile.write(bmp24);
 				}
 
 				if (padding > 0)
-					BMPfile.write(new byte[padding]);
+					BMPfile.write(padding_bytes);
 			}
 
 			BMPfile.flush();

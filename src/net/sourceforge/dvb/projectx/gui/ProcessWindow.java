@@ -396,6 +396,18 @@ public class ProcessWindow extends JFrame {
 
 		preferencesMenu.add(preferences);
 
+		JMenuItem coll_preferences = new JMenuItem();
+		coll_preferences.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.CTRL_MASK));
+		CommonGui.localize(coll_preferences, "General.CollectionProperties");
+		coll_preferences.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				CommonGui.getCollectionProperties().open(Common.getCollection(), Common.getActiveCollection());
+			}
+		});
+
+		preferencesMenu.add(coll_preferences);
+
 		return preferencesMenu;
 	}
 

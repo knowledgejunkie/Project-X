@@ -289,6 +289,14 @@ danach:
 --fix split mpa, 6.option split dual/copy mono zu doppel-mono/jst, stereo bleibt
 --process-actions jetzt checkboxen
 
+0.90.4.00b09:
+--fix ac3 parse size index
+--zoom area geändert
+--mpg2 lay2 audio fix, erkennung
+--mpa crc test beschleunigt
+--pic area background, cut view index klickbar
+--DnD laden von FTP Links/Datei möglich
+--option spez.2: ohne/mit overhead lesen (vormals immer aktiv)
 
 !-test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding
 !-pid in dateinamen - problem split

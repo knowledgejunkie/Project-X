@@ -1212,7 +1212,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 						Ifo.createIfo(ttxfile, subpicture.getUserColorTableArray());
 
 					job_processing.countMediaFilesExportLength(ttxfile1.length());
-					job_processing.addSummaryInfo(Resource.getString("teletext.summary", "" + job_processing.countPictureStream(), "" + seiten, "" + page, infoPTSMatch(filename_pts, videofile_pts, vptsdata, ptsdata)) + "'" + ttxfile1 + "'");
+					job_processing.addSummaryInfo(Resource.getString("teletext.summary", Common.adaptString(job_processing.countPictureStream(), 2), "" + seiten, "" + page, infoPTSMatch(filename_pts, videofile_pts, vptsdata, ptsdata)) + "'" + ttxfile1 + "'");
 
 					//vobsub
 					if (subtitle_type == EXPORT_SUP && ExportAsVobSub)

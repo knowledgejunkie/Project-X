@@ -46,12 +46,15 @@ import javax.swing.JPanel;
 public class CutView extends JPanel {
 
 	private final int Top = 20;
-	private final int Bottom = 174;
+	private final int Bottom = 188;
 
 	private int[] image_data;
 
 	private int width = 160;
 	private int height = 90;
+
+	private Object index_top = null;
+	private Object index_bottom = null;
 
 	private boolean matchingPoint = false;
 
@@ -98,9 +101,9 @@ public class CutView extends JPanel {
 
 		font = new Font("Tahoma", Font.PLAIN, 12);
 
-		setPreferredSize(new Dimension(340, 120));
-		setMaximumSize(new Dimension(340, 120));
-		setMinimumSize(new Dimension(340, 120));
+		setPreferredSize(new Dimension(350, 120));
+		setMaximumSize(new Dimension(350, 120));
+		setMinimumSize(new Dimension(350, 120));
 
 		setBackground(Color.black);
 		setVisible(true);
@@ -120,6 +123,22 @@ public class CutView extends JPanel {
 	public int getBottom()
 	{
 		return Bottom;
+	}
+
+	/**
+	 *
+	 */
+	public Object getTopIndex()
+	{
+		return index_top;
+	}
+
+	/**
+	 *
+	 */
+	public Object getBottomIndex()
+	{
+		return index_bottom;
 	}
 
 	/**
@@ -160,6 +179,7 @@ public class CutView extends JPanel {
 			source_top.newPixels();
 			string_top = "Prev: " + (object != null ? "#" + (index + 1) + " - " + object[index] + string_in_out[index & 1] : "= Collection Begin");
 			cut_top = object != null ? (index & 1) == 0 : (!matchingPoint ? !cut_bottom : false);
+			index_top = object != null ? object[index] : null;
 		}
 
 		else
@@ -167,6 +187,7 @@ public class CutView extends JPanel {
 			source_bottom.newPixels();
 			string_bottom = "Next: " + (object != null ? "#" + (index + 1) + " - " + object[index] + string_in_out[index & 1] : "= Collection End");
 			cut_bottom = object != null ? (index & 1) == 0 : false;
+			index_bottom = object != null ? object[index] : null;
 		}
 
 		repaint();
@@ -183,9 +204,32 @@ public class CutView extends JPanel {
 			return;
 		}
 
-		System.arraycopy(data, 0, image_data, 0 , data.length);
+		scaleCutImage(data);
 
 		updateView(position, object, index);
+	}
+
+	/**
+	 * create new smaller cutimage pixel data
+	 */
+	private void scaleCutImage(int[] data)
+	{
+		int source_width = 512;
+		int source_height = 288;
+
+		float Y = 0;
+		float X = 0;
+		float decimate_height = (float)source_height / height;
+		float decimate_width = (float)source_width / width;
+
+		for (int y = 0, tmp1, tmp2; Y < source_height && y < height; Y += decimate_height, y++, X = 0)
+		{
+			tmp1 = y * width;
+			tmp2 = (int)Y * source_width;
+
+			for (int x = 0; X < source_width && x < width; X += decimate_width, x++)
+				image_data[x + tmp1] = data[(int)X + tmp2];
+		}
 	}
 
 	/**
@@ -204,12 +248,12 @@ public class CutView extends JPanel {
 	public void paint(Graphics g)
 	{
 		g.setColor(BackgroundColor);
-		g.fillRect(0, 0, 900, 120);
+		g.fillRect(0, 0, 600, 120);
 
 		g.setFont(font);
 
 		g.setColor(cut_top ? Color.green : RedColor);
-		g.drawRect(0, Top - 1, width - 1, height + 1);
+		g.drawRect(2, Top - 1, width - 1, height + 1);
 		g.drawString(string_top, 2, Top - 4);
 
 		g.setColor(cut_bottom ? Color.green : RedColor);
@@ -224,7 +268,7 @@ public class CutView extends JPanel {
 			g.drawString(string_matchingpoint, 2, Bottom - 21);
 		}
 
-		g.drawImage(image_top, 0, Top, this);
+		g.drawImage(image_top, 2, Top, this);
 	//	g.drawImage(image_bottom, 0, Bottom, this);
 		g.drawImage(image_bottom, Bottom, Top, this);
 

@@ -348,7 +348,7 @@ public class StreamProcessLPCMAudio extends StreamProcessBase {
 
 				Common.setMessage(Resource.getString("msg.newfile") + " " + pcmfile);
 				job_processing.countMediaFilesExportLength(pcmfile1.length());
-				job_processing.addSummaryInfo(Resource.getString("lpcm.summary", "" + job_processing.countPictureStream(), "" + samples, Common.formatTime_1(playtime)) + infoPTSMatch(filename_pts, videofile_pts, vptsdata, ptsdata) + "\t'" + pcmfile1 + "'");
+				job_processing.addSummaryInfo(Resource.getString("lpcm.summary", Common.adaptString(job_processing.countPictureStream(), 2), "" + samples, Common.formatTime_1(playtime)) + infoPTSMatch(filename_pts, videofile_pts, vptsdata, ptsdata) + "\t'" + pcmfile1 + "'");
 			}
 
 		} catch (IOException e2) { 

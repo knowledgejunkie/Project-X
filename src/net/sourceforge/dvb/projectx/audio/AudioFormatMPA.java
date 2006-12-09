@@ -1,7 +1,7 @@
 /*
  * @(#)AudioFormatMPA.java - parse Audioheaders, mpa, incl. RDS
  *
- * Copyright (c) 2003-2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2003-2006 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -49,8 +49,15 @@ public class AudioFormatMPA extends AudioFormat {
 	public AudioFormatMPA()
 	{
 		super();
+
 		instanced_time = String.valueOf(System.currentTimeMillis());
+
+		initCRCTable();
 	}
+
+	private int CRC16_POLY = 0x18005; //((1 << 0) | (1 << 2) | (1 << 15) | (1 << 16));
+
+	private int[] crc_table = new int[256];
 
 	private int[][][] bitrate_index = {{
 		{-1,8000,16000,24000,32000,40000,48000,56000,64000,
@@ -104,7 +111,7 @@ public class AudioFormatMPA extends AudioFormat {
 	
 		if (ID == 1 && Emphasis == 2)
 			ID = 2;
-	
+
 		if ( (Layer = 3 & frame[pos + 1]>>>1) < 1) 
 			return -2;
 	
@@ -130,7 +137,7 @@ public class AudioFormatMPA extends AudioFormat {
 		Copyright = 1 & frame[pos + 3]>>>3;
 		Original = 1 & frame[pos + 3]>>>2;
 		Time_length = time_index[Layer] / Sampling_frequency;
-	
+
 		if (ID == 1 && Layer == 2)   // MPEG-1, L2 restrictions
 		{
 			if (Bitrate / Channel < 32000) 
@@ -172,17 +179,18 @@ public class AudioFormatMPA extends AudioFormat {
 			if (Bound > Sblimit) 
 				Bound = Sblimit;
 
-			Size = (Size_base = (ID == 0 ? 72 : 144) * Bitrate / Sampling_frequency) + Padding_bit;
-		//	Size = (Size_base = 144 * Bitrate / Sampling_frequency) + Padding_bit;
+			Size = (Size_base = (ID == 0 && Layer == 1 ? 72 : 144) * Bitrate / Sampling_frequency) + Padding_bit;
+
+			return 1;
 		}
 
 		else
 		{
 			Sblimit = 32;
-			Size = (Size_base = (12 * Bitrate / Sampling_frequency) * 4) + (4 * Padding_bit);
-		}
+			Size = (Size_base = (12 * Bitrate / Sampling_frequency)<<2 ) + (Padding_bit<<2);
 
-		return (Layer < 3 ? 1 : 2);
+			return 2;
+		}
 	}
 	
 	/**
@@ -236,14 +244,15 @@ public class AudioFormatMPA extends AudioFormat {
 	
 		if (nLayer < 3)
 		{
-			nSize = (nSize_base = (nID == 0 ? 72 : 144) * nBitrate / nSampling_frequency) + nPadding_bit;
-		//	nSize = (nSize_base = 144*nBitrate/nSampling_frequency) + nPadding_bit;
+			nSize = (nSize_base = (nID == 0 && nLayer == 1 ? 72 : 144) * nBitrate / nSampling_frequency) + nPadding_bit;
+
 			return 1;
 		}
 
 		else
 		{
-			nSize = (nSize_base = (12*nBitrate/nSampling_frequency)*4) + (4*nPadding_bit);
+			nSize = (nSize_base = (12 * nBitrate / nSampling_frequency)<<2) + (nPadding_bit<<2);
+
 			return 2;
 		}
 	}
@@ -324,11 +333,46 @@ public class AudioFormatMPA extends AudioFormat {
 	}
 
 	/**
+	 * crc init table
+	 */
+	private void initCRCTable()
+	{
+		for (int n = 0, c, k; n < 256; n++)
+		{
+			c = n << 8;
+
+			for (k = 0; k < 8; k++)
+			{
+				if ((c & (1 << 15)) != 0) 
+					c = ((c << 1) & 0xFFFF) ^ (CRC16_POLY & 0xFFFF);
+
+				else
+					c = c << 1;
+			}
+
+			crc_table[n] = c;
+		}
+	}
+
+	/**
+	 * crc
+	 */
+	private int determineCRC(byte[] data, int offs, int len, int crc)
+	{
+		int end = offs + (len>>>3);
+
+		for (int i = offs; i < end; i++)
+			crc = (crc_table[(0xFF & data[i]) ^ (crc >> 8)] ^ (crc << 8)) & 0xFFFF;
+
+		return crc;
+	}
+
+	/**
 	 * 
 	 */
 	public int validateCRC(byte[] _data, int offs, int len)
 	{
-		if (Layer < 2 || Protection_bit==0)
+		if (Layer < 2 || Protection_bit == 0)
 			return 0;
 
 		int crc_val = (0xFF & _data[4])<<8 | (0xFF & _data[5]);
@@ -399,31 +443,44 @@ public class AudioFormatMPA extends AudioFormat {
 		int[] shift_reg = new int[16];
 		int crc = 0;
 
-		Arrays.fill(shift_reg, 1);
+		// byte aligned is faster
+		crc = determineCRC(data, offset, nr_bits, 0xFFFF);
 
-		for (int bit_count=0, bit_in_byte=0, data_bit, j = data.length; bit_count < nr_bits; bit_count++)
+		// rest of bits 
+		if ((nr_bits & 7) > 0)
 		{
-			if (offset >= j)
-				break;
+			for (int i = 0; i < 16; i++)
+				shift_reg[i] = 1 & (crc >> i);
 
-			data_bit = (data[offset] & 0x80>>>(bit_in_byte++)) != 0 ? 1 : 0;
+			offset += (nr_bits>>>3);
 
-			if ((bit_in_byte &= 7) == 0)
-				offset++;
+			for (int bit_count = nr_bits & ~7, bit_in_byte = 0, data_bit, j = data.length; bit_count < nr_bits; bit_count++)
+			{
+				if (offset >= j)
+					break;
 
-			data_bit ^= shift_reg[15];
+				data_bit = (data[offset] & 0x80 >>> (bit_in_byte++)) != 0 ? 1 : 0;
 
-			for (int i = 15; i > 0; i--)
-				shift_reg[i] = g[i]==1 ? (shift_reg[i-1] ^ data_bit) : shift_reg[i-1];
+				if ((bit_in_byte &= 7) == 0)
+					offset++;
 
-			shift_reg[0] = data_bit;
+				data_bit ^= shift_reg[15];
+
+				for (int i = 15; i > 0; i--)
+					shift_reg[i] = g[i] == 1 ? (shift_reg[i - 1] ^ data_bit) : shift_reg[i - 1];
+
+				shift_reg[0] = data_bit;
+			}
+
+			for (int i = 0; i < 16; i++)
+				crc = ((crc << 1) | (shift_reg[15 - i]));
+
+			crc &= 0xFFFF;
 		}
-
-		for (int i=0; i<16; i++)
-			crc = ((crc << 1) | (shift_reg[15-i]));
 
 		if (crc != crc_val)
 			return 1;
+
 		else
 			return 0;
 	}
@@ -562,7 +619,7 @@ public class AudioFormatMPA extends AudioFormat {
 	/**
 	 *
 	 */
-	public void decodeAncillaryData(byte[] frame, String frametime_str)
+	public void decodeAncillaryData(byte[] frame, double frametime)
 	{
 		if (!DecodeRDS)
 			return;
@@ -571,9 +628,9 @@ public class AudioFormatMPA extends AudioFormat {
 
 		if (frame[neg_offs] != RDS_identifier)
 		{
-			neg_offs -= 2;
+	//		neg_offs -= 2;
 
-			if (frame[neg_offs + 2] != 0 || frame[neg_offs + 1] != 0 || frame[neg_offs] != RDS_identifier)
+	//		if (frame[neg_offs + 2] != 0 || frame[neg_offs + 1] != 0 || frame[neg_offs] != RDS_identifier)
 				return;
 		}
 
@@ -585,13 +642,13 @@ public class AudioFormatMPA extends AudioFormat {
 			_list.add(String.valueOf(val));
 		}
 
-		decodeChunk(_list, frametime_str);
+		decodeChunk(_list, frametime);
 	}
 
 	/**
 	 * 
 	 */
-	private void decodeChunk(ArrayList list, String frametime_str)
+	private void decodeChunk(ArrayList list, double frametime)
 	{
 		int index = list.indexOf(String.valueOf(RDS_startcode));
 
@@ -683,31 +740,31 @@ public class AudioFormatMPA extends AudioFormat {
 			break;
 
 		case 0x0A: //RT
-			compareMsg(getRT(bo.toByteArray()), 0, frametime_str);
+			compareMsg(getRT(bo.toByteArray()), 0, frametime);
 			break;
 
 		case 0x01: //PI
-			compareMsg(getPI(bo.toByteArray()), 1, frametime_str);
+			compareMsg(getPI(bo.toByteArray()), 1, frametime);
 			break;
 
 		case 0x02: //PS program service name 
-			compareMsg(getPS(bo.toByteArray()), 2, frametime_str);
+			compareMsg(getPS(bo.toByteArray()), 2, frametime);
 			break;
 
 		case 0x03: //TA
-			compareMsg(getTP(bo.toByteArray()), 3, frametime_str);
+			compareMsg(getTP(bo.toByteArray()), 3, frametime);
 			break;
 
 		case 0x05: //MS
-			compareMsg(getMS(bo.toByteArray()), 4, frametime_str);
+			compareMsg(getMS(bo.toByteArray()), 4, frametime);
 			break;
 
 		case 0x07: //PTY
-			compareMsg(getPTY(bo.toByteArray()), 5, frametime_str);
+			compareMsg(getPTY(bo.toByteArray()), 5, frametime);
 			break;
 
 		case 0x0D: //RTC
-			compareMsg(getRTC(bo.toByteArray()), 6, frametime_str);
+			compareMsg(getRTC(bo.toByteArray()), 6, frametime);
 			break;
 
 		case 0x30: //TMC 
@@ -775,14 +832,14 @@ public class AudioFormatMPA extends AudioFormat {
 	/**
 	 * 
 	 */
-	private void compareMsg(String str, int index, String frametime_str)
+	private void compareMsg(String str, int index, double frametime)
 	{
 		if (str == null || str.equals(rds_values[index]))
 			return;
 
 		rds_values[index] = str;
 
-		Common.setMessage("-> RDS @ " + frametime_str + ": " + str);
+		Common.setMessage("-> RDS @ " + Common.formatTime_1((long) (frametime / 90.0)) + ": " + str);
 	}
 
 	/**

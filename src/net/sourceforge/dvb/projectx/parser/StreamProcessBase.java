@@ -85,6 +85,14 @@ public class StreamProcessBase extends Object {
 	}
 
 	/**
+	 * pts value to time value
+	 */
+	public String formatFrameTime(double time_value)
+	{
+		return Common.formatTime_1((long) (time_value / 90.0));
+	}
+
+	/**
 	 * loadTempVideoPts
 	 */
 	public long[][] loadTempVideoPts(String videofile_pts, boolean debug)
