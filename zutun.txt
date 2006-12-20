@@ -298,6 +298,10 @@ danach:
 --DnD laden von FTP Links/Datei möglich
 --option spez.2: ohne/mit overhead lesen (vormals immer aktiv)
 
+0.90.4.00b10:
+--mpa demux ca. halbe zeit
+--sonderzeichen umtausch zB. direktzugriff
+
 !-test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding
 !-pid in dateinamen - problem split
 
