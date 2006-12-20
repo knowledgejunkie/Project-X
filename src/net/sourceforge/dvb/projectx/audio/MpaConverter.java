@@ -84,12 +84,12 @@ public class MpaConverter extends Object {
 	private final int DUAL = 2;
 	private final int SINGLE = 3;
 
-	private final int SINGLE_TO_3DSTEREO= 1;
-	private final int SINGLE_TO_STEREO  = 2;
-	private final int SINGLE_TO_JSTEREO = 3;
-	private final int SPLIT_INTO_SINGLE = 4;
-	private final int SPLIT_INTO_SINGLE_DOUBLED = 5;
-	private final int SPLIT_DUAL_INTO_SINGLE_DOUBLED = 6;
+	public static final int SINGLE_TO_3DSTEREO= 1;
+	public static final int SINGLE_TO_STEREO  = 2;
+	public static final int SINGLE_TO_JSTEREO = 3;
+	public static final int SPLIT_INTO_SINGLE = 4;
+	public static final int SPLIT_INTO_SINGLE_DOUBLED = 5;
+	public static final int SPLIT_DUAL_INTO_SINGLE_DOUBLED = 6;
 
 	private boolean[] framebuffer;
 
@@ -151,7 +151,7 @@ public class MpaConverter extends Object {
 		}
 
 		//explicit call necessary, if crc removing is disabled in presettings
-		Audio.removeCRC(AudioFrame);
+		Audio.removeCRC(AudioFrame, true);
 
 		switch(MpaConversionMode)
 		{

@@ -972,7 +972,7 @@ public class CutPanel extends JPanel {
 		 * row 3
 		 */
 		cutIndexList = new JComboBox();
-		cutIndexList.setMaximumRowCount(8);
+		cutIndexList.setMaximumRowCount(5);
 		cutIndexList.setPreferredSize(new Dimension(120, 24));
 		cutIndexList.setMaximumSize(new Dimension(120, 24));
 		cutIndexList.setActionCommand("cutbox");
@@ -1103,7 +1103,7 @@ public class CutPanel extends JPanel {
 		 * row 3
 		 */
 		chapterIndexList = new JComboBox();
-		chapterIndexList.setMaximumRowCount(8);
+		chapterIndexList.setMaximumRowCount(5);
 		chapterIndexList.setPreferredSize(new Dimension(120, 24));
 		chapterIndexList.setMaximumSize(new Dimension(120, 24));
 		chapterIndexList.setActionCommand("chapterbox");
@@ -1725,10 +1725,8 @@ public class CutPanel extends JPanel {
 		active_collection = _active_collection;
 
 		Common.getMpvDecoderClass().clearPreviewPixel();
-//
 		Common.getMpvDecoderClass().resetProcessedPosition();
 		Common.getMpvDecoderClass().setPidAndFileInfo(Resource.getString("CollectionPanel.Preview.offline"));
-
 
 		/**
 		 *

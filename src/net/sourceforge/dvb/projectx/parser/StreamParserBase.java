@@ -127,7 +127,19 @@ public class StreamParserBase extends Object {
 	 */
 	public void setFileName(JobCollection collection, JobProcessing job_processing, XInputFile aXInputFile, String extension)
 	{
-		fchild = collection.getOutputName(aXInputFile.getName());
+		String str = aXInputFile.getName();
+		str = str.replace('?', '_');
+		str = str.replace('*', '_');
+		str = str.replace(':', '_');
+		str = str.replace('/', '_');
+		str = str.replace('"', '_');
+		str = str.replace('<', '_');
+		str = str.replace('>', '_');
+		str = str.replace('|', '_');
+
+		fchild = collection.getOutputName(str);
+
+//		fchild = collection.getOutputName(aXInputFile.getName());
 		fparent = collection.getOutputNameParent(fchild);
 
 		// split part 

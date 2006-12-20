@@ -38,13 +38,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.BufferedOutputStream;
 
-import net.sourceforge.dvb.projectx.audio.MpaDecoder;
 import net.sourceforge.dvb.projectx.common.Common;
+
 import net.sourceforge.dvb.projectx.audio.AudioFormat;
+import net.sourceforge.dvb.projectx.audio.MpaDecoder;
+import net.sourceforge.dvb.projectx.audio.MpaConverter;
 
 public class AudioFormatMPA extends AudioFormat {
 		
 	private String instanced_time = "";
+
+	private MpaConverter MPAConverter;
 
 	public AudioFormatMPA()
 	{
@@ -297,18 +301,57 @@ public class AudioFormatMPA extends AudioFormat {
 	{
 		return ("" + dID[lID] + ", " + dLayer[lLayer] + ", " + lSampling_frequency + "Hz, " + dMode[lMode] + ", "+ (lBitrate/1000) + "kbps, " + dCRC[lProtection_bit]);
 	}
-	
+
+	/**
+	 * link to mpa conversion
+	 */
+	public byte[][] convertFrame(byte[] frame, int mode)
+	{
+		if (MPAConverter == null)
+			MPAConverter = new MpaConverter();
+
+		byte[][] newframes = MPAConverter.modifyframe(frame, mode);
+
+		parseRiffData(newframes[0], 1);
+
+		if (mode >= MpaConverter.SPLIT_INTO_SINGLE)
+			parseRiffData(newframes[1], 2);
+
+		return newframes;
+	}
+
+	/**
+	 * edit frame
+	 */
+/**	public byte[] editFrame(byte[] frame, int mode)
+	{
+		return frame;
+	}
+**/
+
+	/**
+	 * link to mpa decoder
+	 */
+/**	public byte[] decodeFrame(byte[] frame, int mode)
+	{
+		if (MPADecoder == null)
+			MPADecoder = new MpaDecoder();
+
+		return MPADecoder.decodeArray(frame);
+	}
+**/
+
 	/**
 	 * remove CRC from mpa 
 	 **/
-	public void removeCRC(byte[] frame)
+	public void removeCRC(byte[] frame, boolean remove)
 	{
 		if (Layer < 2)
 			return;
 
 		removePrivateBit(frame);
 
-		if ((frame[1] & 1) == 1) 
+		if (!remove || (frame[1] & 1) == 1) 
 			return;
 
 		System.arraycopy(frame, 6, frame, 4, frame.length - 6);
@@ -567,9 +610,9 @@ public class AudioFormatMPA extends AudioFormat {
 	}
 
 
+
 	/**
-	 * RDS-Test, cant find any similars to RDS, I-RDS, RBDS i.e. group/block coding
-	 * PI-Code is missing, WDR2 shall have Dx92
+	 * RDS-Test, 
 	 *
 	 */
 	ArrayList _list = new ArrayList();

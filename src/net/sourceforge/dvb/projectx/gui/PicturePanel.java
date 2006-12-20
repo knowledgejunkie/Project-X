@@ -99,7 +99,7 @@ public class PicturePanel extends JPanel {
 
 	private boolean manualzoom = false;
 	private boolean definezoom = false;
-	private int[] zoomrect = new int[4];
+	private int[] zoomrect = new int[6];
 
 
 	private StreamInfo streamInfo = null;
@@ -256,6 +256,8 @@ public class PicturePanel extends JPanel {
 				definezoom = false;
 				manualzoom = false;
 
+				repaint();
+
 				Common.getMpvDecoderClass().setZoomMode(zoomrect);
 			}
 		});
@@ -278,6 +280,17 @@ public class PicturePanel extends JPanel {
 					zoomrect[2] = e.getX() - zoomrect[0];
 					zoomrect[3] = (int) ((9.0 * zoomrect[2]) / 16.0);
 				}
+
+				repaint();
+			}
+
+			public void mouseMoved(MouseEvent e)
+			{
+				if (!definezoom || manualzoom)
+					return;
+
+				zoomrect[4] = e.getX();
+				zoomrect[5] = e.getY();
 
 				repaint();
 			}
@@ -525,11 +538,21 @@ public class PicturePanel extends JPanel {
 		if (!definezoom)
 			return;
 
-		g.setColor(new Color(100, 100, 255, 120));
-		g.fillRect(zoomrect[0], zoomrect[1], zoomrect[2], zoomrect[3]);
+		if (!manualzoom)
+		{
+			g.setColor(new Color(255, 255, 255, 255));
+			g.drawLine(zoomrect[4] - 10, zoomrect[5], zoomrect[4] + 10, zoomrect[5]);
+			g.drawLine(zoomrect[4], zoomrect[5] - 10, zoomrect[4], zoomrect[5] + 10);
+		}
 
-		g.setColor(new Color(255, 255, 255, 255));
-		g.drawRect(zoomrect[0], zoomrect[1], zoomrect[2], zoomrect[3]);
+		else
+		{
+			g.setColor(new Color(100, 100, 255, 120));
+			g.fillRect(zoomrect[0], zoomrect[1], zoomrect[2], zoomrect[3]);
+
+			g.setColor(new Color(255, 255, 255, 255));
+			g.drawRect(zoomrect[0], zoomrect[1], zoomrect[2], zoomrect[3]);
+		}
 	}
 
 	/**

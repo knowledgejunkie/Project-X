@@ -1,5 +1,5 @@
 /*
- * @(#)StreamParser
+ * @(#)StreamParserAudio
  *
  * Copyright (c) 2005-2006 by dvb.matt, All rights reserved.
  * 
@@ -54,7 +54,6 @@ import net.sourceforge.dvb.projectx.common.JobProcessing;
 import net.sourceforge.dvb.projectx.io.IDDBufferedOutputStream;
 
 import net.sourceforge.dvb.projectx.audio.MpaDecoder;
-import net.sourceforge.dvb.projectx.audio.MpaConverter;
 import net.sourceforge.dvb.projectx.audio.AudioFormat;
 
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
@@ -78,7 +77,6 @@ public class StreamProcessAudio extends StreamProcessBase {
 	private final int WAV_AUDIOSTREAM = 5;
 	private final int NO_AUDIOSTREAM = 10;
 
-	private MpaConverter MPAConverter = null;
 	private MpaDecoder MPADecoder = null;
 
 	private PushbackInputStream InputStream;
@@ -120,6 +118,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 	private boolean CreateDDWave;
 	private boolean FadeInOut;
 	private boolean Normalize;
+	private boolean RenameAudio;
 
 	private int FadeInOutMillis;
 	private int ResampleAudioMode;
@@ -139,6 +138,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 	private final int MpaConversion_Mode3 = 3; //single to st
 	private final int MpaConversion_Mode4 = 4; //st-dual to 2 single
 	private final int MpaConversion_Mode5 = 5; //st-dual to 2 jst - doubled single
+	private final int MpaConversion_Mode6 = 6; //dual to 2 jst - doubled single
 
 	private long FileLength;
 	private final long FileLength_Min = 100;
@@ -168,9 +168,6 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 		Normalize = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_Normalize);
 		DecodeMpgAudio = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_decodeMpgAudio);
-
-		if (MPAConverter == null)
-			MPAConverter = new MpaConverter();
 
 		if (MPADecoder == null)
 			MPADecoder = new MpaDecoder();
@@ -237,8 +234,6 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 			if ( (0x10000L & CommonParsing.getAudioProcessingFlags()) != 0) 
 				MpaConversionMode = MpaConversion_None;
-
-			MPAConverter.resetBuffer();
 		}
 
 		CommonParsing.setAudioProcessingFlags(CommonParsing.getAudioProcessingFlags() & 3L);
@@ -266,8 +261,6 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 		getSettings(collection);
 
-		messageSettings();
-
 		boolean insertSilenceLoop = false;
 		boolean preloop = true;
 		boolean missing_syncword = false;
@@ -282,7 +275,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 		byte[] header_copy = new byte[4];
 		byte[][] newframes = new byte[2][1];
 		byte[][] copyframe= new byte[2][1];
-		byte[][] silent_Frame=new byte[2][0];
+		byte[] silent_Frame = new byte[0];
 		byte[] pushback = new byte[10];
 		byte[] frame = new byte[1];
 		byte[] pushmpa = new byte[4];
@@ -295,6 +288,10 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 		double sync_value_1;
 		double sync_value_2;
+		double sync_value_3;
+		double sync_value_4;
+
+		String audio_type[] = { "(ac3)", "(mp3)", "(mp2)", "(mp1)", "(dts)", "(pcm)" };
 
 		FramePosition = 0;
 		CurrentFramePosition = 0;
@@ -517,7 +514,8 @@ public class StreamProcessAudio extends StreamProcessBase {
 					/**
 					 * read entire frame 
 					 */
-					frame = new byte[audio.getSize()];
+					if (frame.length != audio.getSize())
+						frame = new byte[audio.getSize()];
 
 					readInputStream(frame, 0, audio.getSize());
 
@@ -631,7 +629,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 						 * patch ac-3 to 3/2 
 						 */
 						if (!is_DTS && Patch1stAc3Header && FrameExportInfo.getWrittenFrames() == 0)
-							frame = audio.editFrame(frame, audio.getSize(), 1);
+							frame = audio.editFrame(frame, 1);
 
 						long precount = vptsval[v];
 						long[] ins = { (long)TimeCounter, 0 };
@@ -691,11 +689,11 @@ public class StreamProcessAudio extends StreamProcessBase {
 							 */
 							if (ContainsVideoPTS && (v < vptsval.length))
 							{
-								double ms3 = precount - vptsval[v];
-								double ms4 = TimeCounter - vtime[v];
+								sync_value_3 = precount - vptsval[v];
+								sync_value_4 = TimeCounter - vtime[v];
 
 								if (Debug) 
-									System.out.println(" ö" + ms3 + "/" + ms4 + "/" + (ms4 - ms3));
+									System.out.println(" ö" + sync_value_3 + "/" + sync_value_4 + "/" + (sync_value_4 - sync_value_3));
 
 								if (!WriteEnabled && (double) Math.abs((TimeCounter - vtime[v]) - (precount - vptsval[v])) <= (double) audio.getFrameTimeLength() / 2.0 )
 								{
@@ -796,7 +794,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 						vw[0] = v;
 						vw[1] = w;
 
-						WriteEnabled = SyncCheck(vw, TimeCounter, audio.getFrameTimeLength(), TimePosition, FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug);
+						WriteEnabled = SyncCheck(vw, TimeCounter, audio.getFrameTimeLength(), 4, FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug);
 
 						v = vw[0];
 						w = vw[1];
@@ -827,14 +825,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 					/**
 					 * remove CRC, unused
 					 */
-					if (ClearCRC) 
-						audio.removeCRC(frame);
+					audio.removeCRC(frame, ClearCRC);
 
 					/**
 					 * patch ac-3 to 3/2 
 					 */
 					if (!is_DTS && Patch1stAc3Header && FrameExportInfo.getWrittenFrames() == 0)
-						frame = audio.editFrame(frame, audio.getSize(), 1);
+						frame = audio.editFrame(frame, 1);
 
 					if (Debug)
 					{
@@ -1111,7 +1108,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 					Common.updateProgressBar(FramePosition, FileLength);
 
 					if (Debug) 
-						System.out.println(" FramePosition" + FramePosition);
+						System.out.println(" FramePosition " + FramePosition);
 
 					while (pause())
 					{}
@@ -1171,7 +1168,8 @@ public class StreamProcessAudio extends StreamProcessBase {
 					/**
 					 * read entire frame 
 					 */
-					frame = new byte[audio.getSize()];
+					if (frame.length != audio.getSize())
+						frame = new byte[audio.getSize()];
 
 					readInputStream(frame, 0, audio.getSize());
 
@@ -1208,11 +1206,12 @@ public class StreamProcessAudio extends StreamProcessBase {
 					 */
 					if (FillGapsWithLastFrame)
 					{
-						copyframe[0] = new byte[frame.length];
+						if (copyframe[0].length != frame.length)
+							copyframe[0] = new byte[frame.length];
+
 						System.arraycopy(frame, 0, copyframe[0], 0, frame.length);
 
-						if (ClearCRC) 
-							audio.removeCRC(copyframe[0]);
+						audio.removeCRC(copyframe[0], ClearCRC);
 					}
 
 					/** 
@@ -1307,17 +1306,16 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 					else
 					{
-						silent_Frame[0] = new byte[audio.getSizeBase()];	//silence without padd, std
-						silent_Frame[1] = new byte[audio.getSize()];		//silence with padd for 22.05, 44.1
+						if (silent_Frame.length != audio.getSizeBase())
+							silent_Frame = new byte[audio.getSizeBase()];	//silence without padd, std
 
-						for (int a = 0; a < 2; a++)
-						{
-							System.arraycopy(header_copy, 0, silent_Frame[a], 0, 4);	//copy last header data
-							silent_Frame[a][1] |= 1;				//mark noCRC
-							silent_Frame[a][2] |= (a<<1);				//set padding bit
-						}
+						else
+							Arrays.fill(silent_Frame, (byte) 0);
 
-						int padding_counter = 1;						//count padding
+						System.arraycopy(header_copy, 0, silent_Frame, 0, 4);	//copy last header data
+						silent_Frame[1] |= 1;				//mark noCRC
+						silent_Frame[2] &= ~2;				//remove padding bit
+
 						long precount=vptsval[v];
 						long[] ins = { (long)TimeCounter, 0 };
 
@@ -1348,11 +1346,11 @@ public class StreamProcessAudio extends StreamProcessBase {
 							 */
 							if (ContainsVideoPTS && v < vptsval.length)
 							{
-								double ms3 = precount - vptsval[v];
-								double ms4 = TimeCounter - vtime[v];
+								sync_value_3 = precount - vptsval[v];
+								sync_value_4 = TimeCounter - vtime[v];
 
 								if (Debug) 
-									System.out.println(" ö" + ms3 + "/" + ms4 + "/" + (ms4 - ms3));
+									System.out.println(" ö" + sync_value_3 + "/" + sync_value_4 + "/" + (sync_value_4 - sync_value_3));
 
 								if (!WriteEnabled && (double) Math.abs((TimeCounter - vtime[v]) -
 										(precount - vptsval[v]) ) <= (double)audio.getFrameTimeLength() / 2.0 )
@@ -1414,62 +1412,9 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 							if (WriteEnabled)
 							{
-								if (FillGapsWithLastFrame)// copy last frame
-								{		
-									if (audio.getLayer() > 0 && DecodeMpgAudio)
-										writeChannels(MpaDecoder.decodeArray(copyframe[0]), MpaDecoder.get2ndArray());
+								writeFrame(audio, FillGapsWithLastFrame ? copyframe[0] : silent_Frame, newframes, ContainsVideoPTS, es_streamtype);
 
-									else if (MpaConversionMode > MpaConversion_None)
-									{
-										newframes = MPAConverter.modifyframe(copyframe[0], MpaConversionMode); 
-
-										writeChannels(newframes); 
-
-										audio.parseRiffData(newframes[0], 1); 
-
-										if (MpaConversionMode >= MpaConversion_Mode4) 
-												audio.parseRiffData(newframes[1], 2);
-									}
-
-									else
-									{
-										writeChannel1(copyframe[0]); 
-
-										audio.parseRiffData(copyframe[0], 1);
-									}
-								}
-								else
-								{
-									//if (padding_counter==padding) padding_counter=0;	//reset padd count
-									//else if (samplerate==0) padding_counter++;		//count padding
-
-									if (audio.getLayer() > 0 && DecodeMpgAudio)
-										writeChannels(MpaDecoder.decodeArray(silent_Frame[(padding_counter > 0) ? 0 : 1]), MpaDecoder.get2ndArray());
-
-									else if (MpaConversionMode > MpaConversion_None)
-									{
-										newframes = MPAConverter.modifyframe(silent_Frame[(padding_counter > 0) ? 0 : 1], MpaConversionMode);
-
-										writeChannels(newframes);
-
-										audio.parseRiffData(newframes[0], 1); 
-
-										if (MpaConversionMode >= MpaConversion_Mode4) 
-											audio.parseRiffData(newframes[1], 2);
-									}
-
-									else
-									{ 
-										writeChannel1(silent_Frame[(padding_counter > 0) ? 0 : 1]);
-
-										audio.parseRiffData(silent_Frame[(padding_counter > 0) ? 0 : 1], 1);
-									}
-								}
-
-								FrameExportInfo.countWrittenFrames(1);
 								FrameExportInfo.countPreInsertedFrames(1);
-
-								TimeCounter += audio.getFrameTimeLength();
 								ins[1]++;
 							}
 
@@ -1538,8 +1483,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 					/**
 					 * remove CRC 
 					 */
-					if (ClearCRC) 
-						audio.removeCRC(frame);
+					audio.removeCRC(frame, ClearCRC);
 
 					/**
 					 * copy frame header 
@@ -1604,17 +1548,16 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 					if (insertSilenceLoop)
 					{
-						silent_Frame[0] = new byte[audio.getSizeBase()];	//silence without padd, std
-						silent_Frame[1] = new byte[audio.getSize()];		//silence with padd for 22.05, 44.1
+						if (silent_Frame.length != audio.getSizeBase())
+							silent_Frame = new byte[audio.getSizeBase()];	//silence without padd, std
 
-						for (int a = 0; a < 2; a++)
-						{
-							System.arraycopy(header_copy, 0, silent_Frame[a], 0, 4);	//copy last header data
-							silent_Frame[a][1] |= 1;				//mark noCRC
-							silent_Frame[a][2] |= (a<<1);				//set padding bit
-						}
+						else
+							Arrays.fill(silent_Frame, (byte) 0);
 
-						int padding_counter = 1;						//count padding
+						System.arraycopy(header_copy, 0, silent_Frame, 0, 4);	//copy last header data
+						silent_Frame[1] |= 1;				//mark noCRC
+						silent_Frame[2] &= ~2;				//remove padding bit
+
 						long[] ins = { (long)TimeCounter, 0 };
 		
 						// solange nächster ptsval minus nächster framebeginn  ist größer der halben framezeit, füge stille ein
@@ -1687,60 +1630,9 @@ public class StreamProcessAudio extends StreamProcessBase {
   
 							if (!ContainsVideoPTS || (ContainsVideoPTS && WriteEnabled))
 							{
-								if (FillGapsWithLastFrame)
-								{
-									if (audio.getLayer() > 0 && DecodeMpgAudio)
-										writeChannels(MpaDecoder.decodeArray(copyframe[0]), MpaDecoder.get2ndArray());
+								writeFrame(audio, FillGapsWithLastFrame ? copyframe[0] : silent_Frame, newframes, ContainsVideoPTS, es_streamtype);
 
-									else if (MpaConversionMode != MpaConversion_None)
-									{
-										newframes = MPAConverter.modifyframe(copyframe[0], MpaConversionMode); 
-
-										writeChannels(newframes);
-
-										audio.parseRiffData(newframes[0], 1); 
-
-										if (MpaConversionMode >= MpaConversion_Mode4) 
-											audio.parseRiffData(newframes[1], 2);
-									}
-									else
-									{
-										writeChannel1(copyframe[0]);
-
-										audio.parseRiffData(copyframe[0], 1);
-									}
-								}
-								else
-								{
-									//if (padding_counter==padding) padding_counter=0;	//reset padd count
-									//else if (samplerate==0) padding_counter++;		//count padding
-
-									if (audio.getLayer() > 0 && DecodeMpgAudio)
-										writeChannels(MpaDecoder.decodeArray(silent_Frame[(padding_counter > 0) ? 0 : 1]), MpaDecoder.get2ndArray());
-
-									else if (MpaConversionMode != MpaConversion_None)
-									{
-										newframes = MPAConverter.modifyframe(silent_Frame[(padding_counter > 0) ? 0 : 1], MpaConversionMode);
-
-										writeChannels(newframes);
-
-										audio.parseRiffData(newframes[0], 1); 
-
-										if (MpaConversionMode >= MpaConversion_Mode4) 
-											audio.parseRiffData(newframes[1], 2);
-									}
-									else
-									{
-										writeChannel1(silent_Frame[(padding_counter > 0) ? 0 : 1]);
-
-										audio.parseRiffData(silent_Frame[(padding_counter > 0) ? 0 : 1], 1); 
-									}
-								}
-
-								FrameExportInfo.countWrittenFrames(1);
 								FrameExportInfo.countInsertedFrames(1);
-
-								TimeCounter += audio.getFrameTimeLength();
 								ins[1]++;
 							}
 
@@ -1783,82 +1675,27 @@ public class StreamProcessAudio extends StreamProcessBase {
 					TimePosition += audio.getFrameTimeLength();
 					addf[0] = (long) TimeCounter;
 
-					silent_Frame[0] = new byte[audio.getSizeBase()];	//silence without padd, std
-					silent_Frame[1] = new byte[audio.getSize()];		//silence with padd for 22.05, 44.1
+					if (silent_Frame.length != audio.getSizeBase())
+						silent_Frame = new byte[audio.getSizeBase()];	//silence without padd, std
 
-					for (int a = 0; a < 2; a++)
-					{
-						System.arraycopy(header_copy,0, silent_Frame[a], 0, 4);	//copy last header data
-						silent_Frame[a][1] |= 1;				//mark noCRC
-						silent_Frame[a][2] |= (a * 2);				//set padding bit
-					}
+					else
+						Arrays.fill(silent_Frame, (byte) 0);
 
-					int padding_counter = 1;						//count padding
+					System.arraycopy(header_copy,0, silent_Frame, 0, 4);	//copy last header data
+					silent_Frame[1] |= 1;				//mark noCRC
+					silent_Frame[2] &= ~2;				//remove padding bit
 
 					while (w < vptsval.length)
 					{
 						while ( vtime[w + 1] > TimeCounter && 
 							(double) Math.abs(vtime[w + 1] - TimeCounter) > (double) audio.getFrameTimeLength() / 2.0 )
 						{
-							if (FillGapsWithLastFrame)	//add_copy prev. frame
-							{
-								if (audio.getLayer() > 0 && DecodeMpgAudio) 
-									writeChannels(MpaDecoder.decodeArray(copyframe[0]), MpaDecoder.get2ndArray());
 
-								else if (MpaConversionMode != MpaConversion_None)
-								{		//modify frame
-									newframes = MPAConverter.modifyframe(copyframe[0], MpaConversionMode); 
+							writeFrame(audio, FillGapsWithLastFrame ? copyframe[0] : silent_Frame, newframes, ContainsVideoPTS, es_streamtype);
 
-									writeChannels(newframes);
-
-									audio.parseRiffData(newframes[0], 1); 
-
-									if (MpaConversionMode >= MpaConversion_Mode4) 
-										audio.parseRiffData(newframes[1], 2);
-								}
-
-								else
-								{
-									writeChannel1(copyframe[0]);
-
-									audio.parseRiffData(copyframe[0], 1);
-								}
-							}
-
-							else
-							{	//add silence
-								//if (padding_counter==padding) padding_counter=0;	//reset padd count
-								//else if (samplerate==0) padding_counter++;		//count padding
-
-								if (audio.getLayer() > 0 && DecodeMpgAudio)
-									writeChannels(MpaDecoder.decodeArray(silent_Frame[(padding_counter > 0) ? 0 : 1]), MpaDecoder.get2ndArray());
-
-								else if (MpaConversionMode != MpaConversion_None)
-								{
-									newframes = MPAConverter.modifyframe(silent_Frame[(padding_counter > 0) ? 0 : 1], MpaConversionMode);
-
-									writeChannels(newframes);
-
-									audio.parseRiffData(newframes[0], 1); 
-
-									if (MpaConversionMode >= MpaConversion_Mode4) 
-										audio.parseRiffData(newframes[1], 2);
-								}
-
-								else
-								{
-									writeChannel1(silent_Frame[(padding_counter > 0) ? 0 : 1]);
-
-									audio.parseRiffData(silent_Frame[(padding_counter > 0) ? 0 : 1], 1);
-								}
-							}
-
-							FrameExportInfo.countWrittenFrames(1);
 							FrameExportInfo.countAddedFrames(1);
-
 							TimePosition += audio.getFrameTimeLength();
 							addf[1]++;
-							TimeCounter += audio.getFrameTimeLength();
 
 							Common.getGuiInterface().showExportStatus(Resource.getString("audio.status.add")); 
 
@@ -1912,80 +1749,52 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 			closeOutputStreams();
 
-			String[][] pureaudio = {
+			String[][] es_audio_str = {
 				{ ".ac3",".mp1",".mp2",".mp3",".dts" },
 				{ ".new.ac3",".new.mp1",".new.mp2",".new.mp3",".new.dts" }
 			};
 
-			if (collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_renameAudio))
-			{
-				for (int g = 1; g < 4; g++)
-				{
-					pureaudio[0][g] = ".mpa";
-					pureaudio[1][g] = ".new.mpa";
-				}
-			}
+			if (RenameAudio)
+				setExtension(es_audio_str, ".mpa", ".new.mpa");
 
 			if (DecodeMpgAudio && audio.getLayer() > 1)
 			{
 				if (MpaDecoder.WAVE)
-				{
-					for (int g = 1; g < 4; g++)
-					{
-						pureaudio[0][g] += ".wav";
-						pureaudio[1][g] += ".wav";
-					}
-				}
+					setExtension(es_audio_str, ".wav");
 
 				else if (AddAiffHeader)
-				{
-					for (int g = 1; g < 4; g++)
-					{
-						pureaudio[0][g] += ".aif";
-						pureaudio[1][g] += ".aif";
-					}
-				}
+					setExtension(es_audio_str, ".aif");
 
 				else  
-				{
-					for (int g = 1; g < 4; g++)
-					{
-						pureaudio[0][g] += ".pcm";
-						pureaudio[1][g] += ".pcm";
-					}
-				}
+					setExtension(es_audio_str, ".pcm");
 			}
 
 			else if (AddWaveHeaderBWF || AddWaveHeaderACM) 
 			{
-				for (int g = 1; g < 4; g++)
-				{
-					pureaudio[0][g] += ".wav";
-					pureaudio[1][g] += ".wav";
-				}
+				setExtension(es_audio_str, ".wav");
 			}
 
 			if (AddWaveHeaderAC3)
 			{
-				pureaudio[0][0] += ".wav";
-				pureaudio[1][0] += ".wav";
+				for (int j = 0; j < 2; j++)
+					es_audio_str[j][0] += ".wav";
 			}
 
 			else if (CreateDDWave)
 			{
-				pureaudio[0][0] += ".wav";
-				pureaudio[1][0] += ".wav";
-				pureaudio[0][4] += ".wav";
-				pureaudio[1][4] += ".wav";
+				es_audio_str[0][0] += ".wav";
+				es_audio_str[1][0] += ".wav";
+				es_audio_str[0][4] += ".wav";
+				es_audio_str[1][4] += ".wav";
 			}
 
-			File ac3name = new File (fparent + pureaudio[isElementaryStream][0]);
-			File mp1name = new File (fparent + pureaudio[isElementaryStream][1]);
-			File mp2name = new File (fparent + pureaudio[isElementaryStream][2]);
-			File mp3name = new File (fparent + pureaudio[isElementaryStream][3]);
-			File mp2nameL = new File (fparent + "[L]" + pureaudio[0][2]);
-			File mp2nameR = new File (fparent + "[R]" + pureaudio[0][2]);
-			File dtsname = new File (fparent + pureaudio[isElementaryStream][4]);
+			File ac3name = new File (fparent + es_audio_str[isElementaryStream][0]);
+			File mp1name = new File (fparent + es_audio_str[isElementaryStream][1]);
+			File mp2name = new File (fparent + es_audio_str[isElementaryStream][2]);
+			File mp3name = new File (fparent + es_audio_str[isElementaryStream][3]);
+			File mp2nameL = new File (fparent + "[L]" + es_audio_str[0][2]);
+			File mp2nameR = new File (fparent + "[R]" + es_audio_str[0][2]);
+			File dtsname = new File (fparent + es_audio_str[isElementaryStream][4]);
 			File wavname = new File (fparent + ".new.wav");
 
 			//finish wave header
@@ -1996,8 +1805,6 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 			job_processing.countMediaFilesExportLength(audioout1.length());
 			job_processing.countMediaFilesExportLength(audioout2.length());
-
-			String audio_type[] = { "(ac3)", "(mp3)", "(mp2)", "(mp1)", "(dts)", "(pcm)" };
 
 			if (DecodeMpgAudio)
 				audio_type[1] = audio_type[2] = "(pcm)";
@@ -2016,49 +1823,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 			switch (AudioType)
 			{ 
 			case AC3_AUDIOSTREAM: 
-				if (ac3name.exists())
-					ac3name.delete();
 
-				if (audioout1.length() < FileLength_Min) 
-					audioout1.delete();
-
-				else
-				{ 
-					Common.renameTo(audioout1, ac3name);
-
-					Common.setMessage(Resource.getString("msg.newfile", "") + " '" + ac3name + "'"); 
-					job_processing.addSummaryInfo(comparedata + "\t'" + ac3name + "'");
-				}
-
-				if (audioout2.length() < FileLength_Min) 
-					audioout2.delete();
-
-				OutputStream_Ch1.renameIddTo(ac3name);
-				OutputStream_Ch2.deleteIdd();
-
+				finishOutputFile(job_processing, ac3name, audioout1, audioout2, comparedata);
 				break;
 
 			case MP3_AUDIOSTREAM:
-				if ( mp3name.exists() ) 
-					mp3name.delete();
 
-				if (audioout1.length() < FileLength_Min) 
-					audioout1.delete();
-
-				else
-				{ 
-					Common.renameTo(audioout1, mp3name); 
-
-					Common.setMessage(Resource.getString("msg.newfile", "") + " '" + mp3name + "'"); 
-					job_processing.addSummaryInfo(comparedata + "\t'" + mp3name + "'");
-				}
-
-				if (audioout2.length() < FileLength_Min) 
-					audioout2.delete();
-
-				OutputStream_Ch1.renameIddTo(mp3name);
-				OutputStream_Ch2.deleteIdd();
-
+				finishOutputFile(job_processing, mp3name, audioout1, audioout2, comparedata);
 				break;
 
 			case MP2_AUDIOSTREAM:
@@ -2097,97 +1868,23 @@ public class StreamProcessAudio extends StreamProcessBase {
 				}
 
 				else
-				{
-					if ( mp2name.exists() ) 
-						mp2name.delete();
-
-					if (audioout1.length() < FileLength_Min) 
-						audioout1.delete();
-
-					else
-					{ 
-						Common.renameTo(audioout1, mp2name); 
-
-						Common.setMessage(Resource.getString("msg.newfile", "") + " '" + mp2name + "'"); 
-						job_processing.addSummaryInfo(comparedata + "\t'" + mp2name + "'"); 
-					}
-
-					if (audioout2.length() < FileLength_Min) 
-						audioout2.delete();
-
-					OutputStream_Ch1.renameIddTo(mp2name);
-					OutputStream_Ch2.deleteIdd();
-				}
+					finishOutputFile(job_processing, mp2name, audioout1, audioout2, comparedata);
 
 				break;
 
 			case MP1_AUDIOSTREAM: 
-				if ( mp1name.exists() ) 
-					mp1name.delete();
 
-				if (audioout1.length() < FileLength_Min) 
-					audioout1.delete();
-
-				else
-				{ 
-					Common.renameTo(audioout1, mp1name); 
-
-					Common.setMessage(Resource.getString("msg.newfile", "") + " '" + mp1name + "'"); 
-					job_processing.addSummaryInfo(comparedata + "\t'" + mp1name + "'"); 
-				}
-
-				if (audioout2.length() < FileLength_Min) 
-					audioout2.delete();
-
-				OutputStream_Ch1.renameIddTo(mp1name);
-				OutputStream_Ch2.deleteIdd();
-
+				finishOutputFile(job_processing, mp1name, audioout1, audioout2, comparedata);
 				break;
 
 			case DTS_AUDIOSTREAM: 
-				if (dtsname.exists())
-					dtsname.delete();
 
-				if (audioout1.length() < FileLength_Min) 
-					audioout1.delete();
-
-				else
-				{ 
-					Common.renameTo(audioout1, dtsname); 
-
-					Common.setMessage(Resource.getString("msg.newfile", "") + " '" + dtsname + "'"); 
-					job_processing.addSummaryInfo(comparedata + "\t'" + dtsname + "'");
-				}
-
-				if (audioout2.length() < FileLength_Min) 
-					audioout2.delete();
-
-				OutputStream_Ch1.renameIddTo(dtsname);
-				OutputStream_Ch2.deleteIdd();
-
+				finishOutputFile(job_processing, dtsname, audioout1, audioout2, comparedata);
 				break;
 
 			case WAV_AUDIOSTREAM: 
-				if (wavname.exists())
-					wavname.delete();
 
-				if (audioout1.length() < FileLength_Min) 
-					audioout1.delete();
-
-				else
-				{ 
-					Common.renameTo(audioout1, wavname); 
-
-					Common.setMessage(Resource.getString("msg.newfile", "") + " '" + wavname + "'"); 
-					job_processing.addSummaryInfo(comparedata + "\t'" + wavname + "'");
-				}
-
-				if (audioout2.length() < FileLength_Min) 
-					audioout2.delete();
-
-				OutputStream_Ch1.renameIddTo(wavname);
-				OutputStream_Ch2.deleteIdd();
-
+				finishOutputFile(job_processing, wavname, audioout1, audioout2, comparedata);
 				break;
 
 			case NO_AUDIOSTREAM: 
@@ -2211,6 +1908,27 @@ public class StreamProcessAudio extends StreamProcessBase {
 		return false;
 	}
 
+	/**
+	 * 
+	 */
+	private void setExtension(String[][] str, String new_str)
+	{
+		for (int j = 0; j < 2; j++)
+			for (int i = 1; i < 4; i++)
+				str[j][i] += new_str;
+	}
+
+	/**
+	 * 
+	 */
+	private void setExtension(String[][] str, String new_str_1, String new_str_2)
+	{
+		for (int i = 1; i < 4; i++)
+		{
+			str[0][i] += new_str_1;
+			str[1][i] += new_str_2;
+		}
+	}
 
 	/**
 	 * message source format change
@@ -2297,10 +2015,6 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 		switch (es_streamtype)
 		{
-		case CommonParsing.DTS_AUDIO:
-			writeChannel1(frame);
-			break;
-
 		case CommonParsing.AC3_AUDIO:
 			if (AddWaveHeaderAC3) 
 				audio.parseRiffData(frame, 1); 
@@ -2309,7 +2023,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 			break;
 
 		case CommonParsing.MPEG_AUDIO:
-			if (audio.getLayer() > 0 && DecodeMpgAudio) 
+			if (DecodeMpgAudio && audio.getLayer() > 0) 
 			{
 				writeChannel1(MpaDecoder.decodeArray(frame));
 
@@ -2319,16 +2033,12 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 			else if (MpaConversionMode != MpaConversion_None)
 			{
-				newframes = MPAConverter.modifyframe(frame, MpaConversionMode);
+				newframes = audio.convertFrame(frame, MpaConversionMode);
+
 				writeChannel1(newframes[0]);
 
-				if (MpaConversionMode >= MpaConversion_Mode4) 
+				if (MpaConversionMode >= MpaConversion_Mode4)
 					writeChannel2(newframes[1]);
-
-				audio.parseRiffData(newframes[0], 1); 
-
-				if (MpaConversionMode >= MpaConversion_Mode4) 
-					audio.parseRiffData(newframes[1], 2);
 			}
 
 			else
@@ -2338,6 +2048,10 @@ public class StreamProcessAudio extends StreamProcessBase {
 				audio.parseRiffData(frame, 1); 
 			}
 
+			break;
+
+		case CommonParsing.DTS_AUDIO:
+			writeChannel1(frame);
 			break;
 		}
 
@@ -2490,6 +2204,9 @@ public class StreamProcessAudio extends StreamProcessBase {
 		try {
 			value = InputStream.read(array, offset, length);
 
+			if (value < length)
+				Arrays.fill(array, offset + value, length - value, (byte) 0);
+
 		} catch (Exception e) {
 			Common.setExceptionMessage(e);
 		}
@@ -2618,15 +2335,6 @@ public class StreamProcessAudio extends StreamProcessBase {
 	{
 		switch (es_streamtype)
 		{
-		case CommonParsing.MPEG_AUDIO:
-
-			writeChannel1(audio.getExtraWaveHeader(1, true));
-
-			if (MpaConversionMode >= MpaConversion_Mode4) 
-				writeChannel2(audio.getExtraWaveHeader(2, true));
-
-			return;
-
 		case CommonParsing.AC3_AUDIO:
 			if (AddWaveHeaderAC3)
 			{
@@ -2639,9 +2347,20 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 			return;
 
+		case CommonParsing.MPEG_AUDIO:
+
+			writeChannel1(audio.getExtraWaveHeader(1, true));
+
+			if (MpaConversionMode >= MpaConversion_Mode4) 
+				writeChannel2(audio.getExtraWaveHeader(2, true));
+
+			return;
+
 		case CommonParsing.DTS_AUDIO:
 			if (CreateDDWave)
 				writeChannel1(audio.getRiffHeader());
+
+			return;
 		}
 	}
 
@@ -2770,6 +2489,38 @@ public class StreamProcessAudio extends StreamProcessBase {
 	}
 
 	/**
+	 *  
+	 */
+	private void finishOutputFile(JobProcessing job_processing, File new_file_out, File tmp_file_out_1, File tmp_file_out_2, String info)
+	{
+		try {
+			if (new_file_out.exists())
+				new_file_out.delete();
+
+			if (tmp_file_out_1.length() < FileLength_Min) 
+				tmp_file_out_1.delete();
+
+			else
+			{ 
+				Common.renameTo(tmp_file_out_1, new_file_out);
+
+				Common.setMessage(Resource.getString("msg.newfile", "") + " '" + new_file_out.toString() + "'"); 
+				job_processing.addSummaryInfo(info + "\t'" + new_file_out.toString() + "'");
+			}
+
+			if (tmp_file_out_2.length() < FileLength_Min) 
+				tmp_file_out_2.delete();
+
+			OutputStream_Ch1.renameIddTo(new_file_out);
+			OutputStream_Ch2.deleteIdd();
+
+		} catch (Exception e) {
+
+			Common.setExceptionMessage(e);
+		}
+	}
+
+	/**
 	 * messages
 	 */
 	private void messageSettings()
@@ -2813,15 +2564,17 @@ public class StreamProcessAudio extends StreamProcessBase {
 	 */
 	private void getSettings(JobCollection collection)
 	{
-		Debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
+		Debug = Common.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
+		Message_2 = Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
+		Message_7 = Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg7);
+
 		CreateChapters = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createChapters);
+		RenameAudio = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_renameAudio);
 		AddWaveHeaderACM = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addRiffToMpgAudioL3);
 		AddWaveHeaderBWF = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addRiffToMpgAudio);
 		AddWaveHeaderAC3 = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addRiffToAc3);
 		ReplaceAc3withSilence = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_replaceAc3withSilence);
 		CreateM2sIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createM2sIndex);
-		Message_2 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg2);
-		Message_7 = collection.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg7);
 		PitchAudio = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_pitchAudio);
 		AllowSpaces = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_allowSpaces);
 		ValidateCRC = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_validateCRC);
@@ -2843,6 +2596,8 @@ public class StreamProcessAudio extends StreamProcessBase {
 		FadeInOutMillis = collection.getSettings().getIntProperty(Keys.KEY_AudioPanel_fadeInOutMillis);
 		ResampleAudioMode = collection.getSettings().getIntProperty(Keys.KEY_AudioPanel_resampleAudioMode);
 		PitchValue = collection.getSettings().getIntProperty(Keys.KEY_AudioPanel_PitchValue);
+
+		messageSettings();
 	}
 
 	/**
@@ -3042,7 +2797,6 @@ public class StreamProcessAudio extends StreamProcessBase {
 			break;
 		}
 	}
-
 
 	/**
 	 * wri + pre + skip + ins + add

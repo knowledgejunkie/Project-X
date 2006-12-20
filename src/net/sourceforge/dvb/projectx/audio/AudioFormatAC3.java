@@ -75,7 +75,7 @@ public class AudioFormatAC3 extends AudioFormat {
 	 */
 	public int parseHeader(byte[] frame, int pos)
 	{
-		if ( (0xFF & frame[pos]) != 0x0B || (0xFF & frame[pos + 1]) != 0x77 ) 
+		if ( !hasAC3Syncword(frame, pos)) 
 			return -1;
 	
 		ID = 0;
@@ -84,15 +84,15 @@ public class AudioFormatAC3 extends AudioFormat {
 
 		Protection_bit = 0 ^ 1;
 
-		if ((Sampling_frequency = ac3_frequency_index[3 & frame[pos + 4]>>>6]) < 1) 
+		if ((Sampling_frequency = getAC3SamplingFrequency(frame, pos)) < 1) 
 			return -4;
 
-		if ((Bitrate = ac3_bitrate_index[0x1F & frame[pos + 4]>>>1]) < 1) 
+		if ((Bitrate = getAC3Bitrate(frame, pos)) < 1) 
 			return -3;
 	
-		Layer = 7 & frame[pos + 5];       //bsmod
+		Layer = getAC3Bsmod(frame, pos);       //bsmod
 		Padding_bit = 1 & frame[pos + 4];
-		Mode = 7 & frame[pos + 6]>>>5;
+		Mode = getAC3Mode(frame, pos);
 		Mode_extension = 0;
 	
 		int mode = (0xFF & frame[pos + 6])<<8 | (0xFF & frame[pos + 7]);
@@ -137,7 +137,7 @@ public class AudioFormatAC3 extends AudioFormat {
 	public int parseNextHeader(byte[] frame, int pos)
 	{
 	
-		if ( (0xFF & frame[pos]) != 0xB || (0xFF & frame[pos+1]) != 0x77 ) 
+		if ( !hasAC3Syncword(frame, pos)) 
 			return -1;
 	
 		nID = 0;
@@ -146,16 +146,16 @@ public class AudioFormatAC3 extends AudioFormat {
 
 		nProtection_bit = 0 ^ 1;
 	
-		if ( (nSampling_frequency = ac3_frequency_index[3 & frame[pos+4]>>>6]) < 1) 
+		if ( (nSampling_frequency = getAC3SamplingFrequency(frame, pos)) < 1) 
 			return -4;
 	
-		if ( (nBitrate = ac3_bitrate_index[0x1F & frame[pos+4]>>>1]) < 1) 
+		if ( (nBitrate = getAC3Bitrate(frame, pos)) < 1) 
 			return -3;
 	
-		nLayer = 7 & frame[pos+5];       //bsmod
+		nLayer = getAC3Bsmod(frame, pos);       //bsmod
 		nPadding_bit = 1 & frame[pos+4];
-	
-		nMode = 7 & frame[pos+6]>>>5;
+		nMode = getAC3Mode(frame, pos);
+
 		int mode = (0xFF & frame[pos+6])<<8 | (0xFF & frame[pos+7]);
 		int skip=0;
 	
@@ -191,7 +191,50 @@ public class AudioFormatAC3 extends AudioFormat {
 
 		return 1;
 	}
-	
+
+	/**
+	 * 
+	 */
+	private boolean hasAC3Syncword(byte[] frame, int offs)
+	{
+		if (frame[offs] != 0x0B || frame[offs + 1] != 0x77)
+			return false;
+
+		return true;
+	}
+
+	/**
+	 * 
+	 */
+	private int getAC3SamplingFrequency(byte[] frame, int offs)
+	{
+		return ac3_frequency_index[3 & frame[offs + 4]>>>6]; 
+	}
+
+	/**
+	 * 
+	 */
+	private int getAC3Bitrate(byte[] frame, int offs)
+	{
+		return ac3_bitrate_index[0x1F & frame[offs + 4]>>>1];
+	}
+
+	/**
+	 * 
+	 */
+	private int getAC3Bsmod(byte[] frame, int offs)
+	{
+		return (7 & frame[offs + 5]);
+	}
+
+	/**
+	 * 
+	 */
+	private int getAC3Mode(byte[] frame, int offs)
+	{
+		return (7 & frame[offs + 6]>>>5);
+	}
+
 	/**
 	 * compare current & last ac3 header 
 	 */
@@ -250,18 +293,18 @@ public class AudioFormatAC3 extends AudioFormat {
 	/**
 	 *
 	 */
-	public byte[] editFrame(byte[] frame, int framesize, int mode)
+	public byte[] editFrame(byte[] frame, int mode)
 	{
 		switch (mode)
 		{
-		case 1: //patch only
-			setChannelFlags(frame);
+		case 1: //patch only to 3/2
+			setChannelFlags(frame, 7);
 		//	computeCRC(frame, framesize);
 			break;
 
 		case 2:
-			framesize = setBitrateFlags(frame, framesize);
-			computeCRC(frame, framesize);
+//			framesize = setBitrateFlags(frame, framesize);
+//			computeCRC(frame, framesize);
 
 			break;
 		}
@@ -272,9 +315,9 @@ public class AudioFormatAC3 extends AudioFormat {
 	/**
 	 * 3+2 channels, note the following bits will be dispointed and the frame is corrupted
 	 */
-	private void setChannelFlags(byte[] frame)
+	private void setChannelFlags(byte[] frame, int mode)
 	{
-		frame[6] = (byte)((0xF & frame[6]) | 0xE0);
+		frame[6] = (byte)((0xF & frame[6]) | (mode<<5));
 	}
 
 	/**
