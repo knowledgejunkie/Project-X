@@ -127,7 +127,7 @@ public class AudioFormatMPA extends AudioFormat {
 		if ( (Sampling_frequency = frequency_index[ID][3 & frame[pos + 2]>>>2]) == 0) 
 			return -4;
 	
-		Padding_bit = 1 & frame[pos + 2]>>>1;
+		Padding_bit = 1 & (frame[pos + 2]>>>1);
 		Private_bit = 1 & frame[pos + 2];
 	
 		Mode = 3 & frame[pos + 3]>>>6;
@@ -223,8 +223,8 @@ public class AudioFormatMPA extends AudioFormat {
 		if ( (nSampling_frequency = frequency_index[nID][3&frame[pos+2]>>>2]) == 0) 
 			return -4;
 	
-        nPadding_bit = 1&frame[pos+2]>>>1;
-        nPrivate_bit = 1&frame[pos+2];
+        nPadding_bit = 1 & (frame[pos + 2]>>>1);
+        nPrivate_bit = 1 & frame[pos + 2];
 	
         nMode = 3&frame[pos+3]>>>6;
         nMode_extension = 3&frame[pos+3]>>>4;
@@ -346,12 +346,12 @@ public class AudioFormatMPA extends AudioFormat {
 	 **/
 	public void removeCRC(byte[] frame, boolean remove)
 	{
-		if (Layer < 2)
+		if (Layer < 2 || !remove)
 			return;
 
 		removePrivateBit(frame);
 
-		if (!remove || (frame[1] & 1) == 1) 
+		if ((frame[1] & 1) == 1) 
 			return;
 
 		System.arraycopy(frame, 6, frame, 4, frame.length - 6);

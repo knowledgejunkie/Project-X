@@ -49,6 +49,11 @@ public class StreamProcessBase extends Object {
 	public int ERRORCODE = 0;
 	public int MainBufferSize = 8192000;
 
+	public static double sync_value_1;
+	public static double sync_value_2;
+	public static double sync_value_3;
+	public static double sync_value_4;
+
 	/**
 	 * 
 	 */
@@ -343,19 +348,19 @@ public class StreamProcessBase extends Object {
 
 		if (w < vptsval.length)
 		{
-			double ms1 = (double)(timeline - vptsval[w + 1]);
-			double ms2 = (double)(timecount - vtime[w + 1]);
+			sync_value_1 = (double)(timeline - vptsval[w + 1]);
+			sync_value_2 = (double)(timecount - vtime[w + 1]);
 
 			if (debug) 
-				System.out.println("A " + awrite + "/" + v + "/" + w + "/ =1 " + mpf + "/" + vtime[w + 1] + "/" + timecount + " ~2 " + vptsval[w + 1] + "/" + timeline + " ~3 " + ms1 + "/" + ms2 + "/" + (ms2 - ms1));
+				System.out.println("A " + awrite + "/" + v + "/" + w + "/ =1 " + mpf + "/" + vtime[w + 1] + "/" + timecount + " ~2 " + vptsval[w + 1] + "/" + timeline + " ~3 " + sync_value_1 + "/" + sync_value_2 + "/" + (sync_value_2 - sync_value_1));
 
-			if ( (double)Math.abs(ms2) <= timelength / 2.0 )
+			if ( (double)Math.abs(sync_value_2) <= timelength / 2.0 )
 			{
 				awrite = false;
 				w += 2;
 			}
 
-			else if ( (double)Math.abs(ms1) <= timelength / 2.0 )
+			else if ( (double)Math.abs(sync_value_1) <= timelength / 2.0 )
 			{
 				awrite = false;
 				w += 2;
@@ -368,20 +373,21 @@ public class StreamProcessBase extends Object {
 		if (v < vptsval.length)
 		{
 			boolean show = false;
-			double ms3 = (double)(timeline - vptsval[v]);
-			double ms4 = (double)(timecount - vtime[v]);
+
+			sync_value_3 = (double)(timeline - vptsval[v]);
+			sync_value_4 = (double)(timecount - vtime[v]);
 
 			if (debug) 
-				System.out.println("C " + awrite + "/" + v + "/" + w + "/ =4 " + mpf + "/" + vtime[v] + "/" + timecount + " ~5 " + vptsval[v] + "/" + timeline + " ~6 " + ms3 + "/" + ms4 + "/" + (ms4 - ms3));
+				System.out.println("C " + awrite + "/" + v + "/" + w + "/ =4 " + mpf + "/" + vtime[v] + "/" + timecount + " ~5 " + vptsval[v] + "/" + timeline + " ~6 " + sync_value_3 + "/" + sync_value_4 + "/" + (sync_value_4 - sync_value_3));
 
-			if (!awrite && (double)Math.abs(ms3) <= timelength / 2.0 )
+			if (!awrite && (double)Math.abs(sync_value_3) <= timelength / 2.0 )
 			{
 				awrite = true; 
 				show = true;
 				v += 2;
 			}
 
-			else if (!awrite && (double)Math.abs( (double)Math.abs(ms4) - (double)Math.abs(ms3) ) <= timelength / 2.0 )
+			else if (!awrite && (double)Math.abs( (double)Math.abs(sync_value_4) - (double)Math.abs(sync_value_3) ) <= timelength / 2.0 )
 			{
 				awrite = true; 
 				show = true;
@@ -398,7 +404,7 @@ public class StreamProcessBase extends Object {
 				System.out.println("E " + awrite + "/" + v + "/" + w);
 
 			if (show && awrite) 
-				Common.getGuiInterface().showAVOffset("" + (int)(ms3 / 90) + "/" + (int)(ms4 / 90) + "/" + (int)((ms4 - ms3) / 90));
+				Common.getGuiInterface().showAVOffset("" + (int)(sync_value_3 / 90) + "/" + (int)(sync_value_4 / 90) + "/" + (int)((sync_value_4 - sync_value_3) / 90));
 		}
 
 		vw[0] = v;

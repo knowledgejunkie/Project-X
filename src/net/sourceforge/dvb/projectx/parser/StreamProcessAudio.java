@@ -286,11 +286,6 @@ public class StreamProcessAudio extends StreamProcessBase {
 		long[] vptsval = {0};
 		long[] vtime = {0};
 
-		double sync_value_1;
-		double sync_value_2;
-		double sync_value_3;
-		double sync_value_4;
-
 		String audio_type[] = { "(ac3)", "(mp3)", "(mp2)", "(mp1)", "(dts)", "(pcm)" };
 
 		FramePosition = 0;
@@ -794,7 +789,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 						vw[0] = v;
 						vw[1] = w;
 
-						WriteEnabled = SyncCheck(vw, TimeCounter, audio.getFrameTimeLength(), 4, FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug);
+						WriteEnabled = SyncCheck(vw, TimeCounter, audio.getFrameTimeLength(), TimePosition, FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug);
 
 						v = vw[0];
 						w = vw[1];
@@ -2205,7 +2200,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 			value = InputStream.read(array, offset, length);
 
 			if (value < length)
-				Arrays.fill(array, offset + value, length - value, (byte) 0);
+				Arrays.fill(array, offset + value, offset + length, (byte) 0);
 
 		} catch (Exception e) {
 			Common.setExceptionMessage(e);
