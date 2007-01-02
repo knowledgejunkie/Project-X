@@ -1,7 +1,7 @@
 /*
  * @(#)MainProcess
  *
- * Copyright (c) 2001-2006 by dvb.matt, All rights reserved.
+ * Copyright (c) 2001-2007 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -501,6 +501,9 @@ public class MainProcess extends Thread {
 	private void messageSettings(JobCollection collection)
 	{
 		Common.setMessage(" ");
+
+		//buffer
+		Common.setMessage("-> " + Resource.getString(Keys.KEY_MainBuffer[0]) + " " + MainBufferSize + " bytes");
 
 		//biglog
 		messageSetting(collection, Keys.KEY_DebugLog);

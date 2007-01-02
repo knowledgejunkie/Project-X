@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParser
  *
- * Copyright (c) 2005-2006 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2007 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -66,7 +66,6 @@ import net.sourceforge.dvb.projectx.parser.StreamProcessBase;
 import net.sourceforge.dvb.projectx.subtitle.Subpicture;
 import net.sourceforge.dvb.projectx.subtitle.BMP;
 import net.sourceforge.dvb.projectx.subtitle.Bitmap;
-import net.sourceforge.dvb.projectx.subtitle.Teletext;
 import net.sourceforge.dvb.projectx.subtitle.Sup2VobSub;
 
 import net.sourceforge.dvb.projectx.thirdparty.Ifo;
@@ -516,7 +515,7 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 							{
 								if (pics == 0)
 								{
-									String[] SONhead = Teletext.getSONHead(new File(subfile).getParent(), (long)CommonParsing.getVideoFramerate());
+									String[] SONhead = Common.getTeletextClass().getSONHead(new File(subfile).getParent(), (long)CommonParsing.getVideoFramerate());
 
 									for (int a=0; a < SONhead.length; a++) 
 										print_out.println(SONhead[a]);

@@ -407,6 +407,11 @@ public class AudioFormatMPA extends AudioFormat {
 		for (int i = offs; i < end; i++)
 			crc = (crc_table[(0xFF & data[i]) ^ (crc >> 8)] ^ (crc << 8)) & 0xFFFF;
 
+		int remaining_bits = len & 7;
+
+		if (remaining_bits > 0)
+			crc = (crc_table[((0xFF >> (8 - remaining_bits)) & (data[end] >> (8 - remaining_bits))) ^ (crc >> (16 - remaining_bits))] ^ (crc << remaining_bits)) & 0xFFFF;
+
 		return crc;
 	}
 
@@ -481,51 +486,12 @@ public class AudioFormatMPA extends AudioFormat {
 						nr_bits += 2;
 		}
 
-		int[] g = { 1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1 }; // x^16 + x^15 + x^2 + 1
+		int crc = 0xFFFF;
 
-		int[] shift_reg = new int[16];
-		int crc = 0;
+		// look up table  is faster
+		crc = determineCRC(data, offset, nr_bits, crc);
 
-		// byte aligned is faster
-		crc = determineCRC(data, offset, nr_bits, 0xFFFF);
-
-		// rest of bits 
-		if ((nr_bits & 7) > 0)
-		{
-			for (int i = 0; i < 16; i++)
-				shift_reg[i] = 1 & (crc >> i);
-
-			offset += (nr_bits>>>3);
-
-			for (int bit_count = nr_bits & ~7, bit_in_byte = 0, data_bit, j = data.length; bit_count < nr_bits; bit_count++)
-			{
-				if (offset >= j)
-					break;
-
-				data_bit = (data[offset] & 0x80 >>> (bit_in_byte++)) != 0 ? 1 : 0;
-
-				if ((bit_in_byte &= 7) == 0)
-					offset++;
-
-				data_bit ^= shift_reg[15];
-
-				for (int i = 15; i > 0; i--)
-					shift_reg[i] = g[i] == 1 ? (shift_reg[i - 1] ^ data_bit) : shift_reg[i - 1];
-
-				shift_reg[0] = data_bit;
-			}
-
-			for (int i = 0; i < 16; i++)
-				crc = ((crc << 1) | (shift_reg[15 - i]));
-
-			crc &= 0xFFFF;
-		}
-
-		if (crc != crc_val)
-			return 1;
-
-		else
-			return 0;
+		return ((crc != crc_val) ? 1 : 0);
 	}
 
 	/**

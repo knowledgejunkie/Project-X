@@ -1,7 +1,7 @@
 /*
  * @(#)Common.java - carries various stuff, the center class
  *
- * Copyright (c) 2004-2006 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2004-2007 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -70,6 +70,7 @@ import net.sourceforge.dvb.projectx.parser.Scan;
 import net.sourceforge.dvb.projectx.parser.MainProcess;
 
 import net.sourceforge.dvb.projectx.subtitle.Subpicture;
+import net.sourceforge.dvb.projectx.subtitle.Teletext;
 
 import	net.sourceforge.dvb.projectx.video.MpvDecoder;
 
@@ -86,8 +87,8 @@ import net.sourceforge.dvb.projectx.net.WebInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90.4.00.b11";
-	private static String version_date = "22.12.2006";
+	private static String version_name = "ProjectX 0.90.4.00.b12";
+	private static String version_date = "02.01.2007";
 
 	private static String line_separator = System.getProperty("line.separator");
 
@@ -146,6 +147,8 @@ public final class Common extends Object {
 	private static GuiInterface guiInterface = null;
 
 	private static Subpicture subpicture = null;
+
+	private static Teletext teletext = null;
 
 	private static Scan scan = null;
 
@@ -239,6 +242,7 @@ public final class Common extends Object {
 
 		scan = new Scan();
 		subpicture = new Subpicture();
+		teletext = new Teletext();
 		mpvdecoder = new MpvDecoder();
 		subpicture_colormodels = loadColorModels();
 	}
@@ -315,6 +319,14 @@ public final class Common extends Object {
 	public static Subpicture getSubpictureClass()
 	{
 		return subpicture;
+	}
+
+	/**
+	 *
+	 */
+	public static Teletext getTeletextClass()
+	{
+		return teletext;
 	}
 
 	/**

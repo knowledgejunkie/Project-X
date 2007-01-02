@@ -1676,7 +1676,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 					else
 						Arrays.fill(silent_Frame, (byte) 0);
 
-					System.arraycopy(header_copy,0, silent_Frame, 0, 4);	//copy last header data
+					System.arraycopy(header_copy, 0, silent_Frame, 0, 4);	//copy last header data
 					silent_Frame[1] |= 1;				//mark noCRC
 					silent_Frame[2] &= ~2;				//remove padding bit
 
@@ -1783,14 +1783,6 @@ public class StreamProcessAudio extends StreamProcessBase {
 				es_audio_str[1][4] += ".wav";
 			}
 
-			File ac3name = new File (fparent + es_audio_str[isElementaryStream][0]);
-			File mp1name = new File (fparent + es_audio_str[isElementaryStream][1]);
-			File mp2name = new File (fparent + es_audio_str[isElementaryStream][2]);
-			File mp3name = new File (fparent + es_audio_str[isElementaryStream][3]);
-			File mp2nameL = new File (fparent + "[L]" + es_audio_str[0][2]);
-			File mp2nameR = new File (fparent + "[R]" + es_audio_str[0][2]);
-			File dtsname = new File (fparent + es_audio_str[isElementaryStream][4]);
-			File wavname = new File (fparent + ".new.wav");
 
 			//finish wave header
 			fillWaveHeader(audio, es_streamtype);
@@ -1819,77 +1811,42 @@ public class StreamProcessAudio extends StreamProcessBase {
 			{ 
 			case AC3_AUDIOSTREAM: 
 
-				finishOutputFile(job_processing, ac3name, audioout1, audioout2, comparedata);
+				finishOutputFiles(job_processing, fparent, es_audio_str[isElementaryStream][0], audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
 				break;
 
 			case MP3_AUDIOSTREAM:
 
-				finishOutputFile(job_processing, mp3name, audioout1, audioout2, comparedata);
+				finishOutputFiles(job_processing, fparent, es_audio_str[isElementaryStream][3], audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
 				break;
 
 			case MP2_AUDIOSTREAM:
 				if (MpaConversionMode >= MpaConversion_Mode4)
-				{
-					if ( mp2nameL.exists() ) 
-						mp2nameL.delete();
-
-					if ( mp2nameR.exists() ) 
-						mp2nameR.delete();
-
-					if (audioout2.length() < FileLength_Min) 
-						audioout2.delete();
-
-					else
-					{ 
-						Common.renameTo(audioout2, mp2nameR); 
-
-						Common.setMessage(Resource.getString("msg.newfile", Resource.getString("audio.msg.newfile.right")) + " '" + mp2nameR + "'"); 
-						job_processing.addSummaryInfo(comparedata + "\t'" + mp2nameR + "'"); 
-					}
-
-					if (audioout1.length() < FileLength_Min) 
-						audioout1.delete();
-
-					else
-					{
-						Common.renameTo(audioout1, mp2nameL); 
-
-						Common.setMessage(Resource.getString("msg.newfile", Resource.getString("audio.msg.newfile.left")) + " '" + mp2nameL + "'"); 
-						job_processing.addSummaryInfo(comparedata + "\t'" + mp2nameL + "'"); 
-					}
-
-					OutputStream_Ch1.renameIddTo(mp2nameL);
-					OutputStream_Ch2.renameIddTo(mp2nameR);
-				}
+					finishOutputFiles(job_processing, fparent, "[L]" + es_audio_str[0][2], "[R]" + es_audio_str[0][2], audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
 
 				else
-					finishOutputFile(job_processing, mp2name, audioout1, audioout2, comparedata);
+					finishOutputFiles(job_processing, fparent, es_audio_str[isElementaryStream][2], audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
 
 				break;
 
 			case MP1_AUDIOSTREAM: 
 
-				finishOutputFile(job_processing, mp1name, audioout1, audioout2, comparedata);
+				finishOutputFiles(job_processing, fparent, es_audio_str[isElementaryStream][1], audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
 				break;
 
 			case DTS_AUDIOSTREAM: 
 
-				finishOutputFile(job_processing, dtsname, audioout1, audioout2, comparedata);
+				finishOutputFiles(job_processing, fparent, es_audio_str[isElementaryStream][4], audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
 				break;
 
 			case WAV_AUDIOSTREAM: 
 
-				finishOutputFile(job_processing, wavname, audioout1, audioout2, comparedata);
+				finishOutputFiles(job_processing, fparent, ".new.wav", audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
 				break;
 
 			case NO_AUDIOSTREAM: 
 				Common.setMessage(Resource.getString("audio.msg.noaudio")); 
 
-				audioout1.delete();
-				audioout2.delete();
-				OutputStream_Ch1.deleteIdd();
-				OutputStream_Ch2.deleteIdd();
-
+				finishOutputFiles(job_processing, null, null, audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
 				break;
 			}
 
@@ -2486,34 +2443,72 @@ public class StreamProcessAudio extends StreamProcessBase {
 	/**
 	 *  
 	 */
-	private void finishOutputFile(JobProcessing job_processing, File new_file_out, File tmp_file_out_1, File tmp_file_out_2, String info)
+	private void finishOutputFiles(JobProcessing job_processing, String new_file_out_parent, String new_file_out_child, File tmp_file_out_1, File tmp_file_out_2, String info, IDDBufferedOutputStream output_stream_1, IDDBufferedOutputStream output_stream_2)
+	{
+		finishOutputFile(job_processing, null, null, tmp_file_out_2, info, output_stream_2);
+
+		finishOutputFile(job_processing, new_file_out_parent, new_file_out_child, tmp_file_out_1, info, output_stream_1);
+	}
+
+	/**
+	 *  
+	 */
+	private void finishOutputFiles(JobProcessing job_processing, String new_file_out_parent, String new_file_out_child_1, String new_file_out_child_2, File tmp_file_out_1, File tmp_file_out_2, String info, IDDBufferedOutputStream output_stream_1, IDDBufferedOutputStream output_stream_2)
+	{
+		finishOutputFile(job_processing, new_file_out_parent, new_file_out_child_2, tmp_file_out_2, info, output_stream_2);
+
+		finishOutputFile(job_processing, new_file_out_parent, new_file_out_child_1, tmp_file_out_1, info, output_stream_1);
+	}
+
+	/**
+	 *  
+	 */
+	private void finishOutputFile(JobProcessing job_processing, String new_file_out_parent, String new_file_out_child, File tmp_file_out, String info, IDDBufferedOutputStream output_stream)
 	{
 		try {
+			if (new_file_out_parent == null)
+			{
+				tmp_file_out.delete();
+
+				output_stream.deleteIdd();
+
+				return;
+			}
+
+			if (new_file_out_child == null)
+			{
+				if (tmp_file_out.length() < FileLength_Min) 
+					tmp_file_out.delete();
+
+				output_stream.deleteIdd();
+
+				return;
+			}
+
+			File new_file_out = new File(new_file_out_parent + new_file_out_child);
+
 			if (new_file_out.exists())
 				new_file_out.delete();
 
-			if (tmp_file_out_1.length() < FileLength_Min) 
-				tmp_file_out_1.delete();
+			if (tmp_file_out.length() < FileLength_Min) 
+				tmp_file_out.delete();
 
 			else
 			{ 
-				Common.renameTo(tmp_file_out_1, new_file_out);
+				Common.renameTo(tmp_file_out, new_file_out);
 
 				Common.setMessage(Resource.getString("msg.newfile", "") + " '" + new_file_out.toString() + "'"); 
 				job_processing.addSummaryInfo(info + "\t'" + new_file_out.toString() + "'");
 			}
 
-			if (tmp_file_out_2.length() < FileLength_Min) 
-				tmp_file_out_2.delete();
-
-			OutputStream_Ch1.renameIddTo(new_file_out);
-			OutputStream_Ch2.deleteIdd();
+			output_stream.renameIddTo(new_file_out);
 
 		} catch (Exception e) {
 
 			Common.setExceptionMessage(e);
 		}
 	}
+
 
 	/**
 	 * messages

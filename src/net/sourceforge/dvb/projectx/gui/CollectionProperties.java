@@ -123,6 +123,9 @@ public class CollectionProperties extends JFrame {
 	 */
 	public void open(JobCollection collection, int value)
 	{ 
+		if (value < 0)
+			return;
+
 		this.collection = collection;
 		collection_number = value;
 
@@ -1410,6 +1413,7 @@ public class CollectionProperties extends JFrame {
 			Keys.KEY_SubtitlePanel_decodeHiddenRows,
 			Keys.KEY_SubtitlePanel_rebuildPTS,
 			Keys.KEY_SubtitlePanel_keepOriginalTimecode,
+			Keys.KEY_SubtitlePanel_TtxExportBoxedOnly,
 			Keys.KEY_SubtitlePanel_exportTextAsUnicode,
 			Keys.KEY_SubtitlePanel_exportTextAsUTF8,
 			Keys.KEY_SubtitlePanel_useTextOutline,
@@ -1430,12 +1434,8 @@ public class CollectionProperties extends JFrame {
 			box[i].addActionListener(_CheckBoxListener);
 		}
 
-		panel_0.add(box[0]);
-		panel_0.add(box[1]);
-		panel_0.add(box[2]);
-		panel_0.add(box[3]);
-		panel_0.add(box[4]);
-		panel_0.add(box[5]);
+		for (int i = 0; i < 7; i++)
+			panel_0.add(box[i]);
 
 		//toggle action
 		ActionListener al = new ActionListener() {
@@ -1446,25 +1446,25 @@ public class CollectionProperties extends JFrame {
 
 				if (str.equals(Keys.KEY_SubtitlePanel_exportTextAsUnicode[0]) && checkBox.isSelected())
 				{
-					box[5].setSelected(false);
+					box[6].setSelected(false);
 					Common.getSettings().setBooleanProperty(Keys.KEY_SubtitlePanel_exportTextAsUTF8[0], false);
 					return;
 				}
 
 				else if (str.equals(Keys.KEY_SubtitlePanel_exportTextAsUTF8[0]) && checkBox.isSelected())
 				{
-					box[4].setSelected(false);
+					box[5].setSelected(false);
 					Common.getSettings().setBooleanProperty(Keys.KEY_SubtitlePanel_exportTextAsUnicode[0], false);
 					return;
 				}
 			}
 		};
 	
-		box[4].addActionListener(al);
 		box[5].addActionListener(al);
+		box[6].addActionListener(al);
 
 
-		panel_0.add(Box.createRigidArea(new Dimension(1, 10)));
+	//	panel_0.add(Box.createRigidArea(new Dimension(1, 10)));
 
 		JLabel page_decode = new JLabel(Resource.getString("SubtitlePanel.TtxPages"));
 		page_decode.setToolTipText(Resource.getString("SubtitlePanel.TtxPages.Tip"));
@@ -1568,7 +1568,7 @@ public class CollectionProperties extends JFrame {
 
 		panel_1.add(new JLabel(Resource.getString("SubtitlePanel.Title.Teletext")));
 
-		panel_1.add(box[6]);
+		panel_1.add(box[7]);
 
 		JPanel panel_1_2 = new JPanel();
 		panel_1_2.setLayout(new BoxLayout(panel_1_2, BoxLayout.X_AXIS));
@@ -1685,8 +1685,8 @@ public class CollectionProperties extends JFrame {
 		panel_1.add(panel_2_3);
 
 		panel_1.add(Box.createRigidArea(new Dimension(1, 10)));
-		panel_1.add(box[7]);
 		panel_1.add(box[8]);
+		panel_1.add(box[9]);
 
 		teletext.add(panel_1);
 

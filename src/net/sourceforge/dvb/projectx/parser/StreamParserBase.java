@@ -595,7 +595,7 @@ Common.setMessage("tmpfiles " + tempfiles.size());
 	 */
 	public String formatIDString(String str1, int pid, int id, int subid)
 	{
-		String str = "+> " + str1;
+		String str = "++> " + str1;
 
 		str += ": PID 0x" + Common.adaptString(Integer.toHexString(pid).toUpperCase(), 4);
 		str += " / PesID 0x" + Common.adaptString(Integer.toHexString(id).toUpperCase(), 2);

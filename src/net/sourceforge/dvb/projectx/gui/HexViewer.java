@@ -1,7 +1,7 @@
 /*
  * @(#)HEXVIEWER.java - simple hexviewer
  *
- * Copyright (c) 2002-2005 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2002-2006 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -210,7 +210,7 @@ public class HexViewer extends JFrame {
 		from.setMaximumSize(new Dimension(100,25));
 		from.setEditable(true);
 
-		fsize = new JTextField("1000");
+		fsize = new JTextField("100000");
 		fsize.setPreferredSize(new Dimension(100,25));
 		fsize.setMaximumSize(new Dimension(100,25));
 		fsize.setEditable(true);
@@ -442,33 +442,41 @@ public class HexViewer extends JFrame {
 	private void print(byte[] data, long position)
 	{
 		String fill = "0000000000";
-		String text = "";
+		StringBuffer text = new StringBuffer("");
 
-		text += "  Offset   :  0  1  2  3  4  5  6  7- 8  9  A  B  C  D  E  F  :    Ascii        \n";
-		text += "-----------|--------------------------------------------------|-----------------\n";
+		text.append("  Offset   :  0  1  2  3  4  5  6  7- 8  9  A  B  C  D  E  F  :    Ascii        \n");
+		text.append("-----------|--------------------------------------------------|-----------------\n");
+
+		StringBuffer ascii = new StringBuffer("");
+		String stuff;
+		String pos;
+		String val;
 
 		for (int a = 0; a < data.length; a += 16)
 		{
-			String ascii = " : ";
-			String stuff = "   ";
-			String pos = Long.toHexString(position + a).toUpperCase();
-			text += fill.substring(0, 10 - pos.length()) + pos + " : ";
-			int b=0;
+			pos = Long.toHexString(position + a).toUpperCase();
+			text.append(fill.substring(0, 10 - pos.length()) + pos + " : ");
+			int b = 0;
+
+			ascii.setLength(0);
+			ascii.append(" : ");
+
+			stuff = "   ";
 
 			for (; b < 16 && a + b < data.length; b++)
 			{ 
-				String val = Integer.toHexString((0xFF & data[a + b])).toUpperCase();
-				text += fill.substring(0, 2 - val.length()) + val + ((b == 7) ? "-" : " ");
-				ascii += ((0xFF & data[a + b]) > 0x1F && (0xFF & data[a + b]) < 0x7F) ? "" + ((char)data[a + b]) : ".";
+				val = Integer.toHexString((0xFF & data[a + b])).toUpperCase();
+				text.append(fill.substring(0, 2 - val.length()) + val + ((b == 7) ? "-" : " "));
+				ascii.append(((0xFF & data[a + b]) > 0x1F && (0xFF & data[a + b]) < 0x7F) ? "" + ((char)data[a + b]) : ".");
 			}
 
 			for (; b < 16; b++) 
-				text += stuff;
+				text.append(stuff);
 
-			text += ascii + "\n";
+			text.append(ascii.toString() + "\n");
 		}
 
-		HexArea.setText(text);
+		HexArea.setText(text.toString());
 	}
 
 	/**
@@ -498,6 +506,32 @@ public class HexViewer extends JFrame {
 		show();
 	}
 
+/**
+	private void searchString(String search_str, XInputFile xInputFile)
+	{
+		try {
+			//BufferedReader file = new BufferedReader(new InputStreamReader(new FileInputStream(xInputFile)));
+
+			int line = 0;
+
+			while ((str = file.readLine()) != null)
+			{
+				line++;
+
+				if (str.indexOf(search_str) >= 0)
+					break;
+			}
+
+			file.close();
+		}
+
+		catch (IOException e)
+		{ 
+			HexArea.setText(Resource.getString("hexviewer.error") + ": " + xinputFile); 
+		}
+
+	}
+**/
 	/**
 	 *
 	 */

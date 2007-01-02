@@ -1,7 +1,7 @@
 /*
  * @(#)TS.java - constants to create TS packets
  *
- * Copyright (c) 2002-2006 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2002-2007 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -36,10 +36,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-//import net.sourceforge.dvb.projectx.audio.CRC;
 import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.common.Resource;
-import net.sourceforge.dvb.projectx.subtitle.Teletext;
 
 public class TS {
 
@@ -343,7 +341,7 @@ public class TS {
 		byte[] tPTS = pts.getBytes();
 
 		for (int a = 0; a < tPTS.length; a++) 
-			tPTS[a] = Teletext.bytereverse(Teletext.parity(tPTS[a]));
+			tPTS[a] = Common.getTeletextClass().bytereverse(Common.getTeletextClass().parity(tPTS[a]));
 
 		System.arraycopy(tPTS, 0, ttx, 169, tPTS.length);
 		System.arraycopy(data, 9 + offset, ttx, 13, 5);

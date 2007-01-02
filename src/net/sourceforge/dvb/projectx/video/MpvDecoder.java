@@ -65,6 +65,7 @@ import java.util.List;
 
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Common;
+import net.sourceforge.dvb.projectx.common.Keys;
 
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
 
@@ -136,6 +137,14 @@ public class MpvDecoder extends Object {
 	public boolean isAccelerated()
 	{
 		return acceleration;
+	}
+
+	/**
+	 *
+	 */
+	public void setAcceleration(boolean b)
+	{
+		acceleration = b;
 	}
 
 
@@ -2214,7 +2223,7 @@ public void motion_compensation(int MBA[], int macroblock_type[], int motion_typ
 		//form_predictions(bx, by, macroblock_type, motion_type, PMV, motion_vertical_field_select, dmvector);
 
 
-	if (IDCTSseNative.isLibraryLoaded())
+	if (IDCTSseNative.isLibraryLoaded() && isAccelerated())
 	{
 		/* copy or add block data into picture */
 		for (comp=0; comp<block_count; comp++)
@@ -2227,7 +2236,7 @@ public void motion_compensation(int MBA[], int macroblock_type[], int motion_typ
 		}
 	}
 
-	else if (IDCTRefNative.isLibraryLoaded())
+	else if (IDCTRefNative.isLibraryLoaded() && isAccelerated())
 	{
 		/* copy or add block data into picture */
 		for (comp=0; comp<block_count; comp++)
@@ -3094,6 +3103,8 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	 */
 	public long decodeArray(byte[] array, int start_position, boolean direction, boolean _viewGOP, boolean fast, int yGain)
 	{
+		setAcceleration(Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode));
+
 		FAST = fast;
 		DIRECTION = direction;
 		YGain = yGain;

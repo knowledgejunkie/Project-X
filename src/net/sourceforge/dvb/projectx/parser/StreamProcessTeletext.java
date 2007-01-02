@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParser
  *
- * Copyright (c) 2005-2006 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2007 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -123,6 +123,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 		boolean DecodeHiddenRows = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_decodeHiddenRows);
 		boolean KeepOriginalTimecode = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_keepOriginalTimecode);
 		boolean ExportAsVobSub = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_exportAsVobSub);
+		boolean BoxedMode = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_TtxExportBoxedOnly);
 
 //		boolean SpecialTermination = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_specialTermination);
 		boolean SpecialTermination = true;
@@ -135,6 +136,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 		JobProcessing job_processing = collection.getJobProcessing();
 
 		Subpicture subpicture = Common.getSubpictureClass();
+		Teletext teletext = Common.getTeletextClass();
 
 		if (ShowSubpictureWindow && (SubtitleExportFormat.equalsIgnoreCase(Keys.ITEMS_SubtitleExportFormat[6].toString()) || SubtitleExportFormat.equalsIgnoreCase(Keys.ITEMS_SubtitleExportFormat[7].toString())))
 			Common.getGuiInterface().showSubpicture();
@@ -174,7 +176,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 
 			Common.getGuiInterface().initTtxPageMatrix(fchild);
 
-			Teletext.clearEnhancements();
+			teletext.clearEnhancements();
 
 			if (!DecodeMegaradio) 
 				fparent += "[" + page + "]";
@@ -252,6 +254,9 @@ public class StreamProcessTeletext extends StreamProcessBase {
 
 			if (DecodeHiddenRows)
 				Common.setMessage("-> " + Resource.getString(Keys.KEY_SubtitlePanel_decodeHiddenRows[0]));
+
+			if (BoxedMode)
+				Common.setMessage("-> " + Resource.getString(Keys.KEY_SubtitlePanel_TtxExportBoxedOnly[0]));
 
 			if (KeepOriginalTimecode)
 				Common.setMessage("-> " + Resource.getString(Keys.KEY_SubtitlePanel_keepOriginalTimecode[0]));
@@ -341,7 +346,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 					break;
 
 				case EXPORT_SSA:
-					String[] SSAhead = Teletext.getSSAHead();
+					String[] SSAhead = teletext.getSSAHead();
 
 					for (int a = 0; a < SSAhead.length; a++) 
 						print_buffer.println(SSAhead[a]);
@@ -352,7 +357,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 					break;
 
 				case EXPORT_STL:
-					String[] STLhead = Teletext.getSTLHead(Common.getVersionName() + " on " + DateFormat.getDateInstance(DateFormat.MEDIUM).format(new Date(System.currentTimeMillis())));
+					String[] STLhead = teletext.getSTLHead(Common.getVersionName() + " on " + DateFormat.getDateInstance(DateFormat.MEDIUM).format(new Date(System.currentTimeMillis())));
 
 					for (int a = 0; a < STLhead.length; a++) 
 						print_buffer.println(STLhead[a]);
@@ -363,7 +368,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 					break;
 
 				case EXPORT_SON:  //DM14052004 081.7 int02 add, still unused!
-					String[] SONhead = Teletext.getSONHead(new File(ttxfile).getParent(), (long)CommonParsing.getVideoFramerate());
+					String[] SONhead = teletext.getSONHead(new File(ttxfile).getParent(), (long)CommonParsing.getVideoFramerate());
 
 					for (int a = 0; a < SONhead.length; a++) 
 						print_buffer.println(SONhead[a]);
@@ -555,7 +560,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 
 					if (!vps)
 					{
-						tmp_int_value = (Teletext.hamming_8_4(packet[4]))<<4 | Teletext.hamming_8_4(packet[5]);
+						tmp_int_value = (teletext.hamming_8_4(packet[4]))<<4 | teletext.hamming_8_4(packet[5]);
 
 						if (tmp_int_value < 0) // decode error
 						{
@@ -565,9 +570,9 @@ public class StreamProcessTeletext extends StreamProcessBase {
 
 						else
 						{
-						//	row = 0xFF & Teletext.bytereverse((byte)((0xF & Teletext.hamming_8_4(packet[4]))<<4 | (0xF & Teletext.hamming_8_4(packet[5]))));
+						//	row = 0xFF & teletext.bytereverse((byte)((0xF & teletext.hamming_8_4(packet[4]))<<4 | (0xF & teletext.hamming_8_4(packet[5]))));
 
-							row = 0xFF & Teletext.bytereverse((byte) tmp_int_value);
+							row = 0xFF & teletext.bytereverse((byte) tmp_int_value);
 							magazine = (7 & row) == 0 ? 8 : (7 & row);
 							row >>>= 3;
 						}
@@ -587,7 +592,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 						{
 							vps_str = str;
 
-							if (collection.getSettings().getBooleanProperty(Keys.KEY_showTtxHeader)) //interactive checkbox
+							if (Common.getSettings().getBooleanProperty(Keys.KEY_showTtxHeader)) //interactive checkbox
 								Common.getGuiInterface().updateVpsLabel(vps_str);
 
 							Common.setMessage(Resource.getString("teletext.msg.vps", str) + " " + Common.formatTime_1(source_pts / 90));
@@ -600,14 +605,14 @@ public class StreamProcessTeletext extends StreamProcessBase {
 					// X3/31.1 ttx provider
 					if (magazine == 3 && row == 31 && packet[7] == 0x40 && packet[8] == 0x57 && provider.equals(""))
 					{
-						provider = Teletext.makestring(packet, 10, 34, 31, 0, 0, false).trim();
+						provider = teletext.buildString(packet, 10, 34, 31, 0, 0, false).trim();
 						Common.setMessage(Resource.getString("teletext.msg.provider") + " " + provider);
 					}
 
 					// X8/30.0 program title
 					else if (magazine == 8 && row == 30 && packet[7] == (byte)0xA8)
 					{
-						String str = Teletext.makestring(packet, 26, 20, 30, 0, 0, true).trim() + " ";
+						String str = teletext.buildString(packet, 26, 20, 30, 0, 0, true).trim() + " ";
 
 						if (!str.equals(program_title))
 						{
@@ -622,10 +627,10 @@ public class StreamProcessTeletext extends StreamProcessBase {
 						int flag = 0;
 
 						for (int a = 0; a < 6; a++)
-							flag |= (0xF & Teletext.bytereverse((byte) Teletext.hamming_8_4(packet[8+a]) )>>>4 ) <<(a*4);
+							flag |= (0xF & teletext.bytereverse((byte) teletext.hamming_8_4(packet[8+a]) )>>>4 ) <<(a*4);
 
-						page_number = Integer.toHexString(0xF & Teletext.bytereverse((byte) Teletext.hamming_8_4(packet[7]) )>>>4 ).toUpperCase() +
-							Integer.toHexString(0xF & Teletext.bytereverse((byte) Teletext.hamming_8_4(packet[6]) )>>>4 ).toUpperCase();
+						page_number = Integer.toHexString(0xF & teletext.bytereverse((byte) teletext.hamming_8_4(packet[7]) )>>>4 ).toUpperCase() +
+							Integer.toHexString(0xF & teletext.bytereverse((byte) teletext.hamming_8_4(packet[6]) )>>>4 ).toUpperCase();
 
 						int o[] = { 0xF, 7, 0xF, 3 };
 						subpage_number = "";
@@ -660,11 +665,11 @@ public class StreamProcessTeletext extends StreamProcessBase {
 						Common.getGuiInterface().updateTtxPageMatrix("" + magazine + page_number);
 
 						// show header_line in GUI
-						if (collection.getSettings().getBooleanProperty(Keys.KEY_showTtxHeader) || debug) 
+						if (Common.getSettings().getBooleanProperty(Keys.KEY_showTtxHeader) || debug) 
 						{
-							String str = magazine + page_number + "  " + subpage_number + "  " + Teletext.makestring(packet, 14, 32, 0, (7 & flag>>>21), 0, true) + "  " + program_title;
+							String str = magazine + page_number + "  " + subpage_number + "  " + teletext.buildString(packet, 14, 32, 0, (7 & flag>>>21), 0, true) + "  " + program_title;
 
-							if (collection.getSettings().getBooleanProperty(Keys.KEY_showTtxHeader)) //interactive checkbox
+							if (Common.getSettings().getBooleanProperty(Keys.KEY_showTtxHeader)) //interactive checkbox
 								Common.getGuiInterface().updateTtxHeader(str);
 
 							if (debug)
@@ -808,8 +813,8 @@ public class StreamProcessTeletext extends StreamProcessBase {
 										break;
 
 									case EXPORT_SC:  // SC
-										print_buffer.print( Teletext.SMPTE( timeformat_1.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), (long)CommonParsing.getVideoFramerate()) + "&");
-										print_buffer.print( Teletext.SMPTE( timeformat_1.format( new Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), (long)CommonParsing.getVideoFramerate()) + "#");
+										print_buffer.print( teletext.SMPTE( timeformat_1.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), (long)CommonParsing.getVideoFramerate()) + "&");
+										print_buffer.print( teletext.SMPTE( timeformat_1.format( new Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), (long)CommonParsing.getVideoFramerate()) + "#");
 										break;
 
 									case EXPORT_SUB:  // SUB
@@ -824,13 +829,13 @@ public class StreamProcessTeletext extends StreamProcessBase {
 										break;
 
 									case EXPORT_SSA:  // SSA
-										print_buffer.print( Teletext.getSSALine()[0] + timeformat_1.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ).substring(1, 11) + ",");
-										print_buffer.print( timeformat_1.format( new Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ).substring(1, 11) + Teletext.getSSALine()[1]);
+										print_buffer.print( teletext.getSSALine()[0] + timeformat_1.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ).substring(1, 11) + ",");
+										print_buffer.print( timeformat_1.format( new Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ).substring(1, 11) + teletext.getSSALine()[1]);
 										break;
 	
 									case EXPORT_STL:  // STL
-										print_buffer.print( Teletext.SMPTE(timeformat_1.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), (long)CommonParsing.getVideoFramerate()) + ",");
-										print_buffer.print( Teletext.SMPTE(timeformat_1.format( new Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), (long)CommonParsing.getVideoFramerate()) + ",");
+										print_buffer.print( teletext.SMPTE(timeformat_1.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), (long)CommonParsing.getVideoFramerate()) + ",");
+										print_buffer.print( teletext.SMPTE(timeformat_1.format( new Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), (long)CommonParsing.getVideoFramerate()) + ",");
 										break;
 
 									case EXPORT_SUP:  // SUP
@@ -956,7 +961,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 							else
 								write_buffer.put("active", "1");
 
-							Teletext.clearEnhancements();
+							teletext.clearEnhancements();
 
 							load_buffer.clear();
 						}
@@ -992,7 +997,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 					if (row > 23 && subtitle_type != 0)
 					{
 						if (row == 29 || loadpage)
-							Teletext.setEnhancements(packet, row, character_set);
+							teletext.setEnhancements(packet, row, character_set);
 
 						continue readloop;
 					}
@@ -1003,7 +1008,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 					if (subtitle_type == MEGARADIO)  // megaradio, simple decode the bytes of row 1..23
 					{
 						for (int b = (row == 1) ? 17: 0; row < 24 && b < 39; b++) // framebytes to MSB
-							out.write(Teletext.bytereverse(packet[7+b]));
+							out.write(teletext.bytereverse(packet[7+b]));
 
 						continue readloop;
 					}
@@ -1016,22 +1021,22 @@ public class StreamProcessTeletext extends StreamProcessBase {
 					switch (subtitle_type)
 					{
 					case EXPORT_TEXT:
-						str = Teletext.makestring(packet, 6, 40, row, character_set, 0, true);
+						str = teletext.buildString(packet, 6, 40, row, character_set, 0, true, BoxedMode);
 						break;
 
 					case EXPORT_SC:
 					case EXPORT_STL:
 					case EXPORT_SUB:
 					case EXPORT_SRT:
-						str = Teletext.makestring(packet, 6, 40, row, character_set, 0, true).trim();
+						str = teletext.buildString(packet, 6, 40, row, character_set, 0, true, BoxedMode).trim();
 						break;
 
 					case EXPORT_SSA:
-						str = Teletext.makestring(packet, 6, 40, row, character_set, 1, true).trim();
+						str = teletext.buildString(packet, 6, 40, row, character_set, 1, true, BoxedMode).trim();
 						break;
 
 					case EXPORT_SUP:
-						picture_data = Teletext.makepic(packet, 6, 40, row, character_set, true);
+						picture_data = teletext.buildCharArray(packet, 6, 40, row, character_set, true, BoxedMode);
 					}
 
 					if (str != null && !str.equals(""))
@@ -1070,8 +1075,8 @@ public class StreamProcessTeletext extends StreamProcessBase {
 							break;
 
 						case EXPORT_SC:  // SC
-							print_buffer.print( Teletext.SMPTE(timeformat_1.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), (long)CommonParsing.getVideoFramerate()) + "&");
-							print_buffer.print( Teletext.SMPTE(timeformat_1.format( new Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), (long)CommonParsing.getVideoFramerate()) + "#");
+							print_buffer.print( teletext.SMPTE(timeformat_1.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), (long)CommonParsing.getVideoFramerate()) + "&");
+							print_buffer.print( teletext.SMPTE(timeformat_1.format( new Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), (long)CommonParsing.getVideoFramerate()) + "#");
 							break;
 
 						case EXPORT_SUB:  // SUB
@@ -1086,13 +1091,13 @@ public class StreamProcessTeletext extends StreamProcessBase {
 							break;
 
 						case EXPORT_SSA:  // SSA
-							print_buffer.print( Teletext.getSSALine()[0] + timeformat_1.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ).substring(1, 11) + ",");
-							print_buffer.print( timeformat_1.format( new Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ).substring(1, 11) + Teletext.getSSALine()[1]);
+							print_buffer.print( teletext.getSSALine()[0] + timeformat_1.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ).substring(1, 11) + ",");
+							print_buffer.print( timeformat_1.format( new Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ).substring(1, 11) + teletext.getSSALine()[1]);
 							break;
 
 						case EXPORT_STL:  // STL
-							print_buffer.print( Teletext.SMPTE(timeformat_1.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), (long)CommonParsing.getVideoFramerate()) + ",");
-							print_buffer.print( Teletext.SMPTE(timeformat_1.format( new Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), (long)CommonParsing.getVideoFramerate()) + ",");
+							print_buffer.print( teletext.SMPTE(timeformat_1.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ), (long)CommonParsing.getVideoFramerate()) + ",");
+							print_buffer.print( teletext.SMPTE(timeformat_1.format( new Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ), (long)CommonParsing.getVideoFramerate()) + ",");
 							break;
 
 						case EXPORT_SUP:  // SUP

@@ -1,7 +1,7 @@
 /*
  * @(#)SCAN.java - pre-scanning to check supported files
  *
- * Copyright (c) 2002-2005 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2002-2007 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -86,7 +86,7 @@ public class Scan extends Object {
 	}
 
 	/**
-	 * show ScanInfos
+	 * performs a pre-scan of XInputFile and saves results in StreamInfo of XInputFile
  	 */
 	public void getStreamInfo(XInputFile aXInputFile)
 	{
@@ -94,7 +94,8 @@ public class Scan extends Object {
 	}
 
 	/**
-	 * show ScanInfos
+	 * performs a pre-scan of XInputFile and saves results in StreamInfo of XInputFile
+	 * forces a streamtype assignment
  	 */
 	public void getStreamInfo(XInputFile aXInputFile, int assigned_streamtype)
 	{
@@ -123,6 +124,17 @@ public class Scan extends Object {
 			streamInfo = new StreamInfo("none", "", Resource.getString("ScanInfo.NotFound"), _name, _location, "", "", "");
 
 		aXInputFile.setStreamInfo(streamInfo);
+	}
+
+	/**
+	 * saves video basic info, for patch
+	 */
+	private byte[] getVBasic()
+	{ 
+		if (hasVideo)
+			return vbasic; 
+
+		return null;
 	}
 
 	/**
@@ -224,17 +236,6 @@ public class Scan extends Object {
 	private String getAudioTime(long len)
 	{
 		return Common.formatTime_1((len * 8000) / Audio.getBitrate());
-	}
-
-	/**
-	 *
-	 */
-	public byte[] getVBasic()
-	{ 
-		if (hasVideo)
-			return vbasic; 
-
-		return null;
 	}
 
 	/**

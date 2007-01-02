@@ -238,7 +238,7 @@
 --modif. idct.dll sourcen für OS2
 
 
-danach:
+0.90.4.00b01..b06:
 --key ändern loslessmpaconversion -> losslessmpaconversion
 --danish translation update jazzydane
 --wait for return bei extern prozess..
@@ -298,14 +298,22 @@ danach:
 --DnD laden von FTP Links/Datei möglich
 --option spez.2: ohne/mit overhead lesen (vormals immer aktiv)
 
-0.90.4.00b10:
+0.90.4.00b10..b11:
 --mpa demux ca. halbe zeit
 --sonderzeichen umtausch zB. direktzugriff
+
+0.90.4.00b12:
+--idct temporär abschaltbar, falls crashanfällig
+--mpa crc berechnung optimierg
+--only boxed subtitle export option, fehlerminimierung bei problematischen teletexten
+--teletext-class nicht mehr static
+
+
 
 !-test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding
 !-pid in dateinamen - problem split
 
-!!parserliste/demuxlist vereinen
+!!parserliste/demuxlist vereinen, alle fileobjekte in einem pool
 !!ac3 2/0 128kbs wg vro hinzufügen, ac3 5.1 256, 320kb stille 
 !!ac3 384 wird nicht als Stille genommen, restart wenn 5.1 größer detektiert wird
 !!file properties gui, einstellungen je file
@@ -317,14 +325,13 @@ danach:
 
 !!browserlauncher2
 !!ts pes ident - wenn payload kleiner 4 bytes
-!!genauere scanzuordnung
-
 
 !!-pes parser keine vorauswahl von headern ba,ff,f0 etc mehr, mit loggen
 !!-0xBE -> arte_ut fra, scan von pes ändern
 
+!!genauere scanzuordnung
+!!id3tag infos anzeigen
 !!hav sektoren prüfen, nur melden
-!!auto split mpa, wenn dual detektiert?
 !!profile hd,mpg reseted,vob, etc ermöglichen?
 !!MPAD überarbeiten, nicht mehr statisch; decode: arrays.fill statt new init ca. 20% schneller
 !!ac3 bitraten patch mit CRC neu berechnung (bitraten neuerdings fast immer gleichbleibend)
@@ -333,13 +340,11 @@ danach:
 !!finepass wrapper,humax wrapper,vcd-svcd-image wrapper etc evtl. übergeordnet?
 !!avi(bmp)film zu .sup
 !!fixes array für gops verwenden (max 6MB)
-!!id3tag infos anzeigen
 !-ftp,dll access als status , falls nicht verfügbar, apache libs optional machen, dann ohne ftp
 !!dvb-subs,  besonderer hinweis: pagenumber definieren "http://www.cs.helsinki.fi/u/mikkila/son2srt/"
 !!dvb-subs,  pagenumber ausgelesen aus pmt?
 !!-vbvbuffer bei mpeg1 nicht?
 !!-ts-pid-wechseln folgen
-<<-mpa crc berechung optimiern, bitweise erschwert.
 !-audiozusammenfassen, mpa,ac3,dts, tlw
 !!projektdateiexport zusammenfassen
 !!dvdlap index

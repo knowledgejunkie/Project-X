@@ -199,10 +199,17 @@ public class CollectionPanel extends JPanel {
 			box.setToolTipText(Resource.getString(objects[i][0] + Keys.KEY_Tip));
 			box.setActionCommand(objects[i][0]);
 			box.setSelected(Common.getSettings().getBooleanProperty(objects[i]));
+
 			box.addActionListener(_CheckBoxListener);
 
 			if (i == 1)
 				panel.add(Box.createRigidArea(new Dimension(1, 10)));
+
+			if (i == 2 && Common.getMpvDecoderClass().isAccelerated())
+			{
+				box.setSelected(true);
+				Common.getSettings().setBooleanProperty(objects[i][0], box.isSelected());
+			}
 
 			panel.add(box);
 		}
