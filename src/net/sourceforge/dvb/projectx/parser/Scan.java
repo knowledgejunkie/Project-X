@@ -70,6 +70,7 @@ public class Scan extends Object {
 	private ArrayList audio_streams;
 	private ArrayList ttx_streams;
 	private ArrayList pic_streams;
+	private ArrayList unknown_streams;
 
 	private AudioFormat Audio = new AudioFormat();
 
@@ -82,6 +83,7 @@ public class Scan extends Object {
 		audio_streams = new ArrayList();
 		ttx_streams = new ArrayList();
 		pic_streams = new ArrayList();
+		unknown_streams = new ArrayList();
 		pidlist = new ArrayList();
 	}
 
@@ -270,7 +272,7 @@ public class Scan extends Object {
 
 	/* DTS stuff taken from the VideoLAN project. */ 
 	/* Added by R One, 2003/12/18. */
-	private void DTSAudio(byte[] check)
+	private int DTSAudio(byte[] check)
 	{ 
 		Audio.setNewType(CommonParsing.DTS_AUDIO);
 
@@ -289,16 +291,18 @@ public class Scan extends Object {
 
 					audio_streams.add(Audio.saveAndDisplayHeader()); 
 
-					return; 
+					return 1; 
 				} 
 			} 
 		} 
+
+		return 0;
 	} 
 
 	/**
 	 *
 	 */
-	private void MPEGAudio(byte[] check)
+	private int MPEGAudio(byte[] check)
 	{ 
 		Audio.setNewType(CommonParsing.MPEG_AUDIO);
 
@@ -313,8 +317,31 @@ public class Scan extends Object {
 
 			audio_streams.add(Audio.saveAndDisplayHeader());
 
-			return;
+			return 1;
 		}
+
+		return 0;
+	}
+
+	/**
+	 *
+	 */
+	private int LPCMAudio(byte[] check)
+	{ 
+		Audio.setNewType(CommonParsing.LPCM_AUDIO);
+
+		audiocheck:
+		for (int a = 0; a < 1000; a++)
+		{
+			if (Audio.parseHeader(check, a) < 0)
+				continue audiocheck;
+
+			audio_streams.add(Audio.saveAndDisplayHeader());
+
+			return 1;
+		}
+
+		return 0;
 	}
 
 	/**
@@ -329,9 +356,9 @@ public class Scan extends Object {
 		for (; a < check.length; )
 		{
 			jump = (0xFF & check[a + 4])<<8 | (0xFF & check[a + 5]);
-			mpg1 = (0x80 & check[a + 6]) == 0 ? true : false;
-			offs = a + 6 + ( !mpg1 ? 3 + (0xFF & check[a+8]) : 0);
-			len = jump - ( !mpg1 ? 3 + (0xFF & check[a+8]) : 0);
+			mpg1 = (0x80 & check[a + 6]) == 0;
+			offs = a + 6 + ( !mpg1 ? 3 + (0xFF & check[a + 8]) : 0);
+			len = jump - ( !mpg1 ? 3 + (0xFF & check[a + 8]) : 0);
 
 			if (offs + len > check.length)
 				break;
@@ -357,7 +384,7 @@ public class Scan extends Object {
 		int end = check.length > 580000 ? 512000 : check.length - 65000;
 
 		mpg2check:
-		for (int a = b, returncode; a < end; a += jump)
+		for (int a = b, returncode, subid; a < end; a += jump)
 		{
 			if ((returncode = CommonParsing.validateStartcode(check, a)) < 0)
 			{
@@ -413,18 +440,19 @@ public class Scan extends Object {
 
 				int pes_extensionlength = CommonParsing.getPES_ExtensionLengthField(check, a);
 				boolean pes_alignment = (4 & check[a + 6]) != 0;
+				int pes_subid = 0xFF & check[a + 9 + pes_extensionlength];
 
-				if (pes_extensionlength == 0x24 && (0xF0 & check[a + 9 + pes_extensionlength])>>>4 == 1)
+				if (pes_extensionlength == 0x24 && pes_subid>>>4 == 1)
 				{
-					str = "SubID 0x" + Integer.toHexString((0xFF & check[a + 9 + pes_extensionlength])).toUpperCase();
+					str = "SubID 0x" + Integer.toHexString(pes_subid).toUpperCase();
 
 					if (ttx_streams.indexOf(str) < 0)
 						ttx_streams.add(str);
 				}
 
-				else if ( ((!mpg1 && !vdr) || (vdr && pes_alignment)) && ((0xF0 & check[a + 9 + pes_extensionlength])>>>4 == 2 || (0xF0 & check[a + 9 + pes_extensionlength])>>>4 == 3))
+				else if ( ((!mpg1 && !vdr) || (vdr && pes_alignment)) && (pes_subid>>>4 == 2 || pes_subid>>>4 == 3))
 				{
-					str = "SubID 0x" + Integer.toHexString((0xFF & check[a + 9 + pes_extensionlength])).toUpperCase();
+					str = "SubID 0x" + Integer.toHexString(pes_subid).toUpperCase();
 
 					if (pic_streams.indexOf(str) < 0)
 						pic_streams.add(str);
@@ -437,7 +465,8 @@ public class Scan extends Object {
 						id = 0xFF & check[a + 9 + pes_extensionlength];
 						str = String.valueOf(id);
 
-						check[a + 8] = (byte)(4 + pes_extensionlength);
+						check[a + 8] = (byte)((pes_subid>>>4 == 0xA ? 1 : 4) + pes_extensionlength);
+					//	check[a + 8] = (byte)(4 + pes_extensionlength);
 					}
 
 					if (!table.containsKey(str))
@@ -633,8 +662,13 @@ public class Scan extends Object {
 				{
 					byte buffer[] = loadPES(check, a);
 
-					if (AC3Audio(buffer) < 1)
-						DTSAudio(buffer);
+					if (AC3Audio(buffer) != 0) 
+						return;
+					
+					else if (DTSAudio(buffer) != 0) 
+						return;
+
+					LPCMAudio(buffer);
 
 					return;
 				}
@@ -895,7 +929,7 @@ public class Scan extends Object {
 				int sid = (0xFF & pmt[4])<<8 | (0xFF & pmt[5]);
 				pidlist.add("" + sid);
 				pidlist.add("" + pmtpid);
-				addInfo = " (SID 0x" + Integer.toHexString(sid).toUpperCase() + " ,PMT 0x" + Integer.toHexString(pmtpid).toUpperCase() + ")";
+				addInfo = " (SID 0x" + Integer.toHexString(sid).toUpperCase() + ", PMT 0x" + Integer.toHexString(pmtpid).toUpperCase() + ")";
 			}
 
 			int pmt_len = (0xF&pmt[2])<<8 | (0xFF&pmt[3]);
@@ -1166,6 +1200,7 @@ public class Scan extends Object {
 		audio_streams.clear();
 		ttx_streams.clear();
 		pic_streams.clear();
+		unknown_streams.clear();
 		pidlist.clear();
 
 		addInfo = "";
@@ -1395,15 +1430,48 @@ public class Scan extends Object {
 		mpegtscheck:
 		for (int i = 0; i < buffersize; i++) 
 		{ 
-			if ( check[i] != 0x47 || check[i + 188] != 0x47 || check[i + 376] != 0x47 || check[i + 564] != 0x47 || check[i + 752] != 0x47 || check[i + 940] != 0x47 || check[i + 1182] != 0x47) 
+			if ( check[i] != 0x47 || check[i + 188] != 0x47 || check[i + 376] != 0x47 || check[i + 564] != 0x47 || check[i + 752] != 0x47 || check[i + 940] != 0x47 || check[i + 1128] != 0x47) 
 				continue mpegtscheck;
 
 			readPMT(check, i);
+
+			if (pidlist.isEmpty())
+				scanTSPids(check, i, buffersize, more);
 
 			return CommonParsing.TS_TYPE;
 		}
 
 		return -1;
+	}
+
+	/**
+	 *
+	 */
+	private void scanTSPids(byte[] check, int i, int buffersize, boolean more) throws Exception
+	{
+		String str;
+
+		mpegtscheck:
+		for (int pid, scrambling; i < buffersize; i++) 
+		{ 
+			if ( check[i] != 0x47 || check[i + 188] != 0x47 || check[i + 376] != 0x47) 
+				continue mpegtscheck;
+
+			pid = (0x1F & check[i + 1])<<8 | (0xFF & check[i + 2]);
+			scrambling = (0xC0 & check[i + 3])>>>6; // scrambling
+
+			i += 187;
+
+			str = "PID 0x" + Integer.toHexString(pid).toUpperCase();
+
+			if (scrambling > 0)
+				str += "-($)";
+
+			if (!video_streams.contains(str))
+				video_streams.add(str);
+		}
+
+		addInfo += " (no PMT found)";
 	}
 
 	/**

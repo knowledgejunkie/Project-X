@@ -318,7 +318,7 @@ public class Teletext extends Object {
 	/**
 	 * make suppic from teletext *
 	 */
-	public int[] buildCharArray(byte[] packet, int offset, int len, int row, int character_set, boolean checkParity, boolean boxed_mode)
+	public int[] buildCharArray(byte[] packet, int offset, int len, int row, int character_set, boolean checkParity, boolean boxed_mode, boolean alignment)
 	{
 		//  return int char<<8 | 0xF0 & active_color backgrnd | 0xF & active_color foregrnd
 
@@ -544,8 +544,25 @@ public class Teletext extends Object {
 			Common.setMessage(msg);
 		}
 
-		if (test.trim().length() == 0) 
+		int trimlen = test.trim().length();
+
+		if (trimlen == 0) 
 			return null;
+
+		else if (trimlen < 40 && alignment)
+		{
+			int offs = 0;
+			int noffs = 0;
+
+			while (test.startsWith(" ", offs))
+				offs++;
+
+			noffs = (chars.length - trimlen) / 2;
+
+			System.arraycopy(chars, offs, chars, noffs, trimlen);
+			Arrays.fill(chars, 0, noffs, (active_set[32]<<8 | 7));
+			Arrays.fill(chars, noffs + trimlen, chars.length, (active_set[32]<<8 | 7));
+		}
 
 		return chars;
 	}

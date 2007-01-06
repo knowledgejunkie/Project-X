@@ -308,6 +308,12 @@
 --only boxed subtitle export option, fehlerminimierung bei problematischen teletexten
 --teletext-class nicht mehr static
 
+0.90.4.00b13:
+--ttx 2 sup , text horiz. zentrieren
+--pre-scan anzeige von lpcm
+--pre-scan ts miserkennung
+--(neue) koscom lese option
+
 
 
 !-test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding

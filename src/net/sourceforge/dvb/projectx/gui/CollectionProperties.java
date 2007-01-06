@@ -1,7 +1,7 @@
 /*
  * @(#)ColelctionProperties.java
  *
- * Copyright (c) 2006 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2006-2007 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -560,6 +560,7 @@ public class CollectionProperties extends JFrame {
 			Keys.KEY_TS_HumaxAdaption,
 			Keys.KEY_TS_FinepassAdaption,
 			Keys.KEY_TS_JepssenAdaption,
+			Keys.KEY_TS_KoscomAdaption,
 			Keys.KEY_TS_generatePmt,
 			Keys.KEY_TS_generateTtx,
 			Keys.KEY_TS_setMainAudioAc3
@@ -575,8 +576,8 @@ public class CollectionProperties extends JFrame {
 			box.setSelected(getBooleanProperty(objects[i]));
 			box.addActionListener(_CheckBoxListener);
 
-			if (i == 2 || i == 3)
-				idPanel3.add(Box.createRigidArea(new Dimension(1, 10)));
+		//	if (i == 3)
+		//		idPanel3.add(Box.createRigidArea(new Dimension(1, 10)));
 
 			idPanel3.add(box);
 		}
@@ -1417,6 +1418,7 @@ public class CollectionProperties extends JFrame {
 			Keys.KEY_SubtitlePanel_exportTextAsUnicode,
 			Keys.KEY_SubtitlePanel_exportTextAsUTF8,
 			Keys.KEY_SubtitlePanel_useTextOutline,
+			Keys.KEY_SubtitlePanel_useTextAlignment,
 			Keys.KEY_SubtitlePanel_keepColourTable,
 			Keys.KEY_SubtitlePanel_exportAsVobSub
 		};
@@ -1564,11 +1566,13 @@ public class CollectionProperties extends JFrame {
 
 		JPanel panel_1 = new JPanel();
 		panel_1.setLayout( new ColumnLayout() );
-		panel_1.setBorder( BorderFactory.createTitledBorder(Resource.getString("SubtitlePanel.Title")) );
+	//	panel_1.setBorder( BorderFactory.createTitledBorder(Resource.getString("SubtitlePanel.Title")) );
+		panel_1.setBorder( BorderFactory.createTitledBorder(Resource.getString("SubtitlePanel.Title.Teletext")) );
 
-		panel_1.add(new JLabel(Resource.getString("SubtitlePanel.Title.Teletext")));
+	//	panel_1.add(new JLabel(Resource.getString("SubtitlePanel.Title.Teletext")));
 
 		panel_1.add(box[7]);
+		panel_1.add(box[8]);
 
 		JPanel panel_1_2 = new JPanel();
 		panel_1_2.setLayout(new BoxLayout(panel_1_2, BoxLayout.X_AXIS));
@@ -1685,8 +1689,8 @@ public class CollectionProperties extends JFrame {
 		panel_1.add(panel_2_3);
 
 		panel_1.add(Box.createRigidArea(new Dimension(1, 10)));
-		panel_1.add(box[8]);
 		panel_1.add(box[9]);
+		panel_1.add(box[10]);
 
 		teletext.add(panel_1);
 

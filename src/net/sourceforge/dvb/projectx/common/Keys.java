@@ -1,7 +1,7 @@
 /*
  * @(#)Keys.java - static, fixed keys
  *
- * Copyright (c) 2005-2006 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2007 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -159,6 +159,7 @@ public class Keys extends Object {
 	public final static String[] KEY_TS_HumaxAdaption = { "SpecialPanel.TS.HumaxAdaption", "0" }; //cbox[70]
 	public final static String[] KEY_TS_FinepassAdaption = { "SpecialPanel.TS.FinepassAdaption", "0" };
 	public final static String[] KEY_TS_JepssenAdaption = { "SpecialPanel.TS.JepssenAdaption", "0" };
+	public final static String[] KEY_TS_KoscomAdaption = { "SpecialPanel.TS.KoscomAdaption", "0" };
 	public final static String[] KEY_TS_generatePmt = { "SpecialPanel.TS.generatePmt", "1" }; //cbox[41], true
 	public final static String[] KEY_TS_generateTtx = { "SpecialPanel.TS.generateTtx", "0" }; //cbox[42] --ts !!
 	public final static String[] KEY_TS_setMainAudioAc3 = { "SpecialPanel.TS.setMainAudioAc3", "0" }; //cbox[37] --ts  !!
@@ -275,6 +276,7 @@ public class Keys extends Object {
 	public final static String[] KEY_SubtitlePanel_keepColourTable = { "SubtitlePanel.keepColourTable", "0" };
 	public final static String[] KEY_SubtitlePanel_exportAsVobSub = { "SubtitlePanel.exportAsVobSub", "0" };
 	public final static String[] KEY_SubtitlePanel_TtxExportBoxedOnly = { "SubtitlePanel.TtxExportBoxedOnly", "0" };
+	public final static String[] KEY_SubtitlePanel_useTextAlignment = { "SubtitlePanel.useTextAlignment", "0" };
 
 	public static Object[] ITEMS_TtxLanguagePair = { 
 		"auto", "basic latin", "polish", "turkish", "cro,slo,rum", "est,lit,rus",

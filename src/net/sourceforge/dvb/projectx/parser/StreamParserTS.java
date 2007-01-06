@@ -69,6 +69,8 @@ public class StreamParserTS extends StreamParserBase {
 	private boolean HumaxAdaption;
 	private boolean HandanAdaption;
 	private boolean JepssenAdaption;
+	private boolean KoscomAdaption;
+
 	private boolean Debug;
 
 	private long count;
@@ -124,6 +126,7 @@ public class StreamParserTS extends StreamParserBase {
 		HumaxAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_HumaxAdaption);
 		HandanAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_FinepassAdaption);
 		JepssenAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_JepssenAdaption);
+		KoscomAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_KoscomAdaption);
 
 
 		boolean ts_isIncomplete = false;
@@ -463,14 +466,19 @@ public class StreamParserTS extends StreamParserBase {
 					skipLeadingJepssenDataChunk(ts_packet);
 
 					/**
+					 * Koscom .vid workaround, skip special data chunk
+					 */
+					skipLeadingKoscomDataChunk(ts_packet);
+
+					/**
 					 * handan+finepass .hav workaround, chunks fileposition index (hdd sectors) unused, because a file can be hard-cut anywhere
 					 */
 					skipLeadingHandanDataChunk(ts_packet);
 
-					/**
-					 * Jepssen .vid workaround, skip special data chunk
-					 */
 					if (skipJepssenDataChunk(ts_packet))
+					{}
+
+					else if (skipKoscomDataChunk(ts_packet))
 					{}
 
 		 			else if (skipHumaxDataChunk(ts_packet))
@@ -1115,7 +1123,7 @@ public class StreamParserTS extends StreamParserBase {
 					inputstream.close();
 					//System.gc();
 
-					long startoffset = checkNextJepssenSegment(collection, job_processing.getFileNumber(), bytes_read);
+					long startoffset = checkNextJepssenKoscomSegment(collection, job_processing.getFileNumber(), bytes_read);
 
 					XInputFile nextXInputFile = (XInputFile) collection.getInputFile(job_processing.countFileNumber(+1));
 					count = size + startoffset;
@@ -1233,6 +1241,35 @@ public class StreamParserTS extends StreamParserBase {
 				value = CommonParsing.getIntValue(ts_packet, 0, 3, !CommonParsing.BYTEREORDERING);
 				System.out.println("Jepssen hd chunk: " + value);
 			}
+
+			inputstream.unread(ts_packet, chunk_size, TS_BufferSize - chunk_size);
+			inputstream.read(ts_packet, 0, TS_BufferSize);
+			count += chunk_size;
+
+			return !b;
+
+		} catch (IOException e) {
+			Common.setExceptionMessage(e);
+		}
+
+		return b;
+	}
+
+	/**
+	 * Koscom .vid workaround, skip special data chunk
+	 */
+	private boolean skipLeadingKoscomDataChunk(byte[] ts_packet)
+	{
+		boolean b = false;
+		int chunk_size = 4;
+
+		if (!KoscomAdaption)
+			return b;
+
+		if (ts_packet[1] != 0 || ts_packet[2] != 0 || ts_packet[3] != 0 || ts_packet[4] != TS_SyncByte)
+			return b;
+
+		try {
 
 			inputstream.unread(ts_packet, chunk_size, TS_BufferSize - chunk_size);
 			inputstream.read(ts_packet, 0, TS_BufferSize);
@@ -1367,11 +1404,47 @@ public class StreamParserTS extends StreamParserBase {
 	}
 
 	/**
+	 * Koscom .vid workaround, skip special data chunk
+	 */
+	private boolean skipKoscomDataChunk(byte[] ts_packet)
+	{
+		boolean b = false;
+		int chunk_size = 4;
+
+		if (!KoscomAdaption)
+			return b;
+
+		if (ts_packet[188] == TS_SyncByte)
+			return b;
+
+		try {
+			inputstream.read(tmp_chunk, 0, chunk_size);
+
+			// hdd padding chunk 4 bytes , 0 + 1 psb. chunk_no.
+			if (tmp_chunk[1] == 0 && tmp_chunk[2] == 0 && tmp_chunk[3] == TS_SyncByte)
+			{
+				ts_packet[188] = TS_SyncByte;
+				count += chunk_size;
+
+				return !b;
+			}
+
+			else
+				inputstream.unread(tmp_chunk, 0, chunk_size);
+
+		} catch (IOException e) {
+			Common.setExceptionMessage(e);
+		}
+
+		return b;
+	}
+
+	/**
 	 *
 	 */
-	private long checkNextJepssenSegment(JobCollection collection, int filenumber, int bytes_read)
+	private long checkNextJepssenKoscomSegment(JobCollection collection, int filenumber, int bytes_read)
 	{
-		if (!JepssenAdaption)
+		if (!JepssenAdaption && !KoscomAdaption)
 			return 0;
 
 		byte[] nextsegment = new byte[200];

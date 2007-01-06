@@ -1,7 +1,7 @@
 /*
  * @(#)Preview.java - prepare files for previewing
  *
- * Copyright (c) 2004-2006 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2004-2007 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -222,6 +222,19 @@ public class Preview extends Object {
 			}
 
 			//koscom chunk
+			if (a < data.length - 5 && data[a + 2] == 0 && data[a + 3] == 0 && data[a + 4] == 0x47)
+			{
+				if (save && mark <= a)
+					array.write(data, mark, a - mark);
+
+				save = false;
+				a += 3;
+				mark = a + 1;
+
+				continue;
+			}
+
+			//jepssen chunk
 			if (a < data.length - 36 && data[a + 2] == 0 && data[a + 3] == 0 && data[a + 36] == 0x47)
 			{
 				if (save && mark <= a)
@@ -284,8 +297,12 @@ public class Preview extends Object {
 						}
 					}
 
-					//koscom chunk
+					//jepssen chunk
 					if (chunk_offset == 0 && a < data.length - 224 && data[a + 190] == 0 && data[a + 191] == 0 && data[a + 224] == 0x47)
+					{}
+
+					//koscom chunk
+					else if (chunk_offset == 0 && a < data.length - 224 && data[a + 190] == 0 && data[a + 191] == 0 && data[a + 192] == 0x47)
 					{}
 
 					else if (chunk_offset == 0)

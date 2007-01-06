@@ -124,6 +124,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 		boolean KeepOriginalTimecode = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_keepOriginalTimecode);
 		boolean ExportAsVobSub = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_exportAsVobSub);
 		boolean BoxedMode = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_TtxExportBoxedOnly);
+		boolean TextAlignment = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_useTextAlignment);
 
 //		boolean SpecialTermination = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_specialTermination);
 		boolean SpecialTermination = true;
@@ -1036,7 +1037,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 						break;
 
 					case EXPORT_SUP:
-						picture_data = teletext.buildCharArray(packet, 6, 40, row, character_set, true, BoxedMode);
+						picture_data = teletext.buildCharArray(packet, 6, 40, row, character_set, true, BoxedMode, TextAlignment);
 					}
 
 					if (str != null && !str.equals(""))

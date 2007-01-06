@@ -502,9 +502,6 @@ public class MainProcess extends Thread {
 	{
 		Common.setMessage(" ");
 
-		//buffer
-		Common.setMessage("-> " + Resource.getString(Keys.KEY_MainBuffer[0]) + " " + MainBufferSize + " bytes");
-
 		//biglog
 		messageSetting(collection, Keys.KEY_DebugLog);
 
@@ -614,6 +611,8 @@ public class MainProcess extends Thread {
 		messageSetting(collection, Keys.KEY_TS_joinPackets);
 		messageSetting(collection, Keys.KEY_TS_HumaxAdaption);
 		messageSetting(collection, Keys.KEY_TS_FinepassAdaption);
+		messageSetting(collection, Keys.KEY_TS_JepssenAdaption);
+		messageSetting(collection, Keys.KEY_TS_KoscomAdaption);
 		messageSetting(collection, Keys.KEY_TS_generatePmt);
 		messageSetting(collection, Keys.KEY_TS_generateTtx);
 		messageSetting(collection, Keys.KEY_Input_getEnclosedPackets);
@@ -689,6 +688,10 @@ public class MainProcess extends Thread {
 
 		if (MainBufferSize <= 0)
 			MainBufferSize = 4096000;
+
+		//buffer
+		Common.setMessage("");
+		Common.setMessage("-> " + Resource.getString(Keys.KEY_MainBuffer[0]) + " " + MainBufferSize + " bytes");
 
 		job_processing.setSplitSize(collection.getSettings().getBooleanProperty(Keys.KEY_SplitSize) ? 0x100000L * Integer.parseInt(collection.getSettings().getProperty(Keys.KEY_ExportPanel_SplitSize_Value)) : 0);
 
@@ -808,6 +811,24 @@ public class MainProcess extends Thread {
 
 
 		collection.setPrimaryInputFileSegments(primaryInputFiles);
+
+		//message all files
+		Common.setMessage("");
+		Common.setMessage(Resource.getString("JobCollection.PrimaryFileSegments"));
+
+		for (int a = 0; a < collection.getPrimaryInputFileSegments(); a++)
+			Common.setMessage("* (" + a + ") " + ((XInputFile) input_files.get(a)).toString());
+
+		if (collection.getPrimaryInputFileSegments() == 0)
+			Common.setMessage("* ---");
+
+		Common.setMessage(Resource.getString("JobCollection.SecondaryFiles"));
+
+		for (int a = collection.getPrimaryInputFileSegments(); a < inputfiles_size; a++)
+			Common.setMessage("* (" + a + ") " + ((XInputFile) input_files.get(a)).toString());
+
+		if (collection.getPrimaryInputFileSegments() == inputfiles_size)
+			Common.setMessage("* ---");
 
 		Common.getGuiInterface().resetBitrateMonitor();
 
