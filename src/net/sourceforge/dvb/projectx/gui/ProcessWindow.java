@@ -466,6 +466,8 @@ public class ProcessWindow extends JFrame {
 
 					CommonParsing.setProcessPausing(!CommonParsing.isProcessPausing());
 				}
+
+				focusToText();
 			}
 		});
 

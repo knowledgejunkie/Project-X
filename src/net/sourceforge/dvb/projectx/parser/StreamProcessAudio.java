@@ -287,6 +287,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 		long[] vtime = {0};
 
 		String audio_type[] = { "(ac3)", "(mp3)", "(mp2)", "(mp1)", "(dts)", "(pcm)" };
+		String tmp_str = null;
 
 		FramePosition = 0;
 		CurrentFramePosition = 0;
@@ -1280,7 +1281,9 @@ public class StreamProcessAudio extends StreamProcessBase {
 			//		determineFormatChange(audio, es_streamtype);
 
 					audio.saveHeader();
-					audio.decodeAncillaryData(frame, TimeCounter);
+
+					if ((tmp_str = audio.decodeAncillaryData(frame, TimeCounter)) != null)
+						Common.setMessage(tmp_str);
 
 					// TimePosition ist hier aktuelle audiopts
 

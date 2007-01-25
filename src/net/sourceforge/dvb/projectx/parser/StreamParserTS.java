@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParserTS.java
  *
- * Copyright (c) 2005-2006 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2007 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -697,7 +697,7 @@ public class StreamParserTS extends StreamParserBase {
 
 						if (streambuffer.getDataSize() > MaxBufferSize)
 						{
-							Common.setMessage("!> 0x" + Integer.toHexString(streambuffer.getPID()).toUpperCase() + ", buffered packet exceed maximum size, flushed...");
+							Common.setMessage("!> 0x" + Integer.toHexString(streambuffer.getPID()).toUpperCase() + ", buffered packet exceeds maximum size, flushed...");
 							streambuffer.reset();
 						}
 					}
@@ -1266,7 +1266,7 @@ public class StreamParserTS extends StreamParserBase {
 		if (!KoscomAdaption)
 			return b;
 
-		if (ts_packet[1] != 0 || ts_packet[2] != 0 || ts_packet[3] != 0 || ts_packet[4] != TS_SyncByte)
+		if (ts_packet[2] != 0 || ts_packet[3] != 0 || ts_packet[4] != TS_SyncByte)
 			return b;
 
 		try {

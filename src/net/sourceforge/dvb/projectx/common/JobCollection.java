@@ -1,7 +1,7 @@
 /*
  * @(#)JobCollection.java - all about a collection
  *
- * Copyright (c) 2005-2006 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2007 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -824,7 +824,7 @@ public class JobCollection extends Object {
 	 */
 	public int[] getCutImage(Object obj)
 	{
-		if (cut_images.containsKey(obj))
+		if (obj != null && cut_images.containsKey(obj))
 			return ((int[]) cut_images.get(obj));
 
 		return null;

@@ -1,7 +1,7 @@
 /*
  * @(#)StreamInfo
  *
- * Copyright (c) 2005 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2005-2007 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -328,7 +328,7 @@ public class StreamInfo extends Object {
 	public void setStreamType(int _streamtype)
 	{
 		streamtype = _streamtype;
-		file_type = Keys.ITEMS_FileTypes[streamtype].toString();
+		file_type = Keys.ITEMS_FileTypes[getStreamType()].toString();
 	}
 
 	/**
@@ -337,7 +337,7 @@ public class StreamInfo extends Object {
 	public void setStreamType(int _streamtype, String str)
 	{
 		streamtype = _streamtype;
-		file_type = Keys.ITEMS_FileTypes[streamtype].toString() + str;
+		file_type = Keys.ITEMS_FileTypes[getStreamType()].toString() + str;
 	}
 
 	/**
@@ -345,7 +345,15 @@ public class StreamInfo extends Object {
 	 */
 	public int getStreamType()
 	{
-		return streamtype;
+		return (0x1F & streamtype);
+	}
+
+	/**
+	 *
+	 */
+	public int getStreamSubType()
+	{
+		return (streamtype>>8);
 	}
 
 	/**

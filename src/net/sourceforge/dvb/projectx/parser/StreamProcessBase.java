@@ -1,8 +1,8 @@
 
 /*
- * @(#)StreamParser
+ * @(#)StreamProcessBase
  *
- * Copyright (c) 2005 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2007 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -170,13 +170,13 @@ public class StreamProcessBase extends Object {
 		ptsval[0][logsize] = -1;  
 		ptsval[1][logsize] = -1;
 
-		byte[] data = new byte[(int)xInputFile.length()];
+		int readbuffer = 512000; // 32000 indices 2*8
+
+		byte[] data = new byte[readbuffer];
 		int pos = 0;
 
 		try {
 			InputStream pts_file = xInputFile.getInputStream();
-
-			pts_file.read(data, 0, data.length);
 
 			int aa = 0;
 
@@ -185,8 +185,15 @@ public class StreamProcessBase extends Object {
 
 			for (int a = 0; a < logsize; a++)
 			{
+				if (pos % readbuffer == 0)
+				{
+					pts_file.read(data, 0, readbuffer);
+					pos = 0;
+				}
+
 				ptsVal = CommonParsing.getValue(data, pos, 8, !CommonParsing.BYTEREORDERING);
 				pos += 8;
+
 				ptsPos = CommonParsing.getValue(data, pos, 8, !CommonParsing.BYTEREORDERING);
 				pos += 8;
 

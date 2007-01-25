@@ -29,7 +29,7 @@
 /*
  * @(#)MpvDecoder.java - still Picture Decoder
  * 
- * Copyright (c) 2003-2006 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2003-2007 by dvb.matt, All Rights Reserved. 
  *
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -2954,6 +2954,14 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	/**
 	 * 
 	 */
+	public int getZoomMode()
+	{
+		return zoomMode;
+	}
+
+	/**
+	 * 
+	 */
 	public void setZoomMode(int value)
 	{
 		zoomMode = value;
@@ -2967,12 +2975,9 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	 */
 	public void setZoomMode(int[] values)
 	{
-		zoomMode = 2;
-
 		System.arraycopy(values, 0, zoomArea, 0, zoomArea.length);
 
-		if (info_2.length() > 0)
-			scale_Picture();
+		setZoomMode(2);
 	}
 
 	/**

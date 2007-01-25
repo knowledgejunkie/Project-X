@@ -1,7 +1,7 @@
 /*
  * @(#)Gop
  *
- * Copyright (c) 2005-2006 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2007 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -824,7 +824,7 @@ public class Gop extends Object {
 					newframes++;
 					progressive = 0x80;         /* 0xb5 pic coding extension */
 
-					for (int i = s + 6; i < s + 15 && i + 8 < gop.length; i++ )
+					for (int i = s + 6; i < s + 15 && i + 10 < gop.length; i++ ) //i + 8 doesn't reach
 					{
 						if ((returncode = CommonParsing.validateStartcode(gop, i)) < 0)
 						{

@@ -628,10 +628,10 @@ public class AudioFormatMPA extends AudioFormat {
 	/**
 	 *
 	 */
-	public void decodeAncillaryData(byte[] frame, double frametime)
+	public String decodeAncillaryData(byte[] frame, double frametime)
 	{
 		if (!DecodeRDS)
-			return;
+			return null;
 
 		int neg_offs = Size - 1;
 
@@ -640,7 +640,7 @@ public class AudioFormatMPA extends AudioFormat {
 	//		neg_offs -= 2;
 
 	//		if (frame[neg_offs + 2] != 0 || frame[neg_offs + 1] != 0 || frame[neg_offs] != RDS_identifier)
-				return;
+				return null;
 		}
 
 		int len = 0xFF & frame[neg_offs - 1];
@@ -651,20 +651,20 @@ public class AudioFormatMPA extends AudioFormat {
 			_list.add(String.valueOf(val));
 		}
 
-		decodeChunk(_list, frametime);
+		return decodeChunk(_list, frametime);
 	}
 
 	/**
 	 * 
 	 */
-	private void decodeChunk(ArrayList list, double frametime)
+	private String decodeChunk(ArrayList list, double frametime)
 	{
 		int index = list.indexOf(String.valueOf(RDS_startcode));
 
 		if (index < 0)
 		{
 			list.clear();
-			return;
+			return null;
 		}
 
 		while (index > 0)
@@ -676,12 +676,12 @@ public class AudioFormatMPA extends AudioFormat {
 		int eom_index = list.indexOf(String.valueOf(RDS_endcode));
 
 		if (eom_index < 0)
-			return;
+			return null;
 
 		else if (eom_index < 5) //fe xx yy zz ll aa 
 		{
 			list.remove(0);
-			return;
+			return null;
 		}
 
 		if (Debug)
@@ -740,7 +740,7 @@ public class AudioFormatMPA extends AudioFormat {
 		if (real_length != chunk_length)
 			type = -1;
 
-		String str;
+		String str = null;
 
 		switch (type)
 		{
@@ -749,31 +749,31 @@ public class AudioFormatMPA extends AudioFormat {
 			break;
 
 		case 0x0A: //RT
-			compareMsg(getRT(bo.toByteArray()), 0, frametime);
+			str = compareMsg(getRT(bo.toByteArray()), 0, frametime);
 			break;
 
 		case 0x01: //PI
-			compareMsg(getPI(bo.toByteArray()), 1, frametime);
+			str = compareMsg(getPI(bo.toByteArray()), 1, frametime);
 			break;
 
 		case 0x02: //PS program service name 
-			compareMsg(getPS(bo.toByteArray()), 2, frametime);
+			str = compareMsg(getPS(bo.toByteArray()), 2, frametime);
 			break;
 
 		case 0x03: //TA
-			compareMsg(getTP(bo.toByteArray()), 3, frametime);
+			str = compareMsg(getTP(bo.toByteArray()), 3, frametime);
 			break;
 
 		case 0x05: //MS
-			compareMsg(getMS(bo.toByteArray()), 4, frametime);
+			str = compareMsg(getMS(bo.toByteArray()), 4, frametime);
 			break;
 
 		case 0x07: //PTY
-			compareMsg(getPTY(bo.toByteArray()), 5, frametime);
+			str = compareMsg(getPTY(bo.toByteArray()), 5, frametime);
 			break;
 
 		case 0x0D: //RTC
-			compareMsg(getRTC(bo.toByteArray()), 6, frametime);
+			str = compareMsg(getRTC(bo.toByteArray()), 6, frametime);
 			break;
 
 		case 0x30: //TMC 
@@ -786,6 +786,8 @@ public class AudioFormatMPA extends AudioFormat {
 		}
 
 		bo.reset();
+
+		return str;
 	}
 
 	/**
@@ -841,14 +843,14 @@ public class AudioFormatMPA extends AudioFormat {
 	/**
 	 * 
 	 */
-	private void compareMsg(String str, int index, double frametime)
+	private String compareMsg(String str, int index, double frametime)
 	{
 		if (str == null || str.equals(rds_values[index]))
-			return;
+			return null;
 
 		rds_values[index] = str;
 
-		Common.setMessage("-> RDS @ " + Common.formatTime_1((long) (frametime / 90.0)) + ": " + str);
+		return ("-> RDS @ " + Common.formatTime_1((long) (frametime / 90.0)) + ": " + str);
 	}
 
 	/**

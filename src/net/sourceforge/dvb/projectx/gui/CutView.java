@@ -45,13 +45,15 @@ import javax.swing.JPanel;
  */
 public class CutView extends JPanel {
 
-	private final int Top = 20;
+	private final int Top = 15;
 	private final int Bottom = 188;
 
 	private int[] image_data;
 
 	private int width = 160;
 	private int height = 90;
+
+	private int sliderPosition = 175;
 
 	private Object index_top = null;
 	private Object index_bottom = null;
@@ -144,11 +146,58 @@ public class CutView extends JPanel {
 	/**
 	 *
 	 */
+	public void setSlider(int val)
+	{
+		sliderPosition = val;
+
+		repaint();
+	}
+
+	/**
+	 *
+	 */
+	public Object getPreviewPosition()
+	{
+		if (sliderPosition < 168)
+			return getTopIndex();
+
+		if (sliderPosition > 182)
+			return getBottomIndex();
+
+		return null;
+	}
+
+	/**
+	 *
+	 */
+	public int getTransparencyValue()
+	{
+		double div = 255.0 / 168.0;
+		int factor = 0;
+
+		if (sliderPosition < 168)
+			factor = -sliderPosition + 168;
+
+		if (sliderPosition > 182)
+			factor = sliderPosition - 182;
+
+		div *= factor;
+		factor = (int) div;
+		factor = factor > 255 ? 255 : factor;
+
+		return factor;
+	}
+
+	/**
+	 *
+	 */
 	public void clearViews()
 	{
 		matchingPoint = false;
 		clearView(Top);
 		clearView(Bottom);
+
+		CommonGui.getPicturePanel().setMixedPreviewPixel(null, 0);
 	}
 
 	/**
@@ -272,6 +321,36 @@ public class CutView extends JPanel {
 	//	g.drawImage(image_bottom, 0, Bottom, this);
 		g.drawImage(image_bottom, Bottom, Top, this);
 
+		paintSlider(g);
+	}
+
+	/**
+	 *
+	 */
+	public void paintSlider(Graphics g)
+	{
+		int i = 6;
+
+		g.setColor(cut_top ? Color.green : RedColor);
+		g.fillRect(i, 110, 40, 6);
+		g.fillRect(i + 44, 110, 32, 6);
+		g.fillRect(i + 80, 110, 24, 6);
+		g.fillRect(i + 108, 110, 16, 6);
+		g.fillRect(i + 128, 110, 10, 6);
+		g.fillRect(i + 142, 110, 6, 6);
+		g.fillRect(i + 152, 110, 4, 6);
+
+		g.setColor(cut_bottom ? Color.green : RedColor);
+		g.fillRect(Bottom, 110, 4, 6);
+		g.fillRect(Bottom + 8, 110, 6, 6);
+		g.fillRect(Bottom + 18, 110, 10, 6);
+		g.fillRect(Bottom + 32, 110, 16, 6);
+		g.fillRect(Bottom + 52, 110, 24, 6);
+		g.fillRect(Bottom + 80, 110, 32, 6);
+		g.fillRect(Bottom + 116, 110, 40, 6);
+
+		g.setColor(Color.yellow);
+		g.drawRect(sliderPosition - 7, 108, 14, 10);
 	}
 
 }

@@ -1,7 +1,7 @@
 /*
  * @(#)CommonParsing
  *
- * Copyright (c) 2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2007 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -64,6 +64,7 @@ public class CommonParsing extends Object {
 	public final static int ES_AUDIO_PARSER      = 5;
 	public final static int ES_SUBPICTURE_PARSER = 6;
 
+	//max 31, more defined by a subtype
 	public final static int Unsupported   = 0;	//	"unsupported"
 	public final static int PES_AV_TYPE   = 1;	//	"PES (Video/Audio/TTX)"
 	public final static int MPEG1PS_TYPE  = 2;	//	"MPEG-1 PS/SS (Video/Audio PES)"

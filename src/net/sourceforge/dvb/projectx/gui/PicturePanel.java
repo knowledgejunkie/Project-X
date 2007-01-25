@@ -1,7 +1,7 @@
 /*
  * @(#)PicturePanel
  * 
- * Copyright (c) 2003-2006 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2003-2007 by dvb.matt, All Rights Reserved. 
  *
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -85,22 +85,27 @@ public class PicturePanel extends JPanel {
 	private Image PalPlusImage = Resource.loadImage("_ppl.gif");
 	private Image SubpictureImage;
 	private Image image;
+	private Image mixed_image;
 //
 	private Image InfoBackground = Resource.loadImage("ibg.gif");
 	private Image SlideBackground = Resource.loadImage("sbg.gif");
 
 	private MemoryImageSource source;
+	private MemoryImageSource mixed_source;
 
 	private boolean showFileInfo = false;
 	private boolean isSubpictureAvailable = false;
 	private boolean isOSDInfoAvailable = false;
 	private boolean isOSDErrorInfo = false;
 	private boolean PLAY = true;
+	private boolean isMixedImageAvailable = false;
 
 	private boolean manualzoom = false;
 	private boolean definezoom = false;
 	private int[] zoomrect = new int[6];
 
+	private int[] mixed_image_array;
+	private String mixed_image_info = "";
 
 	private StreamInfo streamInfo = null;
 
@@ -211,6 +216,11 @@ public class PicturePanel extends JPanel {
 		source.setAnimated(true);
 		image = createImage(source);
 
+		mixed_image_array = new int[512 * 288];
+		mixed_source = new MemoryImageSource(512, 288, mixed_image_array, 0, 512);
+		mixed_source.setAnimated(true);
+		mixed_image = createImage(mixed_source);
+
 		font_1 = new Font("Tahoma", Font.PLAIN, 12);
 		font_2 = new Font("Tahoma", Font.BOLD, 12);
 		font_3 = new Font("Tahoma", Font.BOLD, 24);
@@ -265,6 +275,14 @@ public class PicturePanel extends JPanel {
 		addMouseMotionListener(new MouseMotionAdapter() {
 			public void mouseDragged(MouseEvent e)
 			{
+				if (e.isShiftDown() && Common.getMpvDecoderClass().getZoomMode() == 2)
+				{
+					zoomrect[0] = e.getX() < 0 ? 0 : e.getX();
+					zoomrect[1] = e.getY() < 0 ? 0 : e.getY();
+
+					Common.getMpvDecoderClass().setZoomMode(zoomrect);
+				}
+
 				if (!definezoom)
 					return;
 
@@ -419,7 +437,11 @@ public class PicturePanel extends JPanel {
 	{
 		paintInfoBackground(g);
 		paintOutline(g);
+
 		paintPreviewPicture(g);
+
+		paintMixedCutPreviewPicture(g);
+
 		paintZoomInfo(g);
 		paintVideoInfo(g);
 		paintSlideBackground(g);
@@ -466,6 +488,21 @@ public class PicturePanel extends JPanel {
 		g.fillRect(0, 0, 514, 290);
 
 		g.drawImage(image, 2, 2, this);
+	}
+
+	/**
+	 * paint cut mixed preview
+	 */
+	private void paintMixedCutPreviewPicture(Graphics g)
+	{
+		if (isMixedImageAvailable)
+		{
+			g.drawImage(mixed_image, 2, 2, this);
+
+			g.setFont(font_2);
+			g.setColor(Color.green);
+			g.drawString(mixed_image_info, 340, 280);
+		}
 	}
 
 	/**
@@ -1006,6 +1043,25 @@ public class PicturePanel extends JPanel {
 	public void updatePreviewPixel()
 	{
 		source.newPixels();
+	}
+
+	/**
+	 * modify transparency
+	 */
+	public void setMixedPreviewPixel(int[] picture, int transparency)
+	{
+		isMixedImageAvailable = picture != null && transparency > 0;
+
+		mixed_image_info = isMixedImageAvailable ? "CutImage Mix Mode: " + ((transparency * 100) / 255) + "%" : "";
+
+		if (!isMixedImageAvailable)
+			Arrays.fill(mixed_image_array, 0);
+
+		else
+			for (int i = 0, j = mixed_image_array.length; i < j; i++)
+				mixed_image_array[i] = (0xFFFFFF & picture[i]) | transparency<<24;
+
+		mixed_source.newPixels();
 	}
 
 	/**

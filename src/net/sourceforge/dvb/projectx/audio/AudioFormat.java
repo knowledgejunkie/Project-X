@@ -414,10 +414,9 @@ public class AudioFormat extends Object {
 	/**
 	 *
 	 */
-	public void decodeAncillaryData(byte[] frame, double frametime)
+	public String decodeAncillaryData(byte[] frame, double frametime)
 	{
-		if (impl != null)
-			impl.decodeAncillaryData(frame, frametime);
+		return (impl == null ? null : impl.decodeAncillaryData(frame, frametime));
 	}
 
 	/**

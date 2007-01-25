@@ -314,6 +314,14 @@
 --pre-scan ts miserkennung
 --(neue) koscom lese option
 
+0.90.4.00b14:
+----(neue) koscom lese option, restanpassung?
+--focus nach prozessstart von starttaste weg
+--zoombereich mit shift + mouse verschiebbar
+--cutimage mix mode zum schnittpunktabgleich
+--fix: abbruch bei bestimmten fehlerhaften Gops
+--speichersparen beim pts lesen
+
 
 
 !-test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding
@@ -355,7 +363,7 @@
 !!projektdateiexport zusammenfassen
 !!dvdlap index
 !!pegel graf audiodecode
-!!vorschau erweitert umringgops
+!!vorschau erweitert umringgops, extradatei aufbaun mit file-id + pos
 !!pmt 0xC3 -> string epg - nur inter Typ 0 - mtv2 cyfra 11282v hotbird 
 !-PAT mit adaptionfield ?? 6400 10977 h 16°E, neue klasse
 !!sendername aus SDT anzeigen?

@@ -46,6 +46,7 @@ import java.awt.GridLayout;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.KeyAdapter;
@@ -625,6 +626,8 @@ public class CutPanel extends JPanel {
 		panel.add(buildNavigationPanel());
 		panel.add(cutview = new CutView());
 
+
+		//cut-preview pic handling
 		cutview.addMouseListener(new MouseAdapter()
 		{
 			public void mouseClicked(MouseEvent e)
@@ -633,13 +636,13 @@ public class CutPanel extends JPanel {
 					return;
 
 				try {
-					if (e.getX() < cutview.getBottom() - 20)
+					if (e.getX() < cutview.getBottom() - 20 && e.getY() < 104)
 					{
 						if (cutview.getTopIndex() != null)
 							preview(Long.parseLong(cutview.getTopIndex().toString()));
 					}
 
-					else if (e.getX() > cutview.getBottom())
+					else if (e.getX() > cutview.getBottom() && e.getY() < 104)
 					{
 						if (cutview.getBottomIndex() != null)
 							preview(Long.parseLong(cutview.getBottomIndex().toString()));
@@ -648,6 +651,24 @@ public class CutPanel extends JPanel {
 				} catch (Exception exc) {}
 			}
 		});
+
+		cutview.addMouseMotionListener(new MouseMotionAdapter() {
+			public void mouseDragged(MouseEvent e)
+			{
+				if (e.getY() > 104)
+				{
+					cutview.setSlider(e.getX());
+
+					CommonGui.getPicturePanel().setMixedPreviewPixel(collection.getCutImage(cutview.getPreviewPosition()), cutview.getTransparencyValue());
+					CommonGui.getPicturePanel().repaint();
+				}
+			}
+
+			public void mouseMoved(MouseEvent e)
+			{
+			}
+		});
+
 
 		add(panel);
 
@@ -1005,6 +1026,7 @@ public class CutPanel extends JPanel {
 		cut_scan.setMaximumSize(new Dimension(50, 24));
 		cut_scan.setActionCommand("cut_scan");
 		cut_scan.addActionListener(jumpAction);
+		cut_scan.setEnabled(false);
 
 		JPanel panel_4 = new JPanel();
 		panel_4.setLayout(new BoxLayout(panel_4, BoxLayout.X_AXIS));
@@ -1135,6 +1157,7 @@ public class CutPanel extends JPanel {
 		chapter_scan.setMaximumSize(new Dimension(50, 24));
 		chapter_scan.setActionCommand("chapter_scan");
 		chapter_scan.addActionListener(jumpAction);
+		chapter_scan.setEnabled(false);
 
 		JPanel panel_4 = new JPanel();
 		panel_4.setLayout(new BoxLayout(panel_4, BoxLayout.X_AXIS));

@@ -1,7 +1,7 @@
 /*
  * @(#)MainFrame.java - holds main gui
  *
- * Copyright (c) 2001-2006 by dvb.matt, All rights reserved.
+ * Copyright (c) 2001-2007 by dvb.matt, All rights reserved.
  *
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -2514,9 +2514,8 @@ public class MainFrame extends JPanel {
 		JTabbedPane tabbedPane = new JTabbedPane();
 		tabbedPane.setTabPlacement(SwingConstants.BOTTOM);
 
-		tabbedPane.addTab("FileTable", buildFilePanel());
-	//	tabbedPane.addTab("ScanView", new ScanView());
-		tabbedPane.addTab("CutPanel", (cut_panel = new CutPanel()));
+		tabbedPane.addTab(Resource.getString("General.FileTable"), buildFilePanel());
+		tabbedPane.addTab(Resource.getString("General.CutControl"), (cut_panel = new CutPanel()));
 
 		panel.add(cut_panel.getSliderPanel(), BorderLayout.NORTH);
 		panel.add(tabbedPane);
