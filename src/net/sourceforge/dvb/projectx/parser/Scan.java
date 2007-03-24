@@ -1621,7 +1621,7 @@ public class Scan extends Object {
 					return CommonParsing.PES_MPA_TYPE;
 				}
 
-				else if ( (0xFF & check[i + 3]) == 0xBD && check[i + 3] == check[next + 3] )
+				else if ( (0xFF & check[i + 3]) == 0xBD && ((0xFF & check[next + 3]) == 0xBD || (0xFF & check[next + 3]) == 0xBE))
 				{
 					if (more)
 					{

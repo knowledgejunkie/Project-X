@@ -1,7 +1,7 @@
 /*
  * @(#)Start.java - main start class 
  *
- * Copyright (c) 2005-2006 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2005-2007 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -113,7 +113,7 @@ public class Start extends Object {
 			/**
 			 * get version switch
 			 */
-			if (getBooleanSwitch("-version"))
+		//	if (getBooleanSwitch("-version"))
 				System.out.println("Version: " + Common.getVersionName() + "/" + Common.getVersionDate());
 
 			System.out.println("Reading GUI-Switch...");

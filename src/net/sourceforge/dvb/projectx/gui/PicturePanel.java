@@ -634,6 +634,9 @@ public class PicturePanel extends JPanel {
 		{
 			g.setColor(Color.red);
 			g.fillRect(10, 294, 20, 20);
+
+			g.drawRect(0, 0, 513, 289);
+			g.drawRect(1, 1, 511, 287);
 		}
 	}
 

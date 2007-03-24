@@ -488,7 +488,9 @@ public class MainProcess extends Thread {
 
 		collection.setOutputDirectory( collection.getOutputDirectory() + collection.getFileSeparator() + str);
 
-		if ( !(new File(collection.getOutputDirectory()).mkdirs()))
+		File f = new File(collection.getOutputDirectory());
+
+		if (!f.exists() && !f.mkdirs())
 		{
 			Common.setMessage("!> can't create output directory..");
 			collection.setOutputDirectory(oldValue);

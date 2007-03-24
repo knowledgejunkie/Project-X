@@ -121,6 +121,7 @@ import net.sourceforge.dvb.projectx.parser.MainProcess;
 import net.sourceforge.dvb.projectx.parser.HpFix;
 import net.sourceforge.dvb.projectx.parser.StripAudio;
 import net.sourceforge.dvb.projectx.parser.StripRelook;
+import net.sourceforge.dvb.projectx.parser.StripMedion;
 
 import net.sourceforge.dvb.projectx.xinput.DirType;
 import net.sourceforge.dvb.projectx.xinput.XInputDirectory;
@@ -174,6 +175,8 @@ public class MainFrame extends JPanel {
 	private static CollectionPanel collection_panel;
 //
 	private static CutPanel cut_panel;
+
+	private static FilterPanel filter_panel;
 
 	private static JFrame frame = new JFrame();
 
@@ -703,6 +706,14 @@ public class MainFrame extends JPanel {
 			/**
 			 *
 			 */
+			else if (actName.equals("stripMedion"))
+			{
+				stripMedion();
+			}
+
+			/**
+			 *
+			 */
 			else if (actName.equals("editBasics"))
 			{
 				int index = tableView.getSelectedRow();
@@ -944,6 +955,46 @@ public class MainFrame extends JPanel {
 				tableView.clearSelection();
 			}
 		}
+
+		/**
+		 *
+		 */
+		private void stripMedion()
+		{
+			int index = tableView.getSelectedRow();
+
+			if (index < 0 || tableView.getValueAt(index, 0) == null)
+				return;
+
+			JobCollection collection = Common.getCollection();
+
+			XInputFile xInputFile = ((XInputFile) collection.getInputFile(index)).getNewInstance();
+
+			if (xInputFile != null && xInputFile.exists() && xInputFile.getStreamInfo().getStreamType() == CommonParsing.PES_AV_TYPE && CommonGui.getUserConfirmation("really process '" + xInputFile.getName() + "' ?"))
+			{
+				StripMedion stripMedion = new StripMedion();
+
+				Common.setOSDMessage("strip Medion® data...");
+
+				XInputFile[] xif = stripMedion.process(xInputFile, collection.getOutputDirectory());
+
+				collection.removeInputFile(index);
+
+				if (xif != null)
+				{
+					for (int i = 0, j = index; i < xif.length; i++)
+					{
+						if (xif[i] != null)
+							collection.addInputFile(j++, xif[i]);
+					}
+				}
+
+				updateCollectionTable(collection.getCollectionAsTable());
+				updateCollectionPanel(Common.getActiveCollection());
+
+				tableView.clearSelection();
+			}
+		}
 	};
 
 
@@ -1090,6 +1141,9 @@ public class MainFrame extends JPanel {
 		JMenuItem menuitem_16 = popup.add("strip Relook® type 1 to separate pes..");
 		menuitem_16.setActionCommand("stripRelook1");
 
+		JMenuItem menuitem_19 = popup.add("strip Medion® to separate pes..");
+		menuitem_19.setActionCommand("stripMedion");
+
 		popup.addSeparator();
 
 		JMenuItem menuitem_11 = popup.add(Resource.getString("popup.copyInfoToClipboard"));
@@ -1155,7 +1209,6 @@ public class MainFrame extends JPanel {
 		//coll properties
 		JMenuItem menuitem_18 = popup.add(Resource.getString("General.CollectionProperties") + "..");
 		menuitem_18.setActionCommand("CollectionProperties");
-		//menuitem_18.setEnabled(false);
 
 
 		popup.pack();
@@ -1176,6 +1229,7 @@ public class MainFrame extends JPanel {
 		menuitem_16.addActionListener(_MenuListener);
 		menuitem_17.addActionListener(_MenuListener);
 		menuitem_18.addActionListener(_MenuListener);
+		menuitem_19.addActionListener(_MenuListener);
 	}
 
 	/**
@@ -1717,10 +1771,10 @@ public class MainFrame extends JPanel {
 					if (elements == null)
 						return;
 
-					for (int i = 1; i < 12; i++)
+					for (int i = 1; i < 13; i++)
 						elements[i].getComponent().setEnabled(row >= 0);
 
-					for (int i = 12; i < elements.length; i++)
+					for (int i = 13; i < elements.length; i++)
 						elements[i].getComponent().setEnabled(index >= 0);
 
 					popup.show(tableView, e.getX(), e.getY() - popup.getHeight());
@@ -2516,6 +2570,7 @@ public class MainFrame extends JPanel {
 
 		tabbedPane.addTab(Resource.getString("General.FileTable"), buildFilePanel());
 		tabbedPane.addTab(Resource.getString("General.CutControl"), (cut_panel = new CutPanel()));
+		tabbedPane.addTab("Filter Control", (filter_panel = new FilterPanel()));
 
 		panel.add(cut_panel.getSliderPanel(), BorderLayout.NORTH);
 		panel.add(tabbedPane);

@@ -583,15 +583,14 @@ public class StreamParserTS extends StreamParserBase {
 					if ((ts_adaptionfield & 1) == 0)
 						continue loop;
 
-					if (ts_adaptionfieldlength > 183 || (ts_adaptionfieldlength > 180 && ts_startunit))
-						ts_hasErrors = true;
-
-					if (ts_hasErrors)
+					// errors
+					if (ts_hasErrors || ts_adaptionfieldlength > 183 || (ts_adaptionfieldlength > 180 && ts_startunit))
 					{
 						if (Message_1)
-							Common.setMessage(Resource.getString("parseTS.bit.error", Integer.toHexString(ts_pid).toUpperCase(), "" + packet, "" + (count-188)));
+							Common.setMessage(Resource.getString("parseTS.bit.error", Integer.toHexString(ts_pid).toUpperCase(), String.valueOf(packet), String.valueOf(count - 188)) + " (" + ts_adaptionfieldlength + " / " + ts_startunit + ")");
 
-						continue loop;
+						if (!ts_hasErrors)
+							continue loop;
 					}
 
 					payload_pesID = ts_startunit ? CommonParsing.getIntValue(ts_packet, 4 + ts_adaptionfieldlength, 4, !CommonParsing.BYTEREORDERING) : 0;
@@ -1449,7 +1448,7 @@ public class StreamParserTS extends StreamParserBase {
 
 		byte[] nextsegment = new byte[200];
 		long startoffset = 0x3C2E0L;
-		int offset = 4;
+		int offset = JepssenAdaption ? 4 : 68;
 
 		if (filenumber < collection.getPrimaryInputFileSegments() - 1)
 		{

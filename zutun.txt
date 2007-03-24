@@ -322,6 +322,12 @@
 --fix: abbruch bei bestimmten fehlerhaften Gops
 --speichersparen beim pts lesen
 
+0.90.4.00b15:
+--medion prepare option
+--geänd. koscom lese option
+--filtersteuerungspanel teil1
+
+
 
 
 !-test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding
