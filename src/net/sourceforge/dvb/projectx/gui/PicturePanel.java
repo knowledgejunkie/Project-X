@@ -275,7 +275,8 @@ public class PicturePanel extends JPanel {
 		addMouseMotionListener(new MouseMotionAdapter() {
 			public void mouseDragged(MouseEvent e)
 			{
-				if (e.isShiftDown() && Common.getMpvDecoderClass().getZoomMode() == 2)
+				//if (e.isShiftDown() && Common.getMpvDecoderClass().getZoomMode() == 2)
+				if (Common.getMpvDecoderClass().getZoomMode() == 2)
 				{
 					zoomrect[0] = e.getX() < 0 ? 0 : e.getX();
 					zoomrect[1] = e.getY() < 0 ? 0 : e.getY();

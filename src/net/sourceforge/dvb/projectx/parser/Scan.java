@@ -92,17 +92,23 @@ public class Scan extends Object {
  	 */
 	public void getStreamInfo(XInputFile aXInputFile)
 	{
-		getStreamInfo(aXInputFile, -1);
+		getStreamInfo(aXInputFile, 0, -1);
+	}
+
+	/**
+	 * performs a pre-scan of XInputFile and saves results in StreamInfo of XInputFile
+ 	 */
+	public void getStreamInfo(XInputFile aXInputFile, long position)
+	{
+		getStreamInfo(aXInputFile, position, -1);
 	}
 
 	/**
 	 * performs a pre-scan of XInputFile and saves results in StreamInfo of XInputFile
 	 * forces a streamtype assignment
  	 */
-	public void getStreamInfo(XInputFile aXInputFile, int assigned_streamtype)
+	public void getStreamInfo(XInputFile aXInputFile, long position, int assigned_streamtype)
 	{
-		long length = aXInputFile.length();
-
 		String _name = getName(aXInputFile);
 		String _location = getLocation(aXInputFile);
 		String _date = getDate(aXInputFile);
@@ -115,8 +121,13 @@ public class Scan extends Object {
 			if (streamInfo == null)
 				streamInfo = new StreamInfo();
 
+			String file_id = streamInfo.getFileID();
+
+			if (file_id.length() == 0)
+				file_id = Common.getNewFileID();
+
 			// type must be first when scanning
-			streamInfo.setStreamInfo(Common.getNewFileID(), aXInputFile.getFileType().getName(), getType(aXInputFile, assigned_streamtype), _name, _location, _date, _size, getPlaytime(), getVideo(), getAudio(), getText(), getPics());
+			streamInfo.setStreamInfo(file_id, aXInputFile.getFileType().getName(), getType(aXInputFile, position, assigned_streamtype), _name, _location, _date, _size, getPlaytime(), getVideo(), getAudio(), getText(), getPics());
 
 			streamInfo.setStreamType(filetype, addInfo);
 			streamInfo.setPIDs(getPIDs());
@@ -142,9 +153,13 @@ public class Scan extends Object {
 	/**
 	 *
 	 */
-	private String getType(XInputFile aXInputFile, int assigned_streamtype)
+	private String getType(XInputFile aXInputFile, long position, int assigned_streamtype)
 	{ 
-		filetype = testFile(aXInputFile, true, assigned_streamtype);
+		if (position > 0)
+			filetype = testFile(aXInputFile, true, position, assigned_streamtype);
+
+		else
+			filetype = testFile(aXInputFile, true, assigned_streamtype);
 
 		return (Keys.ITEMS_FileTypes[filetype].toString() + addInfo); 
 	}
@@ -952,8 +967,9 @@ public class Scan extends Object {
 					pidlist.add("" + pid); 
 					break; 
 
-				case 3:
-				case 4:
+				case 3:  //mp1a
+				case 4:  //mp2a
+				case 0x11:  //mp4a
 					getDescriptor(pmt, b+5, (b += 4+ (0xFF & pmt[b+4])), pid, 4);
 					pidlist.add("" + pid); 
 					break; 
@@ -997,6 +1013,7 @@ public class Scan extends Object {
 			loop:
 			for (; off < end && off < check.length; off++)
 			{
+
 				switch(0xFF & check[off])
 				{
 				case 0x59:  //dvb subtitle descriptor
@@ -1080,6 +1097,12 @@ public class Scan extends Object {
 
 				case 0x6A:  //ac3 descriptor
 					str += "(AC-3)";
+					off++;
+					off += (0xFF & check[off]);
+					break;
+
+				case 0x7C:  //aac descriptor
+					str += "(AAC)";
 					off++;
 					off += (0xFF & check[off]);
 					break;

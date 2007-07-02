@@ -48,6 +48,8 @@ public class Preview extends Object {
 
 	private String processed_file;
 
+	private boolean silent = true;
+
 	private List positionList;
 	private PreviewObject preview_object;
 	private Object[] predefined_Pids;
@@ -62,11 +64,17 @@ public class Preview extends Object {
 		processed_file = "";
 	}
 
+	/**
+	 *
+	 */
 	public String getProcessedFile()
 	{
 		return processed_file;
 	}
 
+	/**
+	 *
+	 */
 	public String getProcessedPID()
 	{
 		if (processed_PID < 0)
@@ -75,6 +83,9 @@ public class Preview extends Object {
 		return ("(P)ID 0x" + Common.adaptString(Integer.toHexString(processed_PID).toUpperCase(), 4));
 	}
 
+	/**
+	 *
+	 */
 	public long load(long startposition, int size, List previewList, boolean direction, boolean all_gops, boolean fast_decode, int y_gain, Object[] _predefined_Pids, int _active_collection) throws IOException
 	{
 		predefined_Pids = _predefined_Pids;
@@ -120,7 +131,7 @@ public class Preview extends Object {
 
 		preview_data = search(preview_data, startposition, filetype);
 
-		long newposition = Common.getMpvDecoderClass().decodeArray(preview_data, direction, all_gops, fast_decode, y_gain);
+		long newposition = Common.getMpvDecoderClass().decodeArray(preview_data, direction, all_gops, fast_decode, y_gain, !silent);
 
 		for (int i = positionList.size() - 1; i >= 0; i--)
 		{
@@ -141,7 +152,6 @@ public class Preview extends Object {
 
 			if (startposition < preview_object.getEnd())
 			{
-			//	processed_file = "" + (i + 1) + "/" + previewList.size() + " - " + preview_object.getFile().getName();
 				processed_file = "" + i + "/" + (previewList.size() - 1) + " - " + preview_object.getFile().getName();
 				break;
 			}
@@ -157,6 +167,42 @@ public class Preview extends Object {
 		return startposition;
 	}
 
+	/**
+	 *
+	 */
+	public long previewFile(XInputFile lXInputFile, long startposition, int size, boolean all_gops, boolean fast_decode, int y_gain)
+	{
+		preview_data = new byte[size];
+		predefined_Pids = new Object[0];
+
+		int filetype = lXInputFile.getStreamInfo().getStreamType();
+
+		try {
+
+			lXInputFile.randomAccessOpen("r");
+			lXInputFile.randomAccessSeek(startposition);
+			lXInputFile.randomAccessRead(preview_data, 0, size);
+			lXInputFile.randomAccessClose();
+
+		} catch (IOException e) {
+			Common.setExceptionMessage(e);
+		}
+
+		preview_data = search(preview_data, startposition, filetype);
+
+		long newposition = Common.getMpvDecoderClass().decodeArray(preview_data, false, all_gops, fast_decode, y_gain, silent);
+
+		startposition += newposition;
+
+		preview_data = null;
+		//System.gc();
+
+		return startposition;
+	}
+
+	/**
+	 *
+	 */
 	private byte[] search(byte data[], long startposition, int filetype)
 	{
 		positionList.clear();

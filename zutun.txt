@@ -327,7 +327,11 @@
 --geänd. koscom lese option
 --filtersteuerungspanel teil1
 
-
+0.90.4.00b16:
+--filtersteuerungspanel teil2 
+--file properties gui, einstellungen je file
+--dynam. Rescan mit vorschau in dateieigenschaften
+--fix mpeg1 out of memory - u.a.
 
 
 !-test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding
@@ -336,7 +340,6 @@
 !!parserliste/demuxlist vereinen, alle fileobjekte in einem pool
 !!ac3 2/0 128kbs wg vro hinzufügen, ac3 5.1 256, 320kb stille 
 !!ac3 384 wird nicht als Stille genommen, restart wenn 5.1 größer detektiert wird
-!!file properties gui, einstellungen je file
 !!vro-vob timecode lese patch?
 !!multi-vob - pts offs nicht erkannt bei nächster cellid, manchmal
 !!multi-vob - fortlaufende pts nicht erkannt bei nächster cellid (nach einer erfoglten anpassung früher)
@@ -349,7 +352,7 @@
 !!-pes parser keine vorauswahl von headern ba,ff,f0 etc mehr, mit loggen
 !!-0xBE -> arte_ut fra, scan von pes ändern
 
-!!genauere scanzuordnung
+!genauere scanzuordnung - angefangen
 !!id3tag infos anzeigen
 !!hav sektoren prüfen, nur melden
 !!profile hd,mpg reseted,vob, etc ermöglichen?

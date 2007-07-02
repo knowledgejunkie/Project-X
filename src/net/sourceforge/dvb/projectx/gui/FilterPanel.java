@@ -74,8 +74,6 @@ import net.sourceforge.dvb.projectx.common.JobCollection;
  */
 public class FilterPanel extends JPanel {
 
-	private String title = Resource.getString("General.CollectionProperties");
-
 	private CPComboBoxIndexListener _ComboBoxIndexListener = new CPComboBoxIndexListener();
 	private CPComboBoxItemListener _ComboBoxItemListener = new CPComboBoxItemListener();
 	private CPCheckBoxListener _CheckBoxListener = new CPCheckBoxListener();
@@ -88,57 +86,92 @@ public class FilterPanel extends JPanel {
 	private JPanel tabPanel;
 	private JList includeList;
 
-		class Clock implements Runnable {
-			private Thread clockThread = null;
+	private boolean actionDenied = false;
+	private boolean hasChanged = false;
 
-			private int last_collection = 0;
+	private String[][] objects = {
+		Keys.KEY_WriteOptions_writeVideo,
+		Keys.KEY_WriteOptions_writeAudio,
+		Keys.KEY_OptionHorizontalResolution,
+		Keys.KEY_OptionDAR,
+		Keys.KEY_Streamtype_MpgVideo,
+		Keys.KEY_Streamtype_MpgAudio,
+		Keys.KEY_Streamtype_Ac3Audio,
+		Keys.KEY_Streamtype_PcmAudio,
+		Keys.KEY_Streamtype_Teletext,
+		Keys.KEY_Streamtype_Subpicture,
+		Keys.KEY_Streamtype_Vbi,
+		Keys.KEY_useAutoPidFilter
+	};
 
-			public void start()
+	private JComboBox combobox_34;
+	private JComboBox combobox_24;
+
+	private JCheckBox[] box;
+
+
+	class Clock implements Runnable {
+		private Thread clockThread = null;
+
+		private int last_collection = 0;
+
+		public void start()
+		{
+			if (clockThread == null)
 			{
-				if (clockThread == null)
-				{
-					clockThread = new Thread(this, "Clock_6");
-					clockThread.setPriority(Thread.MIN_PRIORITY);
-					clockThread.start();
-				}
-			}
-
-			public void run()
-			{
-				Thread myThread = Thread.currentThread();
-
-				while (clockThread == myThread)
-				{
-					update();
-
-					try {
-
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {}
-				}
-			}
-
-			private void update()
-			{
-				if (Common.getCollection() == null || Common.getCollection().hashCode() == last_collection)
-					return;
-
-				last_collection = Common.getCollection().hashCode();
-
-				updatePidList();
-			}
-
-			private void updatePidList()
-			{
-				setPIDs();
-			}
-
-
-			public void stop()
-			{
-				clockThread = null;
+				clockThread = new Thread(this, "Clock_6");
+				clockThread.setPriority(Thread.MIN_PRIORITY);
+				clockThread.start();
 			}
 		}
+
+		public void run()
+		{
+			Thread myThread = Thread.currentThread();
+
+			while (clockThread == myThread)
+			{
+				update();
+
+				try {
+
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {}
+			}
+		}
+
+		private void update()
+		{
+			if (Common.getCollection() == null)
+				return;
+
+			if (Common.getCollection().hashCode() == last_collection)
+				if (hasChanged && collection.hasSettings())
+					return;
+				else
+					hasChanged = false;
+
+			last_collection = Common.getCollection().hashCode();
+
+			updatePidList();
+			updateProperties();
+		}
+
+		private void updatePidList()
+		{
+			setPIDs();
+		}
+
+		private void updateProperties()
+		{
+			setCollectionProperties();
+		}
+
+		public void stop()
+		{
+			clockThread = null;
+		}
+	}
 
 
 	/**
@@ -146,10 +179,26 @@ public class FilterPanel extends JPanel {
 	 */
 	public FilterPanel()
 	{
+		box = new JCheckBox[objects.length];
+
+		for (int i = 0; i < objects.length; i++)
+		{
+			box[i] = new JCheckBox(Resource.getString(objects[i][0]));
+			box[i].setToolTipText(Resource.getString(objects[i][0] + Keys.KEY_Tip));
+			box[i].setActionCommand(objects[i][0]);
+			box[i].addActionListener(_CheckBoxListener);
+		}
+
+		combobox_34 = new JComboBox(Keys.ITEMS_ExportHorizontalResolution);
+		combobox_24 = new JComboBox(Keys.ITEMS_ExportDAR);
+
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
 
 		panel.add(buildPidPanel());
+		panel.add(buildLimitPanel());
+		panel.add(buildWritePanel());
+		panel.add(buildStreamtypePanel());
 
 		new Clock().start();
 
@@ -208,11 +257,10 @@ public class FilterPanel extends JPanel {
 	 */
 	private void setBooleanProperty(String str, boolean b)
 	{
-		if (collection == null)
+		if (!performAction())
 			return;
 
 		collection.getSettings().setBooleanProperty(str, b);
-
 	}
 
 	/**
@@ -220,11 +268,10 @@ public class FilterPanel extends JPanel {
 	 */
 	private void setProperty(String str1, String str2)
 	{
-		if (collection == null)
+		if (!performAction())
 			return;
 
 		collection.getSettings().setProperty(str1, str2);
-
 	}
 
 	/**
@@ -232,11 +279,30 @@ public class FilterPanel extends JPanel {
 	 */
 	private void setProperty(String str, Object obj)
 	{
-		if (collection == null)
+		if (!performAction())
 			return;
 
 		collection.getSettings().setProperty(str, obj);
+	}
 
+	/**
+	 *
+	 */
+	private boolean performAction()
+	{
+		boolean b = true;
+
+		if (actionDenied)
+			return !b;
+
+		getCollectionAndSettings();
+
+		if (collection == null)
+			return !b;
+
+		hasChanged = b;
+
+		return b;
 	}
 
 	/**
@@ -264,9 +330,38 @@ public class FilterPanel extends JPanel {
 	/**
 	 *
 	 */
+	private void setCollectionProperties()
+	{
+		actionDenied = true;
+
+		getCollection();
+
+		for (int i = 0; i < box.length; i++)
+			box[i].setSelected(getBooleanProperty(objects[i]));
+
+		combobox_34.setSelectedItem(getProperty(Keys.KEY_ExportHorizontalResolution));
+		combobox_24.setSelectedIndex(getIntProperty(Keys.KEY_ExportDAR));
+
+		actionDenied = false;
+	}
+
+	/**
+	 *
+	 */
 	private void getCollection()
 	{
 		collection = Common.getCollection();
+	}
+
+	/**
+	 *
+	 */
+	private void getCollectionAndSettings()
+	{
+		getCollection();
+
+		if (collection != null && !collection.hasSettings())
+			collection.setSettings(Common.getSettings());
 	}
 
 	/**
@@ -420,6 +515,152 @@ public class FilterPanel extends JPanel {
 		return panel;
 	}
 
+	/**
+	 *
+	 */
+	protected JPanel buildLimitPanel()
+	{
+		JPanel panel_1 = new JPanel();
+		panel_1.setLayout(new ColumnLayout());
+		panel_1.setBorder( BorderFactory.createTitledBorder("Filter Options"));
+//		panel_1.setBorder( BorderFactory.createTitledBorder(Resource.getString("ExportPanel.WriteOptions")) );
+//		panel_1.setToolTipText(Resource.getString("ExportPanel.WriteOptions.Tip"));
+
+		panel_1.add(box[11]);
+
+		/**
+		 *
+		 */
+		JPanel CL2 = new JPanel();
+		CL2.setLayout(new BoxLayout(CL2, BoxLayout.X_AXIS));
+
+		box[2].setPreferredSize(new Dimension(110, 20));
+		box[2].setMaximumSize(new Dimension(110, 20));
+		CL2.add(box[2]);  
+
+
+		combobox_34 = new JComboBox(Keys.ITEMS_ExportHorizontalResolution);
+		combobox_34.setMaximumRowCount(7);
+		combobox_34.setPreferredSize(new Dimension(90, 20));
+		combobox_34.setMaximumSize(new Dimension(90, 20));
+		combobox_34.setActionCommand(Keys.KEY_ExportHorizontalResolution[0]);
+		combobox_34.setEditable(true);
+		combobox_34.addActionListener(_ComboBoxItemListener);
+		CL2.add(combobox_34);
+
+		panel_1.add(CL2);
+
+		/**
+		 *
+		 */
+		JPanel CL3 = new JPanel();
+		CL3.setLayout(new BoxLayout(CL3, BoxLayout.X_AXIS));
+
+		box[3].setPreferredSize(new Dimension(80, 20));
+		box[3].setMaximumSize(new Dimension(80, 20));
+		CL3.add(box[3]);  
+
+		combobox_24 = new JComboBox(Keys.ITEMS_ExportDAR);
+		combobox_24.setMaximumRowCount(7);
+		combobox_24.setPreferredSize(new Dimension(120, 20));
+		combobox_24.setMaximumSize(new Dimension(120, 20));
+		combobox_24.setActionCommand(Keys.KEY_ExportDAR[0]);
+		combobox_24.addActionListener(_ComboBoxIndexListener);
+		CL3.add(combobox_24);
+
+		panel_1.add(CL3);
+
+		panel_1.add(Box.createRigidArea(new Dimension(1, 10)));
+
+		JButton revert = new JButton(Resource.getString("FilterPanel.ResetAll"));
+		revert.setPreferredSize(new Dimension(180, 24));
+		revert.setMaximumSize(new Dimension(180, 24));
+		revert.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				if (collection != null)
+					collection.setSettings(null);
+			}
+		});
+
+		panel_1.add(revert);
+
+
+		JPanel panel = new JPanel();
+		panel.setLayout( new GridLayout(1, 1) );
+		panel.add(panel_1);
+
+		return panel;
+	}
+
+	/**
+	 *
+	 */
+	protected JPanel buildWritePanel()
+	{
+		JPanel panel_1 = new JPanel();
+		panel_1.setLayout(new ColumnLayout());
+		panel_1.setBorder( BorderFactory.createTitledBorder(Resource.getString("ExportPanel.WriteOptions")) );
+		panel_1.setToolTipText(Resource.getString("ExportPanel.WriteOptions.Tip"));
+
+		panel_1.add(box[0]);
+		panel_1.add(box[1]);
+
+		panel_1.add(Box.createRigidArea(new Dimension(1, 25)));
+
+		JButton more = new JButton(Resource.getString("FilterPanel.MoreSettings"));
+		more.setPreferredSize(new Dimension(180, 24));
+		more.setMaximumSize(new Dimension(180, 24));
+		more.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				if (collection != null)
+					CommonGui.getCollectionProperties().open(Common.getCollection(), Common.getActiveCollection());
+			}
+		});
+
+		panel_1.add(more);
+
+
+		JPanel panel = new JPanel();
+		panel.setLayout( new GridLayout(1, 1) );
+		panel.add(panel_1);
+
+		return panel;
+	}
+
+	/**
+	 *
+	 */
+	protected JPanel buildStreamtypePanel()
+	{
+		JPanel idPanel = new JPanel();
+		idPanel.setBorder(BorderFactory.createTitledBorder(Resource.getString("ExportPanel.StreamtypePanel")));
+		idPanel.setLayout(new BoxLayout(idPanel, BoxLayout.X_AXIS));
+		idPanel.setToolTipText(Resource.getString("ExportPanel.StreamtypePanel.Tip"));
+
+		JPanel panel_1 = new JPanel();
+		panel_1.setLayout(new ColumnLayout());
+
+		for (int i = 4; i < 8; i++)
+			panel_1.add(box[i]);
+
+		JPanel panel_2 = new JPanel();
+		panel_2.setLayout(new ColumnLayout());
+
+		for (int i = 8; i < 11; i++)
+			panel_2.add(box[i]);
+
+		idPanel.add(panel_1);
+		idPanel.add(panel_2);
+
+
+		JPanel panel = new JPanel();
+		panel.setLayout( new GridLayout(1, 1) );
+		panel.add(idPanel);
+
+		return panel;
+	}
 
 	/**
 	 * 

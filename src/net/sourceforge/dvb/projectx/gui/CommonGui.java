@@ -35,6 +35,7 @@ import net.sourceforge.dvb.projectx.gui.X_JFileChooser;
 import net.sourceforge.dvb.projectx.gui.PicturePanel;
 import net.sourceforge.dvb.projectx.gui.FileProperties;
 import net.sourceforge.dvb.projectx.gui.CollectionProperties;
+import net.sourceforge.dvb.projectx.gui.PatchDialog;
 
 import net.sourceforge.dvb.projectx.common.Resource;
 
@@ -54,6 +55,8 @@ public class CommonGui extends Object {
 	private static FileProperties file_properties;
 
 	private static CollectionProperties collection_properties;
+
+	private static PatchDialog patch_dialog = null;
 
 	/**
 	 *
@@ -218,5 +221,17 @@ public class CommonGui extends Object {
 	{
 		return collection_properties;
 	}
+
+	/**
+	 *
+	 */
+	public static PatchDialog getPatchDialog()
+	{
+		if (patch_dialog == null)
+			patch_dialog = new PatchDialog(frame);
+
+		return patch_dialog;
+	}
+
 }
 

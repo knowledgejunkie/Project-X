@@ -54,6 +54,8 @@ public class StreamInfo extends Object {
 	private Object[] pids;
 	private byte[] videoheader;
 
+	private long scanposition = 0;
+
 	private String line_separator = System.getProperty("line.separator");
 
 	/**
@@ -320,6 +322,22 @@ public class StreamInfo extends Object {
 		str += getPlaytime();
 
 		return str;
+	}
+
+	/**
+	 *
+	 */
+	public long getScanPosition()
+	{
+		return scanposition;
+	}
+
+	/**
+	 *
+	 */
+	public void setScanPosition(long value)
+	{
+		scanposition = value;
 	}
 
 	/**

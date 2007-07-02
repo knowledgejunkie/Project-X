@@ -26,6 +26,8 @@
 
 package net.sourceforge.dvb.projectx.gui;
 
+import java.awt.Image;
+import java.awt.image.MemoryImageSource;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -35,6 +37,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.KeyEvent;
 import java.awt.Color;
+import java.awt.Graphics;
+import javax.swing.event.*;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -47,6 +51,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.JTextArea;
 import javax.swing.UIManager;
 import javax.swing.SwingConstants;
 import javax.swing.JMenuBar;
@@ -54,6 +59,10 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
 import javax.swing.JSlider;
+import javax.swing.JScrollPane;
+import javax.swing.JViewport;
+
+import java.io.IOException;
 
 import net.sourceforge.dvb.projectx.gui.UISwitchListener;
 import net.sourceforge.dvb.projectx.gui.CommonGui;
@@ -67,8 +76,17 @@ import net.sourceforge.dvb.projectx.gui.TextFieldKeyListener;
 import net.sourceforge.dvb.projectx.common.Keys;
 import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.common.Resource;
+import net.sourceforge.dvb.projectx.common.JobCollection;
 
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
+
+import net.sourceforge.dvb.projectx.video.Preview;
+
+import net.sourceforge.dvb.projectx.parser.HpFix;
+import net.sourceforge.dvb.projectx.parser.StripAudio;
+import net.sourceforge.dvb.projectx.parser.StripRelook;
+import net.sourceforge.dvb.projectx.parser.StripMedion;
+import net.sourceforge.dvb.projectx.parser.CommonParsing;
 
 /**
  *
@@ -77,13 +95,29 @@ public class FileProperties extends JFrame {
 
 	private String title = Resource.getString("General.FileProperties");
 
-	private final Color head_color = new Color(224, 224, 224);
-
 	private ComboBoxIndexListener _ComboBoxIndexListener = new ComboBoxIndexListener();
 	private ComboBoxItemListener _ComboBoxItemListener = new ComboBoxItemListener();
 	private CheckBoxListener _CheckBoxListener = new CheckBoxListener();
 	private TextFieldListener _TextFieldListener = new TextFieldListener();
 	private TextFieldKeyListener _TextFieldKeyListener = new TextFieldKeyListener();
+
+	private XInputFile inputfile = null;
+
+	private JTextArea area = null;
+	private JLabel length = null;
+	private JSlider slider = null;
+	private View view;
+
+	private Color bg_color = new Color(0, 150, 0);
+
+	private int loadSizeForward = 1024000;
+	private int collection_number = 0;
+	private int collection_index = 0;
+	private int tmp_value = 0;
+
+	private boolean silent = false;
+
+	private Preview Preview = new Preview(loadSizeForward);
 
 	/**
 	 * Constructor
@@ -103,11 +137,11 @@ public class FileProperties extends JFrame {
 
 		buildMenu();
 
-		container.add(buildTabPanel());
+		container.add(buildMainPanel());
 		getContentPane().add(container);
 
 		setTitle(title);
-		setBounds(200, 100, 720, 400);
+		setBounds(200, 100, 660, 360);
 		setResizable(false);
 
 		UIManager.addPropertyChangeListener(new UISwitchListener(getRootPane()));
@@ -121,6 +155,9 @@ public class FileProperties extends JFrame {
 		JMenuBar menuBar = new JMenuBar();
 
 		menuBar.add(buildFileMenu());
+		menuBar.add(buildEditMenu());
+		menuBar.add(buildPreprocessMenu());
+		menuBar.add(buildStreamMenu());
 
 		setJMenuBar(menuBar);
 	}
@@ -130,10 +167,10 @@ public class FileProperties extends JFrame {
 	 */
 	protected JMenu buildFileMenu()
 	{
-		JMenu fileMenu = new JMenu();
-		CommonGui.localize(fileMenu, "Common.File");
+		JMenu menu = new JMenu();
+		CommonGui.localize(menu, "Common.File");
 
-		fileMenu.addSeparator();
+		menu.addSeparator();
 
 		JMenuItem close = new JMenuItem();
 		CommonGui.localize(close, "Common.Close");
@@ -145,48 +182,114 @@ public class FileProperties extends JFrame {
 			}
 		});
 
-		fileMenu.add(close);
+		JMenuItem item_2 = new JMenuItem(Resource.getString("popup.rename"));
+		item_2.setActionCommand("rename");
 
-		return fileMenu;
+		JMenuItem item_3 = new JMenuItem(Resource.getString("popup.openhex"));
+		item_3.setActionCommand("viewAsHex");
+
+		menu.add(item_2);
+		menu.addSeparator();
+		menu.add(item_3);
+		menu.addSeparator();
+		menu.add(close);
+
+		item_2.addActionListener(_MenuListener);
+		item_3.addActionListener(_MenuListener);
+
+		return menu;
 	}
 
 	/**
 	 *
 	 */
-	protected JPanel buildTabPanel()
+	protected JMenu buildEditMenu()
 	{
-		JPanel panel = new JPanel();
-		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-		panel.setBorder(BorderFactory.createEmptyBorder(5, 2, 2, 2));
+		JMenu menu = new JMenu();
+		CommonGui.localize(menu, "Common.Edit");
 
-		JTabbedPane logtab = new JTabbedPane(SwingConstants.LEFT);
+		JMenuItem item_1 = new JMenuItem(Resource.getString("popup.changeTimestamp"));
+		item_1.setActionCommand("changeTimestamp");
 
-		logtab.addTab( "Main", buildMainPanel());
-	//	logtab.addTab( Resource.getString("TabPanel.SpecialPanel"), buildSpecialPanel());
+		JMenuItem item_2 = new JMenuItem(Resource.getString("popup.patchbasics"));
+		item_2.setActionCommand("editBasics");
 
-		logtab.setSelectedIndex(0);
+		menu.add(item_1);
+		menu.addSeparator();
+		menu.add(item_2);
 
-		panel.add(logtab, BorderLayout.CENTER);
+		item_1.addActionListener(_MenuListener);
+		item_2.addActionListener(_MenuListener);
 
-		return panel;
+		return menu;
 	}
 
 	/**
 	 *
 	 */
-	protected JPanel buildHeadPanel(JPanel panel, String str)
+	protected JMenu buildPreprocessMenu()
 	{
-		JPanel panel_1 = new JPanel(new BorderLayout());
-		panel_1.setBackground(head_color);
-		panel_1.setBorder(BorderFactory.createTitledBorder(""));
-		panel_1.add(new JLabel(" " + str));
+		JMenu menu = new JMenu();
+		CommonGui.localize(menu, "Common.Preprocess");
 
-		JPanel panel_2 = new JPanel(new BorderLayout());
-		panel_2.add(panel, BorderLayout.CENTER);
-		panel_2.add(panel_1, BorderLayout.NORTH);
+		JMenuItem item_1 = new JMenuItem(Resource.getString("popup.fixHpAc3"));
+		item_1.setActionCommand("fixHpAc3");
 
-		return panel_2;
+		JMenuItem item_2 = new JMenuItem(Resource.getString("popup.stripAudio"));
+		item_2.setActionCommand("stripAudio");
+
+		JMenuItem item_3 = new JMenuItem("strip Relook® type 0 to separate pes..");
+		item_3.setActionCommand("stripRelook");
+
+		JMenuItem item_4 = new JMenuItem("strip Relook® type 1 to separate pes..");
+		item_4.setActionCommand("stripRelook1");
+
+		JMenuItem item_5 = new JMenuItem("strip Medion® to separate pes..");
+		item_5.setActionCommand("stripMedion");
+
+
+		menu.add(item_1);
+		menu.addSeparator();
+		menu.add(item_2);
+		menu.addSeparator();
+		menu.add(item_3);
+		menu.add(item_4);
+		menu.addSeparator();
+		menu.add(item_5);
+
+		item_1.addActionListener(_MenuListener);
+		item_2.addActionListener(_MenuListener);
+		item_3.addActionListener(_MenuListener);
+		item_4.addActionListener(_MenuListener);
+		item_5.addActionListener(_MenuListener);
+
+		return menu;
 	}
+
+	/**
+	 *
+	 */
+	protected JMenu buildStreamMenu()
+	{
+		JMenu menu = new JMenu(Resource.getString("popup.assignStreamType"));
+
+		Object[] objects = Keys.ITEMS_FileTypes;
+
+		for (int i = 0; i <= objects.length; i++)
+		{
+			JMenuItem item = new JMenuItem(i == objects.length ? Resource.getString("popup.automatic") : objects[i].toString());
+			item.setActionCommand("assignStreamtype");
+			item.addActionListener(_MenuListener);
+
+			if (i == objects.length)
+				menu.addSeparator();
+
+			menu.add(item);
+		}
+
+		return menu;
+	}
+
 
 	/**
 	 *
@@ -194,36 +297,426 @@ public class FileProperties extends JFrame {
 	protected JPanel buildMainPanel()
 	{
 		JPanel panel = new JPanel();
-		panel.setLayout( new GridLayout(2, 2) );
+		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
 
-		JPanel op1 = new JPanel();
-		op1.setLayout( new ColumnLayout() );
-		op1.setBorder( BorderFactory.createTitledBorder("Preview") );
+		JPanel panel_1 = new JPanel();
+		panel_1.setLayout( new ColumnLayout() );
+		panel_1.setBorder( BorderFactory.createTitledBorder("Preview") );
 
-		JSlider slider = new JSlider();
+		panel_1.add(view = new View());
+
+		panel_1.add(Box.createRigidArea(new Dimension(1, 5)));
+
+		slider = new JSlider();
+		slider.setPreferredSize(new Dimension(160, 30));
+		slider.setMaximumSize(new Dimension(160, 30));
+		slider.setMinimumSize(new Dimension(160, 30));
 		slider.setMaximum(100);
 		slider.setValue(0);
-		op1.add(slider);
 
-		panel.add(op1);
+		slider.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e)
+			{
+				if (!silent)
+					scanFile(32L * slider.getValue());
+			}
+		});
 
-		return buildHeadPanel(panel, "Main");
+		panel_1.add(slider);
+
+		panel_1.add(Box.createRigidArea(new Dimension(1, 5)));
+
+		length = new JLabel("ScanPos: ");
+
+		panel_1.add(length);
+
+		//file info
+		JPanel panel_2 = new JPanel();
+		panel_2.setLayout( new ColumnLayout() );
+		panel_2.setBorder( BorderFactory.createTitledBorder("File Info") );
+
+		area = new JTextArea();
+		area.setEditable(true);
+
+		JScrollPane scroll = new JScrollPane();
+		scroll.setPreferredSize(new Dimension(460, 280));
+		scroll.setMaximumSize(new Dimension(460, 280));
+		scroll.setMinimumSize(new Dimension(460, 280));
+		scroll.setViewportView(area);
+		JViewport viewport = scroll.getViewport();
+
+		panel_2.add(scroll);
+
+		panel.add(panel_1);
+		panel.add(panel_2);
+
+		return panel;
 	}
-
 
 	/**
 	 *
 	 */
 	public void close()
 	{ 
+		inputfile = null;
+
 		dispose();
 	}
 
 	/**
 	 *
 	 */
-	public void open(XInputFile xInputFile, int value)
+	public void open(XInputFile xInputFile, int value_1, int value_2)
 	{ 
+		collection_number = value_1;
+		collection_index = value_2;
+
+		inputfile = xInputFile;
+
+		silent = true;
+		slider.setMaximum((int)(inputfile.length() / 32L));
+		silent = false;
+
+		tmp_value = (int)(inputfile.getStreamInfo().getScanPosition() / 32L);
+
+		if (tmp_value != slider.getValue())
+			slider.setValue(tmp_value);
+
+		else
+			scanFile();
+
 		show();
+	}
+
+	/**
+	 *
+	 */
+	private void setPanelTitle()
+	{ 
+		setTitle(title + ": ID " + inputfile.getStreamInfo().getFileID() + " - '" + inputfile.getName() + "'");
+	}
+
+	/**
+	 *
+	 */
+	private void scanFile()
+	{ 
+		setPanelTitle();
+		scanFile(inputfile.getStreamInfo().getScanPosition());
+	}
+
+	/**
+	 *
+	 */
+	private void scanFile(long value)
+	{ 
+		setPosInfo(value);
+
+		Common.getScanClass().getStreamInfo(inputfile, value);
+
+		setFileInfo();
+
+		long position = Preview.previewFile(inputfile, value, loadSizeForward, Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops), Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode), Common.getSettings().getIntProperty(Keys.KEY_Preview_YGain));
+
+		view.setImage(Common.getMpvDecoderClass().getScaledCutImage());
+	}
+
+	/**
+	 *
+	 */
+	private void scanSpecFileType(int type)
+	{ 
+		long value = inputfile.getStreamInfo().getScanPosition();
+
+		setPosInfo(value);
+
+		Common.getScanClass().getStreamInfo(inputfile, value, type);
+
+		setFileInfo();
+
+		long position = Preview.previewFile(inputfile, value, loadSizeForward, Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops), Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode), Common.getSettings().getIntProperty(Keys.KEY_Preview_YGain));
+
+		view.setImage(Common.getMpvDecoderClass().getScaledCutImage());
+	}
+
+	/**
+	 *
+	 */
+	private void setPosInfo(long value)
+	{ 
+		inputfile.getStreamInfo().setScanPosition(value);
+
+		length.setText("ScanPos: " + Common.formatNumber(value));
+	}
+
+	/**
+	 *
+	 */
+	private void setFileInfo()
+	{ 
+		area.setText(inputfile.getStreamInfo().getFullInfo());
+	}
+
+	/**
+	 *
+	 */
+	private ActionListener _MenuListener = new ActionListener() {
+		public void actionPerformed(ActionEvent e)
+		{
+			String actName = e.getActionCommand();
+
+			/**
+			 *
+			 */
+			if (actName.equals("rename"))
+			{
+				try {
+					if (inputfile.rename())
+					{
+						scanFile();
+
+						Common.getGuiInterface().showActiveCollection(collection_number);
+					}
+
+					//if (((XInputFile) collection.getInputFile(index)).rename())
+					//	reloadInputDirectories();
+
+					toFront();
+
+				} catch (IOException ioe) {}
+
+				//updateCollectionTable(collection.getCollectionAsTable());
+				//updateCollectionPanel(collection_number);
+			}
+
+			/**
+			 *
+			 */
+			else if (actName.equals("changeTimestamp"))
+			{
+				if (CommonGui.getUserConfirmation("really update the timestamp of '" + inputfile.getName() + "' ?"))
+				{
+					inputfile.setLastModified();
+
+					scanFile();
+
+					Common.getGuiInterface().showActiveCollection(collection_number);
+				}
+				//updateCollectionTable(collection.getCollectionAsTable());
+				//updateCollectionPanel(collection_number);
+
+				toFront();
+			}
+
+			/**
+			 *
+			 */
+			else if (actName.equals("viewAsHex"))
+			{
+				if (inputfile.exists())
+					new HexViewer().view(inputfile.getNewInstance());
+			}
+
+			/**
+			 *
+			 */
+			else if (actName.equals("editBasics"))
+			{
+				if (CommonGui.getPatchDialog().entry(inputfile))
+				{
+					scanFile();
+
+					Common.getGuiInterface().showActiveCollection(collection_number);
+				//	getScanInfo(xInputFile, xInputFile.getStreamInfo().getStreamType());
+				}
+
+				toFront();
+			}
+
+			/**
+			 *
+			 */
+			else if (actName.equals("assignStreamtype"))
+			{
+				Object[] items = Keys.ITEMS_FileTypes;
+				String str = ((JMenuItem) e.getSource()).getText();
+
+				for (int i = 0; i < items.length; i++)
+				{
+					if (str.equals(items[i].toString()))
+					{
+						inputfile.getStreamInfo().setStreamType(i);
+
+						scanSpecFileType(i);
+
+						Common.getGuiInterface().showActiveCollection(collection_number);
+
+						return;
+					}
+				}
+
+				scanFile();
+
+				Common.getGuiInterface().showActiveCollection(collection_number);
+			}
+
+			/**
+			 *
+			 */
+			else if (actName.equals("stripRelook"))
+			{
+				stripRelook(0);
+			}
+
+			/**
+			 *
+			 */
+			else if (actName.equals("stripRelook1"))
+			{
+				stripRelook(1);
+			}
+
+			/**
+			 *
+			 */
+			else if (actName.equals("stripMedion"))
+			{
+				stripMedion();
+			}
+
+			/**
+			 *
+			 */
+			else if (actName.equals("stripAudio"))
+			{
+				if (inputfile.exists() && inputfile.getStreamInfo().getStreamType() == CommonParsing.ES_RIFF_TYPE && CommonGui.getUserConfirmation("really process '" + inputfile.getName() + "' ?"))
+				{
+					StripAudio stripAudio = new StripAudio();
+
+					Common.setOSDMessage("strip audio data...");
+
+					XInputFile xInputFile = stripAudio.process(inputfile);
+
+					JobCollection collection = Common.getCollection(collection_number);
+
+					if (xInputFile != null)
+					{
+						collection.removeInputFile(collection_index);
+						collection.addInputFile(collection_index, xInputFile);
+
+						Common.getGuiInterface().showActiveCollection(collection_number);
+					}
+				}
+
+				toFront();
+			}
+		}
+
+		/**
+		 *
+		 */
+		private void stripRelook(int type)
+		{
+			if (inputfile.exists() && inputfile.getStreamInfo().getStreamType() == CommonParsing.PES_AV_TYPE && CommonGui.getUserConfirmation("really process '" + inputfile.getName() + "' ?"))
+			{
+				StripRelook stripRelook = new StripRelook(type);
+
+				Common.setOSDMessage("strip Relook® data, type " + type + "...");
+
+				JobCollection collection = Common.getCollection(collection_number);
+
+				XInputFile[] xif = stripRelook.process(inputfile.getNewInstance(), collection.getOutputDirectory());
+
+				if (xif != null)
+				{
+					collection.removeInputFile(collection_index);
+
+					for (int i = 0, j = collection_index; i < xif.length; i++)
+					{
+						if (xif[i] != null)
+							collection.addInputFile(j++, xif[i]);
+					}
+
+					Common.getGuiInterface().showActiveCollection(collection_number);
+				}
+			}
+
+			toFront();
+		}
+
+		/**
+		 *
+		 */
+		private void stripMedion()
+		{
+			if (inputfile.exists() && inputfile.getStreamInfo().getStreamType() == CommonParsing.PES_AV_TYPE && CommonGui.getUserConfirmation("really process '" + inputfile.getName() + "' ?"))
+			{
+				StripMedion stripMedion = new StripMedion();
+
+				Common.setOSDMessage("strip Medion® data...");
+
+				JobCollection collection = Common.getCollection(collection_number);
+
+				XInputFile[] xif = stripMedion.process(inputfile.getNewInstance(), collection.getOutputDirectory());
+
+				if (xif != null)
+				{
+					collection.removeInputFile(collection_index);
+
+					for (int i = 0, j = collection_index; i < xif.length; i++)
+					{
+						if (xif[i] != null)
+							collection.addInputFile(j++, xif[i]);
+					}
+
+					Common.getGuiInterface().showActiveCollection(collection_number);
+				}
+			}
+
+			toFront();
+		}
+	};
+
+	/**
+	 *
+	 */
+	private class View extends JPanel {
+	
+		private int width = 160;
+		private int height = 90;
+		private Image image;
+		private MemoryImageSource source;
+		private int[] image_data;
+
+		public View()
+		{
+			image_data = new int[width * height];
+			source = new MemoryImageSource(width, height, image_data, 0, width);
+			source.setAnimated(true);
+			image = createImage(source);
+
+			setPreferredSize(new Dimension(160, 90));
+			setMaximumSize(new Dimension(160, 90));
+			setMinimumSize(new Dimension(160, 90));
+
+			setBackground(Color.black);
+
+		}
+
+		public void setImage(int[] new_image_data)
+		{
+			System.arraycopy(new_image_data, 0, image_data, 0, new_image_data.length);
+			source.newPixels();
+			repaint();
+		}
+
+		public void paint(Graphics g)
+		{
+			g.setColor(bg_color);
+			g.fillRect(0, 0, 160, 90);
+
+			g.drawImage(image, 0, 0, this);
+		}
+
 	}
 }

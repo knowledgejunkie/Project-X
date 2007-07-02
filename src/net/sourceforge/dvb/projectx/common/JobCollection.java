@@ -939,7 +939,7 @@ public class JobCollection extends Object {
 	 */
 	public boolean hasSettings()
 	{
-		return (settings == null ? false : true);
+		return (settings != null);
 	}
 
 	/**

@@ -87,8 +87,8 @@ import net.sourceforge.dvb.projectx.net.WebInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90.4.00.b15";
-	private static String version_date = "22.03.2007";
+	private static String version_name = "ProjectX 0.90.4.00.b16";
+	private static String version_date = "01.07.2007";
 
 	private static String line_separator = System.getProperty("line.separator");
 
@@ -1720,7 +1720,7 @@ public final class Common extends Object {
 
 		} catch (Exception e) {}
 
-		if (buffervalue < 128000)
+		if (buffervalue < 128000 || buffervalue > 5120000)
 			LastPreviewBitrate = buffervalue = 1875000;
 
 		return buffervalue;

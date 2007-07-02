@@ -193,7 +193,9 @@ public class MainFrame extends JPanel {
 	private JRadioButtonMenuItem lf_item[] = null;
 
 
+//	private static JTable tableView;
 	private JTable tableView;
+
 	private JList list1;
 
 	private JViewport viewport;
@@ -666,7 +668,7 @@ public class MainFrame extends JPanel {
 
 				if (xInputFile != null && xInputFile.exists())
 				{
-					CommonGui.getFileProperties().open(xInputFile, Common.getActiveCollection());
+					CommonGui.getFileProperties().open(xInputFile, Common.getActiveCollection(), index);
 
 					updateCollectionTable(collection.getCollectionAsTable());
 					updateCollectionPanel(Common.getActiveCollection());
@@ -1111,19 +1113,19 @@ public class MainFrame extends JPanel {
 
 		JMenuItem menuitem_8 = popup.add(Resource.getString("popup.url"));
 		menuitem_8.setActionCommand("url");
-
+/**
 		JMenuItem menuitem_4 = popup.add(Resource.getString("popup.rename"));
 		menuitem_4.setActionCommand("rename");
-
+**/
 		JMenuItem menuitem_5 = popup.add(Resource.getString("popup.openhex"));
 		menuitem_5.setActionCommand("viewAsHex");
-
+/**
 		JMenuItem menuitem_6 = popup.add(Resource.getString("popup.patchbasics"));
 		menuitem_6.setActionCommand("editBasics");
-
+**/
 		JMenuItem menuitem_7 = popup.add(Resource.getString("popup.sendtocl3"));
 		menuitem_7.setActionCommand("sendTo3");
-
+/**
 		popup.addSeparator();
 
 		JMenuItem menuitem_10 = popup.add(Resource.getString("popup.changeTimestamp"));
@@ -1143,7 +1145,7 @@ public class MainFrame extends JPanel {
 
 		JMenuItem menuitem_19 = popup.add("strip Medion® to separate pes..");
 		menuitem_19.setActionCommand("stripMedion");
-
+**/
 		popup.addSeparator();
 
 		JMenuItem menuitem_11 = popup.add(Resource.getString("popup.copyInfoToClipboard"));
@@ -1153,7 +1155,7 @@ public class MainFrame extends JPanel {
 		 *
 		 */
 		Object[] objects = Keys.ITEMS_FileTypes;
-
+/**
 		JMenu streamtype = new JMenu(Resource.getString("popup.assignStreamType"));
 
 		for (int i = 0; i <= objects.length; i++)
@@ -1169,7 +1171,7 @@ public class MainFrame extends JPanel {
 		}
 
 		popup.add(streamtype);
-
+**/
 		popup.addSeparator();
 
 		JMenuItem menuitem_9 = popup.add(Resource.getString("popup.newOutName"));
@@ -1215,21 +1217,21 @@ public class MainFrame extends JPanel {
 
 		UIManager.addPropertyChangeListener(new UISwitchListener(popup));
 
-		menuitem_4.addActionListener(_MenuListener);
+	//	menuitem_4.addActionListener(_MenuListener);
 		menuitem_5.addActionListener(_MenuListener);
-		menuitem_6.addActionListener(_MenuListener);
+	//	menuitem_6.addActionListener(_MenuListener);
 		menuitem_7.addActionListener(_MenuListener);
 		menuitem_8.addActionListener(_MenuListener);
 		menuitem_9.addActionListener(_MenuListener);
-		menuitem_10.addActionListener(_MenuListener);
+	//	menuitem_10.addActionListener(_MenuListener);
 		menuitem_11.addActionListener(_MenuListener);
-		menuitem_12.addActionListener(_MenuListener);
-		menuitem_14.addActionListener(_MenuListener);
-		menuitem_15.addActionListener(_MenuListener);
-		menuitem_16.addActionListener(_MenuListener);
+	//	menuitem_12.addActionListener(_MenuListener);
+	//	menuitem_14.addActionListener(_MenuListener);
+	//	menuitem_15.addActionListener(_MenuListener);
+	//	menuitem_16.addActionListener(_MenuListener);
 		menuitem_17.addActionListener(_MenuListener);
 		menuitem_18.addActionListener(_MenuListener);
-		menuitem_19.addActionListener(_MenuListener);
+	//	menuitem_19.addActionListener(_MenuListener);
 	}
 
 	/**
@@ -1771,10 +1773,12 @@ public class MainFrame extends JPanel {
 					if (elements == null)
 						return;
 
-					for (int i = 1; i < 13; i++)
+					for (int i = 1; i < 4; i++)
+				//	for (int i = 1; i < 13; i++)
 						elements[i].getComponent().setEnabled(row >= 0);
 
-					for (int i = 13; i < elements.length; i++)
+					for (int i = 4; i < elements.length; i++)
+				//	for (int i = 13; i < elements.length; i++)
 						elements[i].getComponent().setEnabled(index >= 0);
 
 					popup.show(tableView, e.getX(), e.getY() - popup.getHeight());
@@ -1784,7 +1788,7 @@ public class MainFrame extends JPanel {
 					getScanInfo((XInputFile) Common.getCollection(index).getInputFile(row));
 
 				if (e.getClickCount() >= 2 && e.getModifiers() == MouseEvent.BUTTON1_MASK && !Common.isCollectionListEmpty() && row >= 0)
-					CommonGui.getFileProperties().open((XInputFile) Common.getCollection(index).getInputFile(row), Common.getActiveCollection());
+					CommonGui.getFileProperties().open((XInputFile) Common.getCollection(index).getInputFile(row), Common.getActiveCollection(), row);
 			}
 		});
 
@@ -2570,7 +2574,7 @@ public class MainFrame extends JPanel {
 
 		tabbedPane.addTab(Resource.getString("General.FileTable"), buildFilePanel());
 		tabbedPane.addTab(Resource.getString("General.CutControl"), (cut_panel = new CutPanel()));
-		tabbedPane.addTab("Filter Control", (filter_panel = new FilterPanel()));
+		tabbedPane.addTab(Resource.getString("General.FilterControl"), (filter_panel = new FilterPanel()));
 
 		panel.add(cut_panel.getSliderPanel(), BorderLayout.NORTH);
 		panel.add(tabbedPane);
@@ -3015,7 +3019,7 @@ public class MainFrame extends JPanel {
 	public void getScanInfo(XInputFile aXInputFile, int streamtype)
 	{
 		if (aXInputFile.getStreamInfo() == null || streamtype > -1)
-			Common.getScanClass().getStreamInfo(aXInputFile, streamtype);
+			Common.getScanClass().getStreamInfo(aXInputFile, 0, streamtype);
 
 		CommonGui.getPicturePanel().setStreamInfo(aXInputFile.getStreamInfo());
 	}
@@ -3253,7 +3257,6 @@ public class MainFrame extends JPanel {
 	 */
 	public static void updateCollectionPanel(int index)
 	{
-		//collection_panel.entry(index);
 		cut_panel.entry(index);
 	}
 }

@@ -68,6 +68,9 @@ public class StripMedion extends Object {
 	 */
 	public XInputFile[] process(XInputFile xInputFile, String output)
 	{
+		if (output.startsWith("[res]"))
+			output = xInputFile.getParent();
+
 		parent = output + System.getProperty("file.separator") + xInputFile.getName();
 
 		try {

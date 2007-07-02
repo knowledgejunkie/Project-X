@@ -571,19 +571,8 @@ public class CollectionProperties extends JFrame {
 
 		String[][] objects = {
 			Keys.KEY_SplitSize,
-			Keys.KEY_Streamtype_MpgVideo,
-			Keys.KEY_Streamtype_MpgAudio,
-			Keys.KEY_Streamtype_Ac3Audio,
-			Keys.KEY_Streamtype_PcmAudio,
-			Keys.KEY_Streamtype_Teletext,
-			Keys.KEY_Streamtype_Subpicture,
-			Keys.KEY_Streamtype_Vbi,
-			Keys.KEY_WriteOptions_writeVideo,
-			Keys.KEY_WriteOptions_writeAudio,
-			Keys.KEY_OptionHorizontalResolution,
-			Keys.KEY_OptionDAR,
-			Keys.KEY_additionalOffset,
-			Keys.KEY_ExportPanel_Export_Overlap
+			Keys.KEY_ExportPanel_Export_Overlap,
+			Keys.KEY_additionalOffset
 		};
 
 		JCheckBox[] box = new JCheckBox[objects.length];
@@ -622,7 +611,7 @@ public class CollectionProperties extends JFrame {
 
 		JPanel sp2 = new JPanel();
 		sp2.setLayout(new BoxLayout(sp2, BoxLayout.X_AXIS));
-		sp2.add(box[13]);  
+		sp2.add(box[1]);  
 		sp2.add(overlap);  
 
 		op1.add(sp2);
@@ -646,83 +635,6 @@ public class CollectionProperties extends JFrame {
 
 		exportPanel.add(op1);
 
-		JPanel idPanel = new JPanel();
-		idPanel.setBorder(BorderFactory.createTitledBorder(Resource.getString("ExportPanel.StreamtypePanel")));
-		idPanel.setLayout(new BoxLayout(idPanel, BoxLayout.X_AXIS));
-		idPanel.setToolTipText(Resource.getString("ExportPanel.StreamtypePanel.Tip"));
-
-		JPanel panel_1 = new JPanel();
-		panel_1.setLayout ( new ColumnLayout() );
-
-		for (int i = 1; i < 5; i++)
-			panel_1.add(box[i]);
-
-		JPanel panel_2 = new JPanel();
-		panel_2.setLayout ( new ColumnLayout() );
-
-		for (int i = 5; i < 8; i++)
-			panel_2.add(box[i]);
-
-		idPanel.add(panel_1);
-		idPanel.add(panel_2);
-
-		exportPanel.add(idPanel);
-
-		JPanel op4 = new JPanel();
-		op4.setLayout( new ColumnLayout() );
-		op4.setBorder( BorderFactory.createTitledBorder(Resource.getString("ExportPanel.WriteOptions")) );
-		op4.setToolTipText(Resource.getString("ExportPanel.WriteOptions.Tip"));
-
-		op4.add(box[8]);
-		op4.add(box[9]);
-
-		op4.add(Box.createRigidArea(new Dimension(1, 5)));
-
-		/**
-		 *
-		 */
-		JPanel CL2 = new JPanel();
-		CL2.setLayout(new BoxLayout(CL2, BoxLayout.X_AXIS));
-
-		box[10].setPreferredSize(new Dimension(110, 20));
-		box[10].setMaximumSize(new Dimension(110, 20));
-		CL2.add(box[10]);  
-
-
-		JComboBox combobox_34 = new JComboBox(Keys.ITEMS_ExportHorizontalResolution);
-		combobox_34.setMaximumRowCount(7);
-		combobox_34.setPreferredSize(new Dimension(90, 20));
-		combobox_34.setMaximumSize(new Dimension(90, 20));
-		combobox_34.setActionCommand(Keys.KEY_ExportHorizontalResolution[0]);
-		combobox_34.setEditable(true);
-		combobox_34.setSelectedItem(getProperty(Keys.KEY_ExportHorizontalResolution));
-		combobox_34.addActionListener(_ComboBoxItemListener);
-		CL2.add(combobox_34);
-
-		op4.add(CL2);
-
-		/**
-		 *
-		 */
-		JPanel CL3 = new JPanel();
-		CL3.setLayout(new BoxLayout(CL3, BoxLayout.X_AXIS));
-
-		box[11].setPreferredSize(new Dimension(80, 20));
-		box[11].setMaximumSize(new Dimension(80, 20));
-		CL3.add(box[11]);  
-
-		JComboBox combobox_24 = new JComboBox(Keys.ITEMS_ExportDAR);
-		combobox_24.setMaximumRowCount(7);
-		combobox_24.setPreferredSize(new Dimension(120, 20));
-		combobox_24.setMaximumSize(new Dimension(120, 20));
-		combobox_24.setActionCommand(Keys.KEY_ExportDAR[0]);
-		combobox_24.setSelectedIndex(getIntProperty(Keys.KEY_ExportDAR));
-		combobox_24.addActionListener(_ComboBoxIndexListener);
-		CL3.add(combobox_24);
-
-		op4.add(CL3);
-
-		exportPanel.add(op4);
 
 		JPanel op5 = new JPanel();
 		op5.setLayout( new ColumnLayout() );
@@ -731,7 +643,7 @@ public class CollectionProperties extends JFrame {
 		JPanel op7 = new JPanel();
 		op7.setLayout(new BoxLayout(op7, BoxLayout.X_AXIS));
 
-		op7.add(box[12]);
+		op7.add(box[2]);
 
 		JTextField offset_value = new JTextField(getProperty(Keys.KEY_ExportPanel_additionalOffset_Value));
 		offset_value.setPreferredSize(new Dimension(80, 22));

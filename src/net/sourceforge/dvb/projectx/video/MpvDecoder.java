@@ -2723,12 +2723,20 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 		return (T<<24 | R<<16 | G<<8 | B);
 	}
 
-
 	/**
 	 * scales source picture to 2nd picture of memoryimagesource
 	 * includes YUV to RGB conversion
 	 */
 	private void scale_Picture()
+	{
+		scale_Picture(false);
+	}
+
+	/**
+	 * scales source picture to 2nd picture of memoryimagesource
+	 * includes YUV to RGB conversion
+	 */
+	private void scale_Picture(boolean silent)
 	{
 		Arrays.fill(pixels2, 0xFF505050);
 
@@ -2793,6 +2801,10 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 			for (int x = x_offset; X < horizontal_size && x < nx; X += Xdecimate, x++)
 				pixels2[x + tmp1] = YUVtoRGB(pixels[(int)X + tmp2]);
 		}
+
+		//file props preview
+		if (silent)
+			return;
 
 		Common.getGuiInterface().updatePreviewPixel();
 
@@ -3092,7 +3104,22 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	 */
 	public long decodeArray(byte array[], boolean direction, boolean _viewGOP, boolean fast, int yGain)
 	{
-		return decodeArray(array, 0, direction, _viewGOP, fast, yGain);
+		return decodeArray(array, 0, direction, _viewGOP, fast, yGain, false);
+	}
+
+	/**
+	 * returns arrays byteposition offset of 1st successful decoded GOP
+	 * interface, entry point to decode picture for preview
+	 *
+	 * @param1 - ES byte array
+	 * @param2 - search direction
+	 * @param3 - enable GOPheader alignment
+	 * @param4 - simple_fast decode
+	 * @return
+	 */
+	public long decodeArray(byte array[], boolean direction, boolean _viewGOP, boolean fast, int yGain, boolean silent)
+	{
+		return decodeArray(array, 0, direction, _viewGOP, fast, yGain, silent);
 	}
 
 	/**
@@ -3106,7 +3133,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	 * @param5 - simple_fast decode
 	 * @return
 	 */
-	public long decodeArray(byte[] array, int start_position, boolean direction, boolean _viewGOP, boolean fast, int yGain)
+	public long decodeArray(byte[] array, int start_position, boolean direction, boolean _viewGOP, boolean fast, int yGain, boolean silent)
 	{
 		setAcceleration(Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode));
 
@@ -3146,16 +3173,13 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 
 					InitialDecoder();
 					Decode_Picture();
-					scale_Picture();
-				//	repaint();
+					scale_Picture(silent);
 
 					return StartPos;
 				}
 
 				else if (ERROR_CODE1 == 2 )
 				{
-				//	repaint();
-
 					return 0;
 				}
 
@@ -3175,9 +3199,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 		if (ERROR1)
 			checkH264(buf, buf.length);
 
-		scale_Picture();
-
-	//	repaint();
+		scale_Picture(silent);
 
 		return 0;
 	}

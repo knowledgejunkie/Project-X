@@ -299,8 +299,7 @@ public class ProcessWindow extends JFrame {
 			Keys.KEY_ExportPanel_createSubDirVdr,
 			Keys.KEY_enablePostProcessing,
 			Keys.KEY_simpleMPG,
-			Keys.KEY_enhancedPES,
-			Keys.KEY_useAutoPidFilter
+			Keys.KEY_enhancedPES
 		};
 
 		for (int i = 0, sep_offs = 3; i < objects.length; i++)
@@ -316,26 +315,6 @@ public class ProcessWindow extends JFrame {
 
 			editMenu.add(box);
 		}
-
-/**
-		JMenu menu_2 = new JMenu(Resource.getString(Keys.KEY_OptionDAR[0]));
-
-		Object[] objects_2 = Keys.ITEMS_ExportDAR;
-		ButtonGroup group = new ButtonGroup();
-
-		for (int i = 0; i < objects_2.length; i++)
-		{
-			JRadioButtonMenuItem box = new JRadioButtonMenuItem(objects_2[i].toString());
-			box.setActionCommand(Keys.KEY_ExportDAR[0]);
-			box.setSelected(Common.getSettings().getIntProperty(Keys.KEY_ExportDAR) == i);
-			box.addActionListener(_BoxListener);
-			group.add(box);
-
-			menu_2.add(box);
-		}
-
-		editMenu.add(menu_2);
-**/
 
 		return editMenu;
 	}
