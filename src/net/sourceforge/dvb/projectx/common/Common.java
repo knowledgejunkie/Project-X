@@ -87,8 +87,8 @@ import net.sourceforge.dvb.projectx.net.WebInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90.4.00.b16";
-	private static String version_date = "01.07.2007";
+	private static String version_name = "ProjectX 0.90.4.00.b17";
+	private static String version_date = "09.07.2007";
 
 	private static String line_separator = System.getProperty("line.separator");
 

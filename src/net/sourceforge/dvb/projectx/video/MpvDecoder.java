@@ -3092,6 +3092,29 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 		return cut_image;
 	}
 
+
+	/**
+	 * add new smaller matrix cutimage pixel data
+	 * the mixed overlay image will be partialy overridden, in a 5x5 matrix of 100*56 each (in 512*288)
+	 */
+	public void getScaledCutMatrixImage(int[] matrix_image, int new_width, int new_height, int matrix_x, int matrix_y)
+	{
+		int source_width = preview_horizontal_size;
+		int source_height = preview_vertical_size;
+
+		float Y = 0;
+		float X = 0;
+		float decimate_height = (float)source_height / new_height;
+		float decimate_width = (float)source_width / new_width;
+
+		int[] cut_image = new int[new_width * new_height];
+
+		for (int y = 0; Y < source_height && y < new_height; Y += decimate_height, y++, X = 0)
+			for (int x = 0; X < source_width && x < new_width; X += decimate_width, x++)
+				matrix_image[(matrix_x + x) + ((matrix_y + y) * source_width)] = pixels2[(int)X + ((int)Y * source_width)];
+			//	matrix_image[x + (y * new_width)] = pixels2[(int)X + ((int)Y * source_width)];
+	}
+
 	/**
 	 * returns arrays byteposition offset of 1st successful decoded GOP
 	 * interface, entry point to decode picture for preview

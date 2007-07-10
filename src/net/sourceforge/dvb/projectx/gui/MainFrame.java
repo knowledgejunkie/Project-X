@@ -173,8 +173,6 @@ public class MainFrame extends JPanel {
 	private static Object[][] FileObjectTable = new Object[10][12];
 
 	private static CollectionPanel collection_panel;
-//
-	private static CutPanel cut_panel;
 
 	private static FilterPanel filter_panel;
 
@@ -1113,75 +1111,51 @@ public class MainFrame extends JPanel {
 
 		JMenuItem menuitem_8 = popup.add(Resource.getString("popup.url"));
 		menuitem_8.setActionCommand("url");
-/**
-		JMenuItem menuitem_4 = popup.add(Resource.getString("popup.rename"));
-		menuitem_4.setActionCommand("rename");
-**/
+		menuitem_8.addActionListener(_MenuListener);
+
+		JMenuItem menuitem_2 = new JMenuItem();
+		CommonGui.localize(menuitem_2, "file.add");
+		menuitem_2.setActionCommand("add");
+		menuitem_2.addActionListener(_MenuListener);
+		popup.add(menuitem_2);
+
+		JMenuItem menuitem_3 = new JMenuItem();
+		CommonGui.localize(menuitem_3, "file.remove");
+		menuitem_3.setActionCommand("remove");
+		menuitem_3.addActionListener(_MenuListener);
+		popup.add(menuitem_3);
+
+		popup.addSeparator();
+
 		JMenuItem menuitem_5 = popup.add(Resource.getString("popup.openhex"));
 		menuitem_5.setActionCommand("viewAsHex");
-/**
-		JMenuItem menuitem_6 = popup.add(Resource.getString("popup.patchbasics"));
-		menuitem_6.setActionCommand("editBasics");
-**/
+		menuitem_5.addActionListener(_MenuListener);
+
 		JMenuItem menuitem_7 = popup.add(Resource.getString("popup.sendtocl3"));
 		menuitem_7.setActionCommand("sendTo3");
-/**
-		popup.addSeparator();
-
-		JMenuItem menuitem_10 = popup.add(Resource.getString("popup.changeTimestamp"));
-		menuitem_10.setActionCommand("changeTimestamp");
-
-		JMenuItem menuitem_12 = popup.add(Resource.getString("popup.fixHpAc3"));
-		menuitem_12.setActionCommand("fixHpAc3");
-
-		JMenuItem menuitem_14 = popup.add(Resource.getString("popup.stripAudio"));
-		menuitem_14.setActionCommand("stripAudio");
-
-		JMenuItem menuitem_15 = popup.add("strip Relook® type 0 to separate pes..");
-		menuitem_15.setActionCommand("stripRelook");
-
-		JMenuItem menuitem_16 = popup.add("strip Relook® type 1 to separate pes..");
-		menuitem_16.setActionCommand("stripRelook1");
-
-		JMenuItem menuitem_19 = popup.add("strip Medion® to separate pes..");
-		menuitem_19.setActionCommand("stripMedion");
-**/
-		popup.addSeparator();
+		menuitem_7.addActionListener(_MenuListener);
 
 		JMenuItem menuitem_11 = popup.add(Resource.getString("popup.copyInfoToClipboard"));
 		menuitem_11.setActionCommand("clipboard");
+		menuitem_11.addActionListener(_MenuListener);
 
-		/**
-		 *
-		 */
-		Object[] objects = Keys.ITEMS_FileTypes;
-/**
-		JMenu streamtype = new JMenu(Resource.getString("popup.assignStreamType"));
+		popup.addSeparator();
 
-		for (int i = 0; i <= objects.length; i++)
-		{
-			JMenuItem item = new JMenuItem(i == objects.length ? Resource.getString("popup.automatic") : objects[i].toString());
-			item.setActionCommand("assignStreamtype");
-			item.addActionListener(_MenuListener);
+		JMenuItem menuitem_17 = popup.add(Resource.getString("General.FileProperties") + "..");
+		menuitem_17.setActionCommand("FileProperties");
+		menuitem_17.addActionListener(_MenuListener);
 
-			if (i == objects.length)
-				streamtype.addSeparator();
-
-			streamtype.add(item);
-		}
-
-		popup.add(streamtype);
-**/
 		popup.addSeparator();
 
 		JMenuItem menuitem_9 = popup.add(Resource.getString("popup.newOutName"));
 		menuitem_9.setActionCommand("newOutName");
+		menuitem_9.addActionListener(_MenuListener);
 
 
 		/**
 		 *
 		 */
-		objects = Keys.ITEMS_ConversionMode;
+		Object[] objects = Keys.ITEMS_ConversionMode;
 
 		JMenu action = new JMenu(Resource.getString("popup.assignActionType"));
 
@@ -1201,37 +1175,15 @@ public class MainFrame extends JPanel {
 
 		popup.addSeparator();
 
-		//file properties
-		JMenuItem menuitem_17 = popup.add(Resource.getString("General.FileProperties") + "..");
-		menuitem_17.setActionCommand("FileProperties");
-		//menuitem_17.setEnabled(false);
-
-		popup.addSeparator();
-
 		//coll properties
 		JMenuItem menuitem_18 = popup.add(Resource.getString("General.CollectionProperties") + "..");
 		menuitem_18.setActionCommand("CollectionProperties");
+		menuitem_18.addActionListener(_MenuListener);
 
 
 		popup.pack();
 
 		UIManager.addPropertyChangeListener(new UISwitchListener(popup));
-
-	//	menuitem_4.addActionListener(_MenuListener);
-		menuitem_5.addActionListener(_MenuListener);
-	//	menuitem_6.addActionListener(_MenuListener);
-		menuitem_7.addActionListener(_MenuListener);
-		menuitem_8.addActionListener(_MenuListener);
-		menuitem_9.addActionListener(_MenuListener);
-	//	menuitem_10.addActionListener(_MenuListener);
-		menuitem_11.addActionListener(_MenuListener);
-	//	menuitem_12.addActionListener(_MenuListener);
-	//	menuitem_14.addActionListener(_MenuListener);
-	//	menuitem_15.addActionListener(_MenuListener);
-	//	menuitem_16.addActionListener(_MenuListener);
-		menuitem_17.addActionListener(_MenuListener);
-		menuitem_18.addActionListener(_MenuListener);
-	//	menuitem_19.addActionListener(_MenuListener);
 	}
 
 	/**
@@ -1721,7 +1673,7 @@ public class MainFrame extends JPanel {
 		tableView.setSelectionForeground(Color.black);
 
 		tableView.getColumn(names[2]).setCellRenderer(renderer_2);
-		tableView.getColumn(names[2]).setMaxWidth(20);
+		tableView.getColumn(names[2]).setMaxWidth(25);
 
 		tableView.getColumn(names[0]).setCellRenderer(renderer_2);
 		tableView.getColumn(names[0]).setMaxWidth(25);
@@ -1731,7 +1683,7 @@ public class MainFrame extends JPanel {
 		tableView.getColumn(names[1]).setMaxWidth(32);
 
 		tableView.getColumn(names[3]).setMinWidth(165); //200
-		tableView.getColumn(names[4]).setMinWidth(165);
+		tableView.getColumn(names[4]).setMinWidth(160);
 
 		tableView.getColumn(names[5]).setCellRenderer(renderer_1);
 		tableView.getColumn(names[5]).setMinWidth(62);
@@ -1773,12 +1725,10 @@ public class MainFrame extends JPanel {
 					if (elements == null)
 						return;
 
-					for (int i = 1; i < 4; i++)
-				//	for (int i = 1; i < 13; i++)
+					for (int i = 3; i < 7; i++)
 						elements[i].getComponent().setEnabled(row >= 0);
 
-					for (int i = 4; i < elements.length; i++)
-				//	for (int i = 13; i < elements.length; i++)
+					for (int i = 7; i < elements.length; i++)
 						elements[i].getComponent().setEnabled(index >= 0);
 
 					popup.show(tableView, e.getX(), e.getY() - popup.getHeight());
@@ -2573,10 +2523,10 @@ public class MainFrame extends JPanel {
 		tabbedPane.setTabPlacement(SwingConstants.BOTTOM);
 
 		tabbedPane.addTab(Resource.getString("General.FileTable"), buildFilePanel());
-		tabbedPane.addTab(Resource.getString("General.CutControl"), (cut_panel = new CutPanel()));
+		tabbedPane.addTab(Resource.getString("General.CutControl"), CommonGui.getCutPanel());
 		tabbedPane.addTab(Resource.getString("General.FilterControl"), (filter_panel = new FilterPanel()));
 
-		panel.add(cut_panel.getSliderPanel(), BorderLayout.NORTH);
+		panel.add(CommonGui.getCutPanel().getSliderPanel(), BorderLayout.NORTH);
 		panel.add(tabbedPane);
 
 		return panel;
@@ -3257,6 +3207,6 @@ public class MainFrame extends JPanel {
 	 */
 	public static void updateCollectionPanel(int index)
 	{
-		cut_panel.entry(index);
+		CommonGui.getCutPanel().entry(index);
 	}
 }

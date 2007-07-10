@@ -261,7 +261,6 @@ public class MainProcess extends Thread {
 						continue;
 					}
 
-
 					if (Common.getSettings().getBooleanProperty(Keys.KEY_ExportPanel_createSubDirNumber))
 					{
 						str = "[" + a + "]";
@@ -752,6 +751,10 @@ public class MainProcess extends Thread {
 
 		StreamParserBase streamparser_basic = new StreamParserBase();
 
+		/**
+		 * determine primary file segments
+		 * read next start pts if next segment is of same stream type
+		 */
 		filesearch:
 		for (int a = 0, b = -1, type = -1; a < inputfiles_size; a++)
 		{
@@ -833,6 +836,19 @@ public class MainProcess extends Thread {
 			Common.setMessage("* ---");
 
 		Common.getGuiInterface().resetBitrateMonitor();
+
+		/**
+		 * check whether remux action is applicable
+		 * deactivate process
+		 */
+		if (action > CommonParsing.ACTION_DEMUX && collection.getSecondaryInputFileSegments() > 0)
+		{
+			Common.setMessage("");
+			Common.setMessage("!> remux action allows no secondary files, processing cancelled!");
+			Common.setMessage("");
+
+			job_processing.setSplitLoopActive(false);
+		}
 
 		/**
 		 * loop for split output segments

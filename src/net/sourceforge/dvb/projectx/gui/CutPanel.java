@@ -159,6 +159,8 @@ public class CutPanel extends JPanel {
 
 	private SlideShow cl = new SlideShow();
 
+	private CutMatrix cm = new CutMatrix();
+
 	private boolean slideshow = false;
 
 	private JPanel sliderPanel;
@@ -479,11 +481,14 @@ public class CutPanel extends JPanel {
 
 			else if (actName.equals("save_chapterlist"))
 				saveChapterList();
+
+			else if (actName.equals("cut_scan"))
+				restartMatrix();
 		}
 	}
 
 	/**
-	 * class to control short OSD fadings
+	 * class to control play of  slideshow
 	 */
 	private class SlideShow implements Runnable {
 
@@ -597,6 +602,116 @@ public class CutPanel extends JPanel {
 
 			// jump to next exported area
 			return Long.parseLong(cutpoints[index + 1].toString());
+		}
+
+		/**
+		 *
+		 */
+		public void stop()
+		{
+			clockThread = null;
+		}
+	}
+
+	/**
+	 * class to control matrix preview
+	 */
+	private class CutMatrix implements Runnable {
+
+		private Thread clockThread = null;
+
+		private boolean stopit = false;
+
+		private long tmp = 0;
+		private long value = 0;
+		private long start_value = 0;
+		private int scale = 1;
+
+		/**
+		 *
+		 */
+		public void restart(long value_1)
+		{
+			start(value_1);
+			scale = 1;
+		}
+
+		/**
+		 *
+		 */
+		public void start(long value_1)
+		{
+			breakLoop();
+
+			if (clockThread == null)
+			{
+				clockThread = new Thread(this, "CutMatrix");
+				clockThread.setPriority(Thread.MIN_PRIORITY);
+
+				start_value = value_1;
+				stopit = false;
+
+				clockThread.start();
+			}
+		}
+
+		/**
+		 *
+		 */
+		public void breakLoop()
+		{
+			stopit = true;
+		}
+
+		/**
+		 *
+		 */
+		public void run()
+		{
+			Thread myThread = Thread.currentThread();
+
+			while (clockThread == myThread)
+			{
+				try {
+
+					if (!previewList.isEmpty())
+					{
+						int[][] matrix_index = CommonGui.getPicturePanel().getMatrixTable();
+						long end = ((PreviewObject) previewList.get(previewList.size() - 1)).getEnd();
+						long div = end / matrix_index.length;
+
+						div /= scale;
+						scale <<= 1;
+
+						CommonGui.getPicturePanel().resetMatrixPositions(end);
+
+						for (int i = 0; !stopit && i < matrix_index.length; i++)
+						{
+							tmp = start_value + (i * div);
+
+							if (tmp > end)
+								break;
+
+							value = update(tmp, i);
+							CommonGui.getPicturePanel().setMatrixIndexPosition(i, value);
+
+							Thread.sleep(5);
+						}
+					}
+
+					stop();
+
+				} catch (InterruptedException e) {}
+
+			}
+		}
+
+		/**
+		 *
+		 */
+		private long update(long val, int index)
+		{
+			return previewMatrix(val, index);
 		}
 
 		/**
@@ -1021,12 +1136,14 @@ public class CutPanel extends JPanel {
 		cut_savelist.setActionCommand("save_cutlist");
 		cut_savelist.addActionListener(jumpAction);
 
-		JButton cut_scan = new JButton("scan");
+		//JButton cut_scan = new JButton("scan");
+		JButton cut_scan = new JButton(CommonGui.loadIcon("matrix.gif"));
 		cut_scan.setPreferredSize(new Dimension(50, 24));
 		cut_scan.setMaximumSize(new Dimension(50, 24));
 		cut_scan.setActionCommand("cut_scan");
 		cut_scan.addActionListener(jumpAction);
-		cut_scan.setEnabled(false);
+		cut_scan.setEnabled(true);
+//		cut_scan.setEnabled(false);
 
 		JPanel panel_4 = new JPanel();
 		panel_4.setLayout(new BoxLayout(panel_4, BoxLayout.X_AXIS));
@@ -1590,7 +1707,7 @@ public class CutPanel extends JPanel {
 	/**
 	 *
 	 */
-	private long preview(long position)
+	public long preview(long position)
 	{
 		boolean direction = false;
 
@@ -1650,6 +1767,57 @@ public class CutPanel extends JPanel {
 		action = true;
 
 		return lastPosition;
+	}
+
+	/**
+	 *
+	 */
+	public void startMatrix(long from_position)
+	{
+		cm.start(from_position);
+	}
+
+	/**
+	 *
+	 */
+	public void restartMatrix()
+	{
+		cm.restart(0);
+	}
+
+	/**
+	 *
+	 */
+	public void stopMatrix()
+	{
+		cm.breakLoop();
+	}
+
+	/**
+	 *
+	 */
+	private long previewMatrix(long position, int matrix_index)
+	{
+		try {
+
+			if (Common.getSettings().getIntProperty(Keys.KEY_CutMode) != CommonParsing.CUTMODE_BYTE || previewList.isEmpty())
+				return position;
+
+			action = false;
+
+			position = Preview.silentload(position, getLoadSize(), previewList, false, Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops), Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode), Common.getSettings().getIntProperty(Keys.KEY_Preview_YGain), collection.getPIDs(), active_collection);
+
+			CommonGui.getPicturePanel().setMatrixPreviewPixel(matrix_index);
+			CommonGui.getPicturePanel().repaint();
+
+		} catch (IOException e6) {
+
+			Common.setExceptionMessage(e6);
+		}
+
+		action = true;
+
+		return position;
 	}
 
 	/**

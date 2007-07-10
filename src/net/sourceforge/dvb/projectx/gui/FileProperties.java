@@ -360,6 +360,8 @@ public class FileProperties extends JFrame {
 	{ 
 		inputfile = null;
 
+		Common.getGuiInterface().showActiveCollection(collection_number);
+
 		dispose();
 	}
 

@@ -1,5 +1,5 @@
 /*
- * @(#)CutPanel
+ * @(#)CutView
  *
  * Copyright (c) 2006 by dvb.matt, All Rights Reserved. 
  * 

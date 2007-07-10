@@ -44,6 +44,8 @@ import java.awt.event.ActionListener;
 
 import java.awt.image.MemoryImageSource;
 
+import java.text.NumberFormat;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -51,6 +53,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Hashtable;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -99,6 +102,7 @@ public class PicturePanel extends JPanel {
 	private boolean isOSDErrorInfo = false;
 	private boolean PLAY = true;
 	private boolean isMixedImageAvailable = false;
+	private boolean isMatrixImageAvailable = false;
 
 	private boolean manualzoom = false;
 	private boolean definezoom = false;
@@ -107,11 +111,28 @@ public class PicturePanel extends JPanel {
 	private int[] mixed_image_array;
 	private String mixed_image_info = "";
 
+	private int matrix_index = -1;
+	private int matrix_new_width = 100;
+	private int matrix_new_height = 56;
+
+	private Hashtable matrix_positions = new Hashtable();
+
+	// 5x5 matrix
+	private int[][] matrix_table = {
+		{ 2, 1 }, { 104, 1 }, { 206, 1 }, { 308, 1 }, { 410, 1 }, 
+		{ 2, 58 }, { 104, 58 }, { 206, 58 }, { 308, 58 }, { 410, 58 }, 
+		{ 2, 117 }, { 104, 117 }, { 206, 117 }, { 308, 117 }, { 410, 117 }, 
+		{ 2, 174 }, { 104, 174 }, { 206, 174 }, { 308, 174 }, { 410, 174 }, 
+		{ 2, 231 }, { 104, 231 }, { 206, 231 }, { 308, 231 }, { 410, 231 }
+	};
+
 	private StreamInfo streamInfo = null;
 
 	private Font font_1;
 	private Font font_2;
 	private Font font_3;
+
+	private NumberFormat percentage;
 
 	private int ErrorFlag = 0;
 	private int bmpCount = 0;
@@ -212,6 +233,9 @@ public class PicturePanel extends JPanel {
 	 */
 	public PicturePanel()
 	{
+		percentage = NumberFormat.getPercentInstance();
+		percentage.setMaximumFractionDigits(2);
+
 		source = new MemoryImageSource(512, 288, Common.getMpvDecoderClass().getPreviewPixel(), 0, 512);
 		source.setAnimated(true);
 		image = createImage(source);
@@ -245,7 +269,34 @@ public class PicturePanel extends JPanel {
 					repaint();
 				}
 
-				if (e.getClickCount() >= 1 && e.getModifiers() == MouseEvent.BUTTON3_MASK)
+				if (isMatrixImageAvailable)
+				{
+					if (e.getClickCount() == 1 && e.getModifiers() == MouseEvent.BUTTON1_MASK)
+					{
+						if (matrix_positions.containsKey(String.valueOf(matrix_index)))
+						{
+							long value = ((Long)matrix_positions.get(String.valueOf(matrix_index))).longValue();
+
+							CommonGui.getCutPanel().startMatrix(value);
+						}
+
+						else
+							CommonGui.getCutPanel().stopMatrix();
+					}
+
+					if (e.getClickCount() >= 2 && e.getModifiers() == MouseEvent.BUTTON3_MASK)
+					{
+						if (matrix_positions.containsKey(String.valueOf(matrix_index)))
+						{
+							long value = ((Long)matrix_positions.get(String.valueOf(matrix_index))).longValue();
+
+							CommonGui.getCutPanel().stopMatrix();
+							CommonGui.getCutPanel().preview(value);
+						}
+					}
+				}
+
+				else if (e.getClickCount() >= 1 && e.getModifiers() == MouseEvent.BUTTON3_MASK)
 					popup.show(getParent(), e.getX(), e.getY());
 			}
 
@@ -275,7 +326,6 @@ public class PicturePanel extends JPanel {
 		addMouseMotionListener(new MouseMotionAdapter() {
 			public void mouseDragged(MouseEvent e)
 			{
-				//if (e.isShiftDown() && Common.getMpvDecoderClass().getZoomMode() == 2)
 				if (Common.getMpvDecoderClass().getZoomMode() == 2)
 				{
 					zoomrect[0] = e.getX() < 0 ? 0 : e.getX();
@@ -305,6 +355,19 @@ public class PicturePanel extends JPanel {
 
 			public void mouseMoved(MouseEvent e)
 			{
+				int tmp_val = 0;
+
+				if (isMatrixImageAvailable)
+				{
+					tmp_val = ((e.getX() * 5) / 512) + (5 * ((e.getY() * 5) / 288));
+
+					if (tmp_val < matrix_table.length)
+					{
+						matrix_index = tmp_val;
+						repaint();
+					}
+				}
+
 				if (!definezoom || manualzoom)
 					return;
 
@@ -442,6 +505,7 @@ public class PicturePanel extends JPanel {
 		paintPreviewPicture(g);
 
 		paintMixedCutPreviewPicture(g);
+		paintMatrixPreviewPicture(g);
 
 		paintZoomInfo(g);
 		paintVideoInfo(g);
@@ -496,14 +560,39 @@ public class PicturePanel extends JPanel {
 	 */
 	private void paintMixedCutPreviewPicture(Graphics g)
 	{
-		if (isMixedImageAvailable)
-		{
-			g.drawImage(mixed_image, 2, 2, this);
+		if (!isMixedImageAvailable)
+			return;
 
-			g.setFont(font_2);
-			g.setColor(Color.green);
-			g.drawString(mixed_image_info, 340, 280);
-		}
+		g.drawImage(mixed_image, 2, 2, this);
+
+		g.setFont(font_2);
+		g.setColor(Color.green);
+		g.drawString(mixed_image_info, 340, 280);
+	}
+
+	/**
+	 * paint cut matrix preview
+	 */
+	private void paintMatrixPreviewPicture(Graphics g)
+	{
+		if (!isMatrixImageAvailable)
+			return;
+
+		g.drawImage(mixed_image, 2, 2, this);
+
+		if (matrix_index < 0 || matrix_index >= matrix_table.length)
+			return;
+
+		if (!matrix_positions.containsKey(String.valueOf(matrix_index)))
+			return;
+
+		g.setColor(Color.green);
+		g.drawRect(matrix_table[matrix_index][0] + 1, matrix_table[matrix_index][1] + 1, matrix_new_width + 1, matrix_new_height + 1);
+
+		g.setFont(font_2);
+		g.drawString(String.valueOf(matrix_index), matrix_table[matrix_index][0] + 5, matrix_table[matrix_index][1] + 14);
+		g.drawString(matrix_positions.get(String.valueOf(matrix_index)).toString(), matrix_table[matrix_index][0] + 5, matrix_table[matrix_index][1] + 54);
+		g.drawString(percentage.format(((Long)matrix_positions.get(String.valueOf(matrix_index))).doubleValue() / ((Long)matrix_positions.get("end")).doubleValue()), matrix_table[matrix_index][0] + 50, matrix_table[matrix_index][1] + 14);
 	}
 
 	/**
@@ -750,20 +839,22 @@ public class PicturePanel extends JPanel {
 		g.fillRect(x1 + w1, y1, 2, h1); //end
 		g.fillRect(x1, y1 + 3, w1, 2); //axis
 
+		long pos;
+		long max = 1;
+		int mark;
+
 		if (!positions.isEmpty())
 		{
-			long pos;
-			long max = ((Long) positions.get(positions.size() - 1)).longValue();
-			int mark;
+			max = ((Long) positions.get(positions.size() - 1)).longValue();
 
 			for (int i = 1, j = positions.size() - 1; i < j; i++)
 			{
-				pos = (((Long) positions.get(i)).longValue());
+				pos = ((Long) positions.get(i)).longValue();
 				mark = (int) ((pos * w1) / max);
 				g.fillRect(x1 + mark, y1, 2, h1); //mark
 			}
 
-			pos = (((Long) positions.get(0)).longValue());
+			pos = ((Long) positions.get(0)).longValue();
 			mark = (int) ((pos * w1) / max);
 			g.setColor(Color.red);
 			g.fillRect(x1 + mark, y1, 2, h1); //mark
@@ -773,6 +864,27 @@ public class PicturePanel extends JPanel {
 		g.setColor(Color.green);
 		g.drawString(Common.getMpvDecoderClass().getPidAndFileInfo(), 10, 370);
 
+		//matrix
+		if (!isMatrixImageAvailable)
+			return;
+
+		for (int i = 0; i < matrix_table.length; i++)
+		{
+			if (matrix_positions.containsKey(String.valueOf(i)))
+			{
+				pos = ((Long)matrix_positions.get(String.valueOf(i))).longValue();
+				mark = (int) ((pos * w1) / max);
+				g.fillRect(x1 + mark, y1 + 4, 2, h1 - 4); //mark matrix position
+			}
+		}
+
+		if (matrix_positions.containsKey(String.valueOf(matrix_index)))
+		{
+			pos = ((Long)matrix_positions.get(String.valueOf(matrix_index))).longValue();
+			mark = (int) ((pos * w1) / max);
+			g.setColor(Color.magenta);
+			g.fillRect(x1 + mark, y1, 2, h1); //mark matrix position
+		}
 	}
 
 	/**
@@ -1059,13 +1171,69 @@ public class PicturePanel extends JPanel {
 		mixed_image_info = isMixedImageAvailable ? "CutImage Mix Mode: " + ((transparency * 100) / 255) + "%" : "";
 
 		if (!isMixedImageAvailable)
-			Arrays.fill(mixed_image_array, 0);
+			clearMixedImage();
 
 		else
 			for (int i = 0, j = mixed_image_array.length; i < j; i++)
 				mixed_image_array[i] = (0xFFFFFF & picture[i]) | transparency<<24;
 
+		isMatrixImageAvailable = false;
+
 		mixed_source.newPixels();
+	}
+
+	/**
+	 * 
+	 */
+	public void clearMixedImage()
+	{
+		Arrays.fill(mixed_image_array, 0);
+	}
+
+	/**
+	 * modify matrix image
+	 */
+	public void setMatrixPreviewPixel(int index)
+	{
+		isMatrixImageAvailable = true;
+
+		Common.getMpvDecoderClass().getScaledCutMatrixImage(mixed_image_array, matrix_new_width, matrix_new_height, matrix_table[index][0], matrix_table[index][1]);
+
+		mixed_source.newPixels();
+	}
+
+	/**
+	 * get matrix
+	 */
+	public int[][] getMatrixTable()
+	{
+		return matrix_table;
+	}
+
+	/**
+	 * set matrix pos
+	 */
+	public void setMatrixIndexPosition(int index, long value)
+	{
+		matrix_positions.put(String.valueOf(index), new Long(value));
+	}
+
+	/**
+	 * set matrix pos
+	 */
+	public void setMatrixEndPosition(long value)
+	{
+		matrix_positions.put("end", new Long(value));
+	}
+
+	/**
+	 * set matrix pos
+	 */
+	public void resetMatrixPositions(long value)
+	{
+		matrix_positions.clear();
+		setMatrixEndPosition(value);
+		clearMixedImage();
 	}
 
 	/**

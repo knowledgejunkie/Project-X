@@ -86,7 +86,23 @@ public class Preview extends Object {
 	/**
 	 *
 	 */
+	public long silentload(long startposition, int size, List previewList, boolean direction, boolean all_gops, boolean fast_decode, int y_gain, Object[] _predefined_Pids, int _active_collection) throws IOException
+	{
+		return load(startposition, size, previewList, direction, all_gops, fast_decode, y_gain, _predefined_Pids, _active_collection, true);
+	}
+
+	/**
+	 *
+	 */
 	public long load(long startposition, int size, List previewList, boolean direction, boolean all_gops, boolean fast_decode, int y_gain, Object[] _predefined_Pids, int _active_collection) throws IOException
+	{
+		return load(startposition, size, previewList, direction, all_gops, fast_decode, y_gain, _predefined_Pids, _active_collection, false);
+	}
+
+	/**
+	 *
+	 */
+	public long load(long startposition, int size, List previewList, boolean direction, boolean all_gops, boolean fast_decode, int y_gain, Object[] _predefined_Pids, int _active_collection, boolean silent) throws IOException
 	{
 		predefined_Pids = _predefined_Pids;
 		active_collection = _active_collection;
@@ -131,7 +147,7 @@ public class Preview extends Object {
 
 		preview_data = search(preview_data, startposition, filetype);
 
-		long newposition = Common.getMpvDecoderClass().decodeArray(preview_data, direction, all_gops, fast_decode, y_gain, !silent);
+		long newposition = Common.getMpvDecoderClass().decodeArray(preview_data, direction, all_gops, fast_decode, y_gain, silent);
 
 		for (int i = positionList.size() - 1; i >= 0; i--)
 		{
@@ -146,7 +162,7 @@ public class Preview extends Object {
 		if (positionList.size() == 0) 
 			startposition += newposition;
 
-		for (int i = 0; i < previewList.size(); i++)
+		for (int i = 0; !silent && i < previewList.size(); i++)
 		{
 			preview_object = (PreviewObject)previewList.get(i);
 
@@ -160,9 +176,12 @@ public class Preview extends Object {
 		preview_data = null;
 		//System.gc();
 
-		Common.getMpvDecoderClass().setProcessedPosition(startposition, previewList);
-		Common.getMpvDecoderClass().setPidAndFileInfo(getProcessedPID() + " : " + getProcessedFile());
-		Common.getGuiInterface().repaintPicturePanel();
+		if (!silent)
+		{
+			Common.getMpvDecoderClass().setProcessedPosition(startposition, previewList);
+			Common.getMpvDecoderClass().setPidAndFileInfo(getProcessedPID() + " : " + getProcessedFile());
+			Common.getGuiInterface().repaintPicturePanel();
+		}
 
 		return startposition;
 	}
@@ -190,7 +209,7 @@ public class Preview extends Object {
 
 		preview_data = search(preview_data, startposition, filetype);
 
-		long newposition = Common.getMpvDecoderClass().decodeArray(preview_data, false, all_gops, fast_decode, y_gain, silent);
+		long newposition = Common.getMpvDecoderClass().decodeArray(preview_data, false, all_gops, fast_decode, y_gain, true);
 
 		startposition += newposition;
 

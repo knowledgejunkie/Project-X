@@ -77,9 +77,9 @@
 --alle fehler mit stacktrace melden im log
 --biglog (options[30]) über coll.debug steuern
 --main routine ausgelagert nach start
-<<!-unwichtig... textfieldlistener evtl. als changelistener, immer enter drücken
-<<!-verworfen: dateitypen in listview coll. + autoload farblich hinterlegen (weiß = ungeprüft, rot = unbekannt, andere mal sehen) , erfordert ne abfrage, spez. cellrenderer
-<<!-wieder rausgenommne,fortschrittsbalken mit farbänderung je Prozent (rot-gelb-grün), verbruacht ca. 5% zeit
+##!-unwichtig... textfieldlistener evtl. als changelistener, immer enter drücken
+##!-verworfen: dateitypen in listview coll. + autoload farblich hinterlegen (weiß = ungeprüft, rot = unbekannt, andere mal sehen) , erfordert ne abfrage, spez. cellrenderer
+##!-wieder rausgenommne,fortschrittsbalken mit farbänderung je Prozent (rot-gelb-grün), verbruacht ca. 5% zeit
 --file dragndrop für macosx tiger workaround
 !-unicode im resourcefile nicht möglich, schreiben als "\uxxxx"
 --biglog loggt noch nich alles, options[30] über coll.debug steuern, fast erl.
@@ -95,24 +95,24 @@
 --zusätzl  class in collect., die die variablen hält (framerate, pts, clv, etc), wird vor dem process init. mit den aktuellen settings, nach ende entfernt wieder entfernt
 --neue collection klasse speichert alle extraeinstellungen, schnittpunkte + bilder evtl, outpfad etc
 --aktive coll. kann nun nicht entfernt werden
-<<!-rückgestellt, mpvd classe ergänzen s. forum
+##!-rückgestellt, mpvd classe ergänzen s. forum
 --Los! + pausetaste zusammenfassen, evtl. Bildchen, größer
 --logfenster separat wie bei ifoedit, aufpoppen beim start und per knopp, falls geschlossen.
 --pidliste rechts doppelklick entfernt multiple auswahl
 --dateiinfo als osd mit Icons, kopie als tect in clipboard, bei SUP-Es auch Anzeige des ersten Bildes, skaliert
-<<-properties: links kategorie via tree, rechts panel <- tabs gehen erstmal auch noch gut
+##-properties: links kategorie via tree, rechts panel <- tabs gehen erstmal auch noch gut
 --alle klassen 'extends object'
 --statusleiste hauptf. unten, links vorgang, von progressbar, rechts uhrzeit
 --common.renameto : system.gc ergänzt, da java 1.5 die systemressourcen zu geschlossenen datein nicht unmittelbar löst, vgl. auch ftp-connection problematik
 --dateityp optional zuweisen über kontext (im fileobjekt)
-<<-abfrage vor globalem schließen, falls nochn prozess läuft --> erster test: geht nicht, hauptframe schließt sich dennoch
+##-abfrage vor globalem schließen, falls nochn prozess läuft --> erster test: geht nicht, hauptframe schließt sich dennoch
 --extra ftp-panel
 --falsche PID nummer -> fehler in OSD melden
 --tf5k header neu, 3.option ergänzt
 --disk access prüfung/meldung mit statusanzeige
 --UIcomponentIF durchleitung
 --filepanel separieren, später
-<<!-subtitle fenster, menü ergänzen, unten testeinstellungen ergänzen, zzt nur separat
+##!-subtitle fenster, menü ergänzen, unten testeinstellungen ergänzen, zzt nur separat
 --palplus sign, falls WSS entsprechend
 --jre >= 1.4 liefert zusätzl. actionevent bei editierbaren comboboxen! workaround ergänzt
 --mehr cli switches
@@ -125,11 +125,11 @@
 --preview wird immer gleich geladen, und bei collectionändereungen angepasst, kein extra zugriff (dpkl) mehr
 --yield ist unnötig
 --typ-sortierscan auf coll-ebene, bei dateitransaktionen, move, del, add etc
-<<-2.ut exportformat durchlauf, gui vorbereitet
+##-2.ut exportformat durchlauf, gui vorbereitet
 --kapitelmarken in gui setzen, export in celltimes txt
-<<-hexviewer, menü ergänzen, gui elemente sortieren, speicher unter, startcodes färben , jeditorpane
+##-hexviewer, menü ergänzen, gui elemente sortieren, speicher unter, startcodes färben , jeditorpane
 --collection steuerun links, mit infofeld, aktiv, dateianzahl, (hauptbild?)
-<<-sprachdatein direkt nachladen können, online abfrage schonmal drin
+##-sprachdatein direkt nachladen können, online abfrage schonmal drin
 --gui neu ordnen, preview immer oben, im wechsel mit log/optionen, filemenü über table drunter
 --bitraten änderungsfunktionen prüfen
 --toggle d2v
@@ -333,6 +333,11 @@
 --dynam. Rescan mit vorschau in dateieigenschaften
 --fix mpeg1 out of memory - u.a.
 
+0.90.4.00b17:
+--matrix scan, vorschau erweitert (li. annähern, re. übernehmen)
+--remux wird bei sekund. Dateien abgelehnt, info sekund. Datei in tabelle bei # "-"
+
+
 
 !-test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding
 !-pid in dateinamen - problem split
@@ -372,7 +377,6 @@
 !!projektdateiexport zusammenfassen
 !!dvdlap index
 !!pegel graf audiodecode
-!!vorschau erweitert umringgops, extradatei aufbaun mit file-id + pos
 !!pmt 0xC3 -> string epg - nur inter Typ 0 - mtv2 cyfra 11282v hotbird 
 !-PAT mit adaptionfield ?? 6400 10977 h 16°E, neue klasse
 !!sendername aus SDT anzeigen?

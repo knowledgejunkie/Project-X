@@ -36,6 +36,7 @@ import net.sourceforge.dvb.projectx.gui.PicturePanel;
 import net.sourceforge.dvb.projectx.gui.FileProperties;
 import net.sourceforge.dvb.projectx.gui.CollectionProperties;
 import net.sourceforge.dvb.projectx.gui.PatchDialog;
+import net.sourceforge.dvb.projectx.gui.CutPanel;
 
 import net.sourceforge.dvb.projectx.common.Resource;
 
@@ -49,6 +50,8 @@ public class CommonGui extends Object {
 	private static Object suggestion = null;
 
 	private static X_JFileChooser chooser;
+
+	private static CutPanel cutpanel;
 
 	private static PicturePanel picturepanel;
 
@@ -66,6 +69,7 @@ public class CommonGui extends Object {
 		chooser = new X_JFileChooser();
 
 		picturepanel = new PicturePanel();
+		cutpanel = new CutPanel();
 		file_properties = new FileProperties();
 		collection_properties = new CollectionProperties();
 	}
@@ -204,6 +208,14 @@ public class CommonGui extends Object {
 	public static PicturePanel getPicturePanel()
 	{
 		return picturepanel;
+	}
+
+	/**
+	 *
+	 */
+	public static CutPanel getCutPanel()
+	{
+		return cutpanel;
 	}
 
 	/**
