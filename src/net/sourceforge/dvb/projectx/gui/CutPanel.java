@@ -333,7 +333,8 @@ public class CutPanel extends JPanel {
 
 				setCutIndexField(index + 1);
 
-				Common.getGuiInterface().showCutIcon((index & 1) == 0, obj, previewList);
+				showCutInfo((index & 1) == 0, obj, previewList);
+				//Common.getGuiInterface().showCutIcon((index & 1) == 0, obj, previewList);
 
 				if (actName.equals("cutbox") || actName.equals("delpoint"))
 				{
@@ -347,7 +348,8 @@ public class CutPanel extends JPanel {
 
 			else
 			{
-				Common.getGuiInterface().showCutIcon(true, null, previewList);
+				showCutInfo(true, null, previewList);
+				//Common.getGuiInterface().showCutIcon(true, null, previewList);
 
 				setCutIndexField(-1);
 
@@ -679,6 +681,7 @@ public class CutPanel extends JPanel {
 						int[][] matrix_index = CommonGui.getPicturePanel().getMatrixTable();
 						long end = ((PreviewObject) previewList.get(previewList.size() - 1)).getEnd();
 						long div = end / matrix_index.length;
+						String str;
 
 						div /= scale;
 						scale <<= 1;
@@ -693,7 +696,10 @@ public class CutPanel extends JPanel {
 								break;
 
 							value = update(tmp, i);
-							CommonGui.getPicturePanel().setMatrixIndexPosition(i, value);
+							str = Common.getMpvDecoderClass().getInfo_2();
+							str = str.substring(0, str.indexOf(","));
+
+							CommonGui.getPicturePanel().setMatrixIndexPosition(i, value, str);
 
 							Thread.sleep(5);
 						}
@@ -1658,11 +1664,13 @@ public class CutPanel extends JPanel {
 		{
 			index = getCutIndex(obj, String.valueOf(lastPosition));
 
-			Common.getGuiInterface().showCutIcon((index & 1) == 0, obj, previewList);
+			showCutInfo((index & 1) == 0, obj, previewList);
+			//Common.getGuiInterface().showCutIcon((index & 1) == 0, obj, previewList);
 		}
 
 		else
-			Common.getGuiInterface().showCutIcon(true, null, previewList);
+			showCutInfo(true, null, previewList);
+			//Common.getGuiInterface().showCutIcon(true, null, previewList);
 
 		/**
 		 * chapters
@@ -1893,7 +1901,8 @@ public class CutPanel extends JPanel {
 		previewList.clear();
 		reloadCutpoints();
 		reloadChapterpoints();
-		Common.getGuiInterface().showCutIcon(true, null, previewList);
+		showCutInfo(true, null, previewList);
+		//Common.getGuiInterface().showCutIcon(true, null, previewList);
 		Common.getGuiInterface().showChapterIcon(null, previewList);
 
 		slider.setMaximum(1);
@@ -2215,5 +2224,27 @@ public class CutPanel extends JPanel {
 		positionField.setText(str);
 
 		action = b;
+	}
+
+	/**
+	 * 
+	 */
+	private void showCutInfo(boolean b, Object[] obj, Object list)
+	{
+		boolean b1 = false;
+
+		if (!((List) list).isEmpty())
+		{
+			if (collection.getSettings().getBooleanProperty(Keys.KEY_OptionDAR) &&
+				collection.getSettings().getIntProperty(Keys.KEY_ExportDAR) + 1 != Common.getMpvDecoderClass().getAspectRatio())
+				b1 = true;
+
+			else if (collection.getSettings().getBooleanProperty(Keys.KEY_OptionHorizontalResolution) &&
+				collection.getSettings().getIntProperty(Keys.KEY_ExportHorizontalResolution) != Common.getMpvDecoderClass().getWidth())
+				b1 = true;
+		}
+
+		CommonGui.getPicturePanel().setFilterStatus(b1);
+		Common.getGuiInterface().showCutIcon(b, obj, list);
 	}
 }

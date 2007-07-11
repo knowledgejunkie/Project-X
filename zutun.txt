@@ -337,6 +337,9 @@
 --matrix scan, vorschau erweitert (li. annähern, re. übernehmen)
 --remux wird bei sekund. Dateien abgelehnt, info sekund. Datei in tabelle bei # "-"
 
+0.90.4.00b18:
+--filter info
+--matrix changed to 4x4
 
 
 !-test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding
@@ -356,6 +359,7 @@
 
 !!-pes parser keine vorauswahl von headern ba,ff,f0 etc mehr, mit loggen
 !!-0xBE -> arte_ut fra, scan von pes ändern
+
 
 !genauere scanzuordnung - angefangen
 !!id3tag infos anzeigen

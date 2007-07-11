@@ -103,6 +103,7 @@ public class PicturePanel extends JPanel {
 	private boolean PLAY = true;
 	private boolean isMixedImageAvailable = false;
 	private boolean isMatrixImageAvailable = false;
+	private boolean isFilterActive = false;
 
 	private boolean manualzoom = false;
 	private boolean definezoom = false;
@@ -112,13 +113,21 @@ public class PicturePanel extends JPanel {
 	private String mixed_image_info = "";
 
 	private int matrix_index = -1;
-	private int matrix_new_width = 100;
-	private int matrix_new_height = 56;
+	private int matrix_new_width = 128; //100
+	private int matrix_new_height = 72; //56
 
 	private Hashtable matrix_positions = new Hashtable();
 
-	// 5x5 matrix
+	// 4x4 matrix
 	private int[][] matrix_table = {
+		{ 0, 0 }, { 128, 1 }, { 256, 1 }, { 384, 1 }, 
+		{ 0, 72 }, { 128, 72 }, { 256, 72 }, { 384, 72 },
+		{ 0, 144 }, { 128, 144 }, { 256, 144 }, { 384, 144 },
+		{ 0, 216 }, { 128, 216 }, { 256, 216 }, { 384, 216 },
+	};
+
+	// 5x5 matrix
+	private int[][] matrix_table_5x5 = {
 		{ 2, 1 }, { 104, 1 }, { 206, 1 }, { 308, 1 }, { 410, 1 }, 
 		{ 2, 58 }, { 104, 58 }, { 206, 58 }, { 308, 58 }, { 410, 58 }, 
 		{ 2, 117 }, { 104, 117 }, { 206, 117 }, { 308, 117 }, { 410, 117 }, 
@@ -359,7 +368,8 @@ public class PicturePanel extends JPanel {
 
 				if (isMatrixImageAvailable)
 				{
-					tmp_val = ((e.getX() * 5) / 512) + (5 * ((e.getY() * 5) / 288));
+				//	tmp_val = ((e.getX() * 512 / matrix_new_width) / 512) + (5 * ((e.getY() * 288 / matrix_new_height) / 288));
+					tmp_val = (e.getX() / matrix_new_width) + ((512 / matrix_new_width) * (e.getY() / matrix_new_height));
 
 					if (tmp_val < matrix_table.length)
 					{
@@ -592,6 +602,7 @@ public class PicturePanel extends JPanel {
 		g.setFont(font_2);
 		g.drawString(String.valueOf(matrix_index), matrix_table[matrix_index][0] + 5, matrix_table[matrix_index][1] + 14);
 		g.drawString(matrix_positions.get(String.valueOf(matrix_index)).toString(), matrix_table[matrix_index][0] + 5, matrix_table[matrix_index][1] + 54);
+		g.drawString(matrix_positions.get(String.valueOf(matrix_index) + "TC").toString(), matrix_table[matrix_index][0] + 5, matrix_table[matrix_index][1] + 68);
 		g.drawString(percentage.format(((Long)matrix_positions.get(String.valueOf(matrix_index))).doubleValue() / ((Long)matrix_positions.get("end")).doubleValue()), matrix_table[matrix_index][0] + 50, matrix_table[matrix_index][1] + 14);
 	}
 
@@ -725,9 +736,19 @@ public class PicturePanel extends JPanel {
 			g.setColor(Color.red);
 			g.fillRect(10, 294, 20, 20);
 
+			//red border around pic
 			g.drawRect(0, 0, 513, 289);
 			g.drawRect(1, 1, 511, 287);
 		}
+
+		if (!isFilterActive)
+			return;
+
+		g.setColor(Color.yellow);
+		g.drawString("active export filter !", 522, 18);
+		//red border around pic
+		g.drawRect(0, 0, 513, 289);
+		g.drawRect(1, 1, 511, 287);
 	}
 
 	/**
@@ -1213,9 +1234,10 @@ public class PicturePanel extends JPanel {
 	/**
 	 * set matrix pos
 	 */
-	public void setMatrixIndexPosition(int index, long value)
+	public void setMatrixIndexPosition(int index, long value, String str)
 	{
-		matrix_positions.put(String.valueOf(index), new Long(value));
+		matrix_positions.put(String.valueOf(index), new Long(value)); // pos
+		matrix_positions.put(String.valueOf(index) + "TC", str);  // TC
 	}
 
 	/**
@@ -1234,6 +1256,14 @@ public class PicturePanel extends JPanel {
 		matrix_positions.clear();
 		setMatrixEndPosition(value);
 		clearMixedImage();
+	}
+
+	/**
+	 * get filter mismatch
+	 */
+	public void setFilterStatus(boolean b)
+	{
+		isFilterActive = b;
 	}
 
 	/**

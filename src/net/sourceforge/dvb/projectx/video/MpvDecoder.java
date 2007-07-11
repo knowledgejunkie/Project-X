@@ -1416,7 +1416,7 @@ public void Decode_Picture(){
 
 	//DM26022004 081.6 int18 changed
 	//DM06052004 081.7 int02 changed
-	info_2 = "" + gop_hour + ":" + gop_minute + ":" + gop_sec + ":" + gop_frame + " ";
+	info_2 = Common.adaptString(gop_hour, 2) + ":" + Common.adaptString(gop_minute, 2) + ":" + Common.adaptString(gop_sec, 2) + ":" + Common.adaptString(gop_frame, 2) + " ";
 	info_2 += ", " + drop_flag + "/" + closed_gop + "/" + broken_link + " ";
 	info_2 += ", " + (Math.round(frame_rate * 1000) / 1000.0f) + "fps ";  //DM06022004 081.6 int15 change
 	info_2 += ", " + SH[SequenceHeader] + " ";
@@ -3001,17 +3001,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 			return "LB Zoom";
 
 		else if (zoomMode == 2)
-		{
-		/**
-			String str = "Manual Zoom: x" + ((zoomArea[0] * horizontal_size) / preview_horizontal_size) +
-			", y" + ((zoomArea[1] * vertical_size) / preview_vertical_size) +
-			" - " + ((zoomArea[2] * horizontal_size) / preview_horizontal_size) +
-			"*" + ((zoomArea[3] * vertical_size) / preview_vertical_size);
-		**/
-			String str = "Manual Zoom: x" + zoomArea[0] + ", y" + zoomArea[1] + " - " + zoomArea[2] + "*" + zoomArea[3];
-
-			return str;
-		}
+			return ("Manual Zoom: x" + zoomArea[0] + ", y" + zoomArea[1] + " - " + zoomArea[2] + "*" + zoomArea[3]);
 
 		return "";
 	}
