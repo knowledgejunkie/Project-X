@@ -31,7 +31,12 @@
 
 package net.sourceforge.dvb.projectx.audio;
 
+import java.util.Arrays;
+
 import net.sourceforge.dvb.projectx.audio.AudioFormat;
+import net.sourceforge.dvb.projectx.common.Common;
+
+import net.sourceforge.dvb.projectx.parser.CommonParsing;
 
 public class AudioFormatAC3 extends AudioFormat {
 		
@@ -56,9 +61,9 @@ public class AudioFormatAC3 extends AudioFormat {
 	};
 
 	private int[][] ac3_size_table = {
-		{ 128,160,192,224,256,320,384,448,512,640,768,896,1024,1280,1536,1792,2080,2304,2560 },
-		{ 138,174,208,242,278,348,416,486,556,696,834,974,1114,1392,1670,1950,2228,2506,2786 },
-		{ 192,240,288,336,384,480,576,672,768,960,1152,1344,1536,1920,2304,2688,3120,3456,3840 }
+		{ 128,160,192,224,256,320,384,448,512,640,768,896,1024,1280,1536,1792,2048,2304,2560 }, //48khz
+		{ 138,174,208,242,278,348,416,486,556,696,834,974,1114,1392,1670,1950,2228,2506,2786 }, //44.1khz
+		{ 192,240,288,336,384,480,576,672,768,960,1152,1344,1536,1920,2304,2688,3120,3456,3840 } //32khz
 	};
 	
 	private String[] bsmod = {	", CM" , ", ME" , ", K:VI" , ", K:HI" , ", K:D" , ", K:C" , ", K:E" , ", K:VO" };
@@ -303,9 +308,11 @@ public class AudioFormatAC3 extends AudioFormat {
 			break;
 
 		case 2:
-//			framesize = setBitrateFlags(frame, framesize);
-//			computeCRC(frame, framesize);
+			frame = setNewBitrate(frame);
+			break;
 
+		case 3:
+			frame = setSilence(frame);
 			break;
 		}
 
@@ -313,7 +320,7 @@ public class AudioFormatAC3 extends AudioFormat {
 	}
 
 	/**
-	 * 3+2 channels, note the following bits will be dispointed and the frame is corrupted
+	 * fix to 3+2 channels, note the following bits will be dispointed and the frame is corrupted
 	 */
 	private void setChannelFlags(byte[] frame, int mode)
 	{
@@ -323,14 +330,61 @@ public class AudioFormatAC3 extends AudioFormat {
 	/**
 	 * bitrate edit
 	 */
-	private int setBitrateFlags(byte[] frame, int framesize)
+	private byte[] setNewBitrate(byte[] frame)
 	{
-		int src = 0xC1 & frame[4];
-		int src_idx = (0x3E & frame[4])>>>1;
+		int size_index_src = 0x1F & frame[4]>>>1;
+		int size_index = (int)(0x1FL & (CommonParsing.getAudioProcessingFlags()>>>4));
 
-		frame[4] = (byte)(src | src_idx<<1);
+		if (size_index_src == size_index)
+			return frame;
 
-		return framesize;
+		else if (size_index_src > size_index)
+		{
+			size_index = size_index_src;
+
+			if ((CommonParsing.getAudioProcessingFlags()>>>18) > 0) // not first frame
+				CommonParsing.setAudioProcessingFlags(CommonParsing.getAudioProcessingFlags() | 0xCL); //restart marker
+		}
+
+		CommonParsing.setAudioProcessingFlags((~0xFF0L & CommonParsing.getAudioProcessingFlags()) | size_index<<4); //common bitrate index
+
+		byte[] newframe = new byte[ac3_size_table[3 & frame[4]>>>6][size_index]];
+
+		System.arraycopy(frame, 0, newframe, 0, frame.length);
+
+		newframe[4] &= 0xC0; //keep samplerate
+		newframe[4] |= (size_index<<1); //set index
+
+		clearCRC(newframe, frame.length);
+		computeCRC(newframe, ac3_size_table[3 & newframe[4]>>>6][size_index]);
+
+		return newframe;
+	}
+
+	/**
+	 * set silence
+	 */
+	private byte[] setSilence(byte[] frame)
+	{
+		byte[] newframe = new byte[frame.length];
+
+		System.arraycopy(frame, 0, newframe, 0, frame.length);
+
+		int bitpos = getBSI(newframe, 0);
+
+		if ((bitpos & 7) == 0) //byte aligned
+			Arrays.fill(newframe, bitpos>>>3, newframe.length, (byte) 0);
+
+		else
+		{
+			Arrays.fill(newframe, (bitpos + 1)>>>3, newframe.length, (byte) 0);
+			newframe[bitpos>>>3] &= (0xFF00>>>(bitpos & 7));
+		}
+
+		clearCRC(newframe, newframe.length);
+		computeCRC(newframe, ac3_size_table[3 & newframe[4]>>>6][0x1F & newframe[4]>>>1]);
+
+		return newframe;
 	}
 
 	/**
@@ -340,7 +394,7 @@ public class AudioFormatAC3 extends AudioFormat {
 	{
 		// frame_size is BYTE
 		int words = frame_size>>>1; //to word
-		int frame_size_58 = 2* ((words>>>1) + (words>>>3)); //frame_size_58
+		int frame_size_58 = 2 * ((words>>>1) + (words>>>3)); //frame_size_58
 
 		int crc = -1;
 
@@ -356,22 +410,32 @@ public class AudioFormatAC3 extends AudioFormat {
 	}
 
 	/**
+	 * clear crc
+	 */
+	private void clearCRC(byte[] frame, int size)
+	{
+		frame[2] = (byte) 0;
+		frame[3] = (byte) 0;
+		frame[size - 2] = (byte) 0;
+		frame[size - 1] = (byte) 0;
+	}
+
+	/**
 	 * compute crc16 1 + 2
 	 */
 	private void computeCRC(byte[] frame, int frame_size)
 	{
-		// frame_size is WORD
-		frame_size >>>= 1; //to word
-
-		int frame_size_58 = (frame_size>>>1) + (frame_size>>>3);
+		// frame_size is BYTE
+		int words = frame_size>>>1; //to word
+		int frame_size_58 = 2 * ((words>>>1) + (words>>>3)); //frame_size_58
 
 		int crc1 = -1;
 		int crc2 = -1;
 		int crc_inv = -1;
 
-		crc1 = determineCRC(frame, 4, 2 * frame_size_58, 0);
+		crc1 = determineCRC(frame, 4, frame_size_58, 0);
 
-		crc_inv = pow_poly((CRC16_POLY >>> 1), (16 * frame_size_58) - 16, CRC16_POLY);
+		crc_inv = pow_poly((CRC16_POLY >>> 1), (frame_size_58<<3) - 16, CRC16_POLY);
 
 		//crc1
 		crc1 = mul_poly(crc_inv, crc1, CRC16_POLY);
@@ -379,9 +443,9 @@ public class AudioFormatAC3 extends AudioFormat {
 		frame[3] = (byte)(0xFF & crc1);
 
 		//crc2
-		crc2 = determineCRC(frame, 2 * frame_size_58, (2 * frame_size) - 2, 0);
-		frame[(2* frame_size) - 2] = (byte)(0xFF & (crc2 >> 8));
-		frame[(2* frame_size) - 1] = (byte)(0xFF & crc2);
+		crc2 = determineCRC(frame, frame_size_58, (words<<1) - 2, 0);
+		frame[(2* words) - 2] = (byte)(0xFF & (crc2 >> 8));
+		frame[(2* words) - 1] = (byte)(0xFF & crc2);
 	}
 
 	/**
@@ -457,6 +521,85 @@ public class AudioFormatAC3 extends AudioFormat {
 
 		return r;
 	}
+
+
+	/**
+	 * bsi , taken from Doc A/52
+	 */
+	private int getBSI(byte[] frame, int pos)
+	{
+		//start at frame[5]
+
+		int[] BitPos = { pos<<3 };
+		int acmod = 0;
+		int val = 0;
+
+		getBits(frame, BitPos, 16); //sync
+		getBits(frame, BitPos, 16); //crc1
+		getBits(frame, BitPos, 2); //freq
+		getBits(frame, BitPos, 6); //size
+		getBits(frame, BitPos, 5); //bsi
+		getBits(frame, BitPos, 3); //bsmod
+
+		acmod = getBits(frame, BitPos, 3); //acmod
+		if ((acmod & 1) > 0 && acmod != 1)
+			getBits(frame, BitPos, 2); //cmixlev // if 3 front channels
+		if ((acmod & 4) > 0)
+			getBits(frame, BitPos, 2); //surmixlev // if a surround channel exists 
+		if (acmod == 2)
+			getBits(frame, BitPos, 2); //dsurmod // if in 2/0 mode 
+
+		getBits(frame, BitPos, 1); //lfeon
+		getBits(frame, BitPos, 5); //dialnorm
+
+		if (getBits(frame, BitPos, 1) == 1) //compre
+			getBits(frame, BitPos, 8); //compr
+
+		if (getBits(frame, BitPos, 1) == 1) //langcode
+			getBits(frame, BitPos, 8); //langcod
+
+		if (getBits(frame, BitPos, 1) == 1) //audprodie
+		{
+			getBits(frame, BitPos, 5); //mixlevel
+			getBits(frame, BitPos, 2); //roomtyp
+		}
+
+		if (acmod == 0) // if 1+1 mode (dual mono, so some items need a second value)
+		{
+			getBits(frame, BitPos, 5); //dialnorm2
+
+			if (getBits(frame, BitPos, 1) == 1) //compr2e
+				getBits(frame, BitPos, 8); //compr2
+
+			if (getBits(frame, BitPos, 1) == 1) //langcod2e
+				getBits(frame, BitPos, 8); //langcod2
+
+			if (getBits(frame, BitPos, 1) == 1) //audprodi2e
+			{
+				getBits(frame, BitPos, 5); //mixlevel2
+				getBits(frame, BitPos, 2); //roomtyp2
+			}
+		}
+
+		getBits(frame, BitPos, 1); //copyrightb
+		getBits(frame, BitPos, 1); //origbs
+
+		if (getBits(frame, BitPos, 1) == 1) //timecod1e
+			getBits(frame, BitPos, 14); //timecod1
+
+		if (getBits(frame, BitPos, 1) == 1) //timecod2e
+			getBits(frame, BitPos, 14); //timecod2
+
+		if (getBits(frame, BitPos, 1) == 1) //addbsie
+		{
+			val = getBits(frame, BitPos, 6); //addbsil
+			getBits(frame, BitPos, (val + 1) * 8); //addbsi
+		}
+
+		return BitPos[0];
+	}
+
+
 
 	/**
 	 * ac3 riff header stuff

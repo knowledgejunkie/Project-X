@@ -1,7 +1,7 @@
 /*
  * @(#)AudioFormat.java - parse Audioheaders, basic class
  *
- * Copyright (c) 2003-2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2003-2007 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -614,5 +614,25 @@ public class AudioFormat extends Object {
 			return ( (0xFF & data>>>8) | (0xFF & data)<<8 );
 	}
 
+	/**
+	 * 
+	 */
+	public int getBits(byte buf[], int BitPos[], int N)
+	{
+		int Pos, Val;
+
+		Pos = BitPos[0]>>>3;
+
+		Val = (0xFF & buf[Pos])<<24 |
+			(0xFF & buf[Pos+1])<<16 |
+			(0xFF & buf[Pos+2])<<8 |
+			(0xFF & buf[Pos+3]);
+
+		Val <<= BitPos[0] & 7;
+		Val >>>= 32-N;
+		BitPos[0] += N;
+
+		return Val;
+	}
 
 }

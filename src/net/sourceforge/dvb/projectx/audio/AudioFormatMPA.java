@@ -1,7 +1,7 @@
 /*
  * @(#)AudioFormatMPA.java - parse Audioheaders, mpa, incl. RDS
  *
- * Copyright (c) 2003-2006 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2003-2007 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -492,27 +492,6 @@ public class AudioFormatMPA extends AudioFormat {
 		crc = determineCRC(data, offset, nr_bits, crc);
 
 		return ((crc != crc_val) ? 1 : 0);
-	}
-
-	/**
-	 * 
-	 */
-	private int getBits(byte buf[], int BitPos[], int N)
-	{
-		int Pos, Val;
-
-		Pos = BitPos[0]>>>3;
-
-		Val = (0xFF & buf[Pos])<<24 |
-			(0xFF & buf[Pos+1])<<16 |
-			(0xFF & buf[Pos+2])<<8 |
-			(0xFF & buf[Pos+3]);
-
-		Val <<= BitPos[0] & 7;
-		Val >>>= 32-N;
-		BitPos[0] += N;
-
-		return Val;
 	}
 
 

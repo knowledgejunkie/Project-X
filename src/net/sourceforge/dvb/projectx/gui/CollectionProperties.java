@@ -1005,12 +1005,13 @@ public class CollectionProperties extends JFrame {
 			Keys.KEY_AudioPanel_clearCRC,
 			Keys.KEY_AudioPanel_fillGapsWithLastFrame,
 			Keys.KEY_AudioPanel_addFrames,
-			Keys.KEY_AudioPanel_patch1stAc3Header,
-			Keys.KEY_AudioPanel_replaceAc3withSilence,
 			Keys.KEY_AudioPanel_allowSpaces,
 			Keys.KEY_AudioPanel_addRiffToMpgAudio,
 			Keys.KEY_AudioPanel_addRiffToMpgAudioL3,
 			Keys.KEY_AudioPanel_addRiffToAc3,
+			Keys.KEY_AudioPanel_AC3_patch1stHeader,
+			Keys.KEY_AudioPanel_AC3_replaceWithSilence,
+			Keys.KEY_AudioPanel_AC3_BitrateAdaption,
 			Keys.KEY_AudioPanel_createDDWave
 		};
 
@@ -1127,7 +1128,7 @@ public class CollectionProperties extends JFrame {
 
 		for (int i = 7; i < objects.length; i++)
 		{
-			if (i == 14 || i == 17)
+			if (i == 12 || i == 15 || i == 18)
 				audio1.add(Box.createRigidArea(new Dimension(1, 10)));
 
 			audio1.add(box[i]);
@@ -1141,22 +1142,22 @@ public class CollectionProperties extends JFrame {
 
 				if (str.equals(Keys.KEY_AudioPanel_addRiffToMpgAudioL3[0]) && checkBox.isSelected())
 				{
-					box[15].setSelected(false);
+					box[12].setSelected(false);
 					Common.getSettings().setBooleanProperty(Keys.KEY_AudioPanel_addRiffToMpgAudio[0], false);
 					return;
 				}
 
 				else if (str.equals(Keys.KEY_AudioPanel_addRiffToMpgAudio[0]) && checkBox.isSelected())
 				{
-					box[16].setSelected(false);
+					box[13].setSelected(false);
 					Common.getSettings().setBooleanProperty(Keys.KEY_AudioPanel_addRiffToMpgAudioL3[0], false);
 					return;
 				}
 			}
 		};
 
-		box[15].addActionListener(al_2);
-		box[16].addActionListener(al_2);
+		box[12].addActionListener(al_2);
+		box[13].addActionListener(al_2);
 
 		audio.add(audio0);
 		audio.add(audio1);

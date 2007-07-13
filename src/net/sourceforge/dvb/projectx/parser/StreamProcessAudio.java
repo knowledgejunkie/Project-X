@@ -95,7 +95,9 @@ public class StreamProcessAudio extends StreamProcessBase {
 	private boolean AddWaveHeaderBWF;
 	private boolean AddWaveHeaderAC3;
 	private boolean DecodeMpgAudio;
-	private boolean ReplaceAc3withSilence;
+	private boolean AC3_ReplaceWithSilence;
+	private boolean AC3_Patch1stHeader;
+	private boolean AC3_BitrateAdaption;
 	private boolean ContainsVideoPTS;
 	private boolean ContainsAudioPTS;
 	private boolean CreateM2sIndex;
@@ -104,7 +106,6 @@ public class StreamProcessAudio extends StreamProcessBase {
 	private boolean PitchAudio;
 	private boolean AllowSpaces;
 	private boolean ValidateCRC;
-	private boolean Patch1stAc3Header;
 	private boolean FillGapsWithLastFrame;
 	private boolean LimitPts;
 	private boolean AllowFormatChanges;
@@ -218,6 +219,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 			if (collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addAiffHeader))
 				Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_addAiffHeader[0]));
 		}
+
 
 		/**
 		 * restart loop
@@ -450,6 +452,17 @@ public class StreamProcessAudio extends StreamProcessBase {
 					if (isCancelled(job_processing))
 						break bigloop; 
 
+					/**
+					 * updates global audio_error and framecounter variable
+					 */
+					CommonParsing.setAudioProcessingFlags((0x3FFFFL & CommonParsing.getAudioProcessingFlags()) | ((long)FrameExportInfo.getWrittenFrames())<<18);
+
+					/**
+					 * fix VBR & restart processing 
+					 */
+					if ((0xCL & CommonParsing.getAudioProcessingFlags()) != 0)
+						return true; 
+
 					if (ptspos[x + 1] != -1 && FramePosition > ptspos[x + 1])
 					{
 						Common.setMessage(Resource.getString("audio.msg.pts.wo_frame") + " (" + ptspos[x + 1] + "/" + FramePosition + ")");
@@ -624,7 +637,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 						/**
 						 * patch ac-3 to 3/2 
 						 */
-						if (!is_DTS && Patch1stAc3Header && FrameExportInfo.getWrittenFrames() == 0)
+						if (!is_DTS && AC3_Patch1stHeader && FrameExportInfo.getWrittenFrames() == 0)
 							frame = audio.editFrame(frame, 1);
 
 						long precount = vptsval[v];
@@ -826,7 +839,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 					/**
 					 * patch ac-3 to 3/2 
 					 */
-					if (!is_DTS && Patch1stAc3Header && FrameExportInfo.getWrittenFrames() == 0)
+					if (!is_DTS && AC3_Patch1stHeader && FrameExportInfo.getWrittenFrames() == 0)
 						frame = audio.editFrame(frame, 1);
 
 					if (Debug)
@@ -909,7 +922,6 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 								silentFrameBuffer.reset();
 								silentFrameBuffer.write(ac3data);
-
 								break;
 							}
 						}
@@ -1971,6 +1983,10 @@ public class StreamProcessAudio extends StreamProcessBase {
 		switch (es_streamtype)
 		{
 		case CommonParsing.AC3_AUDIO:
+			// set bitrate
+			if (AC3_BitrateAdaption)
+				frame = audio.editFrame(frame, 2);
+
 			if (AddWaveHeaderAC3) 
 				audio.parseRiffData(frame, 1); 
 
@@ -2223,7 +2239,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 	 */
 	private byte[] getReplacementFrame(AudioFormat audio, byte[] array, int es_streamtype)
 	{
-		if (es_streamtype != CommonParsing.AC3_AUDIO || !ReplaceAc3withSilence)
+		if (es_streamtype != CommonParsing.AC3_AUDIO || !AC3_ReplaceWithSilence)
 			return array;
 
 		//is 3/2
@@ -2536,11 +2552,14 @@ public class StreamProcessAudio extends StreamProcessBase {
 		if (ClearCRC)
 			Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_clearCRC[0]));
 
-		if (Patch1stAc3Header)
-			Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_patch1stAc3Header[0]));
+		if (AC3_Patch1stHeader)
+			Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_AC3_patch1stHeader[0]));
 
-		if (ReplaceAc3withSilence)
-			Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_replaceAc3withSilence[0]));
+		if (AC3_ReplaceWithSilence)
+			Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_AC3_replaceWithSilence[0]));
+
+		if (AC3_BitrateAdaption)
+			Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_AC3_BitrateAdaption[0]));
 
 		if (FillGapsWithLastFrame)
 			Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_fillGapsWithLastFrame[0]));
@@ -2566,12 +2585,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 		AddWaveHeaderACM = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addRiffToMpgAudioL3);
 		AddWaveHeaderBWF = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addRiffToMpgAudio);
 		AddWaveHeaderAC3 = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_addRiffToAc3);
-		ReplaceAc3withSilence = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_replaceAc3withSilence);
+		AC3_ReplaceWithSilence = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_AC3_replaceWithSilence);
+		AC3_Patch1stHeader = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_AC3_patch1stHeader);
+		AC3_BitrateAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_AC3_BitrateAdaption);
 		CreateM2sIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createM2sIndex);
 		PitchAudio = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_pitchAudio);
 		AllowSpaces = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_allowSpaces);
 		ValidateCRC = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_validateCRC);
-		Patch1stAc3Header = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_patch1stAc3Header);
 		FillGapsWithLastFrame = collection.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_fillGapsWithLastFrame);
 		LimitPts = collection.getSettings().getBooleanProperty(Keys.KEY_Audio_limitPts);
 		AllowFormatChanges = collection.getSettings().getBooleanProperty(Keys.KEY_Audio_allowFormatChanges);

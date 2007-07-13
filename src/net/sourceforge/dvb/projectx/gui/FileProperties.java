@@ -63,6 +63,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import net.sourceforge.dvb.projectx.gui.UISwitchListener;
 import net.sourceforge.dvb.projectx.gui.CommonGui;
@@ -418,9 +419,11 @@ public class FileProperties extends JFrame {
 
 		setFileInfo();
 
-		long position = Preview.previewFile(inputfile, value, loadSizeForward, Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops), Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode), Common.getSettings().getIntProperty(Keys.KEY_Preview_YGain));
+		previewFile(value);
 
-		view.setImage(Common.getMpvDecoderClass().getScaledCutImage());
+	//	long position = Preview.previewFile(inputfile, value, loadSizeForward, Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops), Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode), Common.getSettings().getIntProperty(Keys.KEY_Preview_YGain));
+
+	//	view.setImage(Common.getMpvDecoderClass().getScaledCutImage());
 	}
 
 	/**
@@ -436,9 +439,10 @@ public class FileProperties extends JFrame {
 
 		setFileInfo();
 
-		long position = Preview.previewFile(inputfile, value, loadSizeForward, Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops), Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode), Common.getSettings().getIntProperty(Keys.KEY_Preview_YGain));
+		previewFile(value);
+//		long position = Preview.previewFile(inputfile, value, loadSizeForward, Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops), Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode), Common.getSettings().getIntProperty(Keys.KEY_Preview_YGain));
 
-		view.setImage(Common.getMpvDecoderClass().getScaledCutImage());
+//		view.setImage(Common.getMpvDecoderClass().getScaledCutImage());
 	}
 
 	/**
@@ -457,6 +461,47 @@ public class FileProperties extends JFrame {
 	private void setFileInfo()
 	{ 
 		area.setText(inputfile.getStreamInfo().getFullInfo());
+	}
+
+	/**
+	 *
+	 */
+	private void previewFile(long value)
+	{ 
+		switch (inputfile.getStreamInfo().getStreamType())
+		{
+		case CommonParsing.PES_AV_TYPE:
+		case CommonParsing.MPEG1PS_TYPE:
+		case CommonParsing.MPEG2PS_TYPE:
+		case CommonParsing.PVA_TYPE:
+		case CommonParsing.TS_TYPE:
+			long position = Preview.previewFile(inputfile, value, loadSizeForward, Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops), Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode), Common.getSettings().getIntProperty(Keys.KEY_Preview_YGain));
+			view.setImage(Common.getMpvDecoderClass().getScaledCutImage());
+			break;
+
+		case CommonParsing.PES_MPA_TYPE:
+		case CommonParsing.PES_PS1_TYPE:
+			view.setImage("PES Audio");
+			break;
+
+		case CommonParsing.ES_MPV_TYPE:
+		case CommonParsing.ES_MPA_TYPE:
+		case CommonParsing.ES_AC3_TYPE:
+		case CommonParsing.ES_AC3_A_TYPE:
+		case CommonParsing.ES_DTS_TYPE:
+		case CommonParsing.ES_DTS_A_TYPE:
+		case CommonParsing.ES_RIFF_TYPE:
+		case CommonParsing.ES_cRIFF_TYPE:
+		case CommonParsing.ES_SUP_TYPE:
+			view.setImage("RAW Audio");
+			break;
+
+		case CommonParsing.Unsupported:
+		default:
+			view.setImage("Unknown");
+			break;
+		}
+
 	}
 
 	/**
@@ -689,6 +734,7 @@ public class FileProperties extends JFrame {
 		private Image image;
 		private MemoryImageSource source;
 		private int[] image_data;
+		private String alternative = "";
 
 		public View()
 		{
@@ -707,7 +753,18 @@ public class FileProperties extends JFrame {
 
 		public void setImage(int[] new_image_data)
 		{
+			alternative = "";
 			System.arraycopy(new_image_data, 0, image_data, 0, new_image_data.length);
+
+			source.newPixels();
+			repaint();
+		}
+
+		public void setImage(String str)
+		{
+			alternative = str;
+			Arrays.fill(image_data, 0);
+
 			source.newPixels();
 			repaint();
 		}
@@ -718,6 +775,9 @@ public class FileProperties extends JFrame {
 			g.fillRect(0, 0, 160, 90);
 
 			g.drawImage(image, 0, 0, this);
+
+			g.setColor(Color.white);
+			g.drawString(alternative, 10, 30);
 		}
 
 	}

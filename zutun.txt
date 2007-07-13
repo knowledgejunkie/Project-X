@@ -341,6 +341,11 @@
 --filter info
 --matrix changed to 4x4
 
+0.90.4.00b19:
+--fix dvb-sub crash
+--opt. ac3 bitraten angleichung
+
+
 
 !-test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding
 !-pid in dateinamen - problem split
@@ -366,7 +371,6 @@
 !!hav sektoren prüfen, nur melden
 !!profile hd,mpg reseted,vob, etc ermöglichen?
 !!MPAD überarbeiten, nicht mehr statisch; decode: arrays.fill statt new init ca. 20% schneller
-!!ac3 bitraten patch mit CRC neu berechnung (bitraten neuerdings fast immer gleichbleibend)
 !!info .00 sek, :00 frame, ;00 dropframes (semikoloon)
 !-h264 ? zzt nur info
 !!finepass wrapper,humax wrapper,vcd-svcd-image wrapper etc evtl. übergeordnet?

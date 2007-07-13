@@ -1,7 +1,7 @@
 /*
  * @(#)DVBSubpicture.java - decodes DVB subtitles
  *
- * Copyright (c) 2004-2006 by dvb.matt, All rights reserved
+ * Copyright (c) 2004-2007 by dvb.matt, All rights reserved
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -388,10 +388,10 @@ public class DVBSubpicture extends Object {
 			}
 
 			addBigMessage("enum: region " + region.getId() + " /err " + region.getErrors() + " /acti " + region.isActive() + " /chng " + region.isChanged() + " /ti_o " + time_out);
-//
+
 			if ( page.getState() == 0 && time_out > 6000 )
 				continue;
-//
+
 
 			region.setError(0); //DM23062004 081.7 int05 add
 
@@ -426,6 +426,7 @@ public class DVBSubpicture extends Object {
 
 		page.setTimeOut(time_out); //page_time_out, seconds to stand
 
+		//empty pages may define CLUTs without regions
 		while (BytePosition < segment_end)
 		{
 			region = epoch.setRegion(getBits(8)); //region_ids of this epoch
@@ -554,7 +555,7 @@ public class DVBSubpicture extends Object {
 			addBigMessage("addclut: " + CLUT_entry_id + " /flag " + Integer.toHexString(flag).toUpperCase() + " /ARGB " + Integer.toHexString(ARGB).toUpperCase() + " /range " + full_range_flag);
 
 			for (int i=0; i<3; i++)
-				clut.setClutEntry(mapColorIndex(CLUT_entry_id, region.getDepth(), 2<<i), (flag & 2<<i), ARGB);
+				clut.setClutEntry(mapColorIndex(CLUT_entry_id, getRegionDepth(), 2<<i), (flag & 2<<i), ARGB);
 		}
 	}
 
@@ -1080,14 +1081,20 @@ public class DVBSubpicture extends Object {
 		return color_index;
 	}
 
+	//in case of undefined regions take regular 8 bit (256col) depth = flag 4
+	private int getRegionDepth()
+	{
+		return (region != null ? region.getDepth() : 4);
+	}
+
 	//DM13062004 081.7 int04 add
 	private void setUserClut()
 	{
 		int model = Integer.parseInt(user_table.get("model").toString().trim());
 		int max_indices = model > 2 ? (model > 4 ? 256 : 16) : 4;
 
-		if (region.getDepth() < model)
-			max_indices = region.getDepth();
+		if (getRegionDepth() < model)
+			max_indices = getRegionDepth();
 
 		for (int i = 0; i < max_indices; i++)
 		{
@@ -1095,7 +1102,7 @@ public class DVBSubpicture extends Object {
 			{
 				addBigMessage("addUserClut: " + i + " /ARGB " + user_table.get("" + i));
 
-				clut.setClutEntry(mapColorIndex(i, region.getDepth(), model), model, (int)Long.parseLong(user_table.get("" + i).toString().trim(), 16));
+				clut.setClutEntry(mapColorIndex(i, getRegionDepth(), model), model, (int)Long.parseLong(user_table.get("" + i).toString().trim(), 16));
 			}
 		}
 	}

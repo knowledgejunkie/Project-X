@@ -1724,7 +1724,7 @@ public class Scan extends Object {
 		Audio.setNewType(CommonParsing.AC3_AUDIO);
 
 		audiocheck:
-		for (int i = 0; i < buffersize; i++)
+		for (int i = 0, gg=0; i < buffersize; i++)
 		{
 			if (Audio.parseHeader(check, i) < 1)
 				continue;

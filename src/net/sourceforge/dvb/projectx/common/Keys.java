@@ -292,8 +292,9 @@ public class Keys extends Object {
 	public final static String[] KEY_AudioPanel_clearCRC = { "AudioPanel.clearCRC", "1" }; //cbox[1] 
 	public final static String[] KEY_AudioPanel_fillGapsWithLastFrame = { "AudioPanel.fillGapsWithLastFrame", "0" }; //cbox[0] 
 	public final static String[] KEY_AudioPanel_addFrames = { "AudioPanel.addFrames", "1" }; //cbox[20] 
-	public final static String[] KEY_AudioPanel_patch1stAc3Header = { "AudioPanel.patch1stAc3Header", "0" }; //cbox[9] 
-	public final static String[] KEY_AudioPanel_replaceAc3withSilence = { "AudioPanel.replaceAc3withSilence", "0" }; //cbox[10] 
+	public final static String[] KEY_AudioPanel_AC3_patch1stHeader = { "AudioPanel.patch1stAc3Header", "0" }; //cbox[9] 
+	public final static String[] KEY_AudioPanel_AC3_replaceWithSilence = { "AudioPanel.replaceAc3withSilence", "0" }; //cbox[10] 
+	public final static String[] KEY_AudioPanel_AC3_BitrateAdaption = { "AudioPanel.AC3BitrateAdaption", "0" };
 	public final static String[] KEY_AudioPanel_allowSpaces = { "AudioPanel.allowSpaces", "0" }; //cbox[69] 
 	public final static String[] KEY_AudioPanel_addRiffToAc3 = { "AudioPanel.addRiffToAc3", "0" }; //cbox[12] 
 	public final static String[] KEY_AudioPanel_addRiffToMpgAudio = { "AudioPanel.addRiffToMpgAudioL12", "0" }; //cbox[4] + rbutton[14] riff für layer1+2
