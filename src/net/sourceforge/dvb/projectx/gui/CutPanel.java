@@ -1721,6 +1721,8 @@ public class CutPanel extends JPanel {
 
 		try {
 
+			CommonGui.getPicturePanel().disableMatrix();
+
 			if (Common.getSettings().getIntProperty(Keys.KEY_CutMode) != CommonParsing.CUTMODE_BYTE || previewList.isEmpty())
 			{
 				Common.getMpvDecoderClass().resetProcessedPosition();

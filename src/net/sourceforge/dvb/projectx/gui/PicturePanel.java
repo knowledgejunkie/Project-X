@@ -299,6 +299,8 @@ public class PicturePanel extends JPanel {
 						{
 							long value = ((Long)matrix_positions.get(String.valueOf(matrix_index))).longValue();
 
+							disableMatrix();
+
 							CommonGui.getCutPanel().stopMatrix();
 							CommonGui.getCutPanel().preview(value);
 						}
@@ -1256,6 +1258,14 @@ public class PicturePanel extends JPanel {
 		matrix_positions.clear();
 		setMatrixEndPosition(value);
 		clearMixedImage();
+	}
+
+	/**
+	 * set matrix
+	 */
+	public void disableMatrix()
+	{
+		isMatrixImageAvailable = false;
 	}
 
 	/**

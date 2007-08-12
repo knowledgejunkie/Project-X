@@ -87,8 +87,8 @@ import net.sourceforge.dvb.projectx.net.WebInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90.4.00.b19";
-	private static String version_date = "13.07.2007";
+	private static String version_name = "ProjectX 0.90.4.00.b20";
+	private static String version_date = "11.08.2007";
 
 	private static String line_separator = System.getProperty("line.separator");
 
@@ -1240,6 +1240,7 @@ public final class Common extends Object {
 
 		case CommonParsing.ACTION_TO_TS:
 			cmdl = getSettings().getProperty(Keys.KEY_PostCommands_Cmd8);
+			break;
 
 		default:
 			return;
@@ -1302,7 +1303,8 @@ public final class Common extends Object {
 
 
 			try { 
-				Process subprocess = Runtime.getRuntime().exec(arguments); 
+				Process subprocess = Runtime.getRuntime().exec(commandline); // anyone has told that works better
+			//	Process subprocess = Runtime.getRuntime().exec(arguments); 
 
 				if (getSettings().getBooleanProperty(Keys.KEY_PostProcessCompletion))
 				{

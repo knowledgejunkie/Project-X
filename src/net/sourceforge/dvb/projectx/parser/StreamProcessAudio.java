@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParserAudio
  *
- * Copyright (c) 2005-2006 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2007 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -139,7 +139,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 	private final int MpaConversion_Mode3 = 3; //single to st
 	private final int MpaConversion_Mode4 = 4; //st-dual to 2 single
 	private final int MpaConversion_Mode5 = 5; //st-dual to 2 jst - doubled single
-	private final int MpaConversion_Mode6 = 6; //dual to 2 jst - doubled single
+	private final int MpaConversion_Mode6 = 6; //auto-dual to 2 jst - doubled single
 
 	private long FileLength;
 	private final long FileLength_Min = 100;
@@ -149,6 +149,18 @@ public class StreamProcessAudio extends StreamProcessBase {
 	private long FramePosition;
 	private long CurrentFramePosition;
 	private long TimePosition;
+
+	private String str_wav = ".wav";
+	private String str_ac3 = ".ac3";
+	private String str_mpa = ".mpa";
+	private String str_mp1 = ".mp1";
+	private String str_mp2 = ".mp2";
+	private String str_mp3 = ".mp3";
+	private String str_dts = ".dts";
+	private String str_aif = ".aif";
+	private String str_pcm = ".pcm";
+	private String str_new = ".new";
+
 
 	/**
 	 * 
@@ -288,14 +300,16 @@ public class StreamProcessAudio extends StreamProcessBase {
 		long[] vptsval = {0};
 		long[] vtime = {0};
 
+		long[] insertion_counter = new long[2];
+
 		String audio_type[] = { "(ac3)", "(mp3)", "(mp2)", "(mp1)", "(dts)", "(pcm)" };
 		String tmp_str = null;
 
-		FramePosition = 0;
-		CurrentFramePosition = 0;
+		setFramePosition(0);
+		setCurrentFramePosition(0);
 
-		TimePosition = 0;
-		TimeCounter = 0.0;
+		setTimePosition(0);
+		setTimeCounter(0.0);
 
 		ModeChangeCount = 0;
 		ModeChangeCount_JSS = 0;
@@ -311,9 +325,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 		int x = 0; 
 
-		int v = 0;
-		int w = 0;
-		int[] vw = new int[2];
+		int[] video_timeIndex = new int[4];
 
 		int layer = 0;
 		int returncode = 0;
@@ -399,12 +411,12 @@ public class StreamProcessAudio extends StreamProcessBase {
 			// the index to start with processing
 			if (ContainsAudioPTS)
 			{ 
-				TimePosition = ptsval[x]; 
-				FramePosition = ptspos[x]; 
+				setTimePosition(ptsval[x]); 
+				setFramePosition(ptspos[x]); 
 			}
 
-			if (FramePosition > 0) 
-				skipInputStream(FramePosition);
+			if (getFramePosition() > 0) 
+				skipInputStream(getFramePosition());
 
 			//init extra wave header
 			audio.initExtraWaveHeader(AddWaveHeaderACM, AddWaveHeaderBWF, AddWaveHeaderAC3);
@@ -439,12 +451,12 @@ public class StreamProcessAudio extends StreamProcessBase {
 				 *  AC-3/DTS Audio
 				 */
 				readloopdd:
-				while ((es_streamtype == CommonParsing.AC3_AUDIO || es_streamtype == CommonParsing.DTS_AUDIO) && FramePosition < FileLength - 10)
+				while ((es_streamtype == CommonParsing.AC3_AUDIO || es_streamtype == CommonParsing.DTS_AUDIO) && getFramePosition() < FileLength - 10)
 				{
-					Common.updateProgressBar(FramePosition, FileLength);
+					Common.updateProgressBar(getFramePosition(), FileLength);
 
 					if (Debug) 
-						System.out.println("FramePosition " + FramePosition);
+						System.out.println("\n FramePosition " + getFramePosition());
 
 					while (pause())
 					{}
@@ -461,18 +473,22 @@ public class StreamProcessAudio extends StreamProcessBase {
 					 * fix VBR & restart processing 
 					 */
 					if ((0xCL & CommonParsing.getAudioProcessingFlags()) != 0)
-						return true; 
-
-					if (ptspos[x + 1] != -1 && FramePosition > ptspos[x + 1])
 					{
-						Common.setMessage(Resource.getString("audio.msg.pts.wo_frame") + " (" + ptspos[x + 1] + "/" + FramePosition + ")");
+						closeInputStream();
+						closeOutputStreams();
+						return true; 
+					}
+
+					if (ptspos[x + 1] != -1 && getFramePosition() > ptspos[x + 1])
+					{
+						Common.setMessage(Resource.getString("audio.msg.pts.wo_frame") + " (" + ptspos[x + 1] + "/" + getFramePosition() + ")");
 						x++;
 					}
 
 					/** 
 					 * read 10 bytes for headercheck 
 					 */
-					FramePosition += readInputStream(pushback, 0, 10);
+					countFramePosition(readInputStream(pushback, 0, 10));
 
 					/**
 					 * parse header 
@@ -489,10 +505,10 @@ public class StreamProcessAudio extends StreamProcessBase {
 							unreadInputStream(pushback, 1, 9);
 
 							if (Message_2 && !missing_syncword)
-								Common.setMessage(Resource.getString("audio.msg.syncword.lost", " " + (FramePosition - 10)) + " " + formatFrameTime(TimeCounter));
+								Common.setMessage(Resource.getString("audio.msg.syncword.lost", " " + (getFramePosition() - 10)) + " " + formatFrameTime(getTimeCounter()));
 
 							missing_syncword = true; 
-							FramePosition -= 9; 
+							countFramePosition(-9); 
 
 							continue readloopdd; 
 						} 
@@ -518,7 +534,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 					/**
 					 * prepare fo read entire frame 
 					 */
-					FramePosition -= unreadInputStream(pushback, 0, 10);
+					countFramePosition(-unreadInputStream(pushback, 0, 10));
 
 					/**
 					 * read entire frame 
@@ -531,12 +547,12 @@ public class StreamProcessAudio extends StreamProcessBase {
 					/**
 					 * startfileposition of current frame 
 					 */
-					CurrentFramePosition = FramePosition;
+					setCurrentFramePosition(getFramePosition());
 
 					/**
 					 * expected position for following frame 
 					 */
-					FramePosition += audio.getSize();
+					countFramePosition(audio.getSize());
 
 					if (PitchAudio)
 					{  // skip a frame
@@ -552,14 +568,14 @@ public class StreamProcessAudio extends StreamProcessBase {
 					/**
 					 * finish loop if last frame in file is shorter than nominal size 
 					 */
-					if ( FramePosition > FileLength ) 
+					if ( getFramePosition() > FileLength ) 
 						break readloopdd; 
 
 					/**
 					 * read following frame header, not if it is the last frame 
 					 * check following frameheader for valid , if not starting with next byte 
 					 */
-					if (FramePosition < FileLength - 10)
+					if (getFramePosition() < FileLength - 10)
 					{
 						int d = 0;
 
@@ -583,7 +599,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 						{ 
 							unreadInputStream(frame, 1, frame.length - 1);
 
-							FramePosition = CurrentFramePosition + 1; 
+							setFramePosition(getCurrentFramePosition() + 1); 
 
 							continue readloopdd; 
 						}
@@ -593,23 +609,23 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 							skipInputStream(d);
 
-							FramePosition += d;
+							countFramePosition(d);
 						}
 					}
 
 					if (ValidateCRC && (ERRORCODE = audio.validateCRC(frame, 2, audio.getSize())) != 0 )
 					{
-						Common.setMessage(Resource.getString("audio.msg.crc.error", "" + ERRORCODE) + " " + CurrentFramePosition);
+						Common.setMessage(Resource.getString("audio.msg.crc.error", "" + ERRORCODE) + " " + getCurrentFramePosition());
 
 						unreadInputStream(frame, 2, frame.length - 2);
 
-						FramePosition = CurrentFramePosition + 2;
+						setFramePosition(getCurrentFramePosition() + 2);
 
 						continue readloopdd; 
 					}
 
 					if (Message_2 && missing_syncword)
-						Common.setMessage(Resource.getString("audio.msg.syncword.found") + " " + CurrentFramePosition);
+						Common.setMessage(Resource.getString("audio.msg.syncword.found") + " " + getCurrentFramePosition());
 
 					missing_syncword = false;
 
@@ -629,7 +645,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 					/**
 					 * preloop if audio starts later than video, and i must insert 
 					 */
-					if ( (preloop && v >= vptsval.length) || !( preloop && ContainsVideoPTS && vptsval[v] < TimePosition - (audio.getFrameTimeLength() / 2.0) ) ) 
+					if ( (preloop && video_timeIndex[0] >= vptsval.length) || !( preloop && ContainsVideoPTS && vptsval[video_timeIndex[0]] < getTimePosition() - (audio.getFrameTimeLength() / 2.0) ) ) 
 						preloop=false;
 
 					else
@@ -640,8 +656,10 @@ public class StreamProcessAudio extends StreamProcessBase {
 						if (!is_DTS && AC3_Patch1stHeader && FrameExportInfo.getWrittenFrames() == 0)
 							frame = audio.editFrame(frame, 1);
 
-						long precount = vptsval[v];
-						long[] ins = { (long)TimeCounter, 0 };
+						long precount = vptsval[video_timeIndex[0]];
+
+						insertion_counter[0] = (long) getTimeCounter();
+						insertion_counter[1] = 0;
 
 						silentFrameBuffer.reset();
 
@@ -670,47 +688,47 @@ public class StreamProcessAudio extends StreamProcessBase {
 						/**
 						 * pre inserting
 						 */
-						while (precount < TimePosition - (audio.getFrameTimeLength() / 2.0))
+						while (precount < getTimePosition() - (audio.getFrameTimeLength() / 2.0))
 						{
 							/**
 							 * check if frame write should paused 
 							 */
-							if (ContainsVideoPTS && w < vptsval.length)
+							if (ContainsVideoPTS && video_timeIndex[1] < vptsval.length)
 							{ 
-								sync_value_1 = (double) (precount - vptsval[w + 1]);
-								sync_value_2 = (double) (TimeCounter - vtime[w + 1]);
+								sync_value_1 = (double) (precount - vptsval[video_timeIndex[1] + 1]);
+								sync_value_2 = (double) (getTimeCounter() - vtime[video_timeIndex[1] + 1]);
 
 								if ((double) Math.abs(sync_value_2) <= audio.getFrameTimeLength() / 2.0 )
 								{
 									WriteEnabled = false;
-									w += 2;
+									video_timeIndex[1] += 2;
 								}
 
 								else if ((double) Math.abs(sync_value_1) <= audio.getFrameTimeLength() / 2.0 )
 								{
 									WriteEnabled = false;
-									w += 2;
+									video_timeIndex[1] += 2;
 								}
 							}
 
 							/**
 							 * calculate A/V Offset for true 
 							 */
-							if (ContainsVideoPTS && (v < vptsval.length))
+							if (ContainsVideoPTS && (video_timeIndex[0] < vptsval.length))
 							{
-								sync_value_3 = precount - vptsval[v];
-								sync_value_4 = TimeCounter - vtime[v];
+								sync_value_3 = precount - vptsval[video_timeIndex[0]];
+								sync_value_4 = getTimeCounter() - vtime[video_timeIndex[0]];
 
 								if (Debug) 
 									System.out.println(" ö" + sync_value_3 + "/" + sync_value_4 + "/" + (sync_value_4 - sync_value_3));
 
-								if (!WriteEnabled && (double) Math.abs((TimeCounter - vtime[v]) - (precount - vptsval[v])) <= (double) audio.getFrameTimeLength() / 2.0 )
+								if (!WriteEnabled && (double) Math.abs((getTimeCounter() - vtime[video_timeIndex[0]]) - (precount - vptsval[video_timeIndex[0]])) <= (double) audio.getFrameTimeLength() / 2.0 )
 								{
 									WriteEnabled = true;
-									v += 2;
+									video_timeIndex[0] += 2;
 
-									sync_value_1 = precount - vptsval[v - 2];
-									sync_value_2 = TimeCounter - vtime[v - 2];
+									sync_value_1 = precount - vptsval[video_timeIndex[0] - 2];
+									sync_value_2 = getTimeCounter() - vtime[video_timeIndex[0] - 2];
 
 									Common.getGuiInterface().showAVOffset("" + (int)(sync_value_1 / 90) + "/" + (int)(sync_value_2 / 90) + "/" + (int)((sync_value_2 - sync_value_1) / 90));
 
@@ -722,15 +740,15 @@ public class StreamProcessAudio extends StreamProcessBase {
 							/**
 							 * calculate A/V Offset for true 
 							 */
-							if ((v < vptsval.length) )
+							if ((video_timeIndex[0] < vptsval.length) )
 							{
-								if ((double) Math.abs(vptsval[v] - precount) <= ((double) audio.getFrameTimeLength() / 2.0) )
+								if ((double) Math.abs(vptsval[video_timeIndex[0]] - precount) <= ((double) audio.getFrameTimeLength() / 2.0) )
 								{
 									WriteEnabled = true;
-									v += 2;
+									video_timeIndex[0] += 2;
 
-									sync_value_1 = precount - vptsval[v - 2];
-									sync_value_2 = TimeCounter - vtime[v - 2];
+									sync_value_1 = precount - vptsval[video_timeIndex[0] - 2];
+									sync_value_2 = getTimeCounter() - vtime[video_timeIndex[0] - 2];
 
 									Common.getGuiInterface().showAVOffset("" + (int)(sync_value_1 / 90) + "/" + (int)(sync_value_2 / 90) + "/" + (int)((sync_value_2 - sync_value_1) / 90));
 
@@ -741,10 +759,10 @@ public class StreamProcessAudio extends StreamProcessBase {
 								/**
 								 * calculate A/V Offset for false 
 								 */
-								if (WriteEnabled && (double) Math.abs((TimeCounter - vtime[v - 2]) - (precount - vptsval[v-2])) > (double) audio.getFrameTimeLength() / 2.0 )
+								if (WriteEnabled && (double) Math.abs((getTimeCounter() - vtime[video_timeIndex[0] - 2]) - (precount - vptsval[video_timeIndex[0]-2])) > (double) audio.getFrameTimeLength() / 2.0 )
 								{
 									WriteEnabled = false;
-									v -= 2;
+									video_timeIndex[0] -= 2;
 								}
 							}
 
@@ -773,23 +791,23 @@ public class StreamProcessAudio extends StreamProcessBase {
 								FrameExportInfo.countWrittenFrames(1);
 								FrameExportInfo.countPreInsertedFrames(1);
 
-								ins[1]++;
-								TimeCounter += audio.getFrameTimeLength();
+								insertion_counter[1]++;
+								countTimeCounter(audio.getFrameTimeLength());
 							}
 
 							precount += audio.getFrameTimeLength();
 
 							if (Debug) 
-								System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(TimeCounter) + "  ");
+								System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()) + "  ");
 
 						} // end while
 
-						FramePosition = CurrentFramePosition;
+						setFramePosition(getCurrentFramePosition());
 
 						unreadInputStream(frame, 0, frame.length);
 
-						if (ins[1] > 0)
-							Common.setMessage(Resource.getString("audio.msg.summary.pre-insert", "" + ins[1], FramesToTime((int)ins[1], audio.getFrameTimeLength())) + " " + formatFrameTime(ins[0]));
+						if (insertion_counter[1] > 0)
+							Common.setMessage(Resource.getString("audio.msg.summary.pre-insert", "" + insertion_counter[1], FramesToTime((int)insertion_counter[1], audio.getFrameTimeLength())) + " " + formatFrameTime(insertion_counter[0]));
 
 						continue readloopdd;
 					} // end if preloop
@@ -799,17 +817,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 					 * check if frame write should pause 
 					 */
 					if (ContainsVideoPTS)
-					{ 
-						vw[0] = v;
-						vw[1] = w;
-
-						WriteEnabled = SyncCheck(vw, TimeCounter, audio.getFrameTimeLength(), TimePosition, FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug);
-
-						v = vw[0];
-						w = vw[1];
-					}
-					//System.out.println(""+WriteEnabled+"/"+v+"/"+w);
-
+						WriteEnabled = SyncCheck(video_timeIndex, getTimeCounter(), audio.getFrameTimeLength(), getTimePosition(), FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug);
 
 					/**
 					 * message
@@ -818,18 +826,18 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 
 					if (Debug) 
-						System.out.println(" k)" + TimePosition + " l)" + (audio.getFrameTimeLength() / 2.0) + " u)" + audio.getSize() + " m)" + WriteEnabled + " FramePosition)"+w+" o)"+v+" p)"+FramePosition);
+						System.out.println(" k)" + getTimePosition() + " l)" + (audio.getFrameTimeLength() / 2.0) + " u)" + audio.getSize() + " m)" + WriteEnabled + " FramePosition)"+video_timeIndex[1]+" o)"+video_timeIndex[0]+" p)"+ getFramePosition());
 
 					/**
 					 * stop if no more audio needed 
 					 */
-					if (!checkLastAudioBound(ContainsVideoPTS, TimePosition, vptsval, FileLength))
+					if (!checkLastAudioBound(ContainsVideoPTS, getTimePosition(), vptsval, FileLength))
 						break readloopdd;
 
 					/**
 					 * message 
 					 */
-					messageSourceFormat(job_processing, audio, ContainsVideoPTS, TimeCounter);
+					messageSourceFormat(job_processing, audio, ContainsVideoPTS, getTimeCounter());
 
 					/**
 					 * remove CRC, unused
@@ -844,22 +852,18 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 					if (Debug)
 					{
-						System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(TimeCounter));
+						System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()));
 						System.out.println(" x" + ((x < ptspos.length - 1) ? x + "/" + ptsval[x + 1] + "/" + ptspos[x + 1] : "-"));
 					}
 
-					/**
-					 * pts for next frame!! 
-					 */
-					TimePosition += audio.getFrameTimeLength();
+					// pts for next frame!! 
+					countTimePosition(audio.getFrameTimeLength());
 
 					silentFrameBuffer.reset();
 					silentFrameBuffer.write(frame);
 
-					/**
-					 * simple sync
-					 */
-					if (LimitPts && ptspos[x + 1] != -1 && ptspos[x + 1] < FramePosition)
+					//simple sync
+					if (LimitPts && ptspos[x + 1] != -1 && ptspos[x + 1] < getFramePosition())
 					{
 						if (Debug)
 							System.out.println(" minSync " + minSync + "/ " + x);
@@ -870,34 +874,62 @@ public class StreamProcessAudio extends StreamProcessBase {
 							minSync = 0;
 					}
 
-					/**
-					 * frame is in last pes packet or packet end not yet reached 
-					 */
-					if (writeSuccessiveFrame(audio, frame, newframes, ContainsVideoPTS, FramePosition, ptspos, x, es_streamtype))
+					// frame is in last pes packet or packet end not yet reached 
+					if (writeSuccessiveFrame(audio, frame, newframes, ContainsVideoPTS, getFramePosition(), ptspos, x, es_streamtype))
 						continue readloopdd;
 
 
 					minSync = 0;
 
-					if ( (double) Math.abs(ptsval[x + 1] - TimePosition) < (double) audio.getFrameTimeLength() / 2.0 )
+					if ( (double) Math.abs(ptsval[x + 1] - getTimePosition()) < (double) audio.getFrameTimeLength() / 2.0 )
 					{
-						TimePosition = ptsval[x + 1];
-						x++;
+						setTimePosition(ptsval[++x]);
 
 						writeFrame(audio, frame, newframes, ContainsVideoPTS, es_streamtype);
+
+						insertion_counter[0] = (long) getTimeCounter();
+						insertion_counter[1] = 0;
+
+						// check sync after resetting
+						if (Math.abs(video_timeIndex[2]) >= (audio.getFrameTimeLength() / 2.0) || Math.abs(video_timeIndex[3]) >= (audio.getFrameTimeLength() / 2.0))
+						{
+							// 1 zusätzl. frame einfügen 
+							if (video_timeIndex[2] < 0 || video_timeIndex[3] < 0)
+							{
+								Common.setMessage("!> A/V sync discontinuity in next audio packet @ " + formatFrameTime(getTimeCounter()));
+
+								// gui message 
+								Common.getGuiInterface().showExportStatus((WriteEnabled || !ContainsVideoPTS) ? Resource.getString("audio.status.insert") : Resource.getString("audio.status.pause")); 
+
+								if (!ContainsVideoPTS || (ContainsVideoPTS && WriteEnabled))
+								{
+									writeFrame(audio, frame, newframes, ContainsVideoPTS, es_streamtype);
+
+									FrameExportInfo.countInsertedFrames(1);
+									insertion_counter[1]++;
+
+									Common.setMessage(Resource.getString("audio.msg.summary.insert", "" + insertion_counter[1], FramesToTime((int)insertion_counter[1], audio.getFrameTimeLength())) + " " + formatFrameTime(insertion_counter[0]));
+								}
+
+								if (Debug)
+								{
+									System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()));
+									System.out.println("tl: " + getTimePosition() + " x" + ((x < ptspos.length - 1) ? x + "/" + ptsval[x + 1] + "/" + ptspos[x + 1] : "-"));
+								}
+							}
+						}
 
 						continue readloopdd;
 					}
 
-					if (ptsval[x + 1] > TimePosition) 
+					if (ptsval[x + 1] > getTimePosition()) 
 						insertSilenceLoop = true;
 
-					if (ptsval[x + 1] < TimePosition)
+					if (ptsval[x + 1] < getTimePosition())
 					{
-						x++;
-						TimePosition = ptsval[x];
+						setTimePosition(ptsval[++x]);
 
-						Common.setMessage(Resource.getString("audio.msg.summary.skip") + " " + formatFrameTime(TimeCounter));
+						Common.setMessage(Resource.getString("audio.msg.summary.skip") + " " + formatFrameTime(getTimeCounter()));
 
 						FrameExportInfo.countSkippedFrames(1);
 					}
@@ -906,7 +938,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 					{
 						writeFrame(audio, frame, newframes, ContainsVideoPTS, es_streamtype);
 
-						TimePosition += audio.getFrameTimeLength();
+						countTimePosition(audio.getFrameTimeLength());
 
 						/**
 						 * insert silence ac3
@@ -926,116 +958,96 @@ public class StreamProcessAudio extends StreamProcessBase {
 							}
 						}
 
-						long[] ins = { (long)TimeCounter, 0 };
+						insertion_counter[0] = (long) getTimeCounter();
+						insertion_counter[1] = 0;
 
-
-						while (ptsval[x + 1] > (TimePosition - (audio.getFrameTimeLength() / 2.0)) )
+						while (ptsval[x + 1] > (getTimePosition() - (audio.getFrameTimeLength() / 2.0)) )
 						{
-							if (ContainsVideoPTS && w < vptsval.length)
-							{ 
-								sync_value_1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[w + 1]);
-								sync_value_2 = (double) (TimeCounter - vtime[w + 1]);
-
-								if ((double) Math.abs(sync_value_2) <= audio.getFrameTimeLength() / 2.0 )
-								{
-									WriteEnabled = false;
-									w += 2;
-								}
-
-								else if ((double) Math.abs(sync_value_1) <= audio.getFrameTimeLength() / 2.0 )
-								{
-									WriteEnabled = false;
-									w += 2;
-								}
-							}
-
-							if (ContainsVideoPTS && v < vptsval.length)
-							{
-								if (!WriteEnabled && (double) Math.abs((TimeCounter - vtime[v]) -
-										(TimePosition - audio.getFrameTimeLength() - vptsval[v]) ) <= (double) audio.getFrameTimeLength() / 2.0 )
-								{
-									sync_value_1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[v]);
-									sync_value_2 = (double) (TimeCounter - vtime[v]);
-
-									Common.getGuiInterface().showAVOffset("" + (int)(sync_value_1 / 90) + "/" + (int)(sync_value_2 / 90) + "/" + (int)((sync_value_2 - sync_value_1) / 90));
-
-									if (Debug) 
-										System.out.println(" §" + sync_value_1 + "/" + sync_value_2 + "/" + (sync_value_2 - sync_value_1));
-
-									WriteEnabled = true;
-									v += 2;
-								}
-							} 
-
-							if (ContainsVideoPTS && v < vptsval.length)
-							{
-								if ((double) Math.abs(vptsval[v] - (TimePosition - audio.getFrameTimeLength())) <= ((double) audio.getFrameTimeLength() / 2.0) )
-								{
-									sync_value_1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[v]);
-									sync_value_2 = (double) (TimeCounter - vtime[v]);
-
-									Common.getGuiInterface().showAVOffset("" + (int)(sync_value_1 / 90) + "/" + (int)(sync_value_2 / 90) + "/" + (int)((sync_value_2 - sync_value_1) / 90));
-
-									if (Debug) 
-										System.out.println(" ß" + sync_value_1 + "/" + sync_value_2 + "/" + (sync_value_2 - sync_value_1));
-
-									WriteEnabled = true;
-									v += 2;
-								}
-
-								if (WriteEnabled && (double) Math.abs((TimeCounter - vtime[v - 2]) -
-										(TimePosition - audio.getFrameTimeLength() - vptsval[v - 2]) ) > (double) audio.getFrameTimeLength() / 2.0 )
-								{
-									WriteEnabled = false;
-									v -= 2;
-								}
-							}
-
 							Common.getGuiInterface().showExportStatus((WriteEnabled || !ContainsVideoPTS) ? Resource.getString("audio.status.insert") : Resource.getString("audio.status.pause"));
 
 							if (!ContainsVideoPTS || (ContainsVideoPTS && WriteEnabled))
 							{
 								writeChannel1(silentFrameBuffer.toByteArray());
 
-								/**
-								 * RIFF 
-								 */
+								// RIFF 
 								if (!is_DTS && AddWaveHeaderAC3) 
 									audio.parseRiffData(silentFrameBuffer.toByteArray(), 1); 
 
 								FrameExportInfo.countWrittenFrames(1);
 								FrameExportInfo.countInsertedFrames(1);
 
-								TimeCounter += audio.getFrameTimeLength();
-								ins[1]++;
+								countTimeCounter(audio.getFrameTimeLength());
+								insertion_counter[1]++;
 							}
 
 							if (Debug)
 							{
-								System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(TimeCounter) + " ");
-								System.out.println(" t)" + TimePosition);
+								System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()) + " ");
+								System.out.println(" t)" + getTimePosition());
 								System.out.println(" x" + ((x < ptspos.length - 1) ? x + "/" + ptsval[x + 1] + "/" + ptspos[x + 1] : "-"));
 							}
 
-							TimePosition += audio.getFrameTimeLength();
-						} // end while
+							// check a+v sync
+							if (ContainsVideoPTS)
+								WriteEnabled = SyncCheck(video_timeIndex, getTimeCounter(), audio.getFrameTimeLength(), getTimePosition(), FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug);
 
-						TimePosition -= audio.getFrameTimeLength();
+							countTimePosition(audio.getFrameTimeLength());
+
+						} // end while insert
+
 						insertSilenceLoop = false;
-						x++;
 
-						if (ins[1] > 0)
-							Common.setMessage(Resource.getString("audio.msg.summary.insert", "" + ins[1], FramesToTime((int)ins[1], audio.getFrameTimeLength())) + " " + formatFrameTime(ins[0]));
+						if (insertion_counter[1] > 0)
+							Common.setMessage(Resource.getString("audio.msg.summary.insert", "" + insertion_counter[1], FramesToTime((int)insertion_counter[1], audio.getFrameTimeLength())) + " " + formatFrameTime(insertion_counter[0]));
 
-						/**
-						 * reset PTS after inserting
-						 */
-						TimePosition = ptsval[x];
+						// reset PTS after inserting
+						setTimePosition(ptsval[++x]);
+
+						insertion_counter[0] = (long) getTimeCounter();
+						insertion_counter[1] = 0;
+
+						// check sync after resetting
+						if (Math.abs(video_timeIndex[2]) >= audio.getFrameTimeLength() || Math.abs(video_timeIndex[3]) >= audio.getFrameTimeLength())
+						{
+							// 1 zusätzl. frame einfügen 
+							if (video_timeIndex[2] < 0 || video_timeIndex[3] < 0)
+							{
+								Common.setMessage("!> A/V sync discontinuity in next audio packet (insert) @ " + formatFrameTime(getTimeCounter()));
+
+								// gui message 
+								Common.getGuiInterface().showExportStatus((WriteEnabled || !ContainsVideoPTS) ? Resource.getString("audio.status.insert") : Resource.getString("audio.status.pause")); 
+
+								if (!ContainsVideoPTS || (ContainsVideoPTS && WriteEnabled))
+								{
+									writeChannel1(silentFrameBuffer.toByteArray());
+
+									// RIFF 
+									if (!is_DTS && AddWaveHeaderAC3) 
+										audio.parseRiffData(silentFrameBuffer.toByteArray(), 1); 
+
+									FrameExportInfo.countWrittenFrames(1);
+									FrameExportInfo.countInsertedFrames(1);
+
+									countTimeCounter(audio.getFrameTimeLength());
+
+									insertion_counter[1]++;
+								}
+
+								if (Debug)
+								{
+									System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()));
+									System.out.println("tl: " + getTimePosition() + " x" + ((x < ptspos.length - 1) ? x + "/" + ptsval[x + 1] + "/" + ptspos[x + 1] : "-"));
+								}
+							}
+						}
+
+						if (insertion_counter[1] > 0) 
+							Common.setMessage(Resource.getString("audio.msg.summary.insert", "" + insertion_counter[1], FramesToTime((int)insertion_counter[1], audio.getFrameTimeLength())) + " " + formatFrameTime(insertion_counter[0]));
 
 						continue readloopdd;
 					} // end if insertSilenceLoop
 
-					if ( (CurrentFramePosition + audio.getSize()) >= FileLength ) 
+					if ( (getCurrentFramePosition() + audio.getSize()) >= FileLength ) 
 						break readloopdd;
 
 				}  // end while
@@ -1043,10 +1055,10 @@ public class StreamProcessAudio extends StreamProcessBase {
 				/**
 				 * add frames at the end 
 				 */
-				if ((es_streamtype == CommonParsing.AC3_AUDIO || es_streamtype == CommonParsing.DTS_AUDIO) && AddFrames && ContainsVideoPTS && WriteEnabled && (w < vptsval.length))
+				if ((es_streamtype == CommonParsing.AC3_AUDIO || es_streamtype == CommonParsing.DTS_AUDIO) && AddFrames && ContainsVideoPTS && WriteEnabled && (video_timeIndex[1] < vptsval.length))
 				{
-					TimePosition += audio.getFrameTimeLength();
-					addf[0] = (long) TimeCounter;
+					countTimePosition(audio.getFrameTimeLength());
+					addf[0] = (long) getTimeCounter();
 
 					/**
 					 * insert silence ac3 
@@ -1067,9 +1079,9 @@ public class StreamProcessAudio extends StreamProcessBase {
 						}
 					}
 
-					while ( w < vptsval.length )
+					while ( video_timeIndex[1] < vptsval.length )
 					{
-						while (vtime[w + 1] > TimeCounter && (double) Math.abs(vtime[w + 1] - TimeCounter) > (double) audio.getFrameTimeLength() / 2.0)
+						while (vtime[video_timeIndex[1] + 1] > getTimeCounter() && (double) Math.abs(vtime[video_timeIndex[1] + 1] - getTimeCounter()) > (double) audio.getFrameTimeLength() / 2.0)
 						{
 							writeChannel1(silentFrameBuffer.toByteArray());
 
@@ -1084,25 +1096,25 @@ public class StreamProcessAudio extends StreamProcessBase {
 							FrameExportInfo.countWrittenFrames(1);
 							FrameExportInfo.countAddedFrames(1);
 
-							TimeCounter += audio.getFrameTimeLength();
-							TimePosition += audio.getFrameTimeLength();
+							countTimeCounter(audio.getFrameTimeLength());
+							countTimePosition(audio.getFrameTimeLength());
 							addf[1]++;
 
 							if (Debug)
 							{ 
-								System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(TimeCounter));
-								System.out.print(" t)" + (long)(TimePosition - audio.getFrameTimeLength()) + " w)" + w);
+								System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()));
+								System.out.print(" t)" + (long)(getTimePosition() - audio.getFrameTimeLength()) + " w)" + video_timeIndex[1]);
 							}
 						}
 
-						w += 2;
+						video_timeIndex[1] += 2;
 					}
 
-					w -= 2;
-					TimePosition -= audio.getFrameTimeLength();
+					video_timeIndex[1] -= 2;
+					countTimePosition(-audio.getFrameTimeLength());
 
 					if (Debug) 
-						System.out.println(" eot_video:" + (vptsval[w + 1] / 90) + "ms, eot_audio:" + (TimePosition / 90) + "ms ");
+						System.out.println(" eot_video:" + (vptsval[video_timeIndex[1] + 1] / 90) + "ms, eot_audio:" + (getTimePosition() / 90) + "ms ");
 				}
 
 // mpa start
@@ -1111,12 +1123,12 @@ public class StreamProcessAudio extends StreamProcessBase {
 				 *  MPEG1+2 Audio Layer 1,2,3
 				 */
 				readloop:
-				while (es_streamtype == CommonParsing.MPEG_AUDIO && FramePosition < FileLength - 4)
+				while (es_streamtype == CommonParsing.MPEG_AUDIO && getFramePosition() < FileLength - 4)
 				{
-					Common.updateProgressBar(FramePosition, FileLength);
+					Common.updateProgressBar(getFramePosition(), FileLength);
 
 					if (Debug) 
-						System.out.println(" FramePosition " + FramePosition);
+						System.out.println("\n FramePosition " + getFramePosition());
 
 					while (pause())
 					{}
@@ -1133,24 +1145,32 @@ public class StreamProcessAudio extends StreamProcessBase {
 					 * fix VBR & restart processing 
 					 */
 					if (MpaDecoder.RESET)
+					{
+						closeInputStream();
+						closeOutputStreams();
 						return true; 
+					}
 
 					/**
 					 * fix VBR & restart processing 
 					 */
 					if (!MpaDecoder.PRESCAN && (0xCL & CommonParsing.getAudioProcessingFlags()) != 0)
-						return true; 
-
-					if (ptspos[x + 1] != -1 && FramePosition > ptspos[x + 1])
 					{
-						Common.setMessage(Resource.getString("audio.msg.pts.wo_frame") + " (" + ptspos[x + 1] + "/" + FramePosition + ")");
+						closeInputStream();
+						closeOutputStreams();
+						return true; 
+					}
+
+					if (ptspos[x + 1] != -1 && getFramePosition() > ptspos[x + 1])
+					{
+						Common.setMessage(Resource.getString("audio.msg.pts.wo_frame") + " (" + ptspos[x + 1] + "/" + getFramePosition() + ")");
 						x++;
 					}
 
 					/**
 					 * read 4 bytes for headercheck 
 					 */
-					FramePosition += readInputStream(pushmpa, 0, 4);
+					countFramePosition(readInputStream(pushmpa, 0, 4));
 
 					/**
 					 * parse header 
@@ -1160,44 +1180,32 @@ public class StreamProcessAudio extends StreamProcessBase {
 						unreadInputStream(pushmpa, 1, 3);
 
 						if (Message_2 && !missing_syncword)
-							Common.setMessage(Resource.getString("audio.msg.syncword.lost", " " + (FramePosition - 4)) + " " + formatFrameTime(TimeCounter));
+							Common.setMessage(Resource.getString("audio.msg.syncword.lost", " " + (getFramePosition() - 4)) + " " + formatFrameTime(getTimeCounter()));
 
 						missing_syncword = true;
-						FramePosition -= 3;
+						countFramePosition(-3);
 
 						continue readloop;
 					}
 
-					/**
-					 * prepare fo read entire frame 
-					 */
-					FramePosition -= unreadInputStream(pushmpa, 0, 4);
+					// prepare to read entire frame, reset to start of frame
+					countFramePosition(-unreadInputStream(pushmpa, 0, 4));
 
-					/**
-					 * read entire frame 
-					 */
+					// read entire frame 
 					if (frame.length != audio.getSize())
 						frame = new byte[audio.getSize()];
 
 					readInputStream(frame, 0, audio.getSize());
 
-					System.arraycopy(frame, 0, header_copy, 0, 4);
-					header_copy[3] &= 0xCF;
-					header_copy[2] &= ~2;
+					copyMpaFrameHeader(frame, header_copy);
 
-					/**
-					 * startfileposition of current frame 
-					 */
-					CurrentFramePosition = FramePosition;
+					// startfileposition of current frame 
+					setCurrentFramePosition(getFramePosition());
 
-					/**
-					 * expected position for following frame 
-					 */
-					FramePosition += audio.getSize();
+					// expected position for following frame 
+					countFramePosition(audio.getSize());
 
-					/**
-					 * pitch 
-					 */
+					// pitch 
 					if (PitchAudio)
 					{  // skip a frame
 						if (pitch[1] * pitch[0] == FrameExportInfo.getWrittenFrames())
@@ -1209,9 +1217,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 						}
 					}
 
-					/**
-					 * save current frame for copying, delete crc if nec. 
-					 */
+					// save current frame for copying, delete crc if nec. 
 					if (FillGapsWithLastFrame)
 					{
 						if (copyframe[0].length != frame.length)
@@ -1222,17 +1228,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 						audio.removeCRC(copyframe[0], ClearCRC);
 					}
 
-					/** 
-					 * finish loop if last frame in file is shorter than nominal size 
-					 */
-					if (FramePosition > FileLength) 
+					// finish loop if last frame in file is shorter than nominal size 
+					if (getFramePosition() > FileLength) 
 						break readloop; 
 
-					/**
-					 * read following frame header, not if it is the last frame 
-					 * check following frameheader for valid mpegaudio, if not starting with next byte 
-					 */
-					if (FramePosition < FileLength - 4)
+					// read following frame header, not if it is the last frame 
+					// check following frameheader for valid mpegaudio, if not starting with next byte 
+					if (getFramePosition() < FileLength - 4)
 					{
 						if (!AllowSpaces)
 						{
@@ -1246,7 +1248,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 							{
 								unreadInputStream(frame, 1, frame.length - 1);
 
-								FramePosition = CurrentFramePosition + 1;
+								setFramePosition(getCurrentFramePosition() + 1);
 
 								continue readloop;
 							}
@@ -1255,63 +1257,55 @@ public class StreamProcessAudio extends StreamProcessBase {
 						AudioType = audio.getLayer();
 					}
 
+					// check CRC
 					if (ValidateCRC && (ERRORCODE = audio.validateCRC(frame, 0, audio.getSize())) != 0 )
 					{
-						Common.setMessage(Resource.getString("audio.msg.crc.error", "") + " " + CurrentFramePosition);
+						Common.setMessage(Resource.getString("audio.msg.crc.error", "") + " " + getCurrentFramePosition());
 
 						unreadInputStream(frame, 2, frame.length - 2);
 
-						FramePosition = CurrentFramePosition + 2;
+						setFramePosition(getCurrentFramePosition() + 2);
 
 						continue readloop;
 					}
 
-					/**
-					 * check for change in frametype
-					 */
-					// new pos
+					// check for change in frametype, if not allowed, handle as unknown
 					if (!determineFormatChange(audio, es_streamtype))
 					{
 						if (!missing_syncword)
-							Common.setMessage("!> change in frame type not accepted @ " + CurrentFramePosition);
+							Common.setMessage("!> change in frame type not accepted @ " + getCurrentFramePosition());
 
 						unreadInputStream(frame, 2, frame.length - 2);
 
-						FramePosition = CurrentFramePosition + 2;
+						setFramePosition(getCurrentFramePosition() + 2);
 
 						continue readloop;
 					}
 
+					// all right till now
 					if (Message_2 && missing_syncword)
-						Common.setMessage(Resource.getString("audio.msg.syncword.found") + " " + CurrentFramePosition);
+						Common.setMessage(Resource.getString("audio.msg.syncword.found") + " " + getCurrentFramePosition());
 
 					missing_syncword = false;
 
-					/**
-					 * check for change in frametype 
-					 */
-			//		determineFormatChange(audio, es_streamtype);
-
+					// frame accepted
 					audio.saveHeader();
 
-					if ((tmp_str = audio.decodeAncillaryData(frame, TimeCounter)) != null)
+					// read & decode ancillary data like RDS
+					if ((tmp_str = audio.decodeAncillaryData(frame, getTimeCounter())) != null)
 						Common.setMessage(tmp_str);
 
-					// TimePosition ist hier aktuelle audiopts
+			// TimePosition ist hier aktuelle audiopts frame start
 
 					Common.setFps(FrameExportInfo.getWrittenFrames());
 
-					/**
-					 * message 
-					 */
+					// message 
 					if (Debug) 
-						System.out.println(" k)" +TimePosition +" l)" + (audio.getFrameTimeLength() / 2.0) + " m)" + WriteEnabled + " FramePosition)" + w + " o)" + v + " p)" + FramePosition);
+						System.out.println(" k)" + getTimePosition() +" l)" + (audio.getFrameTimeLength() / 2.0) + " m)" + WriteEnabled + " FramePosition)" + video_timeIndex[1] + " o)" + video_timeIndex[0] + " p)" + getFramePosition());
 
 
-					/**
-					 * preloop if audio starts later than video, and i must insert 
-					 */
-					if ( (preloop && ContainsVideoPTS && v >= vptsval.length) || !( preloop && ContainsVideoPTS && vptsval[v] < TimePosition - (audio.getFrameTimeLength() / 2.0) ) ) 
+					// preloop if audio starts later than video, and i must insert 
+					if ( (preloop && ContainsVideoPTS && video_timeIndex[0] >= vptsval.length) || !( preloop && ContainsVideoPTS && vptsval[video_timeIndex[0]] < getTimePosition() - (audio.getFrameTimeLength() / 2.0) ) ) 
 						preloop = false;
 
 					else
@@ -1326,50 +1320,48 @@ public class StreamProcessAudio extends StreamProcessBase {
 						silent_Frame[1] |= 1;				//mark noCRC
 						silent_Frame[2] &= ~2;				//remove padding bit
 
-						long precount=vptsval[v];
-						long[] ins = { (long)TimeCounter, 0 };
+						long precount = vptsval[video_timeIndex[0]];
 
-						while ( precount < TimePosition - (audio.getFrameTimeLength() / 2.0) )
+						insertion_counter[0] = (long) getTimeCounter();
+						insertion_counter[1] = 0;
+
+						while ( precount < getTimePosition() - (audio.getFrameTimeLength() / 2.0) )
 						{  //better for RTS
-							/**
-							 * check if frame write should pause 
-							 */
-							if (ContainsVideoPTS && w < vptsval.length)
+							// check if frame write should pause 
+							if (ContainsVideoPTS && video_timeIndex[1] < vptsval.length)
 							{ 
-								sync_value_1 = (double) (precount - vptsval[w + 1]);
-								sync_value_2 = (double) (TimeCounter - vtime[w + 1]);
+								sync_value_1 = (double) (precount - vptsval[video_timeIndex[1] + 1]);
+								sync_value_2 = (double) (getTimeCounter() - vtime[video_timeIndex[1] + 1]);
 
-								if ( (double) Math.abs(sync_value_2) <= audio.getFrameTimeLength() / 2.0 )
+								if ( (double) Math.abs(sync_value_2) <= (audio.getFrameTimeLength() / 2.0) )
 								{
 									WriteEnabled = false;
-									w += 2;
+									video_timeIndex[1] += 2;
 								}
-								else if ((double) Math.abs(sync_value_1) <= audio.getFrameTimeLength() / 2.0 )
+								else if ((double) Math.abs(sync_value_1) <= (audio.getFrameTimeLength() / 2.0) )
 								{
 									WriteEnabled = false;
-									w += 2;
+									video_timeIndex[1] += 2;
 								}
 							}
 
-							/**
-							 * calculate A/V Offset for true 
-							 */
-							if (ContainsVideoPTS && v < vptsval.length)
+							// calculate A/V Offset for true 
+							if (ContainsVideoPTS && video_timeIndex[0] < vptsval.length)
 							{
-								sync_value_3 = precount - vptsval[v];
-								sync_value_4 = TimeCounter - vtime[v];
+								sync_value_3 = precount - vptsval[video_timeIndex[0]];
+								sync_value_4 = getTimeCounter() - vtime[video_timeIndex[0]];
 
 								if (Debug) 
 									System.out.println(" ö" + sync_value_3 + "/" + sync_value_4 + "/" + (sync_value_4 - sync_value_3));
 
-								if (!WriteEnabled && (double) Math.abs((TimeCounter - vtime[v]) -
-										(precount - vptsval[v]) ) <= (double)audio.getFrameTimeLength() / 2.0 )
+								if (!WriteEnabled && (double) Math.abs((getTimeCounter() - vtime[video_timeIndex[0]]) -
+										(precount - vptsval[video_timeIndex[0]]) ) <= (double)audio.getFrameTimeLength() / 2.0 )
 								{
 									WriteEnabled = true;
-									v += 2;
+									video_timeIndex[0] += 2;
 
-									sync_value_1 = precount - vptsval[v - 2];
-									sync_value_2 = TimeCounter - vtime[v - 2];
+									sync_value_1 = precount - vptsval[video_timeIndex[0] - 2];
+									sync_value_2 = getTimeCounter() - vtime[video_timeIndex[0] - 2];
 
 									Common.getGuiInterface().showAVOffset("" + (int)(sync_value_1 / 90) + "/" + (int)(sync_value_2 / 90) + "/" + (int)((sync_value_2 - sync_value_1) / 90));
 
@@ -1378,18 +1370,16 @@ public class StreamProcessAudio extends StreamProcessBase {
 								}
 							} 
 
-							/**
-							 * calculate A/V Offset for true 
-							 */
-							if (v < vptsval.length)
+							// calculate A/V Offset for true 
+							if (video_timeIndex[0] < vptsval.length)
 							{
-								if ((double) Math.abs(vptsval[v] - precount) <= (double) audio.getFrameTimeLength() / 2.0)
+								if ((double) Math.abs(vptsval[video_timeIndex[0]] - precount) <= (double) (audio.getFrameTimeLength() / 2.0))
 								{
 									WriteEnabled = true;
-									v += 2;
+									video_timeIndex[0] += 2;
 
-									sync_value_1 = precount - vptsval[v - 2];
-									sync_value_2 = TimeCounter - vtime[v - 2];
+									sync_value_1 = precount - vptsval[video_timeIndex[0] - 2];
+									sync_value_2 = getTimeCounter() - vtime[video_timeIndex[0] - 2];
 
 									Common.getGuiInterface().showAVOffset("" + (int)(sync_value_1 / 90) + "/" + (int)(sync_value_2 / 90) + "/" + (int)((sync_value_2 - sync_value_1) / 90));
 
@@ -1397,25 +1387,19 @@ public class StreamProcessAudio extends StreamProcessBase {
 										System.out.println(" ü" + sync_value_1 + "/" + sync_value_2 + "/" + (sync_value_2 - sync_value_1));
 								}
 
-								/**
-								 * calculate A/V Offset for false 
-								 */
-								if (WriteEnabled && Math.abs((TimeCounter - vtime[v - 2]) -
-										(precount - vptsval[v - 2]) ) > audio.getFrameTimeLength() / 2.0 )
+								// calculate A/V Offset for false 
+								if (WriteEnabled && Math.abs((getTimeCounter() - vtime[video_timeIndex[0] - 2]) -
+										(precount - vptsval[video_timeIndex[0] - 2]) ) > audio.getFrameTimeLength() / 2.0 )
 								{
 									WriteEnabled = false;
-									v -= 2;
+									video_timeIndex[0] -= 2;
 								}
 							}
 
-							/**
-							 * message 
-							 */
+							// message 
 							Common.getGuiInterface().showExportStatus((WriteEnabled || !ContainsVideoPTS) ? Resource.getString("audio.status.pre-insert") : Resource.getString("audio.status.pause")); 
 
-							/**
-							 * stop if no more audio needed 
-							 */
+							// stop if no more audio needed 
 							if (!checkLastAudioBound(ContainsVideoPTS, precount, vptsval, FileLength))
 								break readloop;
 
@@ -1425,93 +1409,61 @@ public class StreamProcessAudio extends StreamProcessBase {
 								writeFrame(audio, FillGapsWithLastFrame ? copyframe[0] : silent_Frame, newframes, ContainsVideoPTS, es_streamtype);
 
 								FrameExportInfo.countPreInsertedFrames(1);
-								ins[1]++;
+								insertion_counter[1]++;
 							}
 
 							precount += audio.getFrameTimeLength();
 
 							if (Debug) 
-								System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(TimeCounter));
-						} /** end while **/
+								System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()));
 
-						FramePosition = CurrentFramePosition;
+						} // end while
+
+						setFramePosition(getCurrentFramePosition());
 
 						unreadInputStream(frame, 0, frame.length);
 
-						if (ins[1] > 0)
-							Common.setMessage(Resource.getString("audio.msg.summary.pre-insert", "" + ins[1], FramesToTime((int)ins[1], audio.getFrameTimeLength())) + " " + formatFrameTime(ins[0]));
+						if (insertion_counter[1] > 0)
+							Common.setMessage(Resource.getString("audio.msg.summary.pre-insert", "" + insertion_counter[1], FramesToTime((int)insertion_counter[1], audio.getFrameTimeLength())) + " " + formatFrameTime(insertion_counter[0]));
 
 						continue readloop;
-					} 
+					} // end of pre-loop
 
 
-					/**
-					 * check if frame write should pause 
-					 */
+					// check for A+V sync
 					if (ContainsVideoPTS)
-					{ 
-						vw[0] = v;
-						vw[1] = w;
+						WriteEnabled = SyncCheck(video_timeIndex, getTimeCounter(), audio.getFrameTimeLength(), getTimePosition(), FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug);
 
-						WriteEnabled = SyncCheck(vw, TimeCounter, audio.getFrameTimeLength(), TimePosition, FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug);
-
-						v = vw[0];
-						w = vw[1];
-					}
-					//  System.out.println(""+WriteEnabled+"/"+v+"/"+w);
-
-					/**
-					 * message 
-					 */
+					// gui message 
 					Common.getGuiInterface().showExportStatus((WriteEnabled || !ContainsVideoPTS) ? Resource.getString("audio.status.write") : Resource.getString("audio.status.pause"));
 
-					/**
-					 * stop if no more audio needed 
-					 */
-					if (!checkLastAudioBound(ContainsVideoPTS, TimePosition, vptsval, FileLength))
+					// stop if no more audio needed 
+					if (!checkLastAudioBound(ContainsVideoPTS, getTimePosition(), vptsval, FileLength))
 						break readloop;
 
-					/**
-					 * message 
-					 */
-					messageSourceFormat(job_processing, audio, ContainsVideoPTS, TimeCounter);
+					// gui message 
+					messageSourceFormat(job_processing, audio, ContainsVideoPTS, getTimeCounter());
 
-					/**
-					 * pts for next frame!! 
-					 */
-					TimePosition += audio.getFrameTimeLength();
+					// endpts of current frame, startpts of next frame
+					countTimePosition(audio.getFrameTimeLength());
 
-					/**
-					 * message 
-					 */
+			// TimePosition ist hier nächste audiopts frame start
+
+					// message 
 					if (Debug)
 					{
-						System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(TimeCounter));
-						System.out.println("ntl: " + TimePosition + " x" + ((x < ptspos.length - 1) ? x + "/" + ptsval[x + 1] + "/" + ptspos[x + 1] : "-"));
+						System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()));
+						System.out.println("ntl: " + getTimePosition() + " x" + ((x < ptspos.length - 1) ? x + "/" + ptsval[x + 1] + "/" + ptspos[x + 1] : "-"));
 					}
 
-					/**
-					 * remove CRC 
-					 */
+					// remove CRC 
 					audio.removeCRC(frame, ClearCRC);
 
-					/**
-					 * copy frame header 
-					 */
-					System.arraycopy(frame, 0, header_copy, 0, 4);
-					header_copy[3] &= 0xCF;
-					header_copy[2] &= ~2;
+					// copy frame header , for gaps
+					copyMpaFrameHeader(frame, header_copy);
 
-					/**
-					 * message 
-					 */
-					//if (Debug)
-					//	System.out.print(" tl"+TimePosition+" /px "+ptsval[x]+" /1_"+ptsval[x+1]+" /p1-tl "+(ptsval[x+1]-TimePosition)+" /pp1 "+ptspos[x+1]+" /FramePosition "+FramePosition);
-
-					/**
-					 * simple sync
-					 */
-					if (LimitPts && ptspos[x + 1] != -1 && ptspos[x + 1] < FramePosition)
+					// simple sync
+					if (LimitPts && ptspos[x + 1] != -1 && ptspos[x + 1] < getFramePosition())
 					{
 						if (Debug)
 							System.out.println(" minSync " + minSync + "/ " + x);
@@ -1522,42 +1474,78 @@ public class StreamProcessAudio extends StreamProcessBase {
 							minSync = 0;
 					}
 
-					/**
-					 * frame is in last pes packet or packet end not yet reached 
-					 */
-					if (writeSuccessiveFrame(audio, frame, newframes, ContainsVideoPTS, FramePosition, ptspos, x, es_streamtype))
+					// frame is in last pes packet or packet end not yet reached
+					// normal condition
+					if (writeSuccessiveFrame(audio, frame, newframes, ContainsVideoPTS, getFramePosition(), ptspos, x, es_streamtype))
 						continue readloop;
 
 					minSync = 0;
 
-					/**
-					 * frame is on pes packet corner 
-					 */
-					if ((double) Math.abs(ptsval[x + 1] - TimePosition) < (double) audio.getFrameTimeLength() / 2.0 )
+					// message 
+					if (Debug)
+						System.out.println("ZZ " + getTimePosition() + " /pvx " + ptsval[x] + " /pvx+1 " + ptsval[x + 1] + " /endFramePosition " + getFramePosition());
+
+					// frame is on pes packet corner 
+					// less than a half of frame time to packet end, so write it and count to next index
+					if ((double) Math.abs(ptsval[x + 1] - getTimePosition()) < (audio.getFrameTimeLength() / 2.0))
 					{
-						TimePosition = ptsval[x + 1];
-						x++;
+						setTimePosition(ptsval[++x]);
 
 						writeFrame(audio, frame, newframes, ContainsVideoPTS, es_streamtype);
+
+						insertion_counter[0] = (long) getTimeCounter();
+						insertion_counter[1] = 0;
+
+						// check sync after resetting
+						if (Math.abs(video_timeIndex[2]) >= (audio.getFrameTimeLength() / 2.0) || Math.abs(video_timeIndex[3]) >= (audio.getFrameTimeLength() / 2.0))
+						{
+							// 1 zusätzl. frame einfügen 
+							if (video_timeIndex[2] < 0 || video_timeIndex[3] < 0)
+							{
+								Common.setMessage("!> A/V sync discontinuity in next audio packet @ " + formatFrameTime(getTimeCounter()));
+
+								// gui message 
+								Common.getGuiInterface().showExportStatus((WriteEnabled || !ContainsVideoPTS) ? Resource.getString("audio.status.insert") : Resource.getString("audio.status.pause")); 
+
+								if (!ContainsVideoPTS || (ContainsVideoPTS && WriteEnabled))
+								{
+									writeFrame(audio, frame, newframes, ContainsVideoPTS, es_streamtype);
+
+									FrameExportInfo.countInsertedFrames(1);
+									insertion_counter[1]++;
+
+									Common.setMessage(Resource.getString("audio.msg.summary.insert", "" + insertion_counter[1], FramesToTime((int)insertion_counter[1], audio.getFrameTimeLength())) + " " + formatFrameTime(insertion_counter[0]));
+								}
+
+								if (Debug)
+								{
+									System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()));
+									System.out.println("tl: " + getTimePosition() + " x" + ((x < ptspos.length - 1) ? x + "/" + ptsval[x + 1] + "/" + ptspos[x + 1] : "-"));
+								}
+							}
+						}
 
 						continue readloop;
 					}
 
-					if (ptsval[x + 1] > TimePosition) 
+					// more than or equal of a half of frame time is missing, so fill it
+					if (ptsval[x + 1] > getTimePosition()) 
 						insertSilenceLoop = true;
 
-					if (ptsval[x + 1] < TimePosition)
+					// frame time is later than next indexed frame, so skip it and count to next index
+					if (ptsval[x + 1] < getTimePosition())
 					{
-						x++;
-						TimePosition = ptsval[x];
+						setTimePosition(ptsval[++x]);
 
-						Common.setMessage(Resource.getString("audio.msg.summary.skip") + " " + formatFrameTime(TimeCounter));
+						Common.setMessage(Resource.getString("audio.msg.summary.skip") + " " + formatFrameTime(getTimeCounter()));
 
 						FrameExportInfo.countSkippedFrames(1);
 					}
 
+					// insert condition
 					if (insertSilenceLoop)
 					{
+						// silentframe auslagern zu audio.class !!
 						if (silent_Frame.length != audio.getSizeBase())
 							silent_Frame = new byte[audio.getSizeBase()];	//silence without padd, std
 
@@ -1568,122 +1556,99 @@ public class StreamProcessAudio extends StreamProcessBase {
 						silent_Frame[1] |= 1;				//mark noCRC
 						silent_Frame[2] &= ~2;				//remove padding bit
 
-						long[] ins = { (long)TimeCounter, 0 };
+						insertion_counter[0] = (long) getTimeCounter();
+						insertion_counter[1] = 0;
 		
 						// solange nächster ptsval minus nächster framebeginn  ist größer der halben framezeit, füge stille ein
-						while (ptsval[x + 1] > (TimePosition - (audio.getFrameTimeLength() / 2.0)))
+						while (ptsval[x + 1] > (getTimePosition() - (audio.getFrameTimeLength() / 2.0)))
 						{
-							if (ContainsVideoPTS && w < vptsval.length)
-							{ 
-								sync_value_1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[w + 1]);
-								sync_value_2 = (double) (TimeCounter - vtime[w + 1]);
-
-								if ((double) Math.abs(sync_value_2) <= audio.getFrameTimeLength() / 2.0)
-								{
-									WriteEnabled = false;
-									w += 2;
-								}
-								else if ((double) Math.abs(sync_value_1) <= audio.getFrameTimeLength() / 2.0)
-								{
-									WriteEnabled = false;
-									w += 2;
-								}
-							}
-
-							if (ContainsVideoPTS && v < vptsval.length)
-							{
-								if (!WriteEnabled && (double) Math.abs((TimeCounter - vtime[v]) -
-									(TimePosition - audio.getFrameTimeLength() - vptsval[v]) ) <= (double) audio.getFrameTimeLength() / 2.0 )
-								{
-									sync_value_1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[v]);
-									sync_value_2 = (double) (TimeCounter - vtime[v]);
-
-									Common.getGuiInterface().showAVOffset("" + (int)(sync_value_1 / 90) + "/" + (int)(sync_value_2 / 90) + "/" + (int)((sync_value_2 - sync_value_1) / 90));
-
-									if (Debug) 
-										System.out.println(" §" + sync_value_1 + "/" + sync_value_2 + "/" + (sync_value_2 - sync_value_1));
-
-									WriteEnabled = true;
-									v += 2;
-								}
-							} 
-
-							if (ContainsVideoPTS && v < vptsval.length)
-							{
-								if ((double) Math.abs(vptsval[v] - (TimePosition - audio.getFrameTimeLength())) <= ((double) audio.getFrameTimeLength() / 2.0) )
-								{
-									sync_value_1 = (double) (TimePosition - audio.getFrameTimeLength() - vptsval[v]);
-									sync_value_2 = (double) (TimeCounter - vtime[v]);
-
-									Common.getGuiInterface().showAVOffset("" + (int)(sync_value_1 / 90) + "/" + (int)(sync_value_2 / 90) + "/" + (int)((sync_value_2 - sync_value_1) / 90));
-
-									if (Debug) 
-										System.out.println(" ß" + sync_value_1 + "/" + sync_value_2 + "/" + (sync_value_2 - sync_value_1));
-
-									WriteEnabled = true;
-									v += 2;
-								}
-
-								if (WriteEnabled && (double) Math.abs((TimeCounter - vtime[v - 2]) -
-									(TimePosition - audio.getFrameTimeLength() - vptsval[v - 2]) ) > (double) audio.getFrameTimeLength() / 2.0 )
-								{
-									WriteEnabled = false;
-									v -= 2;
-								}
-							}
-
-							/**
-							 * message 
-							 */
+							// gui message 
 							Common.getGuiInterface().showExportStatus((WriteEnabled || !ContainsVideoPTS) ? Resource.getString("audio.status.insert") : Resource.getString("audio.status.pause")); 
 
-  
-							if (!ContainsVideoPTS || (ContainsVideoPTS && WriteEnabled))
+  							if (!ContainsVideoPTS || (ContainsVideoPTS && WriteEnabled))
 							{
 								writeFrame(audio, FillGapsWithLastFrame ? copyframe[0] : silent_Frame, newframes, ContainsVideoPTS, es_streamtype);
 
 								FrameExportInfo.countInsertedFrames(1);
-								ins[1]++;
+								insertion_counter[1]++;
 							}
 
 							if (Debug)
 							{
-								System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(TimeCounter));
-								System.out.println("tl: " + TimePosition + " x" + ((x < ptspos.length - 1) ? x + "/" + ptsval[x + 1] + "/" + ptspos[x + 1] : "-"));
+								System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()));
+								System.out.println("tl: " + getTimePosition() + " x" + ((x < ptspos.length - 1) ? x + "/" + ptsval[x + 1] + "/" + ptspos[x + 1] : "-"));
 							}
 
-							TimePosition += audio.getFrameTimeLength();
+							// check a+v sync
+							if (ContainsVideoPTS)
+								WriteEnabled = SyncCheck(video_timeIndex, getTimeCounter(), audio.getFrameTimeLength(), getTimePosition(), FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug);
+
+							countTimePosition(audio.getFrameTimeLength());
+
 						} // end while
 
-						TimePosition -= audio.getFrameTimeLength();
 						insertSilenceLoop = false;
-						x++;
 
-						if (ins[1] > 0) 
-							Common.setMessage(Resource.getString("audio.msg.summary.insert", "" + ins[1], FramesToTime((int)ins[1], audio.getFrameTimeLength())) + " " + formatFrameTime(ins[0]));
+						if (insertion_counter[1] > 0) 
+							Common.setMessage(Resource.getString("audio.msg.summary.insert", "" + insertion_counter[1], FramesToTime((int)insertion_counter[1], audio.getFrameTimeLength())) + " " + formatFrameTime(insertion_counter[0]));
 
-						/**
-						 * reset PTS after inserting
-						 */
-						TimePosition = ptsval[x];
+						// set PTS after inserting to new index
+						setTimePosition(ptsval[++x]);
+
+						insertion_counter[0] = (long) getTimeCounter();
+						insertion_counter[1] = 0;
+
+						// check sync after resetting
+						if (Math.abs(video_timeIndex[2]) >= audio.getFrameTimeLength() || Math.abs(video_timeIndex[3]) >= audio.getFrameTimeLength())
+						{
+							// 1 zusätzl. frame einfügen 
+							if (video_timeIndex[2] < 0 || video_timeIndex[3] < 0)
+							{
+								Common.setMessage("!> A/V sync discontinuity in next audio packet (insert) @ " + formatFrameTime(getTimeCounter()));
+
+								// gui message 
+								Common.getGuiInterface().showExportStatus((WriteEnabled || !ContainsVideoPTS) ? Resource.getString("audio.status.insert") : Resource.getString("audio.status.pause")); 
+
+								if (!ContainsVideoPTS || (ContainsVideoPTS && WriteEnabled))
+								{
+									writeFrame(audio, FillGapsWithLastFrame ? copyframe[0] : silent_Frame, newframes, ContainsVideoPTS, es_streamtype);
+
+									FrameExportInfo.countInsertedFrames(1);
+									insertion_counter[1]++;
+								}
+
+								if (Debug)
+								{
+									System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()));
+									System.out.println("tl: " + getTimePosition() + " x" + ((x < ptspos.length - 1) ? x + "/" + ptsval[x + 1] + "/" + ptspos[x + 1] : "-"));
+								}
+							}
+						}
+
+						if (insertion_counter[1] > 0) 
+							Common.setMessage(Resource.getString("audio.msg.summary.insert", "" + insertion_counter[1], FramesToTime((int)insertion_counter[1], audio.getFrameTimeLength())) + " " + formatFrameTime(insertion_counter[0]));
 
 						continue readloop;
-					}
+					} // end insertion
 
-					if ( (CurrentFramePosition + audio.getSize()) >= FileLength ) 
+					// avail. frame size too short, so end here
+					if ( (getCurrentFramePosition() + audio.getSize()) >= FileLength ) 
 						break readloop; 
+
 				}  // end while
 
+
 				if (Debug) 
-					System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(TimeCounter));
+					System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()));
+
 
 				/**
 				 * add frames at the end 
 				 */
-				if (es_streamtype == CommonParsing.MPEG_AUDIO && AddFrames && ContainsVideoPTS && WriteEnabled && (w < vptsval.length))
+				if (es_streamtype == CommonParsing.MPEG_AUDIO && AddFrames && ContainsVideoPTS && WriteEnabled && (video_timeIndex[1] < vptsval.length))
 				{
-					TimePosition += audio.getFrameTimeLength();
-					addf[0] = (long) TimeCounter;
+					countTimePosition(audio.getFrameTimeLength());
+					addf[0] = (long) getTimeCounter();
 
 					if (silent_Frame.length != audio.getSizeBase())
 						silent_Frame = new byte[audio.getSizeBase()];	//silence without padd, std
@@ -1695,35 +1660,35 @@ public class StreamProcessAudio extends StreamProcessBase {
 					silent_Frame[1] |= 1;				//mark noCRC
 					silent_Frame[2] &= ~2;				//remove padding bit
 
-					while (w < vptsval.length)
+					while (video_timeIndex[1] < vptsval.length)
 					{
-						while ( vtime[w + 1] > TimeCounter && 
-							(double) Math.abs(vtime[w + 1] - TimeCounter) > (double) audio.getFrameTimeLength() / 2.0 )
+						while ( vtime[video_timeIndex[1] + 1] > getTimeCounter() && 
+							(double) Math.abs(vtime[video_timeIndex[1] + 1] - getTimeCounter()) > (double) audio.getFrameTimeLength() / 2.0 )
 						{
 
 							writeFrame(audio, FillGapsWithLastFrame ? copyframe[0] : silent_Frame, newframes, ContainsVideoPTS, es_streamtype);
 
 							FrameExportInfo.countAddedFrames(1);
-							TimePosition += audio.getFrameTimeLength();
+							countTimePosition(audio.getFrameTimeLength());
 							addf[1]++;
 
 							Common.getGuiInterface().showExportStatus(Resource.getString("audio.status.add")); 
 
 							if (Debug)
 							{
-								System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(TimeCounter));
-								System.out.print(" t)" + (long)(TimePosition - audio.getFrameTimeLength()) + " w)" + w);
+								System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()));
+								System.out.print(" t)" + (long)(getTimePosition() - audio.getFrameTimeLength()) + " w)" + video_timeIndex[1]);
 							}
 						}
 
-						w += 2;
+						video_timeIndex[1] += 2;
 					}
 
-					w -= 2;
-					TimePosition -= audio.getFrameTimeLength();
+					video_timeIndex[1] -= 2;
+					countTimePosition(-audio.getFrameTimeLength());
 
 					if (Debug) 
-						System.out.println(" eot_video:" + (vptsval[w + 1] / 90) + "ms, eot_audio:" + ((TimePosition) / 90) + "ms  ");
+						System.out.println(" eot_video:" + (vptsval[video_timeIndex[1] + 1] / 90) + "ms, eot_audio:" + ((getTimePosition()) / 90) + "ms  ");
 				}  //end add mpa
 
 				/**
@@ -1734,6 +1699,8 @@ public class StreamProcessAudio extends StreamProcessBase {
 					MpaDecoder.PRESCAN = false;
 					MpaDecoder.NORMALIZE = false;
 
+					closeInputStream();
+					closeOutputStreams();
 					return true;
 				}
 
@@ -1747,7 +1714,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 			Common.getGuiInterface().showExportStatus(Resource.getString("audio.status.finish")); 
 
-			String tc = formatFrameTime(TimeCounter);
+			String tc = formatFrameTime(getTimeCounter());
 			Common.setMessage(Resource.getString("audio.msg.summary.frames", "" + FrameExportInfo.getWrittenFrames() + "-" + FrameExportInfo.getShortSummary(), "" + tc));
 
 			if (ModeChangeCount_JSS > 0) 
@@ -1760,42 +1727,42 @@ public class StreamProcessAudio extends StreamProcessBase {
 			closeOutputStreams();
 
 			String[][] es_audio_str = {
-				{ ".ac3",".mp1",".mp2",".mp3",".dts" },
-				{ ".new.ac3",".new.mp1",".new.mp2",".new.mp3",".new.dts" }
+				{ str_ac3, str_mp1, str_mp2, str_mp3, str_dts },
+				{ (str_new + str_ac3), (str_new + str_mp1), (str_new + str_mp2), (str_new + str_mp3), (str_new + str_dts) }
 			};
 
 			if (RenameAudio)
-				setExtension(es_audio_str, ".mpa", ".new.mpa");
+				setExtension(es_audio_str, str_mpa, (str_new + str_mpa));
 
 			if (DecodeMpgAudio && audio.getLayer() > 1)
 			{
 				if (MpaDecoder.WAVE)
-					setExtension(es_audio_str, ".wav");
+					setExtension(es_audio_str, str_wav);
 
 				else if (AddAiffHeader)
-					setExtension(es_audio_str, ".aif");
+					setExtension(es_audio_str, str_aif);
 
 				else  
-					setExtension(es_audio_str, ".pcm");
+					setExtension(es_audio_str, str_pcm);
 			}
 
 			else if (AddWaveHeaderBWF || AddWaveHeaderACM) 
 			{
-				setExtension(es_audio_str, ".wav");
+				setExtension(es_audio_str, str_wav);
 			}
 
 			if (AddWaveHeaderAC3)
 			{
 				for (int j = 0; j < 2; j++)
-					es_audio_str[j][0] += ".wav";
+					es_audio_str[j][0] += str_wav;
 			}
 
 			else if (CreateDDWave)
 			{
-				es_audio_str[0][0] += ".wav";
-				es_audio_str[1][0] += ".wav";
-				es_audio_str[0][4] += ".wav";
-				es_audio_str[1][4] += ".wav";
+				es_audio_str[0][0] += str_wav;
+				es_audio_str[1][0] += str_wav;
+				es_audio_str[0][4] += str_wav;
+				es_audio_str[1][4] += str_wav;
 			}
 
 
@@ -1855,7 +1822,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 			case WAV_AUDIOSTREAM: 
 
-				finishOutputFiles(job_processing, fparent, ".new.wav", audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
+				finishOutputFiles(job_processing, fparent, (str_new + str_wav), audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
 				break;
 
 			case NO_AUDIOSTREAM: 
@@ -1900,7 +1867,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 	/**
 	 * message source format change
 	 */
-	private void messageSourceFormat(JobProcessing job_processing, AudioFormat audio, boolean ContainsVideoPTS, double TimeCounter)
+	private void messageSourceFormat(JobProcessing job_processing, AudioFormat audio, boolean ContainsVideoPTS, double _TimeCounter)
 	{
 		if (!HasNewFormat || (ContainsVideoPTS && !WriteEnabled))
 			return;
@@ -1909,7 +1876,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 		if (ModeChangeCount < ModeChangeCount_Max)
 		{
-			String str = formatFrameTime(TimeCounter);
+			String str = formatFrameTime(_TimeCounter);
 
 			Common.setMessage(Resource.getString("audio.msg.source", header) + " " + str);
 
@@ -1918,7 +1885,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 		}
 
 		else if (Debug) 
-			System.out.println("=> src_audio: " + header + " @ " + formatFrameTime(TimeCounter));
+			System.out.println("=> src_audio: " + header + " @ " + formatFrameTime(_TimeCounter));
 
 		if (ModeChangeCount == ModeChangeCount_Max) 
 			Common.setMessage(Resource.getString("audio.msg.source.max"));
@@ -1936,40 +1903,159 @@ public class StreamProcessAudio extends StreamProcessBase {
 	}
 
 	/**
+	 * getFramePosition
+	 */
+	private long getFramePosition()
+	{
+		return FramePosition;
+	}
+
+	/**
+	 * setFramePosition
+	 */
+	private void setFramePosition(long value)
+	{
+		FramePosition = value;
+	}
+
+	/**
+	 * countFramePosition
+	 */
+	private void countFramePosition(long value)
+	{
+		FramePosition += value;
+	}
+
+	/**
+	 * getCurrentFramePosition
+	 */
+	private long getCurrentFramePosition()
+	{
+		return CurrentFramePosition;
+	}
+
+	/**
+	 * setCurrentFramePosition
+	 */
+	private void setCurrentFramePosition(long value)
+	{
+		CurrentFramePosition = value;
+	}
+
+	/**
+	 * countCurrentFramePosition
+	 */
+	private void countCurrentFramePosition(long value)
+	{
+		CurrentFramePosition += value;
+	}
+
+	/**
+	 * getTimePosition
+	 */
+	private long getTimePosition()
+	{
+		return TimePosition;
+	}
+
+	/**
+	 * setTimePosition
+	 */
+	private void setTimePosition(long value)
+	{
+		TimePosition = value;
+	}
+
+	/**
+	 * setTimePosition
+	 */
+	private void setTimePosition(double value)
+	{
+		TimePosition = (long) value;
+	}
+
+	/**
+	 * countTimePosition
+	 */
+	private void countTimePosition(long value)
+	{
+		TimePosition += value;
+	}
+
+	/**
+	 * countTimePosition
+	 */
+	private void countTimePosition(double value)
+	{
+		TimePosition += (long) value;
+	}
+
+	/**
+	 * getTimeCounter
+	 */
+	private double getTimeCounter()
+	{
+		return TimeCounter;
+	}
+
+	/**
+	 * setTimeCounter
+	 */
+	private void setTimeCounter(double value)
+	{
+		TimeCounter = value;
+	}
+
+	/**
+	 * countTimeCounter
+	 */
+	private void countTimeCounter(double value)
+	{
+		TimeCounter += value;
+	}
+
+	/**
+	 * copy frame header , for gaps
+	 */
+	private void copyMpaFrameHeader(byte[] frame, byte[] header_copy)
+	{
+		System.arraycopy(frame, 0, header_copy, 0, 4);
+
+		header_copy[3] &= 0xCF;
+		header_copy[2] &= ~2;
+	}
+
+	/**
 	 * stop if no more audio needed 
 	 */
 	private boolean checkLastAudioBound(boolean ContainsVideoPTS, long time_value, long[] vptsval, long FileLength)
 	{
-		boolean b = true;
-
 		if (!ContainsVideoPTS)
-			return b;
+			return true;
 
 		if (time_value > vptsval[vptsval.length - 1] + 10000)
 		{
 			Common.updateProgressBar(FileLength, FileLength);
 
-			return !b;
+			return false;
 		}
 
-		return b;
+		return true;
 	}
 
 	/**
 	 *
 	 */
-	private boolean writeSuccessiveFrame(AudioFormat audio, byte[] frame, byte[][] newframes, boolean ContainsVideoPTS, long FramePosition, long[] ptspos, int x, int es_streamtype)
+	private boolean writeSuccessiveFrame(AudioFormat audio, byte[] frame, byte[][] newframes, boolean ContainsVideoPTS, long _FramePosition, long[] ptspos, int x, int es_streamtype)
 	{
-		boolean b = true;
-
 		// frame is in last pes packet or packet end not yet reached 
-		if (ptspos[x + 1] != -1 && ptspos[x + 1] <= FramePosition)
-			return !b;
+		if (ptspos[x + 1] != -1 && ptspos[x + 1] <= _FramePosition)
+			return false;
 
 		//always true
 		writeFrame(audio, frame, newframes, ContainsVideoPTS, es_streamtype);
 
-		return b;
+		return true;
 	}
 
 	/**
@@ -2027,7 +2113,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 		}
 
 		FrameExportInfo.countWrittenFrames(1);
-		TimeCounter += audio.getFrameTimeLength();
+		countTimeCounter(audio.getFrameTimeLength());
 
 	//	if (Debug) 
 	//		System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(TimeCounter) + "  ");
@@ -2340,6 +2426,8 @@ public class StreamProcessAudio extends StreamProcessBase {
 	 */
 	private void fillWaveHeader(AudioFormat audio, int es_streamtype)
 	{
+		long tmp_value = (long) (getTimeCounter() / 90.0f);
+
 		try {
 			if (DecodeMpgAudio && es_streamtype == CommonParsing.MPEG_AUDIO && MpaDecoder.WAVE)
 			{
@@ -2364,10 +2452,10 @@ public class StreamProcessAudio extends StreamProcessBase {
 			{
 				if (audio.getLayer() > 1)
 				{
-					MpaDecoder.fillAiff(FileName_Ch1,(long)(TimeCounter / 90.0f), FadeInOut, FadeInOutMillis);
+					MpaDecoder.fillAiff(FileName_Ch1, tmp_value, FadeInOut, FadeInOutMillis);
 
 					if (MpaConversionMode >= MpaConversion_Mode4) 
-						MpaDecoder.fillAiff(FileName_Ch2,(long)(TimeCounter / 90.0f), FadeInOut, FadeInOutMillis);
+						MpaDecoder.fillAiff(FileName_Ch2, tmp_value, FadeInOut, FadeInOutMillis);
 				}
 
 				else
@@ -2386,8 +2474,8 @@ public class StreamProcessAudio extends StreamProcessBase {
 					new RandomAccessFile(FileName_Ch2, "rw") 
 				};
 
-				audio.setExtraWaveLength(rifffile[0].length(), (long)(TimeCounter / 90.0f), 1);
-				audio.setExtraWaveLength(rifffile[1].length(), (long)(TimeCounter / 90.0f), 2);
+				audio.setExtraWaveLength(rifffile[0].length(), tmp_value, 1);
+				audio.setExtraWaveLength(rifffile[1].length(), tmp_value, 2);
 
 				rifffile[0].seek(0); 
 				rifffile[1].seek(0);
@@ -2405,7 +2493,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 			{
 				RandomAccessFile rifffile = new RandomAccessFile(FileName_Ch1, "rw");
 
-				audio.setExtraWaveLength(rifffile.length(), (long)(TimeCounter / 90.0f), 1);
+				audio.setExtraWaveLength(rifffile.length(), tmp_value, 1);
 
 				rifffile.seek(0);
 
@@ -2418,10 +2506,10 @@ public class StreamProcessAudio extends StreamProcessBase {
 				audio.fillRiffHeader(FileName_Ch1);
 
 			else if (CreateDDWave && es_streamtype == CommonParsing.AC3_AUDIO)
-				audio.fillStdRiffHeader(FileName_Ch1, (long)(TimeCounter / 90.0f));
+				audio.fillStdRiffHeader(FileName_Ch1, tmp_value);
 
 			else if (CreateDDWave && es_streamtype == CommonParsing.DTS_AUDIO)
-				audio.fillStdRiffHeader(FileName_Ch1, (long)(TimeCounter / 90.0f));
+				audio.fillStdRiffHeader(FileName_Ch1, tmp_value);
 
 		} catch (Exception e) {
 			Common.setExceptionMessage(e);
@@ -2670,15 +2758,15 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 		unreadInputStream(array, audio.getEmphasis(), 1000 - audio.getEmphasis());
 
-		Common.setMessage(Resource.getString("audio.msg.source", audio.saveAndDisplayHeader()) + " " + formatFrameTime(TimeCounter));
+		Common.setMessage(Resource.getString("audio.msg.source", audio.saveAndDisplayHeader()) + " " + formatFrameTime(getTimeCounter()));
 
 		AudioType = WAV_AUDIOSTREAM;
 
-		FramePosition = audio.getEmphasis(); //start of pcm data
+		setFramePosition(audio.getEmphasis()); //start of pcm data
 
 		long pcm_end_pos = audio.getEmphasis() + audio.getSizeBase(); //whole sample data size
 
-		TimePosition = ptsval[0];
+		setTimePosition(ptsval[0]);
 
 		writeChannel1(audio.getRiffHeader());
 
@@ -2707,13 +2795,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 					return;
 
 				//jump back (not yet) or insert silent samples
-				if (ContainsVideoPTS && vptsval[i] < TimePosition)
+				if (ContainsVideoPTS && vptsval[i] < getTimePosition())
 				{
-					sample_pts = vptsval[i + 1] > TimePosition ? TimePosition - vptsval[i] : vptsval[i + 1] - vptsval[i];
+					sample_pts = vptsval[i + 1] > getTimePosition() ? getTimePosition() - vptsval[i] : vptsval[i + 1] - vptsval[i];
 					sample_bytes = (long) Math.round(1.0 * audio.getSamplingFrequency() * sample_pts / 90000.0) * audio.getMode();
 
 					if (Debug)
-						System.out.println("i " + sample_pts + "/" + sample_bytes + "/" + FramePosition + "/" + TimePosition);
+						System.out.println("i " + sample_pts + "/" + sample_bytes + "/" + getFramePosition() + "/" + getTimePosition());
 
 					for (long sample_pos = 0; sample_pos < sample_bytes; )
 					{
@@ -2727,18 +2815,18 @@ public class StreamProcessAudio extends StreamProcessBase {
 						writeChannel1(array);
 					}
 
-					TimeCounter += sample_pts;
+					countTimeCounter(sample_pts);
 					FrameExportInfo.countWrittenFrames(sample_bytes / audio.getMode());
 
 					Common.setFps(FrameExportInfo.getWrittenFrames());
 
-					if (vptsval[i + 1] > TimePosition)
+					if (vptsval[i + 1] > getTimePosition())
 					{
-						sample_pts = vptsval[i + 1] - TimePosition;
+						sample_pts = vptsval[i + 1] - getTimePosition();
 						sample_bytes = (long) Math.round(1.0 * audio.getSamplingFrequency() * sample_pts / 90000.0) * audio.getMode();
 
 						if (Debug)
-							System.out.println("b " + sample_pts + "/" + sample_bytes + "/" + FramePosition + "/" + TimePosition);
+							System.out.println("b " + sample_pts + "/" + sample_bytes + "/" + getFramePosition() + "/" + getTimePosition());
 
 						for (long sample_pos = 0; sample_pos < sample_bytes; )
 						{
@@ -2754,16 +2842,16 @@ public class StreamProcessAudio extends StreamProcessBase {
 							writeChannel1(array);
 						}
 
-						FramePosition += sample_bytes;
-						TimePosition += sample_pts;
-						TimeCounter += sample_pts;
+						countFramePosition(sample_bytes);
+						countTimePosition(sample_pts);
+						countTimeCounter(sample_pts);
 						FrameExportInfo.countWrittenFrames(sample_bytes / audio.getMode());
 					}
 				}
 
 				else
 				{
-					skip_pts = ContainsVideoPTS ? vptsval[i] - TimePosition : 0;
+					skip_pts = ContainsVideoPTS ? vptsval[i] - getTimePosition() : 0;
 					skip_bytes = (long) Math.round(1.0 * audio.getSamplingFrequency() * skip_pts / 90000.0) * audio.getMode();
 
 					sample_pts = ContainsVideoPTS ? vptsval[i + 1] - vptsval[i] : (long)(1.0 * (audio.getSizeBase() / audio.getMode()) / audio.getSamplingFrequency() * 90000.0);
@@ -2772,10 +2860,10 @@ public class StreamProcessAudio extends StreamProcessBase {
 					for (long skip_pos = 0; skip_pos < skip_bytes; )
 						skip_pos += skipInputStream(skip_bytes - skip_pos);
 
-					FramePosition += skip_bytes;
+					countFramePosition(skip_bytes);
 
 					if (Debug)
-						System.out.println("c " + skip_pts + "/" + skip_bytes + "/" + sample_pts + "/" + sample_bytes + "/" + FramePosition + "/" + TimePosition);
+						System.out.println("c " + skip_pts + "/" + skip_bytes + "/" + sample_pts + "/" + sample_bytes + "/" + getFramePosition() + "/" + getTimePosition());
 
 					for (long sample_pos = 0; sample_pos < sample_bytes; )
 					{
@@ -2791,20 +2879,20 @@ public class StreamProcessAudio extends StreamProcessBase {
 						writeChannel1(array);
 					}
 
-					TimePosition += (skip_pts + sample_pts);
-					TimeCounter += sample_pts;
+					countTimePosition(skip_pts + sample_pts);
+					countTimeCounter(sample_pts);
 
-					FramePosition += sample_bytes;
+					countFramePosition(sample_bytes);
 					FrameExportInfo.countWrittenFrames(sample_bytes / audio.getMode());
 				}
 
 				if (Debug)
-					System.out.println(FrameExportInfo.getSummary() + " @ " + formatFrameTime(TimeCounter));
+					System.out.println(FrameExportInfo.getSummary() + " @ " + formatFrameTime(getTimeCounter()));
 
-				Common.updateProgressBar(FramePosition, FileLength);
+				Common.updateProgressBar(getFramePosition(), FileLength);
 
 				if (Debug) 
-					System.out.println("FramePosition " + FramePosition);
+					System.out.println("FramePosition " + getFramePosition());
 			}
 
 			break;

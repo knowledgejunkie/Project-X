@@ -592,7 +592,18 @@ public class StreamParserTS extends StreamParserBase {
 						if (!ts_hasErrors)
 							continue loop;
 					}
+/** errors alt 0.90.4.00
+					if (ts_adaptionfieldlength > 183 || (ts_adaptionfieldlength > 180 && ts_startunit))
+						ts_hasErrors = true;
 
+					if (ts_hasErrors)
+					{
+						if (Message_1)
+							Common.setMessage(Resource.getString("parseTS.bit.error", Integer.toHexString(ts_pid).toUpperCase(), "" + packet, "" + (count-188)));
+
+						continue loop;
+					}
+**/
 					payload_pesID = ts_startunit ? CommonParsing.getIntValue(ts_packet, 4 + ts_adaptionfieldlength, 4, !CommonParsing.BYTEREORDERING) : 0;
 					payload_psiID = ts_startunit ? payload_pesID>>>16 : 0;
 

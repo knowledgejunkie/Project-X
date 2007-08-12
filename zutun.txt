@@ -345,6 +345,10 @@
 --fix dvb-sub crash
 --opt. ac3 bitraten angleichung
 
+0.90.4.00b20:
+--post process call changed + fixed (toTS didn't work); temp file access
+--sync interruption issue, more tests needed
+
 
 
 !-test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding

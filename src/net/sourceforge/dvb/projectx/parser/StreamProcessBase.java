@@ -348,7 +348,7 @@ public class StreamProcessBase extends Object {
 	/**
 	 * synccheck A/V
 	 */
-	public boolean SyncCheck(int[] vw, double timecount, double timelength, long timeline, int mpf, long[] vptsval, long[] vtime, boolean awrite, boolean debug)
+	public boolean SyncCheck(int[] vw, double timecount, double frametimelength, long timeline, int writtenframes, long[] vptsval, long[] vtime, boolean awrite, boolean debug)
 	{
 		int v = vw[0];
 		int w = vw[1];
@@ -359,15 +359,15 @@ public class StreamProcessBase extends Object {
 			sync_value_2 = (double)(timecount - vtime[w + 1]);
 
 			if (debug) 
-				System.out.println("A " + awrite + "/" + v + "/" + w + "/ =1 " + mpf + "/" + vtime[w + 1] + "/" + timecount + " ~2 " + vptsval[w + 1] + "/" + timeline + " ~3 " + sync_value_1 + "/" + sync_value_2 + "/" + (sync_value_2 - sync_value_1));
+				System.out.println("A " + awrite + "/" + v + "/" + w + "/  " + writtenframes + " #nve " + vtime[w + 1] + " /nae " + timecount + " #nvp " + vptsval[w + 1] + " /nap " + timeline + " /sy " + sync_value_2 + "/" + sync_value_1 + "/" + (sync_value_2 - sync_value_1));
 
-			if ( (double)Math.abs(sync_value_2) <= timelength / 2.0 )
+			if (Math.abs(sync_value_2) <= (frametimelength / 2.0))
 			{
 				awrite = false;
 				w += 2;
 			}
 
-			else if ( (double)Math.abs(sync_value_1) <= timelength / 2.0 )
+			else if (Math.abs(sync_value_1) <= (frametimelength / 2.0))
 			{
 				awrite = false;
 				w += 2;
@@ -385,16 +385,16 @@ public class StreamProcessBase extends Object {
 			sync_value_4 = (double)(timecount - vtime[v]);
 
 			if (debug) 
-				System.out.println("C " + awrite + "/" + v + "/" + w + "/ =4 " + mpf + "/" + vtime[v] + "/" + timecount + " ~5 " + vptsval[v] + "/" + timeline + " ~6 " + sync_value_3 + "/" + sync_value_4 + "/" + (sync_value_4 - sync_value_3));
+				System.out.println("C " + awrite + "/" + v + "/" + w + "/  " + writtenframes + " #cve " + vtime[v] + " /cae " + timecount + " #cvp " + vptsval[v] + " /cap " + timeline + " /sy " + sync_value_4 + "/" + sync_value_3 + "/" + (sync_value_4 - sync_value_3));
 
-			if (!awrite && (double)Math.abs(sync_value_3) <= timelength / 2.0 )
+			if (!awrite && Math.abs(sync_value_3) <= (frametimelength / 2.0))
 			{
 				awrite = true; 
 				show = true;
 				v += 2;
 			}
 
-			else if (!awrite && (double)Math.abs( (double)Math.abs(sync_value_4) - (double)Math.abs(sync_value_3) ) <= timelength / 2.0 )
+			else if (!awrite && Math.abs(Math.abs(sync_value_4) - Math.abs(sync_value_3)) <= (frametimelength / 2.0))
 			{
 				awrite = true; 
 				show = true;
@@ -404,7 +404,7 @@ public class StreamProcessBase extends Object {
 			if (debug)
 				System.out.println("D " + awrite + "/" + v + "/" + w);
 
-			if (v < vptsval.length && awrite && (timecount + (timelength / 2.0)) > vtime[v] ) 
+			if (v < vptsval.length && awrite && (timecount + (frametimelength / 2.0)) > vtime[v] ) 
 				awrite = false;
 
 			if (debug) 
@@ -416,6 +416,8 @@ public class StreamProcessBase extends Object {
 
 		vw[0] = v;
 		vw[1] = w;
+		vw[2] = (int) (sync_value_2 - sync_value_1);
+		vw[3] = (int) (sync_value_4 - sync_value_3);
 
 		return awrite;
 	}
