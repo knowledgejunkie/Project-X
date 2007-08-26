@@ -154,7 +154,7 @@ public class StreamParserPVA extends StreamParserBase {
 		long Overlap_Value = 1048576L * (collection.getSettings().getIntProperty(Keys.KEY_ExportPanel_Overlap_Value) + 1);
 		long qexit;
 
-		String file_id = aXInputFile.getStreamInfo().getFileID();
+		String file_id = aXInputFile.getFileID();
 	
 		String[] streamtypes = { 
 			Resource.getString("parsePVA.streamtype.ac3"),

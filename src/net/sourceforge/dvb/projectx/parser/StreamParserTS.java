@@ -186,7 +186,7 @@ public class StreamParserTS extends StreamParserBase {
 
 		usedPIDs = new ArrayList();
 
-		String file_id = aXInputFile.getStreamInfo().getFileID();
+		String file_id = aXInputFile.getFileID();
 	
 		demuxList = job_processing.getTSDemuxList();
 		TSPidlist = job_processing.getTSPidList();

@@ -121,20 +121,15 @@ public class Scan extends Object {
 			if (streamInfo == null)
 				streamInfo = new StreamInfo();
 
-			String file_id = streamInfo.getFileID();
-
-			if (file_id.length() == 0)
-				file_id = Common.getNewFileID();
-
 			// type must be first when scanning
-			streamInfo.setStreamInfo(file_id, aXInputFile.getFileType().getName(), getType(aXInputFile, position, assigned_streamtype), _name, _location, _date, _size, getPlaytime(), getVideo(), getAudio(), getText(), getPics());
+			streamInfo.setStreamInfo(aXInputFile.getFileType().getName(), getType(aXInputFile, position, assigned_streamtype), _name, _location, _date, _size, getPlaytime(), getVideo(), getAudio(), getText(), getPics());
 
 			streamInfo.setStreamType(filetype, addInfo);
 			streamInfo.setPIDs(getPIDs());
 			streamInfo.setVideoHeader(getVBasic());
 		}
 		else
-			streamInfo = new StreamInfo("none", "", Resource.getString("ScanInfo.NotFound"), _name, _location, "", "", "");
+			streamInfo = new StreamInfo("none", Resource.getString("ScanInfo.NotFound"), _name, _location, "", "", "");
 
 		aXInputFile.setStreamInfo(streamInfo);
 	}

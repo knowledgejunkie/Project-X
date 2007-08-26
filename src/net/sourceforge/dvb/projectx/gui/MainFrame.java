@@ -1761,7 +1761,6 @@ public class MainFrame extends JPanel {
 		 * autoload
 		 */
 		JButton open_autoload = new JButton(CommonGui.loadIcon("openmulti.gif"));
-	//	JButton open_autoload = new JButton(CommonGui.loadIcon("fwd_10.gif"));
 		open_autoload.setPreferredSize(new Dimension(30, 22));
 		open_autoload.setMaximumSize(new Dimension(30, 22));
 		open_autoload.setToolTipText(Resource.getString("FilePanel.openAutoloadPanel.Tip"));
@@ -1778,7 +1777,6 @@ public class MainFrame extends JPanel {
 		 * add
 		 */
 		JButton file_add = new JButton(CommonGui.loadIcon("open.gif"));
-	//	JButton file_add = new JButton(CommonGui.loadIcon("add.gif"));
 		file_add.setPreferredSize(new Dimension(30, 22));
 		file_add.setMaximumSize(new Dimension(30, 22));
 		file_add.setToolTipText(Resource.getString("FilePanel.FileAdd.Tip"));
@@ -1790,7 +1788,6 @@ public class MainFrame extends JPanel {
 		 * remove
 		 */
 		JButton file_remove = new JButton(CommonGui.loadIcon("remove.gif"));
-	//	JButton file_remove = new JButton(CommonGui.loadIcon("rem.gif"));
 		file_remove.setPreferredSize(new Dimension(30, 22));
 		file_remove.setMaximumSize(new Dimension(30, 22));
 		file_remove.setToolTipText(Resource.getString("FilePanel.FileRemove.Tip"));
@@ -1942,7 +1939,7 @@ public class MainFrame extends JPanel {
 		/**
 		 *
 		 */
-		JButton add_output = new JButton(CommonGui.loadIcon("add.gif"));
+		JButton add_output = new JButton(CommonGui.loadIcon("open.gif"));
 		add_output.setMinimumSize(new Dimension(24, 20));
 		add_output.setMaximumSize(new Dimension(24, 20));
 		add_output.setToolTipText(Resource.getString("FilePanel.addRecentOutputDirectory.Tip"));
@@ -1986,7 +1983,7 @@ public class MainFrame extends JPanel {
 		/**
 		 *
 		 */
-		JButton remove_output = new JButton(CommonGui.loadIcon("rem.gif"));
+		JButton remove_output = new JButton(CommonGui.loadIcon("remove.gif"));
 		remove_output.setMinimumSize(new Dimension(24, 20));
 		remove_output.setMaximumSize(new Dimension(24, 20));
 		remove_output.setToolTipText(Resource.getString("FilePanel.removeRecentOutputDirectory.Tip"));
@@ -2124,7 +2121,7 @@ public class MainFrame extends JPanel {
 		/**
 		 *
 		 */
-		JButton remove_input = new JButton(CommonGui.loadIcon("rem.gif"));
+		JButton remove_input = new JButton(CommonGui.loadIcon("remove.gif"));
 		remove_input.setPreferredSize(new Dimension(50,28));
 		remove_input.setMaximumSize(new Dimension(50,28));
 		remove_input.setToolTipText(Resource.getString("autoload.dir.remove.tip"));
@@ -2149,7 +2146,7 @@ public class MainFrame extends JPanel {
 		/**
 		 *
 		 */
-		JButton add_input = new JButton(CommonGui.loadIcon("add.gif"));
+		JButton add_input = new JButton(CommonGui.loadIcon("open.gif"));
 		add_input.setPreferredSize(new Dimension(50,28));
 		add_input.setMaximumSize(new Dimension(50,24));
 		add_input.setToolTipText(Resource.getString("autoload.dir.add.tip"));
@@ -2201,7 +2198,7 @@ public class MainFrame extends JPanel {
 
 
 		// Button to add a ftp server directory to the autoload list
-		JButton add_inputftp = new JButton(CommonGui.loadIcon("ftp.gif"));
+		JButton add_inputftp = new JButton(CommonGui.loadIcon("openftp.gif"));
 		add_inputftp.setPreferredSize(new Dimension(50,28));
 		add_inputftp.setMaximumSize(new Dimension(50,24));
 		add_inputftp.setToolTipText(Resource.getString("autoload.ftp.add.tip"));
@@ -2240,7 +2237,7 @@ public class MainFrame extends JPanel {
 		/**
 		 *
 		 */
-		JButton refresh_list = new JButton(CommonGui.loadIcon("rf.gif"));
+		JButton refresh_list = new JButton(CommonGui.loadIcon("refresh.gif"));
 		refresh_list.setPreferredSize(new Dimension(50,28));
 		refresh_list.setMaximumSize(new Dimension(50,28));
 		refresh_list.setToolTipText(Resource.getString("autoload.dir.refresh.tip"));
@@ -2258,7 +2255,7 @@ public class MainFrame extends JPanel {
 		/**
 		 *
 		 */
-		JButton add_coll_and_1file = new JButton(CommonGui.loadIcon("addleft.gif"));
+		JButton add_coll_and_1file = new JButton(CommonGui.loadIcon("addcollfile.gif"));
 		add_coll_and_1file.setPreferredSize(new Dimension(50,28));
 		add_coll_and_1file.setMaximumSize(new Dimension(50,28));
 		add_coll_and_1file.setToolTipText(Resource.getString("autoload.add.coll.tip"));
@@ -2290,7 +2287,7 @@ public class MainFrame extends JPanel {
 		/**
 		 *
 		 */
-		JButton add_coll_and_files = new JButton(CommonGui.loadIcon("addleft1.gif"));
+		JButton add_coll_and_files = new JButton(CommonGui.loadIcon("addcollfiles.gif"));
 		add_coll_and_files.setPreferredSize(new Dimension(50,28));
 		add_coll_and_files.setMaximumSize(new Dimension(50,28));
 		add_coll_and_files.setToolTipText(Resource.getString("autoload.add.coll.tip"));
@@ -2320,7 +2317,7 @@ public class MainFrame extends JPanel {
 		/**
 		 *
 		 */
-		JButton add_files = new JButton(CommonGui.loadIcon("left.gif"));
+		JButton add_files = new JButton(CommonGui.loadIcon("addfile.gif"));
 		add_files.setPreferredSize(new Dimension(50, 28));
 		add_files.setMaximumSize(new Dimension(50, 28));
 		add_files.setToolTipText(Resource.getString("autoload.add.file.tip"));
@@ -2351,7 +2348,7 @@ public class MainFrame extends JPanel {
 		/**
 		 *
 		 */
-		JButton close = new JButton(CommonGui.loadIcon("x.gif"));
+		JButton close = new JButton(CommonGui.loadIcon("close.gif"));
 		close.setPreferredSize(new Dimension(50,28));
 		close.setMaximumSize(new Dimension(50,28));
 		close.setToolTipText(Resource.getString("autoload.close"));
@@ -2664,7 +2661,7 @@ public class MainFrame extends JPanel {
 		/**
 		 *  remove collection
 		 */
-		JButton remove_coll = new JButton(CommonGui.loadIcon("rem.gif"));
+		JButton remove_coll = new JButton(CommonGui.loadIcon("remcoll.gif"));
 		remove_coll.setPreferredSize(new Dimension(50, 24));
 		remove_coll.setMaximumSize(new Dimension(50, 24));
 		remove_coll.setToolTipText(Resource.getString("FilePanel.removeCollection.Tip"));
@@ -2698,7 +2695,7 @@ public class MainFrame extends JPanel {
 		/**
 		 *  add collection
 		 */
-		JButton add_coll = new JButton(CommonGui.loadIcon("add.gif"));
+		JButton add_coll = new JButton(CommonGui.loadIcon("addcoll.gif"));
 		add_coll.setPreferredSize(new Dimension(50, 24));
 		add_coll.setMaximumSize(new Dimension(50, 24));
 		add_coll.setToolTipText(Resource.getString("FilePanel.addCollection.Tip"));

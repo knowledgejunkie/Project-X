@@ -1,7 +1,7 @@
 /*
  * @(#)FileProperties.java
  *
- * Copyright (c) 2006 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2006-2007 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -396,7 +396,7 @@ public class FileProperties extends JFrame {
 	 */
 	private void setPanelTitle()
 	{ 
-		setTitle(title + ": ID " + inputfile.getStreamInfo().getFileID() + " - '" + inputfile.getName() + "'");
+		setTitle(title + ": ID " + inputfile.getFileID() + " - '" + inputfile.getName() + "'");
 	}
 
 	/**

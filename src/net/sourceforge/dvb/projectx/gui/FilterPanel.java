@@ -503,7 +503,8 @@ public class FilterPanel extends JPanel {
 
 		JPanel CL5 = new JPanel();
 		CL5.setLayout(new BoxLayout(CL5, BoxLayout.X_AXIS));
-		CL5.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), Resource.getString("CollectionPanel.PidList")));
+		CL5.setBorder(BorderFactory.createTitledBorder(Resource.getString("CollectionPanel.PidList")));
+//		CL5.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), Resource.getString("CollectionPanel.PidList")));
 		CL5.add(CL4);
 		CL5.add(Box.createRigidArea(new Dimension(10, 1)));
 		CL5.add(scrollList);
@@ -523,8 +524,6 @@ public class FilterPanel extends JPanel {
 		JPanel panel_1 = new JPanel();
 		panel_1.setLayout(new ColumnLayout());
 		panel_1.setBorder( BorderFactory.createTitledBorder("Filter Options"));
-//		panel_1.setBorder( BorderFactory.createTitledBorder(Resource.getString("ExportPanel.WriteOptions")) );
-//		panel_1.setToolTipText(Resource.getString("ExportPanel.WriteOptions.Tip"));
 
 		panel_1.add(box[11]);
 

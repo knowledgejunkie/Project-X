@@ -90,7 +90,7 @@ public class StreamParserPESSecondary extends StreamParserBase {
 
 		String paname = fparent + ".ma1";
 
-		String file_id = aXInputFile.getStreamInfo().getFileID();
+		String file_id = aXInputFile.getFileID();
 	
 		List tempfiles = job_processing.getTemporaryFileList();
 

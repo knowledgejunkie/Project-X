@@ -116,9 +116,9 @@ public class CutPanel extends JPanel {
 	private String file = " ";
 
 	private String navigation[] = { 
-		"bwd_ncp.gif", "bwd_100.gif", "bwd_10.gif",
-		"fwd_10.gif", "fwd_100.gif", "fwd_ncp.gif",
-		"bwd_gop.gif", "fwd_gop.gif"
+		"leftsteparrow1x.gif", "leftarrow3x.gif", "leftarrow2x.gif",
+		"rightarrow2x.gif", "rightarrow3x.gif", "rightsteparrow1x.gif",
+		"leftarrowstep1x.gif", "rightarrowstep1x.gif"
 	};
 
 	private JComboBox cutIndexList;
@@ -996,7 +996,7 @@ public class CutPanel extends JPanel {
 		estimatedSizeField.setMinimumSize(new Dimension(150, 24));
 		panel_3.add(estimatedSizeField);
 
-		JButton play = new JButton("P/S");
+		JButton play = new JButton(CommonGui.loadIcon("rightarrowstep2x.gif"));
 		play.setPreferredSize(new Dimension(54, 24));
 		play.setMaximumSize(new Dimension(54, 24));
 		play.addActionListener(new ActionListener() {
@@ -1059,13 +1059,13 @@ public class CutPanel extends JPanel {
 		cutIndexField.setEditable(false);
 		cutIndexField.setHorizontalAlignment(JTextField.CENTER);
 
-		JButton cutMoveLeft = new JButton(CommonGui.loadIcon("left.gif"));
+		JButton cutMoveLeft = new JButton(CommonGui.loadIcon("leftcut.gif"));
 		cutMoveLeft.setActionCommand("movecutleft");
 		cutMoveLeft.setPreferredSize(new Dimension(36, 24));
 		cutMoveLeft.setMaximumSize(new Dimension(36, 24));
 		cutMoveLeft.addActionListener(cutAction);
 
-		JButton cutMoveRight = new JButton(CommonGui.loadIcon("right.gif"));
+		JButton cutMoveRight = new JButton(CommonGui.loadIcon("rightcut.gif"));
 		cutMoveRight.setActionCommand("movecutright");
 		cutMoveRight.setPreferredSize(new Dimension(36, 24));
 		cutMoveRight.setMaximumSize(new Dimension(36, 24));
@@ -1081,7 +1081,7 @@ public class CutPanel extends JPanel {
 		/**
 		 * row 2
 		 */
-		cutAdd = new JButton(CommonGui.loadIcon("add.gif"));
+		cutAdd = new JButton(CommonGui.loadIcon("addcut.gif"));
 		cutAdd.setActionCommand("addpoint");
 		cutAdd.setPreferredSize(new Dimension(36, 24));
 		cutAdd.setMaximumSize(new Dimension(36, 24));
@@ -1089,7 +1089,7 @@ public class CutPanel extends JPanel {
 
 		DropTarget dropTarget_4 = new DropTarget(cutAdd, dnd2);
 
-		cutDelete = new JButton(CommonGui.loadIcon("rem.gif"));
+		cutDelete = new JButton(CommonGui.loadIcon("remcut.gif"));
 		cutDelete.setActionCommand("delpoint");
 		cutDelete.setPreferredSize(new Dimension(36, 24));
 		cutDelete.setMaximumSize(new Dimension(36, 24));
@@ -1194,13 +1194,13 @@ public class CutPanel extends JPanel {
 		chapterIndexField.setEditable(false);
 		chapterIndexField.setHorizontalAlignment(JTextField.CENTER);
 
-		JButton chapterMoveLeft = new JButton(CommonGui.loadIcon("left.gif"));
+		JButton chapterMoveLeft = new JButton(CommonGui.loadIcon("leftchap.gif"));
 		chapterMoveLeft.setActionCommand("movechapterleft");
 		chapterMoveLeft.setPreferredSize(new Dimension(36, 24));
 		chapterMoveLeft.setMaximumSize(new Dimension(36, 24));
 		chapterMoveLeft.addActionListener(cutAction);
 
-		JButton chapterMoveRight = new JButton(CommonGui.loadIcon("right.gif"));
+		JButton chapterMoveRight = new JButton(CommonGui.loadIcon("rightchap.gif"));
 		chapterMoveRight.setActionCommand("movechapterright");
 		chapterMoveRight.setPreferredSize(new Dimension(36, 24));
 		chapterMoveRight.setMaximumSize(new Dimension(36, 24));
@@ -1216,13 +1216,13 @@ public class CutPanel extends JPanel {
 		/**
 		 * row 2
 		 */
-		chapterAdd = new JButton(CommonGui.loadIcon("add.gif"));
+		chapterAdd = new JButton(CommonGui.loadIcon("addchap.gif"));
 		chapterAdd.setActionCommand("addchapter");
 		chapterAdd.setPreferredSize(new Dimension(36, 24));
 		chapterAdd.setMaximumSize(new Dimension(36, 24));
 		chapterAdd.addActionListener(cutAction);
 
-		chapterDelete = new JButton(CommonGui.loadIcon("rem.gif"));
+		chapterDelete = new JButton(CommonGui.loadIcon("remchap.gif"));
 		chapterDelete.setActionCommand("delchapter");
 		chapterDelete.setPreferredSize(new Dimension(36, 24));
 		chapterDelete.setMaximumSize(new Dimension(36, 24));

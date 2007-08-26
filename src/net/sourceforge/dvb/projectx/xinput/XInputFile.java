@@ -1,7 +1,7 @@
 /*
  * @(#)XInputFile.java
  *
- * Copyright (c) 2004-2005 by roehrist, All Rights Reserved. 
+ * Copyright (c) 2004-2007 by roehrist, dvbmatt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -45,6 +45,8 @@ public class XInputFile implements XInputFileIF {
 
 	private Object constructorParameter = null;
 
+	public String file_id = "";
+
 	/**
 	 * Private Constructor, don't use!
 	 */
@@ -78,6 +80,9 @@ public class XInputFile implements XInputFileIF {
 
 		if (xif.getImpl() == null)
 			return null;
+
+		// copy file_id
+		xif.setFileID(getFileID());
 
 		/**
 		 * copy already parsed streaminfo
@@ -568,4 +573,19 @@ public class XInputFile implements XInputFileIF {
 		return (impl != null ? impl.getStreamInfo() : null);
 	}
 
+	/**
+	 *
+	 */
+	public String getFileID()
+	{
+		return file_id;
+	}
+
+	/**
+	 *
+	 */
+	public void setFileID(String str)
+	{
+		file_id = str;
+	}
 }

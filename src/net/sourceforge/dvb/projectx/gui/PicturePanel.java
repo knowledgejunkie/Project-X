@@ -370,7 +370,6 @@ public class PicturePanel extends JPanel {
 
 				if (isMatrixImageAvailable)
 				{
-				//	tmp_val = ((e.getX() * 512 / matrix_new_width) / 512) + (5 * ((e.getY() * 288 / matrix_new_height) / 288));
 					tmp_val = (e.getX() / matrix_new_width) + ((512 / matrix_new_width) * (e.getY() / matrix_new_height));
 
 					if (tmp_val < matrix_table.length)

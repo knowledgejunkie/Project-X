@@ -231,7 +231,12 @@ public class JobCollection extends Object {
 		if (index < 0)
 			index = input_files.size();
 
-		input_files.add(index, input);
+		XInputFile xInputFile = ((XInputFile) input).getNewInstance();
+
+		xInputFile.setFileID(Common.getNewFileID());
+
+		input_files.add(index, xInputFile);
+	//	input_files.add(index, input);
 
 		determinePrimaryFileSegments();
 	}
@@ -870,7 +875,8 @@ public class JobCollection extends Object {
 		{
 			XInputFile xInputFile = (XInputFile) getInputFile(i);
 
-			table[i][0] = xInputFile.getStreamInfo().getFileID();
+			table[i][0] = xInputFile.getFileID();
+		//	table[i][0] = xInputFile.getStreamInfo().getFileID();
 			table[i][1] = xInputFile.getStreamInfo().getFileSourceBase();
 			table[i][2] = i < getPrimaryInputFileSegments() ? new Integer(i) : new Integer(-i);
 			table[i][3] = xInputFile.getName();
