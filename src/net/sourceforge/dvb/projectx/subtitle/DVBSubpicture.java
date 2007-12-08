@@ -326,8 +326,12 @@ public class DVBSubpicture extends Object {
 		//long new_time_out = (long)Math.round((pts - page.getTimeIn()) / 900.0); 1000
 		long new_time_out = 1L + ((pts - page.getTimeIn()) / 1024);
 
-		if (page.getTimeOut() > 0 && new_time_out > page.getTimeOut())
+		if (page.getTimeOut() > 0 && new_time_out > page.getTimeOut()) // maybe wrong
 			new_time_out = page.getTimeOut();
+	//	if (page.getTimeOut() > 0 && new_time_out > (page.getTimeOut() / 10))
+	//		new_time_out = page.getTimeOut() / 10;
+		if (page.getTimeOut() > 0 && pts == -1) // -1 means take proposed play time
+			new_time_out = page.getTimeOut() / 10;
 
 		int page_pixel_data[] = new int[page.getWidth() * page.getHeight()];
 

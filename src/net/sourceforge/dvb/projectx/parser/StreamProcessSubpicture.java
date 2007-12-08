@@ -103,10 +103,14 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 	private int X_Offset = 0;
 	private int Y_Offset = 0;
 	private int DisplayMode = 0;
+	private int ExportType = 0;
+	private int Pictures = 0;
+	private int LastPGCSet = 0;
 
 	private String SubpictureColorModel;
 	private String PageId_Value;
 	private String SubtitleExportFormat;
+	private String FileParent;
 
 	/**
 	 * 
@@ -203,11 +207,11 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 		JobProcessing job_processing = collection.getJobProcessing();
 
 		String fchild = isElementaryStream == CommonParsing.ES_TYPE ? collection.getOutputName(xInputFile.getName()) : xInputFile.getName();
-		String fparent = collection.getOutputNameParent(fchild);
+		FileParent = collection.getOutputNameParent(fchild);
 
-		fparent += isElementaryStream == CommonParsing.ES_TYPE ? Extension : "";
+		FileParent += isElementaryStream == CommonParsing.ES_TYPE ? Extension : "";
 
-		String subfile = fparent + ".sup";
+		String subfile = FileParent + ".sup";
 
 		long size = xInputFile.length();
 
@@ -224,11 +228,11 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 		long last_pts = 0;
 
 		int x = 0;
-		int pics = 0;
 		int v = 0;
 		int packetlength = 0;
-		int export_type = 0;
-		int last_pgc_set = 0;
+		ExportType = 0;
+		Pictures = 0;
+		LastPGCSet = 0;
 
 		boolean vptsdata = false;
 		boolean ptsdata = false;
@@ -268,8 +272,8 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 
 			if (SubtitleExportFormat.equalsIgnoreCase(Keys.ITEMS_SubtitleExportFormat[6].toString()))
 			{
-				subfile = fparent + ".son";
-				export_type = 1;
+				subfile = FileParent + ".son";
+				ExportType = 1;
 			}
 
 		//	Common.setMessage("");
@@ -284,7 +288,7 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 			Common.setMessage(Resource.getString("subpicture.msg.tmpfile", xInputFile.getName(), "" + size));
 
 			// SUP with changed settings
-			if (export_type == 0)
+			if (ExportType == 0)
 			{
 				subpicture.set_XY_Offset(X_Offset, Y_Offset);
 				subpicture.setDisplayMode(DisplayMode);
@@ -492,84 +496,7 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 					DVBpicture = true;
 
 					if (display_time == -1) // -1 full data, -2 forced end_time
-					{
-						String num = "00000" + pics;
-						String outfile_base = fparent + "_st" + num.substring(num.length() - 5);
-
-						String key, object_id_str, outfile;
-						int object_id;
-
-						for (Enumeration e = BMP.getKeys(); e.hasMoreElements() ; )
-						{
-							key = e.nextElement().toString();
-							object_id = Integer.parseInt(key);
-							object_id_str = Integer.toHexString(object_id).toUpperCase();
-							outfile = outfile_base + "p" + object_id_str;
-
-							Bitmap bitmap = BMP.getBitmap(object_id);
-
-							if (export_type == 0)  //.sup
-								out.write( subpicture.writeRLE(bitmap));
-
-							else    //.son + .bmp
-							{
-								if (pics == 0)
-								{
-									String[] SONhead = Common.getTeletextClass().getSONHead(new File(subfile).getParent(), (long)CommonParsing.getVideoFramerate());
-
-									for (int a=0; a < SONhead.length; a++) 
-										print_out.println(SONhead[a]);
-								}
-
-								subpicture.updateUserColorTable(bitmap);
-								outfile = BMP.buildBMP_palettized(outfile, bitmap, subpicture.getUserColorTable(), 256);
-
-								job_processing.countMediaFilesExportLength(new File(outfile).length());
-
-								int pgc_values = subpicture.setPGClinks();
-
-								// a change in color_links
-								if ((0xFFFF & pgc_values) != (0xFFFF & last_pgc_set))
-								{
-									String pgc_colors = "";
-
-									for (int a = 0; a < 4; a++)
-										pgc_colors += "" + (0xF & pgc_values>>>(a * 4)) + " ";
-
-									print_out.println("Color\t\t(" + pgc_colors.trim() + ")");
-								}
-
-								// a change in alpha_links
-								if ((0xFFFF0000 & pgc_values) != (0xFFFF0000 & last_pgc_set))
-								{
-									String pgc_alphas = "";
-
-									for (int a = 0; a < 4; a++)
-										pgc_alphas += "" + (0xF & pgc_values>>>((4 + a) * 4)) + " ";
-
-									print_out.println("Contrast\t(" + pgc_alphas.trim() + ")");
-								}
-
-								last_pgc_set = pgc_values;
-
-								print_out.println("Display_Area\t(" + Common.adaptString(bitmap.getX(), 3) + " " + Common.adaptString(bitmap.getY(), 3) + " " + Common.adaptString(bitmap.getMaxX(), 3) + " " + Common.adaptString(bitmap.getMaxY(), 3) + ")");
-								print_out.println(outfile_base.substring(outfile_base.length() - 4) + "\t\t" + Common.formatTime_2(bitmap.getInTime() / 90, (long)CommonParsing.getVideoFramerate()) + "\t" + Common.formatTime_2((bitmap.getInTime() / 90) + (bitmap.getPlayTime() * 10), (long)CommonParsing.getVideoFramerate()) + "\t" + new File(outfile).getName());
-
-								if (debug)
-									System.out.println("-> " + outfile);
-							}
-
-							//Common.setMessage(subpicture.getArea());
-							//BMP.buildBMP_24bit(outfile, key);
-
-							Common.getGuiInterface().setSubpictureTitle(" " + Resource.getString("subpicture.preview.title.dvbexport", "" + bitmap.getPageId(), "" + pics, Common.formatTime_1(new_pts / 90)) + " " + Common.formatTime_1(bitmap.getPlayTime() * 10));
-						}
-
-						if (!BMP.isEmpty())
-							Common.getGuiInterface().showExportStatus(Resource.getString("subpicture.status"), ++pics);
-
-						BMP.clear();
-					}
+						process_dvbsubpicture(job_processing, print_out, out, subpicture, subfile, new_pts);
 				}
 
 				else if (write) //dvd_subpic
@@ -583,13 +510,13 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 
 					out.write(packet);
 
-					Common.getGuiInterface().showExportStatus(Resource.getString("subpicture.status"), ++pics);
-					Common.getGuiInterface().setSubpictureTitle(" " + Resource.getString("subpicture.preview.title.dvdexport", "" + pics, Common.formatTime_1(new_pts / 90)) + " " + Common.formatTime_1(display_time / 90));
+					Common.getGuiInterface().showExportStatus(Resource.getString("subpicture.status"), ++Pictures);
+					Common.getGuiInterface().setSubpictureTitle(" " + Resource.getString("subpicture.preview.title.dvdexport", "" + Pictures, Common.formatTime_1(new_pts / 90)) + " " + Common.formatTime_1(display_time / 90));
 
 					String str = subpicture.isForced_Msg();
 
 					if (str != null)
-						Common.setMessage(str + " " + Resource.getString("subpicture.msg.forced") + " " + pics);
+						Common.setMessage(str + " " + Resource.getString("subpicture.msg.forced") + " " + Pictures);
 				}
 
 				else
@@ -597,9 +524,23 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 
 				if (debug)
 				{
-					System.out.println("-> wr " + write + " /v " + v + " /npts " + new_pts + " /tdif " + time_difference + " /pic " + pics + " /dtim " + display_time);
+					System.out.println("-> wr " + write + " /v " + v + " /npts " + new_pts + " /tdif " + time_difference + " /pic " + Pictures + " /dtim " + display_time);
 					System.out.println("");
 				}
+			}
+
+			// check whether there is still a pic waiting from dvb subpic , assume max 10sec display time
+			if (display_time == -2)
+			{
+			//	if ((display_time = subpicture.decode_picture(packet, 10, Common.getGuiInterface().isSubpictureVisible(), job_processing.getStatusStrings(), new_pts + 1024000, write, Common.getGuiInterface().isSubpictureVisible())) < -2)
+				if ((display_time = subpicture.decode_picture(packet, 10, Common.getGuiInterface().isSubpictureVisible(), job_processing.getStatusStrings(), -1, write, Common.getGuiInterface().isSubpictureVisible())) < -2)
+					Common.setMessage(Resource.getString("subpicture.msg.error", subdecode_errors[Math.abs((int)display_time)], String.valueOf(count - packetlength)));
+
+				if (debug)
+					System.out.println("last picture in memory PTS: source " + Common.formatTime_1(source_pts / 90) + "(" + source_pts + ")" + " /new " + Common.formatTime_1((new_pts) / 90) + "(" + new_pts + ")" + " / write: " + write + " / dec.state: " + display_time);
+
+				if (display_time == -1)
+					process_dvbsubpicture(job_processing, print_out, out, subpicture, subfile, new_pts);
 			}
 
 			in.close();
@@ -613,9 +554,9 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 			if (filename_pts.equals("-1"))
 				Common.setMessage(Resource.getString("subpicture.msg.pts.start_end", Common.formatTime_1(first_pts / 90)) + " " + Common.formatTime_1(source_pts / 90));
 
-			Common.setMessage(Resource.getString("subpicture.msg.summary", "" + pics));
+			Common.setMessage(Resource.getString("subpicture.msg.summary", "" + Pictures));
 
-			if (!DVBpicture && export_type == 1)
+			if (!DVBpicture && ExportType == 1)
 			{
 				String renamed_file = subfile.substring(0, subfile.length() - 3) + "sup";
 				Common.renameTo(subfile, renamed_file);
@@ -624,23 +565,23 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 
 			File subfile1 = new File(subfile); 
 
-			if (pics == 0) 
+			if (Pictures == 0) 
 				subfile1.delete();
 
 			else
 			{ 
-				if (DVBpicture && export_type == 0)
+				if (DVBpicture && ExportType == 0)
 					job_processing.countMediaFilesExportLength(Ifo.createIfo(subfile, subpicture.getUserColorTableArray()));
 
-				else if (DVBpicture && export_type == 1)
-					job_processing.countMediaFilesExportLength(new File( BMP.write_ColorTable(fparent, subpicture.getUserColorTable(), 256)).length());
+				else if (DVBpicture && ExportType == 1)
+					job_processing.countMediaFilesExportLength(new File( BMP.write_ColorTable(FileParent, subpicture.getUserColorTable(), 256)).length());
 
 				Common.setMessage(Resource.getString("msg.newfile") + " " + subfile);
 				job_processing.countMediaFilesExportLength(subfile1.length());
-				job_processing.addSummaryInfo(Resource.getString("subpicture.summary", Common.adaptString(job_processing.countPictureStream(), 2), "" + pics, infoPTSMatch(filename_pts, videofile_pts, vptsdata, ptsdata)) + "'" + subfile1 + "'");
+				job_processing.addSummaryInfo(Resource.getString("subpicture.summary", Common.adaptString(job_processing.countPictureStream(), 2), "" + Pictures, infoPTSMatch(filename_pts, videofile_pts, vptsdata, ptsdata)) + "'" + subfile1 + "'");
 
 				//vobsub
-				if (export_type == 0 && ExportAsVobSub)
+				if (ExportType == 0 && ExportAsVobSub)
 					new Sup2VobSub(subfile, subpicture.getUserColorTableArray());
 			}
 
@@ -656,4 +597,87 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 	}
 
 
+	private void process_dvbsubpicture(JobProcessing job_processing, PrintStream print_out, IDDBufferedOutputStream out, Subpicture subpicture, String subfile, long new_pts)
+	{
+		try {
+			String num = "00000" + Pictures;
+			String outfile_base = FileParent + "_st" + num.substring(num.length() - 5);
+
+			String key, object_id_str, outfile;
+			int object_id;
+
+			for (Enumeration e = BMP.getKeys(); e.hasMoreElements() ; )
+			{
+				key = e.nextElement().toString();
+
+				object_id = Integer.parseInt(key);
+				object_id_str = Integer.toHexString(object_id).toUpperCase();
+				outfile = outfile_base + "p" + object_id_str;
+
+				Bitmap bitmap = BMP.getBitmap(object_id);
+
+				if (ExportType == 0)  //.sup
+					out.write( subpicture.writeRLE(bitmap));
+
+				else    //.son + .bmp
+				{
+					if (Pictures == 0)
+					{
+						String[] SONhead = Common.getTeletextClass().getSONHead(new File(subfile).getParent(), (long)CommonParsing.getVideoFramerate());
+
+						for (int a=0; a < SONhead.length; a++) 
+							print_out.println(SONhead[a]);
+					}
+
+					subpicture.updateUserColorTable(bitmap);
+					outfile = BMP.buildBMP_palettized(outfile, bitmap, subpicture.getUserColorTable(), 256);
+
+					job_processing.countMediaFilesExportLength(new File(outfile).length());
+
+					int pgc_values = subpicture.setPGClinks();
+
+					// a change in color_links
+					if ((0xFFFF & pgc_values) != (0xFFFF & LastPGCSet))
+					{
+						String pgc_colors = "";
+
+						for (int a = 0; a < 4; a++)
+							pgc_colors += "" + (0xF & pgc_values>>>(a * 4)) + " ";
+
+						print_out.println("Color\t\t(" + pgc_colors.trim() + ")");
+					}
+
+					// a change in alpha_links
+					if ((0xFFFF0000 & pgc_values) != (0xFFFF0000 & LastPGCSet))
+					{
+						String pgc_alphas = "";
+
+						for (int a = 0; a < 4; a++)
+							pgc_alphas += "" + (0xF & pgc_values>>>((4 + a) * 4)) + " ";
+
+						print_out.println("Contrast\t(" + pgc_alphas.trim() + ")");
+					}
+
+					LastPGCSet = pgc_values;
+
+					print_out.println("Display_Area\t(" + Common.adaptString(bitmap.getX(), 3) + " " + Common.adaptString(bitmap.getY(), 3) + " " + Common.adaptString(bitmap.getMaxX(), 3) + " " + Common.adaptString(bitmap.getMaxY(), 3) + ")");
+					print_out.println(outfile_base.substring(outfile_base.length() - 4) + "\t\t" + Common.formatTime_2(bitmap.getInTime() / 90, (long)CommonParsing.getVideoFramerate()) + "\t" + Common.formatTime_2((bitmap.getInTime() / 90) + (bitmap.getPlayTime() * 10), (long)CommonParsing.getVideoFramerate()) + "\t" + new File(outfile).getName());
+
+					if (debug)
+						System.out.println("-> " + outfile);
+				}
+
+				Common.getGuiInterface().setSubpictureTitle(" " + Resource.getString("subpicture.preview.title.dvbexport", "" + bitmap.getPageId(), "" + Pictures, Common.formatTime_1(new_pts / 90)) + " " + Common.formatTime_1(bitmap.getPlayTime() * 10));
+			}
+
+			if (!BMP.isEmpty())
+				Common.getGuiInterface().showExportStatus(Resource.getString("subpicture.status"), ++Pictures);
+
+			BMP.clear();
+
+		} catch (IOException e) { 
+
+			Common.setExceptionMessage(e);
+		}
+	}
 }
