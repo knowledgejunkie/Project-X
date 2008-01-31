@@ -153,8 +153,6 @@ public class StreamParserPESSecondary extends StreamParserBase {
 		int offset;
 		int returncode = 0;
 
-		int tmp_value1 = 0;
-
 		byte[] pes_packet = new byte[0x10006];
 		byte[] buffered_data;
 
