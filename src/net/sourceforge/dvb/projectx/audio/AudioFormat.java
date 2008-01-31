@@ -41,6 +41,7 @@ import net.sourceforge.dvb.projectx.audio.AudioFormatAC3;
 import net.sourceforge.dvb.projectx.audio.AudioFormatLPCM;
 import net.sourceforge.dvb.projectx.audio.AudioFormatWAV;
 import net.sourceforge.dvb.projectx.audio.AudioFormatMPA;
+import net.sourceforge.dvb.projectx.audio.AudioFormatAAC;
 
 
 public class AudioFormat extends Object {
@@ -95,6 +96,10 @@ public class AudioFormat extends Object {
 			break;
 
 		case CommonParsing.MPEG_AUDIO:
+			impl = new AudioFormatMPA();
+			break;
+
+		case CommonParsing.AAC_AUDIO:
 			impl = new AudioFormatMPA();
 			break;
 		}

@@ -420,10 +420,6 @@ public class FileProperties extends JFrame {
 		setFileInfo();
 
 		previewFile(value);
-
-	//	long position = Preview.previewFile(inputfile, value, loadSizeForward, Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops), Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode), Common.getSettings().getIntProperty(Keys.KEY_Preview_YGain));
-
-	//	view.setImage(Common.getMpvDecoderClass().getScaledCutImage());
 	}
 
 	/**
@@ -440,9 +436,6 @@ public class FileProperties extends JFrame {
 		setFileInfo();
 
 		previewFile(value);
-//		long position = Preview.previewFile(inputfile, value, loadSizeForward, Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops), Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode), Common.getSettings().getIntProperty(Keys.KEY_Preview_YGain));
-
-//		view.setImage(Common.getMpvDecoderClass().getScaledCutImage());
 	}
 
 	/**

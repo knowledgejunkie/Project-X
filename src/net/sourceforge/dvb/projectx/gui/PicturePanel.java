@@ -782,6 +782,14 @@ public class PicturePanel extends JPanel {
 			g.setColor(Color.red);
 			g.drawString("cannot find sequence header", 160, 163);
 		}
+
+		if ((ErrorFlag & 8) != 0)
+		{
+			g.setColor(Color.white);
+			g.fill3DRect(150, 165, 200, 20, true);
+			g.setColor(Color.red);
+			g.drawString("data seems to be MPEG-4/H.264", 160, 178);
+		}
 	}
 
 	/**

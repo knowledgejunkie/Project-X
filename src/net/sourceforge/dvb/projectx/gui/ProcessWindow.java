@@ -254,8 +254,22 @@ public class ProcessWindow extends JFrame {
 		fileMenu.add(closeOnEnd);
 		fileMenu.addSeparator();
 
+		JMenuItem kill = new JMenuItem();
+		CommonGui.localize(kill, "Common.KillProcess");
+		kill.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.ALT_MASK));
+		kill.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				Common.killMainProcess();
+			}
+		});
+
+		fileMenu.add(kill);
+		fileMenu.addSeparator();
+
 		JMenuItem save = new JMenuItem();
 		CommonGui.localize(save, "Common.SaveAs");
+		save.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.ALT_MASK));
 		save.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{

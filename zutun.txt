@@ -349,17 +349,30 @@
 --post process call changed + fixed (toTS didn't work); temp file access
 --sync interruption issue, more tests needed
 
+0.90.4.00b21:
+--letzter dvb-subtitle fehlte u.U.
+
+0.90.4.00b22:
+--test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding
+--urldecoder aus 1.4.2 in 1.2.2 integrieren (decoder.getfile(), "UTF-8") wg os x tiger - mail
+--falls prozess nicht stoppbar -> hard break funktion im menü
+--"end-beep" fehler stoppt prozess nicht mehr
+--anpassung vdr 1.5.10ff, dvb-subs spezieller container (hierbei zzt nur 1x sub in vdr)
 
 
-!-test-!!mac os url problem umlaute,leerzeichen, sonderzeichen utf 8 encoding
-!-pid in dateinamen - problem split
 
+!-pid in dateinamen - problem split - via FILE-ID
+!-dyn PMT ts-pid-wechseln folgen
+!-AAC audio (roh)
+!-genauere scanzuordnung - angefangen
+
+!!radix verschobene pakete
 !!parserliste/demuxlist vereinen, alle fileobjekte in einem pool
 !!ac3 2/0 128kbs wg vro hinzufügen, ac3 5.1 256, 320kb stille 
 !!ac3 384 wird nicht als Stille genommen, restart wenn 5.1 größer detektiert wird
 !!vro-vob timecode lese patch?
-!!multi-vob - pts offs nicht erkannt bei nächster cellid, manchmal
-!!multi-vob - fortlaufende pts nicht erkannt bei nächster cellid (nach einer erfoglten anpassung früher)
+!!multi-file-vob - pts offs nicht erkannt bei nächster cellid, manchmal
+!!multi-file-vob - fortlaufende pts nicht erkannt bei nächster cellid (nach einer erfoglten anpassung früher)
 !!info anzeige von kurzepg o.ä. in TS, kapitelpunkte aus rec
 !!fehlzuordnung ttx aus ts zu ac3
 
@@ -369,8 +382,7 @@
 !!-pes parser keine vorauswahl von headern ba,ff,f0 etc mehr, mit loggen
 !!-0xBE -> arte_ut fra, scan von pes ändern
 
-
-!genauere scanzuordnung - angefangen
+!!PMT table entries in neue PMT übernehmen (aber andre PID)
 !!id3tag infos anzeigen
 !!hav sektoren prüfen, nur melden
 !!profile hd,mpg reseted,vob, etc ermöglichen?
@@ -384,7 +396,6 @@
 !!dvb-subs,  besonderer hinweis: pagenumber definieren "http://www.cs.helsinki.fi/u/mikkila/son2srt/"
 !!dvb-subs,  pagenumber ausgelesen aus pmt?
 !!-vbvbuffer bei mpeg1 nicht?
-!!-ts-pid-wechseln folgen
 !-audiozusammenfassen, mpa,ac3,dts, tlw
 !!projektdateiexport zusammenfassen
 !!dvdlap index
@@ -392,7 +403,7 @@
 !!pmt 0xC3 -> string epg - nur inter Typ 0 - mtv2 cyfra 11282v hotbird 
 !-PAT mit adaptionfield ?? 6400 10977 h 16°E, neue klasse
 !!sendername aus SDT anzeigen?
-!!mutlicolor je zeile - sup
+!!multicolor je zeile - sup
 
 //
 java.applet.AudioClip ac = java.applet.Applet.newAudioClip(Resource.getResourceURL("bsp.wav"));

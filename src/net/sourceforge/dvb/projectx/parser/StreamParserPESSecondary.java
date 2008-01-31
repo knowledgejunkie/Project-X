@@ -153,6 +153,8 @@ public class StreamParserPESSecondary extends StreamParserBase {
 		int offset;
 		int returncode = 0;
 
+		int tmp_value1 = 0;
+
 		byte[] pes_packet = new byte[0x10006];
 		byte[] buffered_data;
 
@@ -436,7 +438,26 @@ public class StreamParserPESSecondary extends StreamParserBase {
 							subID = 0xFF & pes_packet[offset];
 							isTeletext = pes_extensionlength == 0x24 && subID>>>4 == 1;
 
-							//subpic in vdr_pes
+							// vdr 1.5.x dvb-subs container
+							if (pes_payloadlength >= 4 && subID>>>4 == 2)
+							{
+								tmp_value1 = CommonParsing.getIntValue(pes_packet, offset, 4, !CommonParsing.BYTEREORDERING);
+
+								//vdr 1.5.x start packet of dvb-sub || subsequent packet
+								if ((pes_alignment && tmp_value1 == 0x20010000) || (!pes_alignment && tmp_value1 == 0x20010001))
+								{
+									for (int i = offset, j = offset + 4; i < j; i++)
+										pes_packet[i] = (byte) 0xFF;
+
+									pes_extensionlength += 4;
+									pes_packet[8] = (byte)(pes_extensionlength);
+									pes_payloadlength -= 4;
+
+									pes_extension2_id = 1;
+								}
+							}
+
+							//subpic in vdr_pes before 1.5.x
 							if (pes_alignment && !isTeletext && (subID>>>4 == 2 || subID>>>4 == 3))
 								pes_streamtype = CommonParsing.MPEG2PS_TYPE;  //will be resetted before next packet
 

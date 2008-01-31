@@ -571,7 +571,7 @@ public class AudioFormatMPA extends AudioFormat {
 	private final int RDS_startcode = 0xFE;
 	private final int RDS_endcode = 0xFF;
 
-	private String[] rds_values = new String[7]; //buffer of messages
+	private String[] rds_values = new String[9]; //buffer of messages
 
 	private final String[] pty_list = {
 		"undefined", "News", "Current Affairs", "Information", "Sport", "Education", "Drama", "Culture", "Science", 
@@ -723,7 +723,7 @@ public class AudioFormatMPA extends AudioFormat {
 
 		switch (type)
 		{
-		case 0xDA: //Video-programminfos
+		case 0xDA: //RASS
 			getRawData(bo.toByteArray());
 			break;
 
@@ -756,9 +756,15 @@ public class AudioFormatMPA extends AudioFormat {
 			break;
 
 		case 0x30: //TMC 
+			str = compareMsg("transmits TMC messages", 7, frametime);
+			break;
+
+		case 0x46: //ODA data
+			str = compareMsg("transmits ODA messages", 8, frametime);
+			break;
+
 		case 0x40: //ODA SMC
 		case 0x42: //ODA free 
-		case 0x46: //ODA data
 		case 0x4A: //CT
 		case 0x06: //PIN
 			break;
@@ -795,10 +801,10 @@ public class AudioFormatMPA extends AudioFormat {
 				if (!hasRawData)
 				{
 					hasRawData = true;
-					Common.setMessage("-> exporting RDS data type 0xDA to '" + instanced_time + "_rawdata_0xDA_RDS'");
+					Common.setMessage("-> exporting RDS data (RASS) to '" + instanced_time + "_RASS@RDS'");
 				}
 
-				BufferedOutputStream rawdata = new BufferedOutputStream(new FileOutputStream(Common.getCollection().getOutputNameParent(instanced_time + "_rawdata@RDS"), true));
+				BufferedOutputStream rawdata = new BufferedOutputStream(new FileOutputStream(Common.getCollection().getOutputNameParent(instanced_time + "_RASS@RDS"), true));
 
 				for (int i = index, k; i < end; i++)
 				{

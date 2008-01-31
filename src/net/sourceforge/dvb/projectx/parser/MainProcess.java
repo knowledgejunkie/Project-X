@@ -286,7 +286,7 @@ public class MainProcess extends Thread {
 					 */
 					int action = collection.getActionType();
 
-					if (action <= CommonParsing.ACTION_UNDEFINED)
+					if (action <= CommonParsing.ACTION_UNDEFINED || !Common.getSettings().getBooleanProperty(Keys.KEY_ConversionModePriority))
 						action = Common.getSettings().getIntProperty(Keys.KEY_ConversionMode);
 
 					/**
@@ -1125,7 +1125,10 @@ Common.setMessage("del " + tempfiles);
 
 		job_processing.setSplitSize(splitsize);
 
-		Toolkit.getDefaultToolkit().beep();
+		try {
+			Toolkit.getDefaultToolkit().beep();
+		} catch (Exception e) {}
+
 	}
 
 }

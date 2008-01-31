@@ -1,7 +1,7 @@
 /*
  * @(#)StreamDemultiplexer
  *
- * Copyright (c) 2005-2006 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2007 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -60,6 +60,7 @@ public class StreamDemultiplexer extends Object {
 	private boolean overlap = false;
 	private boolean seqhead = false;
 	private boolean isPTSwritten = false;
+	private boolean isEnabled = true;
 
 	private boolean WriteNonVideo;
 	private boolean WriteVideo;
@@ -298,6 +299,14 @@ public class StreamDemultiplexer extends Object {
 	/**
 	 * stream type preselector
 	 */
+	public void setStreamEnabled(boolean b)
+	{
+		isEnabled = b;
+	}
+
+	/**
+	 * stream type preselector
+	 */
 	public boolean StreamEnabled()
 	{
 		switch(newID>>>4)
@@ -323,7 +332,7 @@ public class StreamDemultiplexer extends Object {
 			return Streamtype_Subpicture;
 
 		default:
-			return true;
+			return isEnabled;
 		}
 	}
 
@@ -653,6 +662,10 @@ public class StreamDemultiplexer extends Object {
 				break;
 
 			case 1: //TTX
+				offset += 1; 
+				pes_payloadlength -= 1; 
+				break;
+
 			case 2: //subpic  0.31
 			case 3: //subpic 32.63
 				offset += 1; 

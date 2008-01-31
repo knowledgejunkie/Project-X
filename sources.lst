@@ -4,6 +4,7 @@ src/net/sourceforge/dvb/projectx/audio/AudioFormatAC3.java
 src/net/sourceforge/dvb/projectx/audio/AudioFormatLPCM.java
 src/net/sourceforge/dvb/projectx/audio/AudioFormatWAV.java
 src/net/sourceforge/dvb/projectx/audio/AudioFormatMPA.java
+src/net/sourceforge/dvb/projectx/audio/AudioFormatAAC.java
 src/net/sourceforge/dvb/projectx/audio/MpaConverter.java
 src/net/sourceforge/dvb/projectx/audio/MpaDecoder.java
 src/net/sourceforge/dvb/projectx/common/Common.java
@@ -20,6 +21,7 @@ src/net/sourceforge/dvb/projectx/io/IDDBufferedOutputStream.java
 src/net/sourceforge/dvb/projectx/io/RawFile.java
 src/net/sourceforge/dvb/projectx/io/StandardBuffer.java
 src/net/sourceforge/dvb/projectx/net/WebInterface.java
+src/net/sourceforge/dvb/projectx/net/X_URLDecoder.java
 src/net/sourceforge/dvb/projectx/parser/CommonParsing.java
 src/net/sourceforge/dvb/projectx/parser/Gop.java
 src/net/sourceforge/dvb/projectx/parser/GopArray.java
@@ -47,6 +49,7 @@ src/net/sourceforge/dvb/projectx/parser/StreamProcessLPCMAudio.java
 src/net/sourceforge/dvb/projectx/parser/StripAudio.java
 src/net/sourceforge/dvb/projectx/parser/StripRelook.java
 src/net/sourceforge/dvb/projectx/parser/StripMedion.java
+src/net/sourceforge/dvb/projectx/parser/TS_PMTParser.java
 src/net/sourceforge/dvb/projectx/parser/VBI.java
 src/net/sourceforge/dvb/projectx/subtitle/Bitmap.java
 src/net/sourceforge/dvb/projectx/subtitle/BMP.java

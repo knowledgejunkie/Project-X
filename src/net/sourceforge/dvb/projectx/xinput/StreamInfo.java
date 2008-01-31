@@ -345,7 +345,7 @@ public class StreamInfo extends Object {
 	public void setStreamType(int _streamtype, String str)
 	{
 		streamtype = _streamtype;
-		file_type = Keys.ITEMS_FileTypes[getStreamType()].toString() + str;
+		file_type = "[" + getStreamSubType() + "] " + Keys.ITEMS_FileTypes[getStreamType()].toString() + " " + str;
 	}
 
 	/**
@@ -353,7 +353,7 @@ public class StreamInfo extends Object {
 	 */
 	public int getStreamType()
 	{
-		return (0x1F & streamtype);
+		return (0xFF & streamtype);
 	}
 
 	/**
@@ -361,7 +361,7 @@ public class StreamInfo extends Object {
 	 */
 	public int getStreamSubType()
 	{
-		return (streamtype>>8);
+		return (0xFF & streamtype>>>8);
 	}
 
 	/**

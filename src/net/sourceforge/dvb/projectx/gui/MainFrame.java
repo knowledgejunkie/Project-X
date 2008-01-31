@@ -116,6 +116,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.net.URL;
 import java.net.URLDecoder;
 
+import net.sourceforge.dvb.projectx.net.X_URLDecoder;
+
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
 import net.sourceforge.dvb.projectx.parser.MainProcess;
 import net.sourceforge.dvb.projectx.parser.HpFix;
@@ -269,7 +271,8 @@ public class MainFrame extends JPanel {
 
 						if (protocol.equals("file"))
 						{
-							File f = new File(URLDecoder.decode(url.getFile()));
+							//File f = new File(URLDecoder.decode(url.getFile()));
+							File f = new File(X_URLDecoder.decode(url.getFile(), "UTF-8"));
 
 							if (f.exists())
 								list.add(new XInputFile(f));
@@ -662,7 +665,7 @@ public class MainFrame extends JPanel {
 
 				JobCollection collection = Common.getCollection();
 
-				XInputFile xInputFile = ((XInputFile) collection.getInputFile(index)).getNewInstance();
+				XInputFile xInputFile = (XInputFile) collection.getInputFile(index);
 
 				if (xInputFile != null && xInputFile.exists())
 				{

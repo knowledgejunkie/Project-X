@@ -85,6 +85,11 @@ public class CommonParsing extends Object {
 
 	public final static int ES_TYPE   = 1;	//	"ElementaryStream"
 
+	public final static int TS_TYPE_TF5X00    = TS_TYPE | 1<<8;	//	"DVB/MPEG2 TS  TF5X00"
+	public final static int TS_TYPE_TF4000    = TS_TYPE | 2<<8;	//	"DVB/MPEG2 TS  TF4000"
+	public final static int TS_TYPE_HANDAN    = TS_TYPE | 3<<8;	//	"DVB/MPEG2 TS  HANDAN"
+
+
 	//	"ElementaryStream"
 	public final static int UNKNOWN   = -1;
 	public final static int AC3_AUDIO  = 0;
@@ -95,6 +100,7 @@ public class CommonParsing extends Object {
 	public final static int SUBPICTURE = 5;
 	public final static int DTS_AUDIO  = 6;	//handled with in AC3_AUDIO so far
 	public final static int WAV_AUDIO  = 7;	
+	public final static int AAC_AUDIO  = 8;	
 
 	public final static int ACTION_UNDEFINED = -1;
 	public final static int ACTION_DEMUX  = 0;	
@@ -377,11 +383,19 @@ public class CommonParsing extends Object {
 	{
 		long value = 0;
 
-		for (int i = 0; bytereordering && i < length; i++)
-			value |= (0xFFL & array[i + offset])<<(i * 8);
+		try {
 
-		for (int i = 0, j = length - 1; !bytereordering && i < length; i++, j--)
-			value |= (0xFFL & array[i + offset])<<(j * 8);
+			for (int i = 0; bytereordering && i < length; i++)
+				value |= (0xFFL & array[i + offset])<<(i * 8);
+
+			for (int i = 0, j = length - 1; !bytereordering && i < length; i++, j--)
+				value |= (0xFFL & array[i + offset])<<(j * 8);
+
+		} catch (Exception e) {
+
+			Common.setMessage("!> array index error (" + offset + "/" + length + "/" + array.length + ")");
+			return 0;
+		}
 
 		return value;
 	}

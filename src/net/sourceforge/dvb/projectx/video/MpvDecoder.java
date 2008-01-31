@@ -102,6 +102,7 @@ public class MpvDecoder extends Object {
 	private boolean ERROR1 = false;
 	private boolean ERROR2 = false;
 	private boolean ERROR3 = false;
+	private boolean ERROR4 = false;
 	private boolean viewGOP = true;
 
 	private String info_4 = "";
@@ -3035,7 +3036,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	 */
 	public int getErrors()
 	{
-		return (0 | (ERROR1 ? 1 : 0) | (ERROR2 ? 2 : 0) | (ERROR3 ? 4 : 0));
+		return (0 | (ERROR1 ? 1 : 0) | (ERROR2 ? 2 : 0) | (ERROR3 ? 4 : 0) | (ERROR4 ? 8 : 0));
 	}
 
 	/**
@@ -3157,6 +3158,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 		ERROR1 = false;
 		ERROR2 = false;
 		ERROR3 = false;
+		ERROR4 = false;
 
 		buf = array;
 		BufferPos = start_position;
@@ -3210,7 +3212,8 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 		}
 
 		if (ERROR1)
-			checkH264(buf, buf.length);
+			if (checkH264(buf, buf.length))
+				ERROR4 = true;
 
 		scale_Picture(silent);
 

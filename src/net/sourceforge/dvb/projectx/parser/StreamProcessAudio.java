@@ -75,6 +75,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 	private final int MP1_AUDIOSTREAM = 3;
 	private final int DTS_AUDIOSTREAM = 4;
 	private final int WAV_AUDIOSTREAM = 5;
+	private final int AAC_AUDIOSTREAM = 6;
 	private final int NO_AUDIOSTREAM = 10;
 
 	private MpaDecoder MPADecoder = null;
@@ -156,6 +157,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 	private String str_mp1 = ".mp1";
 	private String str_mp2 = ".mp2";
 	private String str_mp3 = ".mp3";
+	private String str_mp4 = ".mp4";
 	private String str_dts = ".dts";
 	private String str_aif = ".aif";
 	private String str_pcm = ".pcm";

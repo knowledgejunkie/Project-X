@@ -87,8 +87,8 @@ import net.sourceforge.dvb.projectx.net.WebInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90.4.00.b21";
-	private static String version_date = "26.08.2007";
+	private static String version_name = "ProjectX 0.90.4.00.b22";
+	private static String version_date = "31.01.2008";
 
 	private static String line_separator = System.getProperty("line.separator");
 
@@ -394,6 +394,20 @@ public final class Common extends Object {
 
 		CommonParsing.setProcessPausing(false);
 		CommonParsing.setProcessCancelled(true);
+	}
+
+	/**
+	 * 
+	 */
+	public static void killMainProcess()
+	{
+		if (!isRunningProcess())
+			return;
+
+		breakMainProcess();
+
+		mainprocess.stop();
+		mainprocess = null;
 	}
 
 	/**

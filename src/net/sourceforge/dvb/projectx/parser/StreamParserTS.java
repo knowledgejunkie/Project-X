@@ -51,6 +51,8 @@ import net.sourceforge.dvb.projectx.parser.StreamConverter;
 import net.sourceforge.dvb.projectx.parser.StreamDemultiplexer;
 import net.sourceforge.dvb.projectx.parser.StreamParserBase;
 
+import net.sourceforge.dvb.projectx.parser.TS_PMTParser;
+
 
 
 /**
@@ -65,6 +67,8 @@ public class StreamParserTS extends StreamParserBase {
 	private List TSPidlist;
 
 	private PushbackInputStream inputstream;
+
+	private TS_PMTParser pmt_parser;
 
 	private boolean HumaxAdaption;
 	private boolean HandanAdaption;
@@ -145,13 +149,18 @@ public class StreamParserTS extends StreamParserBase {
 
 		int Infoscan_Value = Integer.parseInt(collection.getSettings().getProperty(Keys.KEY_ExportPanel_Infoscan_Value));
 		int CutMode = collection.getSettings().getIntProperty(Keys.KEY_CutMode);
+
 		int ts_pid;
 		int ts_scrambling = 0;
 		int ts_adaptionfield = 0;
 		int ts_counter = 0;
 		int ts_adaptionfieldlength = 0;
+		int ts_service_id = -1;
+		int ts_pmt_pid = -1;
+
 		int payload_pesID = 0;
 		int payload_psiID = 0;
+
 		int pes_extensionlength = 0;
 		int pes_payloadlength = 0;
 		int pes_packetlength;
@@ -241,6 +250,9 @@ public class StreamParserTS extends StreamParserBase {
 				Common.setMessage(Resource.getString("parseTS.sid") + Integer.toHexString(pids[0]).toUpperCase());
 				Common.setMessage(Resource.getString("parseTS.pmt.refers", Integer.toHexString(pids[1]).toUpperCase()));
 
+				ts_pmt_pid = pids[1];
+				pmt_parser = new TS_PMTParser(pids[0], pids[1]);
+
 				Common.setMessage(Resource.getString("ScanInfo.Video"));
 				Common.setMessage(streamInfo.getVideo());
 
@@ -255,7 +267,8 @@ public class StreamParserTS extends StreamParserBase {
 
 				Common.setMessage("");
 
-				for (int i = 2; i < pids.length; i++)
+			//	for (int i = 2; i < pids.length; i++)
+				for (int i = 1; i < pids.length; i++)  // includes pmtpid
 				{
 					TSPidlist.add(streambuffer = new StreamBuffer());
 					streambuffer.setPID(pids[i]);
@@ -589,7 +602,7 @@ public class StreamParserTS extends StreamParserBase {
 						if (Message_1)
 							Common.setMessage(Resource.getString("parseTS.bit.error", Integer.toHexString(ts_pid).toUpperCase(), String.valueOf(packet), String.valueOf(count - 188)) + " (" + ts_adaptionfieldlength + " / " + ts_startunit + ")");
 
-						if (!ts_hasErrors)
+						//if (!ts_hasErrors) // discard bad packets
 							continue loop;
 					}
 /** errors alt 0.90.4.00
@@ -643,12 +656,9 @@ public class StreamParserTS extends StreamParserBase {
 					if (Debug) 
 						System.out.println("pk " + packet + " /pid " + Integer.toHexString(ts_pid) + " /pes " + Integer.toHexString(payload_pesID) + " /tn " + streambuffer.isneeded() + " /er " + ts_hasErrors + " /st " + ts_startunit + " /sc " + ts_scrambling + " /ad " + ts_adaptionfield + " /al " + ts_adaptionfieldlength);
 
-					/**
-					 * PID not of interest
-					 */
+					// PID not of interest
 					if (!streambuffer.isneeded()) 
 						continue loop;
-
 
 					if (IgnoreScrambledPackets)
 					{
@@ -872,8 +882,28 @@ public class StreamParserTS extends StreamParserBase {
 								continue loop;
 							}
 
+							// dynamic pmt
+							if (UseAutoPidFilter && ts_pid == ts_pmt_pid && payload_psiID == 2)
+							{
+								type = "(PMT) (" + (count - TS_PacketLength) + " #" + packet + ") ";  // pos + packno
 
-							if (type.equals(""))
+								Common.setMessage("ok> PID 0x" + Integer.toHexString(ts_pid).toUpperCase() + " " + type);
+
+								usedPIDs.add("0x" + Integer.toHexString(ts_pid));
+							}
+
+							// accepted pids
+							else if (!type.equals(""))
+							{
+								type += " (" + (count - TS_PacketLength) + " #" + packet + ") ";  // pos + packno
+
+								Common.setMessage(Resource.getString("parseTS.pid.has.pes", Integer.toHexString(ts_pid).toUpperCase(), Integer.toHexString(0xFF & payload_pesID).toUpperCase(), type));
+
+								usedPIDs.add("0x" + Integer.toHexString(ts_pid));
+							}
+
+							// declined pids
+							else
 							{
 								if (ts_pid == 0 && payload_psiID == 0)
 									type = "(PAT)";
@@ -1001,18 +1031,21 @@ public class StreamParserTS extends StreamParserBase {
 
 								continue loop;
 							}
-
-							else
-							{
-								type += " (" + (count - TS_PacketLength) + " #" + packet + ") ";  // pos + packno
-								Common.setMessage(Resource.getString("parseTS.pid.has.pes", Integer.toHexString(ts_pid).toUpperCase(), Integer.toHexString(0xFF & payload_pesID).toUpperCase(), type));
-								usedPIDs.add("0x" + Integer.toHexString(ts_pid));
-							}
 						}
+
+						//check dynamic PMT here, filtered PMT-PID is not discarded
+						if (checkDynamicPMT(ts_pid))
+						{
+							streambuffer.reset();
+							// buffer actual packet data
+							streambuffer.writeData(ts_packet, 4 + ts_adaptionfieldlength, 184 - ts_adaptionfieldlength);
+
+							continue loop;
+						}
+						//
 
 						if (streambuffer.getDemux() == -1 || !streambuffer.isneeded())
 							continue loop;
-
 
 						streamdemultiplexer = (StreamDemultiplexer) demuxList.get(streambuffer.getDemux());
 
@@ -1101,9 +1134,7 @@ public class StreamParserTS extends StreamParserBase {
 						pes_packet = null;
 						streambuffer.reset();
 
-						/**
-						 * buffer actual packet data
-						 */
+						// buffer actual packet data
 						streambuffer.writeData(ts_packet, 4 + ts_adaptionfieldlength, 184 - ts_adaptionfieldlength);
 					}
 
@@ -1481,5 +1512,23 @@ public class StreamParserTS extends StreamParserBase {
 		}
 
 		return 0;
+	}
+
+	/**
+	 * check dynamic PMT for PID changes, at split output not yet handled
+	 */
+	private boolean checkDynamicPMT(int pid)
+	{
+		if (pmt_parser == null || pid != pmt_parser.getPID())
+			return false;
+
+		int ret = pmt_parser.parsePMT(streambuffer.getData().toByteArray());
+
+Common.setMessage("AA " + ret);
+		//TSPidList
+		
+		// edit pid values here, pts reset in demuxers required
+
+		return true;
 	}
 }
