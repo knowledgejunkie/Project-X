@@ -359,6 +359,8 @@
 --"end-beep" fehler stoppt prozess nicht mehr
 --anpassung vdr 1.5.10ff, dvb-subs spezieller container (hierbei zzt nur 1x sub in vdr)
 
+0.90.4.00b23:
+--anpassung vdr 1.5.10ff, multiple dvb-subs spezieller container
 
 
 !-pid in dateinamen - problem split - via FILE-ID

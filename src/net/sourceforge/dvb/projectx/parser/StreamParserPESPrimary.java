@@ -746,7 +746,7 @@ public class StreamParserPESPrimary extends StreamParserBase {
 									tmp_value1 = CommonParsing.getIntValue(pes_packet, offset, 4, !CommonParsing.BYTEREORDERING);
 
 									//vdr 1.5.x start packet of dvb-sub || subsequent packet
-									if ((pes_alignment && tmp_value1 == 0x20010000) || (!pes_alignment && tmp_value1 == 0x20010001))
+									if ((pes_alignment && (0xF0FFFFFF & tmp_value1) == 0x20010000) || (!pes_alignment && (0xF0FFFFFF & tmp_value1) == 0x20010001))
 									{
 										for (int i = offset, j = offset + 4; i < j; i++)
 											pes_packet[i] = (byte) 0xFF;
@@ -755,7 +755,12 @@ public class StreamParserPESPrimary extends StreamParserBase {
 										pes_packet[8] = (byte)(pes_extensionlength);
 										pes_payloadlength -= 4;
 
-										pes_extension2_id = 1;
+										//pes_extension2_id = 1;
+										pes_extension2_id = subID = tmp_value1>>>24;
+										pes_streamtype = CommonParsing.MPEG2PS_TYPE;  //will be resetted before next packet
+
+										if (pes_alignment)
+											pes_packet[offset + 4] = (byte)(subID);
 									}
 								}
 
