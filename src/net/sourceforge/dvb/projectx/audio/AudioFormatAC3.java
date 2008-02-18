@@ -33,9 +33,6 @@ package net.sourceforge.dvb.projectx.audio;
 
 import java.util.Arrays;
 
-import net.sourceforge.dvb.projectx.audio.AudioFormat;
-import net.sourceforge.dvb.projectx.common.Common;
-
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
 
 public class AudioFormatAC3 extends AudioFormat {

@@ -27,7 +27,6 @@
 package net.sourceforge.dvb.projectx.common;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Hashtable;
 
@@ -38,12 +37,6 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.io.FileOutputStream;
 import java.io.ByteArrayInputStream;
-
-import net.sourceforge.dvb.projectx.common.Common;
-import net.sourceforge.dvb.projectx.common.Keys;
-import net.sourceforge.dvb.projectx.common.Resource;
-import net.sourceforge.dvb.projectx.common.JobProcessing;
-import net.sourceforge.dvb.projectx.common.Settings;
 
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
 

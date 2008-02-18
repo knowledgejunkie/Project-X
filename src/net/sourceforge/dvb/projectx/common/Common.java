@@ -59,12 +59,6 @@ import java.text.SimpleDateFormat;
 
 import net.sourceforge.dvb.projectx.audio.AudioFormat;
 
-import net.sourceforge.dvb.projectx.common.Resource;
-import net.sourceforge.dvb.projectx.common.Keys;
-import net.sourceforge.dvb.projectx.common.JobCollection;
-import net.sourceforge.dvb.projectx.common.Settings;
-import net.sourceforge.dvb.projectx.common.GuiInterface;
-
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
 import net.sourceforge.dvb.projectx.parser.Scan;
 import net.sourceforge.dvb.projectx.parser.MainProcess;

@@ -45,10 +45,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
-import java.net.URL;
 
-
-import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.xinput.XInputDirectory;
 
 /**

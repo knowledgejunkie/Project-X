@@ -52,14 +52,7 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
-import net.sourceforge.dvb.projectx.common.Resource;
-import net.sourceforge.dvb.projectx.common.Keys;
-import net.sourceforge.dvb.projectx.common.Common;
-import net.sourceforge.dvb.projectx.common.JobCollection;
-
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
-
-import net.sourceforge.dvb.projectx.parser.MainProcess;
 
 /**
  * the holy start

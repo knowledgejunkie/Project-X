@@ -33,16 +33,12 @@ import java.util.Arrays;
 import java.util.ArrayList;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.BufferedOutputStream;
 
 import net.sourceforge.dvb.projectx.common.Common;
 
-import net.sourceforge.dvb.projectx.audio.AudioFormat;
-import net.sourceforge.dvb.projectx.audio.MpaDecoder;
-import net.sourceforge.dvb.projectx.audio.MpaConverter;
 
 public class AudioFormatMPA extends AudioFormat {
 		

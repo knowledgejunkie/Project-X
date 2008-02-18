@@ -29,19 +29,11 @@
 
 package net.sourceforge.dvb.projectx.audio;
 
-import java.io.File;
 import java.io.RandomAccessFile;
 import java.io.IOException;
 
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
 import net.sourceforge.dvb.projectx.common.Common;
-
-import net.sourceforge.dvb.projectx.audio.AudioFormatDTS;
-import net.sourceforge.dvb.projectx.audio.AudioFormatAC3;
-import net.sourceforge.dvb.projectx.audio.AudioFormatLPCM;
-import net.sourceforge.dvb.projectx.audio.AudioFormatWAV;
-import net.sourceforge.dvb.projectx.audio.AudioFormatMPA;
-import net.sourceforge.dvb.projectx.audio.AudioFormatAAC;
 
 
 public class AudioFormat extends Object {

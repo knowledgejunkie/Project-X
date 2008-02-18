@@ -30,20 +30,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Hashtable;
-import java.util.Enumeration;
-
-import java.io.File;
-import java.io.RandomAccessFile;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.IOException;
-import java.io.FileOutputStream;
-
-import net.sourceforge.dvb.projectx.common.Keys;
-import net.sourceforge.dvb.projectx.common.Resource;
-import net.sourceforge.dvb.projectx.common.JobCollection;
-
-import net.sourceforge.dvb.projectx.xinput.XInputFile;
 
 import net.sourceforge.dvb.projectx.parser.Gop;
 import net.sourceforge.dvb.projectx.parser.GopArray;
