@@ -780,6 +780,9 @@ public class CutPanel extends JPanel {
 				{
 					cutview.setSlider(e.getX());
 
+					if (collection == null)
+						return;
+
 					CommonGui.getPicturePanel().setMixedPreviewPixel(collection.getCutImage(cutview.getPreviewPosition()), cutview.getTransparencyValue());
 					CommonGui.getPicturePanel().repaint();
 				}

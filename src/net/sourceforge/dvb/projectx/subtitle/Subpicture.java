@@ -1200,6 +1200,7 @@ public class Subpicture extends Object {
 
 			default:
 				Common.setMessage(Resource.getString("subpicture.msg3") + ": " + cmd_switch);
+				Flush_Bits(BPos, 8);
 			}
 		}
 

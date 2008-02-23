@@ -361,6 +361,9 @@
 
 0.90.4.00b23:
 --anpassung vdr 1.5.10ff, multiple dvb-subs spezieller container
+--crash (unbedeutend) in mini-schnittbild-abgleichfenster ohne collection 
+--endless loop bei unbekanntem subpicture kommando
+
 
 
 !-pid in dateinamen - problem split - via FILE-ID
