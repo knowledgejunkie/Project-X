@@ -954,6 +954,13 @@ public int extern_Get_Hdr() {
 					return 1;
 				}
 			}
+			else if (start_code==PICTURE_START_CODE) //decode pic even without gopheader
+			{
+				reset_group_of_pictures_header();
+				picture_header();
+				return 1;
+			}
+
 		} else if (viewGOP && start_code==GROUP_START_CODE){
 			StartPos=BufferPos-4;
 			group_of_pictures_header();
@@ -1073,6 +1080,17 @@ private void sequence_header(){
 	info_3 = ", " + (bit_rate_value * 400) + "bps, vbv " + vbv_buffer_size + (constrained_parameters_flag > 0 ? ", cpf" : "");
 
 	Common.setLastPreviewBitrate(bit_rate_value * 400);
+}
+
+/* missing group of pictures header */
+private void reset_group_of_pictures_header(){
+	drop_flag   = 0;
+	gop_hour    = -1;
+	gop_minute  = -1;
+	gop_sec     = -1;
+	gop_frame	= -1;
+	closed_gop  = 0;
+	broken_link = 0;
 }
 
 /* decode group of pictures header */
@@ -1386,14 +1404,16 @@ public void InitialDecoder(){
 	mb_width = (horizontal_size + 15)>>>4;
 	mb_height = (progressive_sequence>0) ? (vertical_size+15)>>>4 : ((vertical_size + 31)>>>5)<<1;
 
+Common.setMessage("d " + mb_width + " / " + mb_height);
 	Coded_Picture_Width = mb_width<<4;
 	Coded_Picture_Height = mb_height<<4;
 
 	Chroma_Width = (chroma_format==CHROMA444) ? Coded_Picture_Width : Coded_Picture_Width>>1;
 	Chroma_Height = (chroma_format!=CHROMA420) ? Coded_Picture_Height : Coded_Picture_Height>>1;
 
+Common.setMessage("e " + mb_width + " / " + mb_height);
 	block_count = ChromaFormat[chroma_format];
-
+Common.setMessage("b " + mb_width + " / " + mb_height);
 	if (picture_coding_type==I_TYPE) 
 		pixels = new int[Coded_Picture_Width*Coded_Picture_Height]; //DM30112003 081.5++ fix
 }
@@ -3185,7 +3205,6 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 						BufferPos += 2048;
 						continue;
 					}
-
 					InitialDecoder();
 					Decode_Picture();
 					scale_Picture(silent);
