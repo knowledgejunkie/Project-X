@@ -1,7 +1,7 @@
 /*
  * @(#)SCAN.java - pre-scanning to check supported files
  *
- * Copyright (c) 2002-2007 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2002-2008 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -335,6 +335,11 @@ public class Scan extends Object {
 			scanloop:
 			for (int index = streamtype; returncode < CommonParsing.Unsupported; index++)
 			{
+				returncode = scanPjxOwn(check, bs0);
+
+				if (returncode != -1)
+					break;
+
 				switch (index)
 				{
 				case -1:
@@ -406,6 +411,20 @@ public class Scan extends Object {
 		check = null;
 
 		return CommonParsing.Unsupported;
+	}
+
+	/**
+	 *
+	 */
+	private int scanPjxOwn(byte[] check, int buffersize) throws Exception
+	{
+		for (int i = 0; i < 16; i++)
+		{
+			if (check[i] != CommonParsing.PTSVideoHeader[i])
+				return -1;
+		}
+
+		return CommonParsing.PJX_PTS_TYPE;
 	}
 
 	/**
@@ -518,19 +537,32 @@ public class Scan extends Object {
 	 */
 	private int scanTS(byte[] check, int buffersize, boolean more) throws Exception
 	{
+		// 188bytes TS
 		for (int i = 0, j = 188; i < buffersize; i++) 
 		{ 
 			if ( check[i] != 0x47 || check[i + j] != 0x47 || check[i + j * 2] != 0x47 || check[i + j * 3] != 0x47 || check[i + j * 4] != 0x47 || check[i + j * 5] != 0x47 || check[i + j * 6] != 0x47) 
 				continue;
 
-			readPMT(check, i);
+			readPMT(check, i, 0);
 
 			if (pidlist.isEmpty())
-				scanTSPids(check, i, buffersize, more);
+				scanTSPids(check, i, buffersize, 0, more);
 
 			return scanTSSubtype(check, buffersize);
+		}
 
-		//	return CommonParsing.TS_TYPE;
+		// 192bytes TS
+		for (int i = 0, j = 192; i < buffersize; i++) 
+		{ 
+			if ( check[i] != 0x47 || check[i + j] != 0x47 || check[i + j * 2] != 0x47 || check[i + j * 3] != 0x47 || check[i + j * 4] != 0x47 || check[i + j * 5] != 0x47 || check[i + j * 6] != 0x47) 
+				continue;
+
+			readPMT(check, i, 4);
+
+			if (pidlist.isEmpty())
+				scanTSPids(check, i, buffersize, 4, more);
+
+			return CommonParsing.TS_TYPE_192BYTE;
 		}
 
 		return -1;
@@ -561,20 +593,20 @@ public class Scan extends Object {
 	/**
 	 *
 	 */
-	private void scanTSPids(byte[] check, int i, int buffersize, boolean more) throws Exception
+	private void scanTSPids(byte[] check, int i, int buffersize, int lead, boolean more) throws Exception
 	{
 		String str;
 
 		mpegtscheck:
-		for (int pid, scrambling; i < buffersize; i++) 
+		for (int pid, scrambling, j = 188 + lead; i < buffersize; i++) 
 		{ 
-			if ( check[i] != 0x47 || check[i + 188] != 0x47 || check[i + 376] != 0x47) 
+			if ( check[i] != 0x47 || check[i + j] != 0x47 || check[i + j * 2] != 0x47) 
 				continue mpegtscheck;
 
 			pid = (0x1F & check[i + 1])<<8 | (0xFF & check[i + 2]);
 			scrambling = (0xC0 & check[i + 3])>>>6; // scrambling
 
-			i += 187;
+			i += j - 1;
 
 			str = "PID 0x" + Integer.toHexString(pid).toUpperCase();
 
@@ -1505,17 +1537,18 @@ public class Scan extends Object {
 	/**
 	 *
 	 */
-	private void readPMT(byte[] check, int a)
+	private void readPMT(byte[] check, int a, int lead)
 	{ 
 		ByteArrayOutputStream bytecheck = new ByteArrayOutputStream();
 	//	pidlist.clear();
 
 		boolean ts_start = false;
+		int packetlength = 188;
 
 		tscheck:
 		for (int adaptfield, pmtpid, offset; a < check.length - 1000; a++)
 		{
-			if ( check[a] != 0x47 || check[a + 188] != 0x47 || check[a + 376] != 0x47 ) 
+			if ( check[a] != 0x47 || check[a + packetlength + lead] != 0x47 || check[a + (packetlength + lead) * 2] != 0x47 ) 
 				continue tscheck;
 
 			if ((0x40 & check[a + 1]) == 0) // start
@@ -1533,22 +1566,22 @@ public class Scan extends Object {
 
 			if (check[a + offset + 4] != 0 || check[a + offset + 5] != 2 || (0xF0 & check[a + offset + 6]) != 0xB0)
 			{ 
-				a += 187; 
+				a += (packetlength + lead - 1); 
 				continue tscheck; 
 			}
 
-			bytecheck.write(check, a + 4 + offset, 184 - offset);
+			bytecheck.write(check, a + 4 + offset, packetlength - 4 - offset);
 
 			pmtpid = (0x1F & check[a + 1])<<8 | (0xFF & check[a + 2]);
 
-			if ( bytecheck.size() < 188 )
+			if ( bytecheck.size() < packetlength )
 			{ 
-				a += 188;
+				a += packetlength + lead;
 
 				addpack:
 				for ( ; a < check.length - 500; a++)
 				{
-					if ( check[a] != 0x47 || check[a + 188] != 0x47 || check[a + 376] != 0x47 ) 
+					if ( check[a] != 0x47 || check[a + packetlength + lead] != 0x47 || check[a + (packetlength + lead) * 2] != 0x47 ) 
 						continue addpack;
 
 					if ((0x40 & check[a + 1]) != 0) // start
@@ -1566,13 +1599,13 @@ public class Scan extends Object {
 
 					if ( ((0x1F & check[a + 1])<<8 | (0xFF & check[a + 2])) != pmtpid )
 					{ 
-						a += 187; 
+						a += (packetlength + lead - 1); 
 						continue addpack; 
 					}
 
-					bytecheck.write(check, a + 4 + offset, 184 - offset);
+					bytecheck.write(check, a + 4 + offset, packetlength - 4 - offset);
 
-					if ( bytecheck.size() > 188 ) 
+					if ( bytecheck.size() > packetlength ) 
 						break addpack;
 				}
 			}

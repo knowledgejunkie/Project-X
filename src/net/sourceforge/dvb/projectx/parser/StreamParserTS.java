@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParserTS.java
  *
- * Copyright (c) 2005-2007 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2008 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -87,7 +87,7 @@ public class StreamParserTS extends StreamParserBase {
 	private int TS_PacketLength = 188;
 	private int PidMask = 0x1FFF;
 	private int MaxBufferSize = 6000000;
-	private int PushbackBufferSize = 225; //200
+	private int PushbackBufferSize = 225; //  188 + chunksize (36)
 
 	/**
 	 * 
@@ -142,9 +142,11 @@ public class StreamParserTS extends StreamParserBase {
 		boolean usePidfilter = false;
 		boolean isTeletext;
 		boolean foundObject;
-
+		boolean TSType192;
+		boolean TSType192Skip = false;
 
 		byte[] ts_packet = new byte[TS_BufferSize];
+		byte[] ts_192pre = new byte[4];
 		byte[] pes_packet;
 
 		int Infoscan_Value = Integer.parseInt(collection.getSettings().getProperty(Keys.KEY_ExportPanel_Infoscan_Value));
@@ -391,6 +393,8 @@ public class StreamParserTS extends StreamParserBase {
 			}
 
 			aXInputFile = (XInputFile) collection.getInputFile(job_processing.getFileNumber());
+			TSType192 = aXInputFile.getStreamInfo().getStreamSubType() == CommonParsing.TS_TYPE_192BYTE >>> 8;
+
 			count = starts[job_processing.getFileNumber()];
 
 			if (job_processing.getFileNumber() > 0)
@@ -447,6 +451,9 @@ public class StreamParserTS extends StreamParserBase {
 							}
 					}
 
+					//192er packets simple skipping
+					TSType192Skip = false;
+
 					/**
 					 * regular read
 					 */
@@ -458,13 +465,30 @@ public class StreamParserTS extends StreamParserBase {
 						 * EOF is packet aligned
 						 */
 						if (bytes_read == TS_PacketLength && size - count == bytes_read)
-							ts_packet[188] = TS_SyncByte;
+							ts_packet[TS_PacketLength] = TS_SyncByte;
 
 						else if (bytes_read < TS_BufferSize && JoinPackets)
 						{
 							Common.setMessage(Resource.getString("parseTS.incomplete") + " " + count);
 							count += bytes_read;
 							break loop;
+						}
+
+						//192er packets simple skipping
+						if (TSType192 && bytes_read == TS_BufferSize)
+						{
+							inputstream.read(ts_192pre, 0, 4);
+
+							TSType192Skip = ts_192pre[3] == TS_SyncByte;
+
+							if (TSType192Skip)
+							{
+								ts_packet[TS_PacketLength] = TS_SyncByte;
+								count += 4;
+							}
+
+							else
+								inputstream.unread(ts_192pre, 0, 4);
 						}
 					}
 
@@ -497,7 +521,7 @@ public class StreamParserTS extends StreamParserBase {
 		 			else if (skipHumaxDataChunk(ts_packet))
 					{}  // do nothing, take the packet
 
-		 			else if (ts_packet[0] != TS_SyncByte || (GetEnclosedPackets && ts_packet[188] != TS_SyncByte) )
+		 			else if (ts_packet[0] != TS_SyncByte || (GetEnclosedPackets && ts_packet[TS_PacketLength] != TS_SyncByte) )
 					{
 						if (Message_2 && !missing_syncword) 
 							Common.setMessage(Resource.getString("parseTS.missing.sync") + " " + count);
@@ -538,6 +562,9 @@ public class StreamParserTS extends StreamParserBase {
 					else if (ts_isIncomplete && JoinPackets)
 						Common.setMessage(Resource.getString("parseTS.comp.ok"));
 
+					//192er packets simple skipping
+					if (TSType192Skip)
+						count -= 4;
 
 					if (Message_2 && missing_syncword)
 						Common.setMessage(Resource.getString("parseTS.found.sync") + " " + count);
@@ -562,6 +589,9 @@ public class StreamParserTS extends StreamParserBase {
 					else
 						count += TS_PacketLength;
 
+					//192er packets simple skipping
+					if (TSType192Skip)
+						count += 4;
 
 					packet++;
 
@@ -600,7 +630,7 @@ public class StreamParserTS extends StreamParserBase {
 					if (ts_hasErrors || ts_adaptionfieldlength > 183 || (ts_adaptionfieldlength > 180 && ts_startunit))
 					{
 						if (Message_1)
-							Common.setMessage(Resource.getString("parseTS.bit.error", Integer.toHexString(ts_pid).toUpperCase(), String.valueOf(packet), String.valueOf(count - 188)) + " (" + ts_adaptionfieldlength + " / " + ts_startunit + ")");
+							Common.setMessage(Resource.getString("parseTS.bit.error", Integer.toHexString(ts_pid).toUpperCase(), String.valueOf(packet), String.valueOf(count - TS_PacketLength)) + " (" + ts_adaptionfieldlength + " / " + ts_startunit + ")");
 
 						//if (!ts_hasErrors) // discard bad packets
 							continue loop;
@@ -612,7 +642,7 @@ public class StreamParserTS extends StreamParserBase {
 					if (ts_hasErrors)
 					{
 						if (Message_1)
-							Common.setMessage(Resource.getString("parseTS.bit.error", Integer.toHexString(ts_pid).toUpperCase(), "" + packet, "" + (count-188)));
+							Common.setMessage(Resource.getString("parseTS.bit.error", Integer.toHexString(ts_pid).toUpperCase(), "" + packet, "" + (count-TS_PacketLength)));
 
 						continue loop;
 					}
@@ -668,7 +698,7 @@ public class StreamParserTS extends StreamParserBase {
 							if (!streambuffer.getScram())
 							{
 								streambuffer.setScram(true);
-								Common.setMessage(Resource.getString("parseTS.scrambled", Integer.toHexString(ts_pid).toUpperCase(), String.valueOf(packet), String.valueOf(count - 188)));
+								Common.setMessage(Resource.getString("parseTS.scrambled", Integer.toHexString(ts_pid).toUpperCase(), String.valueOf(packet), String.valueOf(count - TS_PacketLength)));
 							}
 							continue loop;
 						}
@@ -678,7 +708,7 @@ public class StreamParserTS extends StreamParserBase {
 							if (streambuffer.getScram())
 							{
 								streambuffer.setScram(false);
-								Common.setMessage(Resource.getString("parseTS.clear", Integer.toHexString(ts_pid).toUpperCase(), String.valueOf(packet), String.valueOf(count - 188)));
+								Common.setMessage(Resource.getString("parseTS.clear", Integer.toHexString(ts_pid).toUpperCase(), String.valueOf(packet), String.valueOf(count - TS_PacketLength)));
 							}
 						}
 					}
@@ -693,7 +723,7 @@ public class StreamParserTS extends StreamParserBase {
 						{
 							if (streambuffer.isStarted() && ts_counter != streambuffer.getCounter())
 							{
-								Common.setMessage(Resource.getString("parseTS.outof.sequence", Integer.toHexString(ts_pid).toUpperCase(), String.valueOf(packet), String.valueOf(count - 188), String.valueOf(ts_counter), String.valueOf(streambuffer.getCounter())) + " (~" + Common.formatTime_1( (long)((CommonParsing.getVideoFramerate() / 90.0f) * job_processing.getExportedVideoFrameNumber())) + ")");
+								Common.setMessage(Resource.getString("parseTS.outof.sequence", Integer.toHexString(ts_pid).toUpperCase(), String.valueOf(packet), String.valueOf(count - TS_PacketLength), String.valueOf(ts_counter), String.valueOf(streambuffer.getCounter())) + " (~" + Common.formatTime_1( (long)((CommonParsing.getVideoFramerate() / 90.0f) * job_processing.getExportedVideoFrameNumber())) + ")");
 								streambuffer.setCounter(ts_counter);
 							}
 
@@ -1167,6 +1197,8 @@ public class StreamParserTS extends StreamParserBase {
 					long startoffset = checkNextJepssenKoscomSegment(collection, job_processing.getFileNumber(), bytes_read);
 
 					XInputFile nextXInputFile = (XInputFile) collection.getInputFile(job_processing.countFileNumber(+1));
+					TSType192 = nextXInputFile.getStreamInfo().getStreamSubType() == CommonParsing.TS_TYPE_192BYTE >>> 8;
+
 					count = size + startoffset;
 
 					inputstream = new PushbackInputStream(nextXInputFile.getInputStream(startoffset), PushbackBufferSize);
@@ -1340,7 +1372,7 @@ public class StreamParserTS extends StreamParserBase {
 		if (!HandanAdaption)
 			return b;
 
-		if (ts_packet[0] != TS_SyncByte || ts_packet[188] == TS_SyncByte)
+		if (ts_packet[0] != TS_SyncByte || ts_packet[TS_PacketLength] == TS_SyncByte)
 			return b;
 
 		while (i > 0)
@@ -1395,7 +1427,7 @@ public class StreamParserTS extends StreamParserBase {
 		if (!HumaxAdaption)
 			return b;
 
-		if (ts_packet[0] != TS_SyncByte || ts_packet[188] != 0x7F)
+		if (ts_packet[0] != TS_SyncByte || ts_packet[TS_PacketLength] != 0x7F)
 			return b;
 
 		return !b;
@@ -1413,7 +1445,7 @@ public class StreamParserTS extends StreamParserBase {
 		if (!JepssenAdaption)
 			return b;
 
-		if (ts_packet[188] == TS_SyncByte)
+		if (ts_packet[TS_PacketLength] == TS_SyncByte)
 			return b;
 
 		try {
@@ -1424,11 +1456,11 @@ public class StreamParserTS extends StreamParserBase {
 			{
 				if (Debug)
 				{
-					value = (0xFF & tmp_chunk[1])<<16 | (0xFF & tmp_chunk[0])<<8 | (0xFF & ts_packet[188]);
+					value = (0xFF & tmp_chunk[1])<<16 | (0xFF & tmp_chunk[0])<<8 | (0xFF & ts_packet[TS_PacketLength]);
 					System.out.println("Jepssen hd chunk: " + value);
 				}
 
-				ts_packet[188] = TS_SyncByte;
+				ts_packet[TS_PacketLength] = TS_SyncByte;
 				count += chunk_size;
 
 				return !b;
@@ -1455,7 +1487,7 @@ public class StreamParserTS extends StreamParserBase {
 		if (!KoscomAdaption)
 			return b;
 
-		if (ts_packet[188] == TS_SyncByte)
+		if (ts_packet[TS_PacketLength] == TS_SyncByte)
 			return b;
 
 		try {
@@ -1464,7 +1496,7 @@ public class StreamParserTS extends StreamParserBase {
 			// hdd padding chunk 4 bytes , 0 + 1 psb. chunk_no.
 			if (tmp_chunk[1] == 0 && tmp_chunk[2] == 0 && tmp_chunk[3] == TS_SyncByte)
 			{
-				ts_packet[188] = TS_SyncByte;
+				ts_packet[TS_PacketLength] = TS_SyncByte;
 				count += chunk_size;
 
 				return !b;
@@ -1524,7 +1556,7 @@ public class StreamParserTS extends StreamParserBase {
 
 		int ret = pmt_parser.parsePMT(streambuffer.getData().toByteArray());
 
-Common.setMessage("AA " + ret);
+//Common.setMessage("AA " + ret);
 		//TSPidList
 		
 		// edit pid values here, pts reset in demuxers required

@@ -1,7 +1,7 @@
 /*
  * @(#)Preview.java - prepare files for previewing
  *
- * Copyright (c) 2004-2007 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2004-2008 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -110,6 +110,7 @@ public class Preview extends Object {
 		preview_data = new byte[size];
 
 		int filetype = 0;
+		int subfiletype = 0;
 		int read_offset = 0;
 
 		for (int i = 0; i < previewList.size(); i++)
@@ -141,11 +142,13 @@ public class Preview extends Object {
 					data2 = null;
 				}
 
+				subfiletype = lXInputFile.getStreamInfo().getStreamSubType();
+
 				break;
 			}
 		}
 
-		preview_data = search(preview_data, startposition, filetype);
+		preview_data = search(preview_data, startposition, filetype, subfiletype);
 
 		long newposition = Common.getMpvDecoderClass().decodeArray(preview_data, direction, all_gops, fast_decode, y_gain, silent);
 
@@ -195,6 +198,7 @@ public class Preview extends Object {
 		predefined_Pids = new Object[0];
 
 		int filetype = lXInputFile.getStreamInfo().getStreamType();
+		int subfiletype = lXInputFile.getStreamInfo().getStreamSubType();
 
 		try {
 
@@ -207,7 +211,7 @@ public class Preview extends Object {
 			Common.setExceptionMessage(e);
 		}
 
-		preview_data = search(preview_data, startposition, filetype);
+		preview_data = search(preview_data, startposition, filetype, subfiletype);
 
 		long newposition = Common.getMpvDecoderClass().decodeArray(preview_data, false, all_gops, fast_decode, y_gain, true);
 
@@ -222,7 +226,7 @@ public class Preview extends Object {
 	/**
 	 *
 	 */
-	private byte[] search(byte data[], long startposition, int filetype)
+	private byte[] search(byte data[], long startposition, int filetype, int subfiletype)
 	{
 		positionList.clear();
 
@@ -250,14 +254,17 @@ public class Preview extends Object {
 			return parsePVA(data, include);
 
 		case CommonParsing.TS_TYPE:
-			return parseTS(data, include);
+			if (subfiletype == CommonParsing.TS_TYPE_192BYTE>>>8)
+				return parseTS192(data, include);
+			else
+				return parseTS(data, include);
 		}
 
 		return data;
 	}
 
 	/**
-	 * PES_AV + MPG2
+	 * TS 188
 	 */
 	private byte[] parseTS(byte[] data, int[] include)
 	{
@@ -422,6 +429,69 @@ public class Preview extends Object {
 		return array.toByteArray();
 	}
 
+	/**
+	 * TS 192
+	 */
+	private byte[] parseTS192(byte[] data, int[] include)
+	{
+		ByteArrayOutputStream array = new ByteArrayOutputStream();
+
+		boolean save = false;
+
+		int mark = 0;
+		int offset = 0;
+		int ID = -1;
+
+		for (int a = 0, PID, dl = data.length - 9; a < dl; a++)
+		{
+			//ts:
+			if (a < data.length - 192 && data[a] == 0x47)
+			{
+				if (save && mark <= a)
+					array.write(data, mark, a - mark - 4);
+
+				mark = a;
+
+				PID = (0x1F & data[a + 1])<<8 | (0xFF & data[a + 2]);
+
+				if (include.length > 0 && Arrays.binarySearch(include, PID) < 0)
+					save = false;
+
+				else if ((ID == PID || ID == -1) && (0xD & data[a + 3]>>>4) == 1)
+				{  
+					if ((0x20 & data[a + 3]) != 0)       //payload start position, adaption field
+						mark = a + 5 + (0xFF & data[a + 4]);
+					else
+						mark = a + 4;
+
+					if ((0x40 & data[a + 1]) != 0)    //start indicator
+					{
+						if (data[mark] == 0 && data[mark + 1] == 0 && data[mark + 2] == 1 && (0xF0 & data[mark + 3]) == 0xE0) //DM06032004 081.6 int18 fix
+						{
+							ID = PID;
+							mark = mark + 9 + (0xFF & data[mark + 8]);
+							int[] currentposition = { a, array.size() };
+							positionList.add(currentposition);
+						}
+						else
+							save = false;
+					}
+
+					if (ID == PID)
+						save = true;
+				}
+				else
+					save = false;
+
+				a += 191;
+			}
+
+		}
+
+		processed_PID = ID;
+
+		return array.toByteArray();
+	}
 
 	/**
 	 * PES_AV + MPG2

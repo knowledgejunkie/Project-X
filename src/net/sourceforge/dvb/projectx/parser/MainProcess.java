@@ -684,6 +684,7 @@ public class MainProcess extends Thread {
 
 		String vptslog = "-1";
 		String oldvptslog = "-1";
+		boolean PjxPtsFile = false;
 
 		MainBufferSize = Integer.parseInt(Common.getSettings().getProperty(Keys.KEY_MainBuffer));
 
@@ -1059,6 +1060,23 @@ public class MainProcess extends Thread {
 
 					break;
 
+				case CommonParsing.PJX_PTS_TYPE:
+					if (i > 0)
+						CommonParsing.resetSplitMode(job_processing, vptslog);
+
+					else
+					{
+						Common.setMessage("-> using primary PTS information from this file");
+						vptslog = xInputFile.toString();
+						//datei markieren, wird sonst gelöscht!
+						PjxPtsFile = true;
+
+						if (action == CommonParsing.ACTION_DEMUX) 
+							CommonParsing.resetSplitMode(job_processing, vptslog);
+					}
+
+					break;
+
 				case CommonParsing.Unsupported:
 				default: 
 					Common.setMessage(Resource.getString("working.file.notsupported"));
@@ -1100,7 +1118,8 @@ public class MainProcess extends Thread {
 
 		File mpegvideolog = new File(vptslog);
 
-		if (mpegvideolog.exists()) 
+	//	if (mpegvideolog.exists()) 
+		if (mpegvideolog.exists() && !PjxPtsFile) 
 			mpegvideolog.delete();
 
 		collection.closeDebugLogStream();
@@ -1130,5 +1149,4 @@ Common.setMessage("del " + tempfiles);
 		} catch (Exception e) {}
 
 	}
-
 }

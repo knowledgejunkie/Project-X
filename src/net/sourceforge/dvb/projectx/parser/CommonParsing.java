@@ -1,7 +1,7 @@
 /*
  * @(#)CommonParsing
  *
- * Copyright (c) 2005-2007 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2008 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -82,12 +82,14 @@ public class CommonParsing extends Object {
 	public final static int ES_RIFF_TYPE  = 14;	//	"ES (RIFF Audio)"
 	public final static int ES_cRIFF_TYPE = 15;	//	"ES (compressed RIFF Audio)"
 	public final static int ES_SUP_TYPE   = 16;	//	"ES (Subpicture 2-bit RLE)"
+	public final static int PJX_PTS_TYPE  = 31;	//	"PjX PTS File"
 
 	public final static int ES_TYPE   = 1;	//	"ElementaryStream"
 
 	public final static int TS_TYPE_TF5X00    = TS_TYPE | 1<<8;	//	"DVB/MPEG2 TS  TF5X00"
 	public final static int TS_TYPE_TF4000    = TS_TYPE | 2<<8;	//	"DVB/MPEG2 TS  TF4000"
 	public final static int TS_TYPE_HANDAN    = TS_TYPE | 3<<8;	//	"DVB/MPEG2 TS  HANDAN"
+	public final static int TS_TYPE_192BYTE   = TS_TYPE | 4<<8;	//	"DVB/MPEG2 TS  192b"
 
 
 	//	"ElementaryStream"
@@ -142,6 +144,8 @@ public class CommonParsing extends Object {
 
 	public final static int MAX_BITRATE_VALUE = 262143; //3FFFF *400 = 104857200 bps
 	public final static int MAX_SD_BITRATE_VALUE = 37500; // *400 = 15000000 bps
+
+	public static byte[] PTSVideoHeader = { 0x50, 0x4A, 0x58, 0x5F, 0x50, 0x54, 0x53, 0x56, 0x49, 0x44, 0x31, 0x30, 0x30, 0, 0, 0 }; //'PJX_PTSVID100'
 
 	private static int Pva_PidToExtract = -1;
 

@@ -833,6 +833,8 @@ public class StreamDemultiplexer extends Object {
                 out.InitInfo(FileName);
 
 			pts_log = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(FileName + ".pts"), 65535));
+			pts_log.write(CommonParsing.PTSVideoHeader);
+
 			packet = new ByteArrayOutputStream();
 			vidbuf = new ByteArrayOutputStream();
 			vptsbytes = new ByteArrayOutputStream();
@@ -864,6 +866,7 @@ public class StreamDemultiplexer extends Object {
                 out.InitInfo(FileName);
 
 			pts_log = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(FileName + ".pts"), 65535));
+			pts_log.write(CommonParsing.PTSVideoHeader);
 
 			packet.reset();
 	 		vidbuf.reset();

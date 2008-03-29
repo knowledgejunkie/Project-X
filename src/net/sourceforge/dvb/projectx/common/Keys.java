@@ -1,7 +1,7 @@
 /*
  * @(#)Keys.java - static, fixed keys
  *
- * Copyright (c) 2005-2007 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2008 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -455,23 +455,25 @@ public class Keys extends Object {
 		this.ITEMS_SubtitleChangeDisplay = ITEMS_SubtitleChangeDisplay;
 
 		Object[] ITEMS_FileTypes = {
-			Resource.getString("scan.unsupported"),
-			"PES (incl. MPEG Video)",
-			"MPEG-1 PS/SS (PES Container)",
-			"MPEG-2 PS/SS (PES Container)",
-			"PVA (TT® PES Container)",
-			"TS (generic PES Container)",
-			"PES (MPEG Audio first)",
-			"PES (private stream 1 first)",
-			"ES (MPEG Video)",
-			"ES (MPEG Audio)",
-			"ES (AC-3 Audio)",
-			"ES (AC-3 Audio) (psb. SMPTE)",
-			"ES (DTS Audio)",
-			"ES (DTS Audio) (psb. SMPTE)",
-			"ES (RIFF Audio)",
-			"ES (compressed RIFF Audio)",
-			"ES (Subpicture 2-bit RLE)" 
+			Resource.getString("scan.unsupported"),  //0
+			"PES (incl. MPEG Video)",       //1
+			"MPEG-1 PS/SS (PES Container)", //2
+			"MPEG-2 PS/SS (PES Container)", //3
+			"PVA (TT® PES Container)",      //4
+			"TS (generic PES Container)",   //5
+			"PES (MPEG Audio first)",       //6
+			"PES (private stream 1 first)", //7
+			"ES (MPEG Video)",              //8
+			"ES (MPEG Audio)",              //9
+			"ES (AC-3 Audio)",              //10
+			"ES (AC-3 Audio) (psb. SMPTE)", //11
+			"ES (DTS Audio)",               //12
+			"ES (DTS Audio) (psb. SMPTE)",  //13
+			"ES (RIFF Audio)",              //14
+			"ES (compressed RIFF Audio)",   //15
+			"ES (Subpicture 2-bit RLE)",    //16
+			"", "", "", "", "", "", "", "", "", "", "", "", "", "",  //17-30
+			"PjX PTS File"                  //31 
 		};
 		this.ITEMS_FileTypes = ITEMS_FileTypes;
 	}
