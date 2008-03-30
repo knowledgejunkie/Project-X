@@ -2,7 +2,7 @@
 /*
  * @(#)StreamProcessBase
  *
- * Copyright (c) 2005-2007 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2008 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -110,15 +110,16 @@ public class StreamProcessBase extends Object {
 
 		XInputFile xInputFile = new XInputFile(new File(videofile_pts));
 
-		int vlogsize = (int)xInputFile.length() / 16;
+		int vlogsize = ((int)xInputFile.length() / 16) - 1;
 		long[][] vptsval = new long[2][vlogsize]; 
 
-		byte[] data = new byte[(int)xInputFile.length()];
+		byte[] data = new byte[(int)xInputFile.length() - 16];
 		int pos = 0;
 
 		try {
 			InputStream pts_file = xInputFile.getInputStream();
 
+			pts_file.skip(16); //header
 			pts_file.read(data, 0, data.length);
 
 			for (int i = 0; i < vlogsize; i += 2 )
