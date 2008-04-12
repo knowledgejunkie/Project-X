@@ -29,7 +29,7 @@
 /*
  * @(#)MpvDecoder.java - still Picture Decoder
  * 
- * Copyright (c) 2003-2007 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2003-2008 by dvb.matt, All Rights Reserved. 
  *
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -1404,16 +1404,14 @@ public void InitialDecoder(){
 	mb_width = (horizontal_size + 15)>>>4;
 	mb_height = (progressive_sequence>0) ? (vertical_size+15)>>>4 : ((vertical_size + 31)>>>5)<<1;
 
-Common.setMessage("d " + mb_width + " / " + mb_height);
 	Coded_Picture_Width = mb_width<<4;
 	Coded_Picture_Height = mb_height<<4;
 
 	Chroma_Width = (chroma_format==CHROMA444) ? Coded_Picture_Width : Coded_Picture_Width>>1;
 	Chroma_Height = (chroma_format!=CHROMA420) ? Coded_Picture_Height : Coded_Picture_Height>>1;
 
-Common.setMessage("e " + mb_width + " / " + mb_height);
 	block_count = ChromaFormat[chroma_format];
-Common.setMessage("b " + mb_width + " / " + mb_height);
+
 	if (picture_coding_type==I_TYPE) 
 		pixels = new int[Coded_Picture_Width*Coded_Picture_Height]; //DM30112003 081.5++ fix
 }
