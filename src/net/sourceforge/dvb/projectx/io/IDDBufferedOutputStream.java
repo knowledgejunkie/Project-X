@@ -1,7 +1,7 @@
 /*
  * @(#)IDDBufferedOutputStream.java - export
  *
- * Copyright (c) 2003-2006 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2003-2008 by dvb.matt, All Rights Reserved.
  *
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 

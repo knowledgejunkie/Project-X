@@ -1,7 +1,7 @@
 /*
  * @(#)JobCollection.java - all about a collection
  *
- * Copyright (c) 2005-2007 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2008 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -44,8 +44,6 @@ import net.sourceforge.dvb.projectx.parser.Gop;
 import net.sourceforge.dvb.projectx.parser.GopArray;
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
 
-//import net.sourceforge.dvb.projectx.thirdparty.D2V;
-//import net.sourceforge.dvb.projectx.thirdparty.Chapters;
 
 /**
  * saves all stuff of a collection

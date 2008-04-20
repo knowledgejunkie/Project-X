@@ -1,7 +1,7 @@
 /*
  * @(#)StreamDemultiplexer
  *
- * Copyright (c) 2005-2007 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2008 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -989,7 +989,10 @@ public class StreamDemultiplexer extends Object {
 			if (CreateM2sIndex)
 			{
 				if (new File(videofile).exists())
-					out.renameVideoIddTo(parentname);
+				{
+                    String tmpFN = videofile.toString();
+					out.renameVideoIddTo(tmpFN);
+				}
 
 				else
 					out.deleteIdd();

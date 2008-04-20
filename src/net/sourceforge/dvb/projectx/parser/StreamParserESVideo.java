@@ -511,7 +511,10 @@ public class StreamParserESVideo extends StreamParserBase {
 			if (CreateM2sIndex)
 			{
 				if (new File(videofile).exists())
-					vstream.renameVideoIddTo(fparent);
+				{
+                    String tmpFN = videofile.toString();
+					vstream.renameVideoIddTo(tmpFN);
+				}
 
 				else
 					vstream.deleteIdd();

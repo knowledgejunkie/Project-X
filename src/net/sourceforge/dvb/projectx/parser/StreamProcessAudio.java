@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParserAudio
  *
- * Copyright (c) 2005-2007 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2008 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -782,19 +782,19 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 							if (WriteEnabled)
 							{
+								writeFrame(audio, silentFrameBuffer.toByteArray(), newframes, ContainsVideoPTS, es_streamtype);
+/**
 								writeChannel1(silentFrameBuffer.toByteArray());
 
-								/**
-								 * RIFF 
-								 */
+								//RIFF 
 								if (!is_DTS && AddWaveHeaderAC3) 
 									audio.parseRiffData(frame, 1); 
 
 								FrameExportInfo.countWrittenFrames(1);
-								FrameExportInfo.countPreInsertedFrames(1);
-
-								insertion_counter[1]++;
 								countTimeCounter(audio.getFrameTimeLength());
+**/
+								FrameExportInfo.countPreInsertedFrames(1);
+								insertion_counter[1]++;
 							}
 
 							precount += audio.getFrameTimeLength();
@@ -892,19 +892,21 @@ public class StreamProcessAudio extends StreamProcessBase {
 						insertion_counter[0] = (long) getTimeCounter();
 						insertion_counter[1] = 0;
 
+if (FrameExportInfo.getWrittenFrames() > 77000)
+Common.setMessage("" + WriteEnabled + " / " + FrameExportInfo.getWrittenFrames() + " / " + video_timeIndex[2] + " / " + video_timeIndex[3] + " / " + (audio.getFrameTimeLength() / 2.0) + " / " + formatFrameTime(getTimeCounter()));
 						// check sync after resetting
 						if (Math.abs(video_timeIndex[2]) >= (audio.getFrameTimeLength() / 2.0) || Math.abs(video_timeIndex[3]) >= (audio.getFrameTimeLength() / 2.0))
 						{
 							// 1 zusätzl. frame einfügen 
 							if (video_timeIndex[2] < 0 || video_timeIndex[3] < 0)
 							{
-								Common.setMessage("!> A/V sync discontinuity in next audio packet @ " + formatFrameTime(getTimeCounter()));
-
 								// gui message 
 								Common.getGuiInterface().showExportStatus((WriteEnabled || !ContainsVideoPTS) ? Resource.getString("audio.status.insert") : Resource.getString("audio.status.pause")); 
 
 								if (!ContainsVideoPTS || (ContainsVideoPTS && WriteEnabled))
 								{
+									Common.setMessage("!> A/V sync discontinuity in next audio packet @ " + formatFrameTime(getTimeCounter()));
+
 									writeFrame(audio, frame, newframes, ContainsVideoPTS, es_streamtype);
 
 									FrameExportInfo.countInsertedFrames(1);
@@ -969,16 +971,9 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 							if (!ContainsVideoPTS || (ContainsVideoPTS && WriteEnabled))
 							{
-								writeChannel1(silentFrameBuffer.toByteArray());
+								writeFrame(audio, silentFrameBuffer.toByteArray(), newframes, ContainsVideoPTS, es_streamtype);
 
-								// RIFF 
-								if (!is_DTS && AddWaveHeaderAC3) 
-									audio.parseRiffData(silentFrameBuffer.toByteArray(), 1); 
-
-								FrameExportInfo.countWrittenFrames(1);
 								FrameExportInfo.countInsertedFrames(1);
-
-								countTimeCounter(audio.getFrameTimeLength());
 								insertion_counter[1]++;
 							}
 
@@ -1014,24 +1009,16 @@ public class StreamProcessAudio extends StreamProcessBase {
 							// 1 zusätzl. frame einfügen 
 							if (video_timeIndex[2] < 0 || video_timeIndex[3] < 0)
 							{
-								Common.setMessage("!> A/V sync discontinuity in next audio packet (insert) @ " + formatFrameTime(getTimeCounter()));
-
 								// gui message 
 								Common.getGuiInterface().showExportStatus((WriteEnabled || !ContainsVideoPTS) ? Resource.getString("audio.status.insert") : Resource.getString("audio.status.pause")); 
 
 								if (!ContainsVideoPTS || (ContainsVideoPTS && WriteEnabled))
 								{
-									writeChannel1(silentFrameBuffer.toByteArray());
+									Common.setMessage("!> A/V sync discontinuity in next audio packet (insert) @ " + formatFrameTime(getTimeCounter()));
 
-									// RIFF 
-									if (!is_DTS && AddWaveHeaderAC3) 
-										audio.parseRiffData(silentFrameBuffer.toByteArray(), 1); 
+									writeFrame(audio, silentFrameBuffer.toByteArray(), newframes, ContainsVideoPTS, es_streamtype);
 
-									FrameExportInfo.countWrittenFrames(1);
 									FrameExportInfo.countInsertedFrames(1);
-
-									countTimeCounter(audio.getFrameTimeLength());
-
 									insertion_counter[1]++;
 								}
 
@@ -1085,20 +1072,11 @@ public class StreamProcessAudio extends StreamProcessBase {
 					{
 						while (vtime[video_timeIndex[1] + 1] > getTimeCounter() && (double) Math.abs(vtime[video_timeIndex[1] + 1] - getTimeCounter()) > (double) audio.getFrameTimeLength() / 2.0)
 						{
-							writeChannel1(silentFrameBuffer.toByteArray());
-
-							/**
-							 * RIFF 
-							 */
-							if (!is_DTS && AddWaveHeaderAC3) 
-								audio.parseRiffData(silentFrameBuffer.toByteArray(), 1); 
-
 							Common.getGuiInterface().showExportStatus(Resource.getString("audio.status.add")); 
 
-							FrameExportInfo.countWrittenFrames(1);
-							FrameExportInfo.countAddedFrames(1);
+							writeFrame(audio, silentFrameBuffer.toByteArray(), newframes, ContainsVideoPTS, es_streamtype);
 
-							countTimeCounter(audio.getFrameTimeLength());
+							FrameExportInfo.countAddedFrames(1);
 							countTimePosition(audio.getFrameTimeLength());
 							addf[1]++;
 
@@ -1504,13 +1482,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 							// 1 zusätzl. frame einfügen 
 							if (video_timeIndex[2] < 0 || video_timeIndex[3] < 0)
 							{
-								Common.setMessage("!> A/V sync discontinuity in next audio packet @ " + formatFrameTime(getTimeCounter()));
-
 								// gui message 
 								Common.getGuiInterface().showExportStatus((WriteEnabled || !ContainsVideoPTS) ? Resource.getString("audio.status.insert") : Resource.getString("audio.status.pause")); 
 
 								if (!ContainsVideoPTS || (ContainsVideoPTS && WriteEnabled))
 								{
+									Common.setMessage("!> A/V sync discontinuity in next audio packet @ " + formatFrameTime(getTimeCounter()));
+
 									writeFrame(audio, frame, newframes, ContainsVideoPTS, es_streamtype);
 
 									FrameExportInfo.countInsertedFrames(1);
@@ -1606,13 +1584,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 							// 1 zusätzl. frame einfügen 
 							if (video_timeIndex[2] < 0 || video_timeIndex[3] < 0)
 							{
-								Common.setMessage("!> A/V sync discontinuity in next audio packet (insert) @ " + formatFrameTime(getTimeCounter()));
-
 								// gui message 
 								Common.getGuiInterface().showExportStatus((WriteEnabled || !ContainsVideoPTS) ? Resource.getString("audio.status.insert") : Resource.getString("audio.status.pause")); 
 
 								if (!ContainsVideoPTS || (ContainsVideoPTS && WriteEnabled))
 								{
+									Common.setMessage("!> A/V sync discontinuity in next audio packet (insert) @ " + formatFrameTime(getTimeCounter()));
+
 									writeFrame(audio, FillGapsWithLastFrame ? copyframe[0] : silent_Frame, newframes, ContainsVideoPTS, es_streamtype);
 
 									FrameExportInfo.countInsertedFrames(1);
@@ -1729,8 +1707,8 @@ public class StreamProcessAudio extends StreamProcessBase {
 			closeOutputStreams();
 
 			String[][] es_audio_str = {
-				{ str_ac3, str_mp1, str_mp2, str_mp3, str_dts },
-				{ (str_new + str_ac3), (str_new + str_mp1), (str_new + str_mp2), (str_new + str_mp3), (str_new + str_dts) }
+				{ str_ac3, str_mp3, str_mp2, str_mp1, str_dts },
+				{ (str_new + str_ac3), (str_new + str_mp3), (str_new + str_mp2), (str_new + str_mp1), (str_new + str_dts) }
 			};
 
 			if (RenameAudio)
@@ -1794,32 +1772,20 @@ public class StreamProcessAudio extends StreamProcessBase {
 			switch (AudioType)
 			{ 
 			case AC3_AUDIOSTREAM: 
-
-				finishOutputFiles(job_processing, fparent, es_audio_str[isElementaryStream][0], audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
-				break;
-
+			case DTS_AUDIOSTREAM: 
+			case MP1_AUDIOSTREAM: 
 			case MP3_AUDIOSTREAM:
 
-				finishOutputFiles(job_processing, fparent, es_audio_str[isElementaryStream][3], audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
+				finishOutputFiles(job_processing, fparent, es_audio_str[isElementaryStream][AudioType], audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
 				break;
 
 			case MP2_AUDIOSTREAM:
 				if (MpaConversionMode >= MpaConversion_Mode4)
-					finishOutputFiles(job_processing, fparent, "[L]" + es_audio_str[0][2], "[R]" + es_audio_str[0][2], audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
+					finishOutputFiles(job_processing, fparent, "[L]" + es_audio_str[0][AudioType], "[R]" + es_audio_str[0][AudioType], audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
 
 				else
-					finishOutputFiles(job_processing, fparent, es_audio_str[isElementaryStream][2], audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
+					finishOutputFiles(job_processing, fparent, es_audio_str[isElementaryStream][AudioType], audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
 
-				break;
-
-			case MP1_AUDIOSTREAM: 
-
-				finishOutputFiles(job_processing, fparent, es_audio_str[isElementaryStream][1], audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
-				break;
-
-			case DTS_AUDIOSTREAM: 
-
-				finishOutputFiles(job_processing, fparent, es_audio_str[isElementaryStream][4], audioout1, audioout2, comparedata, OutputStream_Ch1, OutputStream_Ch2);
 				break;
 
 			case WAV_AUDIOSTREAM: 
@@ -1845,7 +1811,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 	}
 
 	/**
-	 * 
+	 * new extension
 	 */
 	private void setExtension(String[][] str, String new_str)
 	{
@@ -1855,14 +1821,14 @@ public class StreamProcessAudio extends StreamProcessBase {
 	}
 
 	/**
-	 * 
+	 * new extension for mpa - replace
 	 */
 	private void setExtension(String[][] str, String new_str_1, String new_str_2)
 	{
 		for (int i = 1; i < 4; i++)
 		{
-			str[0][i] += new_str_1;
-			str[1][i] += new_str_2;
+			str[0][i] = new_str_1;
+			str[1][i] = new_str_2;
 		}
 	}
 
@@ -2119,6 +2085,8 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 	//	if (Debug) 
 	//		System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(TimeCounter) + "  ");
+//if (FrameExportInfo.getWrittenFrames() > 77000)
+//			Common.setMessage(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()) + "  ");
 
 		return true;
 	}
