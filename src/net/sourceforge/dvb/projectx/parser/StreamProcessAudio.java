@@ -892,8 +892,8 @@ public class StreamProcessAudio extends StreamProcessBase {
 						insertion_counter[0] = (long) getTimeCounter();
 						insertion_counter[1] = 0;
 
-if (FrameExportInfo.getWrittenFrames() > 77000)
-Common.setMessage("" + WriteEnabled + " / " + FrameExportInfo.getWrittenFrames() + " / " + video_timeIndex[2] + " / " + video_timeIndex[3] + " / " + (audio.getFrameTimeLength() / 2.0) + " / " + formatFrameTime(getTimeCounter()));
+//if (FrameExportInfo.getWrittenFrames() > 77000)
+//Common.setMessage("" + WriteEnabled + " / " + FrameExportInfo.getWrittenFrames() + " / " + video_timeIndex[2] + " / " + video_timeIndex[3] + " / " + (audio.getFrameTimeLength() / 2.0) + " / " + formatFrameTime(getTimeCounter()));
 						// check sync after resetting
 						if (Math.abs(video_timeIndex[2]) >= (audio.getFrameTimeLength() / 2.0) || Math.abs(video_timeIndex[3]) >= (audio.getFrameTimeLength() / 2.0))
 						{
