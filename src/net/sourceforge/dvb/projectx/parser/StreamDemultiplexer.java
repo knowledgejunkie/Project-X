@@ -990,7 +990,7 @@ public class StreamDemultiplexer extends Object {
 			{
 				if (new File(videofile).exists())
 				{
-                    String tmpFN = videofile.toString();
+                    String tmpFN = videofile.toString().substring(0, videofile.toString().lastIndexOf("."));
 					out.renameVideoIddTo(tmpFN);
 				}
 

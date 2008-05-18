@@ -2293,7 +2293,7 @@ public class MainFrame extends JPanel {
 		JButton add_coll_and_files = new JButton(CommonGui.loadIcon("addcollfiles.gif"));
 		add_coll_and_files.setPreferredSize(new Dimension(50,28));
 		add_coll_and_files.setMaximumSize(new Dimension(50,28));
-		add_coll_and_files.setToolTipText(Resource.getString("autoload.add.coll.tip"));
+		add_coll_and_files.setToolTipText(Resource.getString("autoload.add.coll2.tip"));
 		add_coll_and_files.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{

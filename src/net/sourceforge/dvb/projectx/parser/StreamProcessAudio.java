@@ -234,7 +234,6 @@ public class StreamProcessAudio extends StreamProcessBase {
 				Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_addAiffHeader[0]));
 		}
 
-
 		/**
 		 * restart loop
 		 */
@@ -2437,7 +2436,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 				}
 			}
 
-			else if ((AddWaveHeaderBWF || AddWaveHeaderACM) && es_streamtype == CommonParsing.MPEG_AUDIO)
+			else if (!DecodeMpgAudio && (AddWaveHeaderBWF || AddWaveHeaderACM) && es_streamtype == CommonParsing.MPEG_AUDIO)
 			{
 				RandomAccessFile[] rifffile = { 
 					new RandomAccessFile(FileName_Ch1, "rw"), 
@@ -2627,6 +2626,15 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 		if (CreateDDWave)
 			Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_createDDWave[0]));
+
+		if (AddWaveHeaderACM)
+			Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_addRiffToMpgAudioL3[0]));
+
+		if (AddWaveHeaderBWF)
+			Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_addRiffToMpgAudio[0]));
+
+		if (AddWaveHeaderAC3)
+			Common.setMessage("-> " + Resource.getString(Keys.KEY_AudioPanel_addRiffToAc3[0]));
 	}
 
 	/**

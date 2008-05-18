@@ -388,7 +388,7 @@ public class CollectionProperties extends JFrame {
 		panel.setLayout( new BorderLayout() );
 		panel.setBorder( BorderFactory.createTitledBorder("") );
 
-		panel.add(new JLabel("Einstellungen gelten nur für diese Kollektion"));
+		panel.add(new JLabel(Resource.getString("General.CollectionProperties.Hint")));
 
 		return buildHeadPanel(panel, "Main");
 	}
