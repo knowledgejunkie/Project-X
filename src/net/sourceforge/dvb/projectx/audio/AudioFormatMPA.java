@@ -1,7 +1,7 @@
 /*
  * @(#)AudioFormatMPA.java - parse Audioheaders, mpa, incl. RDS
  *
- * Copyright (c) 2003-2007 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2003-2008 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -95,7 +95,9 @@ public class AudioFormatMPA extends AudioFormat {
 	private String[] dCRC = { "noCRC", "CRC" };
 	private String[] dMode = { "stereo", "jstereo", "dual", "mono" };
 
-	
+	private int Bound = 0;
+	private int Sblimit = 32;
+
 	/**
 	 * parse mpa Header 
 	 */
@@ -106,60 +108,66 @@ public class AudioFormatMPA extends AudioFormat {
 		if ( (0xFF & frame[pos]) != 0xFF || (0xF0 & frame[pos + 1]) != 0xF0 ) 
 			return -1;
 	
-		ID = 1 & frame[pos + 1]>>>3;
-		Emphasis = 3 & frame[pos + 3];
+		setID(1 & frame[pos + 1]>>>3);
+		setEmphasis(3 & frame[pos + 3]);
 	
-		if (ID == 1 && Emphasis == 2)
-			ID = 2;
+		if (getID() == 1 && getEmphasis() == 2)
+			setID(2);
 
-		if ( (Layer = 3 & frame[pos + 1]>>>1) < 1) 
+		setLayer(3 & frame[pos + 1]>>>1);
+
+		if (getLayer() < 1) 
 			return -2;
 	
-		Protection_bit = (1 & frame[pos + 1]) ^ 1;
+		setProtectionBit((1 & frame[pos + 1]) ^ 1);
 	
-		if ( (Bitrate = bitrate_index[ID][Layer - 1][0xF & frame[pos + 2]>>>4]) < 1) 
+		setBitrate(bitrate_index[getID()][getLayer() - 1][0xF & frame[pos + 2]>>>4]); 
+
+		if (getBitrate() < 1) 
 			return -3;
 	
-		if ( (Sampling_frequency = frequency_index[ID][3 & frame[pos + 2]>>>2]) == 0) 
+		setSamplingFrequency(frequency_index[getID()][3 & frame[pos + 2]>>>2]);
+
+		if (getSamplingFrequency() == 0) 
 			return -4;
 	
-		Padding_bit = 1 & (frame[pos + 2]>>>1);
-		Private_bit = 1 & frame[pos + 2];
+		setPaddingBit(1 & (frame[pos + 2]>>>1));
+		setPrivateBit(1 & frame[pos + 2]);
 	
-		Mode = 3 & frame[pos + 3]>>>6;
-		Mode_extension = 3 & frame[pos + 3]>>>4;
+		setMode(3 & frame[pos + 3]>>>6);
+		setModeExtension(3 & frame[pos + 3]>>>4);
 
-		if (Mode == 0) 
-			Mode_extension = 0;
+		if (getMode() == 0) 
+			setModeExtension(0);
 	
-		Bound = Mode == 1 ? ((Mode_extension + 1) << 2) : sblimit;
-		Channel = Mode == 3 ? 1 : 2;
-		Copyright = 1 & frame[pos + 3]>>>3;
-		Original = 1 & frame[pos + 3]>>>2;
-		Time_length = time_index[Layer] / Sampling_frequency;
+		Bound = getMode() == 1 ? ((getModeExtension() + 1) << 2) : sblimit;
+		setChannel(getMode() == 3 ? 1 : 2);
+		setCopyright(1 & frame[pos + 3]>>>3);
+		setOriginal(1 & frame[pos + 3]>>>2);
+		setFrameTimeLength(time_index[getLayer()] / getSamplingFrequency());
 
-		if (ID == 1 && Layer == 2)   // MPEG-1, L2 restrictions
+		if (getID() == 1 && getLayer() == 2)   // MPEG-1, L2 restrictions
 		{
-			if (Bitrate / Channel < 32000) 
+			if (getBitrate() / getChannel() < 32000) 
 				return -5; /* unsupported bitrate */
 
-			if (Bitrate / Channel > 192000) 
+			if (getBitrate() / getChannel() > 192000) 
 				return -6; /* unsupported bitrate */
 	
-			if (Bitrate / Channel < 56000)
+			if (getBitrate() / getChannel() < 56000)
 			{
-				if(Sampling_frequency == 32000) 
+				if(getSamplingFrequency() == 32000) 
 					Sblimit = 12;
 				else 
 					Sblimit = 8;
 			}
 
-			else if (Bitrate / Channel < 96000) 
+			else if (getBitrate() / getChannel() < 96000) 
 				Sblimit = 27;
 
 			else
 			{
-				if (Sampling_frequency == 48000) 
+				if (getSamplingFrequency() == 48000) 
 					Sblimit = 27;
 				else 
 					Sblimit = 30;
@@ -169,17 +177,18 @@ public class AudioFormatMPA extends AudioFormat {
 				Bound = Sblimit;
 		}
 
-		else if (Layer == 2)  // MPEG-2
+		else if (getLayer() == 2)  // MPEG-2
 		{
 			Sblimit = 30;
 		}
 
-		if (Layer < 3)
+		if (getLayer() < 3)
 		{
 			if (Bound > Sblimit) 
 				Bound = Sblimit;
 
-			Size = (Size_base = (ID == 0 && Layer == 1 ? 72 : 144) * Bitrate / Sampling_frequency) + Padding_bit;
+			setSizeBase((getID() == 0 && getLayer() == 1 ? 72 : 144) * getBitrate() / getSamplingFrequency());
+			setSize(getSizeBase() + getPaddingBit());
 
 			return 1;
 		}
@@ -187,7 +196,8 @@ public class AudioFormatMPA extends AudioFormat {
 		else
 		{
 			Sblimit = 32;
-			Size = (Size_base = (12 * Bitrate / Sampling_frequency)<<2 ) + (Padding_bit<<2);
+			setSizeBase((12 * getBitrate() / getSamplingFrequency())<<2);
+			setSize(getSizeBase() + (getPaddingBit()<<2));
 
 			return 2;
 		}
@@ -198,60 +208,68 @@ public class AudioFormatMPA extends AudioFormat {
 	 */
 	public int parseNextHeader(byte[] frame, int pos)
 	{
-	
-		if ( (0xFF&frame[pos])!=0xFF || (0xF0&frame[pos+1])!=0xF0 ) 
+
+		if ( (0xFF & frame[pos]) != 0xFF || (0xF0 & frame[pos + 1]) != 0xF0 ) 
 			return -1;
 	
-		nID = 1&frame[pos+1]>>>3;
-		nEmphasis = 3&frame[pos+3];
+		setNextID(1 & frame[pos + 1]>>>3);
+		setNextEmphasis(3 & frame[pos + 3]);
 	
-		if (nID==1 && nEmphasis==2)
-			nID = 2;
-	
-		if ( (nLayer = 3&frame[pos+1]>>>1) < 1) 
+		if (getNextID() == 1 && getNextEmphasis() == 2)
+			setNextID(2);
+
+		setNextLayer(3 & frame[pos + 1]>>>1);
+
+		if (getNextLayer() < 1) 
 			return -2;
 	
-	    nProtection_bit = (1&frame[pos+1]) ^ 1;
+		setNextProtectionBit((1 & frame[pos + 1]) ^ 1);
 	
-		if ( (nBitrate = bitrate_index[nID][nLayer-1][0xF&frame[pos+2]>>>4]) < 1) 
+		setNextBitrate(bitrate_index[getNextID()][getNextLayer() - 1][0xF & frame[pos + 2]>>>4]); 
+
+		if (getNextBitrate() < 1) 
 			return -3;
 	
-		if ( (nSampling_frequency = frequency_index[nID][3&frame[pos+2]>>>2]) == 0) 
+		setNextSamplingFrequency(frequency_index[getNextID()][3 & frame[pos + 2]>>>2]);
+
+		if (getNextSamplingFrequency() == 0) 
 			return -4;
 	
-        nPadding_bit = 1 & (frame[pos + 2]>>>1);
-        nPrivate_bit = 1 & frame[pos + 2];
+		setNextPaddingBit(1 & (frame[pos + 2]>>>1));
+		setNextPrivateBit(1 & frame[pos + 2]);
 	
-        nMode = 3&frame[pos+3]>>>6;
-        nMode_extension = 3&frame[pos+3]>>>4;
+		setNextMode(3 & frame[pos + 3]>>>6);
+		setNextModeExtension(3 & frame[pos + 3]>>>4);
 
-        if (nMode==0) 
-			nMode_extension=0;
+		if (getNextMode() == 0) 
+			setNextModeExtension(0);
 	
-		nChannel = (nMode==3) ? 1: 2;
-		nCopyright = 1&frame[pos+3]>>>3;
-		nOriginal = 1&frame[pos+3]>>>2;
-		nTime_length = time_index[nLayer]/nSampling_frequency;
-	
-		if (nID == 1 && nLayer == 2)
-		{	// MPEG-1,L2 restrictions
-			if (nBitrate/Channel < 32000) 
+		setNextChannel(getNextMode() == 3 ? 1 : 2);
+		setNextCopyright(1 & frame[pos + 3]>>>3);
+		setNextOriginal(1 & frame[pos + 3]>>>2);
+		setNextFrameTimeLength(time_index[getNextLayer()] / getNextSamplingFrequency());
+
+		if (getNextID() == 1 && getNextLayer() == 2)   // MPEG-1, L2 restrictions
+		{
+			if (getNextBitrate() / getNextChannel() < 32000) 
 				return -5; /* unsupported bitrate */
 
-			if (nBitrate/Channel > 192000) 
+			if (getNextBitrate() / getNextChannel() > 192000) 
 				return -6; /* unsupported bitrate */
 		}
-	
-		if (nLayer < 3)
+
+		if (getNextLayer() < 3)
 		{
-			nSize = (nSize_base = (nID == 0 && nLayer == 1 ? 72 : 144) * nBitrate / nSampling_frequency) + nPadding_bit;
+			setNextSizeBase((getNextID() == 0 && getNextLayer() == 1 ? 72 : 144) * getNextBitrate() / getNextSamplingFrequency());
+			setNextSize(getNextSizeBase() + getNextPaddingBit());
 
 			return 1;
 		}
 
 		else
 		{
-			nSize = (nSize_base = (12 * nBitrate / nSampling_frequency)<<2) + (nPadding_bit<<2);
+			setNextSizeBase((12 * getNextBitrate() / getNextSamplingFrequency())<<2);
+			setNextSize(getNextSizeBase() + (getNextPaddingBit()<<2));
 
 			return 2;
 		}
@@ -262,24 +280,24 @@ public class AudioFormatMPA extends AudioFormat {
 	 */
 	public int compareHeader()
 	{
-		if (lID != ID) 
+		if (getLastID() != getID()) 
 			return 0x1;
 
-		else if (lLayer != Layer) 
+		else if (getLastLayer() != getLayer()) 
 			return 0x2;
 
-		else if (lSampling_frequency != Sampling_frequency) 
+		else if (getLastSamplingFrequency() != getSamplingFrequency()) 
 			return 0x4;
 
-		else if (lBitrate != Bitrate) 
+		else if (getLastBitrate() != getBitrate()) 
 			return 0x8;
 
-		else if (lProtection_bit != Protection_bit) 
+		else if (getLastProtectionBit() != getProtectionBit()) 
 			return 0x10;
 
-		else if (lMode != Mode)
+		else if (getLastMode() != getMode())
 		{
-			if (Mode + lMode < 2)
+			if (getMode() + getLastMode() < 2)
 				return 0x20;
 
 			else
@@ -295,7 +313,7 @@ public class AudioFormatMPA extends AudioFormat {
 	 */
 	public String displayHeader()
 	{
-		return ("" + dID[lID] + ", " + dLayer[lLayer] + ", " + lSampling_frequency + "Hz, " + dMode[lMode] + ", "+ (lBitrate/1000) + "kbps, " + dCRC[lProtection_bit]);
+		return ("" + dID[getLastID()] + ", " + dLayer[getLastLayer()] + ", " + getLastSamplingFrequency() + "Hz, " + dMode[getLastMode()] + ", "+ (getLastBitrate() / 1000) + "kbps, " + dCRC[getLastProtectionBit()]);
 	}
 
 	/**
@@ -342,7 +360,7 @@ public class AudioFormatMPA extends AudioFormat {
 	 **/
 	public void removeCRC(byte[] frame, boolean remove)
 	{
-		if (Layer < 2 || !remove)
+		if (getLayer() < 2 || !remove)
 			return;
 
 		removePrivateBit(frame);
@@ -355,7 +373,7 @@ public class AudioFormatMPA extends AudioFormat {
 
 		frame[1] |= 1;
 
-		Protection_bit = 1;
+		setProtectionBit(1);
 	}
 	
 	/**
@@ -368,7 +386,7 @@ public class AudioFormatMPA extends AudioFormat {
 
 		frame[2] &= ~1;
 
-		Private_bit = 0;
+		setPrivateBit(0);
 	}
 
 	/**
@@ -416,7 +434,7 @@ public class AudioFormatMPA extends AudioFormat {
 	 */
 	public int validateCRC(byte[] _data, int offs, int len)
 	{
-		if (Layer < 2 || Protection_bit == 0)
+		if (getLayer() < 2 || getProtectionBit() == 0)
 			return 0;
 
 		int crc_val = (0xFF & _data[4])<<8 | (0xFF & _data[5]);
@@ -427,10 +445,10 @@ public class AudioFormatMPA extends AudioFormat {
 
 		int ch, sb, offset = 2, nr_bits = 16, BitPos[] = { 32 };
 
-		if (Layer==3) // BAL only, of 32 subbands
+		if (getLayer() == 3) // BAL only, of 32 subbands
 		{
 			for( sb=0; sb<Bound; sb++)
-				for( ch=0; ch<Channel; ch++)
+				for( ch=0; ch<getChannel(); ch++)
 					nr_bits += 4;
 
 			for( sb=Bound; sb<Sblimit; sb++)
@@ -442,7 +460,7 @@ public class AudioFormatMPA extends AudioFormat {
 			int table_alloc[][];
 			int allocation[][] = new int[32][2];
 
-			if (ID==1)
+			if (getID()==1)
 			{
 				if (Sblimit > 20)
 				{
@@ -463,7 +481,7 @@ public class AudioFormatMPA extends AudioFormat {
 
 			for( sb=0; sb<Bound; sb++)
 			{
-				for( ch=0; ch<Channel; ch++)
+				for( ch=0; ch<getChannel(); ch++)
 				{
 					allocation[sb][ch] = table_alloc[sb][getBits(data, BitPos, table_nbal[sb])];
 					nr_bits += table_nbal[sb];
@@ -477,7 +495,7 @@ public class AudioFormatMPA extends AudioFormat {
 			}
 
 			for( sb=0; sb<Sblimit; sb++)
-				for( ch=0; ch<Channel; ch++)
+				for( ch=0; ch<getChannel(); ch++)
 					if (allocation[sb][ch]>0)
 						nr_bits += 2;
 		}
@@ -608,7 +626,7 @@ public class AudioFormatMPA extends AudioFormat {
 		if (!DecodeRDS)
 			return null;
 
-		int neg_offs = Size - 1;
+		int neg_offs = getSize() - 1;
 
 		if (frame[neg_offs] != RDS_identifier)
 		{

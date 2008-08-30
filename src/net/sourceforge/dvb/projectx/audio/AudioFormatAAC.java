@@ -1,7 +1,7 @@
 /*
- * @(#)AudioFormatAAC.java - parse Audioheaders, dts
+ * @(#)AudioFormatAAC.java - parse Audioheaders,
  *
- * Copyright (c) 2007 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2007-2008 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -33,6 +33,7 @@ import net.sourceforge.dvb.projectx.audio.AudioFormat;
 
 public class AudioFormatAAC extends AudioFormat {
 
+//unused !!
 
 	public AudioFormatAAC()
 	{
@@ -102,25 +103,25 @@ public class AudioFormatAAC extends AudioFormat {
 	 */ 
 	public int compareHeader()
 	{ 
-		if (lID != ID) 
+		if (getLastID() != getID()) 
 			return 0x1; 
 
-		else if (lLayer != Layer) 
+		else if (getLastLayer() != getLayer()) 
 			return 0x2; 
 
-		else if (lSampling_frequency != Sampling_frequency) 
+		else if (getLastSamplingFrequency() != getSamplingFrequency()) 
 			return 0x4; 
 
-		else if (lBitrate != Bitrate) 
+		else if (getLastBitrate() != getBitrate()) 
 			return 0x8; 
 
-		else if (lMode != Mode) 
+		else if (getLastMode() != getMode()) 
 			return 0x10; 
 
-		else if (lMode_extension != Mode_extension) 
+		else if (getLastModeExtension() != getModeExtension()) 
 			return 0x20; 
 
-		else if (lSize != Size) 
+		else if (getLastSize() != getSize()) 
 			return 0x40; 
 
 		else 
@@ -132,7 +133,7 @@ public class AudioFormatAAC extends AudioFormat {
 	 */ 
 	public String displayHeader()
 	{ 
-		return ("AAC, " + aac_acmod[lMode] + "(" + aac_channels[lMode] + "), " + lSampling_frequency + "Hz, " + (lBitrate / 1000.0) + "kbps, " + lSize + "BpF"); 
+		return ("AAC, " + aac_acmod[getLastMode()] + "(" + aac_channels[getLastMode()] + "), " + getLastSamplingFrequency() + "Hz, " + (getLastBitrate() / 1000.0) + "kbps, " + getLastSize() + "BpF"); 
 	} 
 
 }

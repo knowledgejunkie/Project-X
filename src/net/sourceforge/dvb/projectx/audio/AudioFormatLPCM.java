@@ -1,7 +1,7 @@
 /*
  * @(#)AudioFormatLPCM.java - parse Audioheaders, lpcm
  *
- * Copyright (c) 2003-2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2003-2008 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -47,30 +47,30 @@ public class AudioFormatLPCM extends AudioFormat {
 	 */
 	public int parseHeader(byte[] frame_header, int pos)
 	{ 
-		INTEL=true; // force intel/wav output
+		setINTEL(true); // force intel/wav output
 	
-		ID = 0xFF & frame_header[pos]; // no of frameheaders
-		Padding_bit = (0xFF & frame_header[pos + 1])<<8 | (0xFF & frame_header[pos + 2]); // first_access_unit_pointer 
-		Layer = 0xFF & frame_header[pos + 3]; // audio_frame_number 
+		setID(0xFF & frame_header[pos]); // no of frameheaders
+		setPaddingBit((0xFF & frame_header[pos + 1])<<8 | (0xFF & frame_header[pos + 2])); // first_access_unit_pointer 
+		setLayer(0xFF & frame_header[pos + 3]); // audio_frame_number 
 	
-		Protection_bit = 0^1; 
-		Private_bit = 0; 
-		Copyright = 0; 
-		Original = 0; 
-		Size_base = 0;
+		setProtectionBit(0^1); 
+		setPrivateBit(0); 
+		setCopyright(0); 
+		setOriginal(0); 
+		setSizeBase(0);
 	
-		Size = lpcm_bps_index[(3 & frame_header[pos + 4]>>>6)]; //bits per sample
-		Sampling_frequency = lpcm_frequency_index[(1 & frame_header[pos + 4]>>>4)]; // samplerate
-		Channel = 1 + (7 & frame_header[pos + 4]); // channels
-		Emphasis = 0xFF & frame_header[pos + 5]; // dynamic_range
-		Mode = (Channel * Size) / 8;  // block_align, bytes per sample
+		setSize(lpcm_bps_index[(3 & frame_header[pos + 4]>>>6)]); //bits per sample
+		setSamplingFrequency(lpcm_frequency_index[(1 & frame_header[pos + 4]>>>4)]); // samplerate
+		setChannel(1 + (7 & frame_header[pos + 4])); // channels
+		setEmphasis(0xFF & frame_header[pos + 5]); // dynamic_range
+		setMode((getChannel() * getSize()) / 8);  // block_align, bytes per sample
 	
-		Bitrate =  Channel * Sampling_frequency * Size; // bitrate per second
+		setBitrate(getChannel() * getSamplingFrequency() * getSize()); // bitrate per second
 	
-		if (Size < 1)
+		if (getSize() < 1)
 			return -1; 
 	
-		Time_length = 90000.0 / Sampling_frequency;  // 1 frame = 150 * timelength
+		setFrameTimeLength(90000.0 / getSamplingFrequency());  // 1 frame = 150 * timelength
 	
 		return 0; 
 	} 
@@ -80,30 +80,30 @@ public class AudioFormatLPCM extends AudioFormat {
 	 */
 	public int parseNextHeader(byte[] frame_header, int pos)
 	{ 
-		INTEL=true; // force intel/wav output
+		setINTEL(true); // force intel/wav output
 	
-		nID = 0xFF & frame_header[pos]; // no of frameheaders
-		nPadding_bit = (0xFF & frame_header[pos + 1])<<8 | (0xFF & frame_header[pos + 2]); // first_access_unit_pointer 
-		nLayer = 0xFF & frame_header[pos + 3]; // audio_frame_number 
+		setNextID(0xFF & frame_header[pos]); // no of frameheaders
+		setNextPaddingBit((0xFF & frame_header[pos + 1])<<8 | (0xFF & frame_header[pos + 2])); // first_access_unit_pointer 
+		setNextLayer(0xFF & frame_header[pos + 3]); // audio_frame_number 
 	
-		nProtection_bit = 0^1; 
-		nPrivate_bit = 0; 
-		nCopyright = 0; 
-		nOriginal = 0; 
-		nSize_base = 0;
+		setNextProtectionBit(0^1); 
+		setNextPrivateBit(0); 
+		setNextCopyright(0); 
+		setNextOriginal(0); 
+		setNextSizeBase(0);
 	
-		nSize = lpcm_bps_index[(3 & frame_header[pos + 4]>>>6)]; //bits per sample
-		nSampling_frequency = lpcm_frequency_index[(1 & frame_header[pos + 4]>>>4)]; // samplerate
-		nChannel = 1 + (7 & frame_header[pos + 4]); // channels
-		nEmphasis = 0xFF & frame_header[pos + 5]; // dynamic_range
-		nMode = (nChannel * nSize) / 8;  // block_align, bytes per sample
+		setNextSize(lpcm_bps_index[(3 & frame_header[pos + 4]>>>6)]); //bits per sample
+		setNextSamplingFrequency(lpcm_frequency_index[(1 & frame_header[pos + 4]>>>4)]); // samplerate
+		setNextChannel(1 + (7 & frame_header[pos + 4])); // channels
+		setNextEmphasis(0xFF & frame_header[pos + 5]); // dynamic_range
+		setNextMode((getNextChannel() * getNextSize()) / 8);  // block_align, bytes per sample
 	
-		nBitrate = nChannel * nSampling_frequency * nSize; // bitrate per second
+		setNextBitrate(getNextChannel() * getNextSamplingFrequency() * getNextSize()); // bitrate per second
 	
-		if (nSize < 1)
+		if (getNextSize() < 1)
 			return -1; 
 	
-		nTime_length = 90000.0 / nSampling_frequency;  // 1 frame = 150 * timelength
+		setNextFrameTimeLength(90000.0 / getNextSamplingFrequency());  // 1 frame = 150 * timelength
 	
 		return 0; 
 	} 
@@ -113,7 +113,7 @@ public class AudioFormatLPCM extends AudioFormat {
 	 */
 	public String displayHeader()
 	{ 
-		return ("LPCM, DR-" + lEmphasis + ", " + lChannel + "-ch, " + lSampling_frequency + "Hz, " + lSize + "bit, " + (lBitrate / 1000.0) + "kbps");
+		return ("LPCM, DR-" + getLastEmphasis() + ", " + getLastChannel() + "-ch, " + getLastSamplingFrequency() + "Hz, " + getLastSize() + "bit, " + (getLastBitrate() / 1000.0) + "kbps");
 	} 
 	 
 	/**
@@ -121,16 +121,16 @@ public class AudioFormatLPCM extends AudioFormat {
 	 */
 	public int compareHeader()
 	{
-		if (lChannel != Channel) 
+		if (getLastChannel() != getChannel()) 
 			return 1; 
 
-		else if (lSampling_frequency != Sampling_frequency) 
+		else if (getLastSamplingFrequency() != getSamplingFrequency()) 
 			return 2; 
 
-		else if (lSize != Size) 
+		else if (getLastSize() != getSize()) 
 			return 3; 
 
-		else if (lEmphasis != Emphasis) 
+		else if (getLastEmphasis() != getEmphasis()) 
 			return 4; 
 
 		else 

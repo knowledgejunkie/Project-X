@@ -1,7 +1,7 @@
 /*
  * @(#)AudioFormatWAV.java - parse Audioheaders, wav / riff
  *
- * Copyright (c) 2003-2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2003-2008 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -62,20 +62,20 @@ public class AudioFormatWAV extends AudioFormat {
 	 */ 
 	public int parseHeader(byte[] frame, int pos)
 	{ 
-		INTEL = false;
+		setINTEL(false);
 
 		if (frame[pos] != 0x52 || frame[pos + 1] != 0x49 || frame[pos + 2] != 0x46 ) 
 			return -1;
 	
 		if (frame[pos + 3] == 0x46)
-			INTEL=true;
+			setINTEL(true);
 
 		else if (frame[pos + 3] != 0x58)
 			return -2;
 	
-		ID = INTEL ? 0 : 1; 
-		Emphasis = 0; 
-		Protection_bit = 0 ^ 1; 
+		setID(isINTEL() ? 0 : 1); 
+		setEmphasis(0); 
+		setProtectionBit(0 ^ 1); 
 	
 		Arrays.sort(WaveChunks);
 	
@@ -92,60 +92,60 @@ public class AudioFormatWAV extends AudioFormat {
 
 			if (chunk == WaveChunks[4])
 			{ //fmt chunk read info datas
-				chunksize = littleEndian(frame, a + 4, 4, INTEL);
-				Layer = littleEndian(frame, a + 8, 2, INTEL);   // Compression type (1=PCM)
-				Channel = littleEndian(frame, a + 10, 2, INTEL); // channels
-				Sampling_frequency = littleEndian(frame, a + 12, 4, INTEL); // samplerate
-				Bitrate = littleEndian(frame, a + 16, 4, INTEL) * 8; // avg bits per second
-				Mode = littleEndian(frame, a + 20, 2, INTEL);  // block align, bytes per sample
-				Size = littleEndian(frame, a + 22, 2, INTEL); //bits per sample
+				chunksize = littleEndian(frame, a + 4, 4, isINTEL());
+				setLayer(littleEndian(frame, a + 8, 2, isINTEL()));   // Compression type (1=PCM)
+				setChannel(littleEndian(frame, a + 10, 2, isINTEL())); // channels
+				setSamplingFrequency(littleEndian(frame, a + 12, 4, isINTEL())); // samplerate
+				setBitrate(littleEndian(frame, a + 16, 4, isINTEL()) * 8); // avg bits per second
+				setMode(littleEndian(frame, a + 20, 2, isINTEL()));  // block align, bytes per sample
+				setSize(littleEndian(frame, a + 22, 2, isINTEL())); //bits per sample
 				//extrabits not of interest
 			}
 
 			else if (chunk == WaveChunks[2])
 			{ //data chunk, sample data
-				chunksize = littleEndian(frame, a + 4, 4, INTEL);
-				Size_base = chunksize; // length of whole sample data
-				Emphasis = a + 8; // real start of whole sample data
+				chunksize = littleEndian(frame, a + 4, 4, isINTEL());
+				setSizeBase(chunksize); // length of whole sample data
+				setEmphasis(a + 8); // real start of whole sample data
 			}
 
 			else
-				chunksize = littleEndian(frame, a + 4, 4, INTEL);
+				chunksize = littleEndian(frame, a + 4, 4, isINTEL());
 
 			a += chunksize + 3;
 		}
 	
 		//PTS low+high may exists in 'fact' of MPEG1audio !
 	
-		if (Bitrate < 1 || Sampling_frequency < 1 || Channel < 1)
+		if (getBitrate() < 1 || getSamplingFrequency() < 1 || getChannel() < 1)
 			return -4; 
 	
-		Padding_bit = 0; 
-		Private_bit = 0; 
-		Copyright = 0; 
-		Original = 0; 
-		Time_length = 90000.0 / Sampling_frequency;
+		setPaddingBit(0); 
+		setPrivateBit(0); 
+		setCopyright(0); 
+		setOriginal(0); 
+		setFrameTimeLength(90000.0 / getSamplingFrequency());
 	
-		switch (Layer)
+		switch (getLayer())
 		{
 		case 1: 
-			Mode_extension = 1; 
+			setModeExtension(1); 
 			return 1;
 
 		case 0x50: 
-			Mode_extension = 2; 
+			setModeExtension(2); 
 			return 0;
 
 		case 0x55: 
-			Mode_extension = 3; 
+			setModeExtension(3); 
 			return 0;
 
 		case 0x2000: 
-			Mode_extension = 4; 
+			setModeExtension(4); 
 			return 0;
 
 		default:
-			Mode_extension = 0; 
+			setModeExtension(0); 
 		}
 	
 		return 0; 
@@ -159,7 +159,7 @@ public class AudioFormatWAV extends AudioFormat {
 	 */ 
 	public String displayHeader()
 	{ 
-		return ("RIF" + LSB_mode[lID] + ", " + (lMode_extension > 0 ? compression[lMode_extension] : "tag 0x" + Integer.toHexString(Layer)) + ", " + lChannel + "-ch, " + lSampling_frequency + "Hz, " + lSize + "bit, " + (lBitrate/1000.0) + "kbps"); 
+		return ("RIF" + LSB_mode[getLastID()] + ", " + (getLastModeExtension() > 0 ? compression[getLastModeExtension()] : "tag 0x" + Integer.toHexString(getLastLayer())) + ", " + getLastChannel() + "-ch, " + getLastSamplingFrequency() + "Hz, " + getLastSize() + "bit, " + (getLastBitrate() / 1000.0) + "kbps"); 
 	} 
 
 }

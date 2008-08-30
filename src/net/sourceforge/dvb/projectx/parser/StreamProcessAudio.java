@@ -2301,20 +2301,20 @@ public class StreamProcessAudio extends StreamProcessBase {
 		if (audio.getMode() == 7)
 			return array;
 
-		AudioFormat ac3_audio = new AudioFormat(CommonParsing.AC3_AUDIO);
+		AudioFormat ac3_test = new AudioFormat(CommonParsing.AC3_AUDIO);
 		byte[] ac3data;
 
 		for (int i = 0, j = Common.getAC3list().size(); i < j; i++)
 		{
 			ac3data = (byte[]) Common.getAC3list().get(i);
 
-			ac3_audio.parseHeader(ac3data, 0);
+			ac3_test.parseHeader(ac3data, 0);
 
-			if (ac3_audio.getMode() != 7 || ac3_audio.getSamplingFrequency() != audio.getSamplingFrequency())
+			if (ac3_test.getMode() != 7 || ac3_test.getSamplingFrequency() != audio.getSamplingFrequency())
 				continue;
 
-			//if (ac3_audio.getBitrate() != audio.getBitrate())
-			//	continue;
+			if (ac3_test.getBitrate() != audio.getBitrate())
+				continue;
 
 			array = new byte[ac3data.length];
 

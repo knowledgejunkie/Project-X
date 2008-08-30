@@ -1,7 +1,7 @@
 /*
  * @(#)Common.java - carries various stuff, the center class
  *
- * Copyright (c) 2004-2007 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2004-2008 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -81,8 +81,8 @@ import net.sourceforge.dvb.projectx.net.WebInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90.4.00.b23";
-	private static String version_date = "17.02.2008";
+	private static String version_name = "ProjectX 0.90.4.00.b25";
+	private static String version_date = "30.08.2008";
 
 	private static String line_separator = System.getProperty("line.separator");
 
@@ -968,7 +968,7 @@ public final class Common extends Object {
 
 					AC3list.add(ac3data);
 
-					a += audio.Size;
+					a += audio.getSize();
 					frame_counter++;
 				}
 

@@ -1,7 +1,7 @@
 /*
  * @(#)AudioFormat.java - parse Audioheaders, basic class
  *
- * Copyright (c) 2003-2007 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2003-2008 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -97,98 +97,103 @@ public class AudioFormat extends Object {
 		}
 	}
 
-	public static boolean INTEL;
+	private boolean INTEL;
 
-	public static int ID;
-	public static int Layer;
-	public static int Protection_bit;
-	public static int Private_bit;
-	public static int Bitrate;
-	public static int Sampling_frequency;
-	public static int Padding_bit;
-	public static int public_bit;
-	public static int Mode;
-	public static int Mode_extension;
-	public static int Copyright;
-	public static int Original;
-	public static int Channel;
-	public static int Emphasis;
-	public static int Size;
-	public static int Size_base;
-	public static int Bound;
-	public static int Sblimit;
-	public static double Time_length;
+	private int ID;
+	private int Layer;
+	private int Protection_bit;
+	private int Private_bit;
+	private int Bitrate;
+	private int Sampling_frequency;
+	private int Padding_bit;
+	private int Mode;
+	private int Mode_extension;
+	private int Copyright;
+	private int Original;
+	private int Channel;
+	private int Emphasis;
+	private int Size;
+	private int Size_base;
+	private double Time_length;
 	
-	public int nID;
-	public int nLayer;
-	public int nProtection_bit;
-	public int nPrivate_bit;
-	public int nBitrate;
-	public int nSampling_frequency;
-	public int nPadding_bit;
-	public int npublic_bit;
-	public int nMode;
-	public int nMode_extension;
-	public int nCopyright;
-	public int nOriginal;
-	public int nChannel;
-	public int nEmphasis;
-	public int nSize;
-	public int nSize_base;
-	public double nTime_length;
+	private int nID;
+	private int nLayer;
+	private int nProtection_bit;
+	private int nPrivate_bit;
+	private int nBitrate;
+	private int nSampling_frequency;
+	private int nPadding_bit;
+	private int nMode;
+	private int nMode_extension;
+	private int nCopyright;
+	private int nOriginal;
+	private int nChannel;
+	private int nEmphasis;
+	private int nSize;
+	private int nSize_base;
+	private double nTime_length;
 	
-	public static int lID;
-	public static int lLayer;
-	public static int lProtection_bit;
-	public static int lPrivate_bit;
-	public static int lBitrate;
-	public static int lSampling_frequency;
-	public static int lPadding_bit;
-	public static int lpublic_bit;
-	public static int lMode;
-	public static int lMode_extension;
-	public static int lCopyright;
-	public static int lOriginal;
-	public static int lChannel;
-	public static int lEmphasis;
-	public static int lSize;
-	public static int lSize_base;
-	public static double lTime_length;
+	private int lID;
+	private int lLayer;
+	private int lProtection_bit;
+	private int lPrivate_bit;
+	private int lBitrate;
+	private int lSampling_frequency;
+	private int lPadding_bit;
+	private int lMode;
+	private int lMode_extension;
+	private int lCopyright;
+	private int lOriginal;
+	private int lChannel;
+	private int lEmphasis;
+	private int lSize;
+	private int lSize_base;
+	private double lTime_length;
 
 	/**
 	 *
 	 */
 	public void init()
 	{
-		INTEL = false;
+		setINTEL(false);
 
-		ID = 0;
-		Layer = 0;
-		Protection_bit = 0;
-		Private_bit = 0;
-		Bitrate = 0;
-		Sampling_frequency = 0;
-		Padding_bit = 0;
-		Private_bit = 0;
-		Mode = 0;
-		Mode_extension = 0;
-		Copyright = 0;
-		Original = 0;
-		Channel = 0;
-		Emphasis = 0;
-		Size = 0;
-		Size_base = 0;
-		Bound = 0;
-		Sblimit = 32;
-		Time_length = 0.0;
+		setID(0);
+		setLayer(0);
+		setProtectionBit(0);
+		setPrivateBit(0);
+		setBitrate(0);
+		setSamplingFrequency(0);
+		setPaddingBit(0);
+		setPrivateBit(0);
+		setMode(0);
+		setModeExtension(0);
+		setCopyright(0);
+		setOriginal(0);
+		setChannel(0);
+		setEmphasis(0);
+		setSize(0);
+		setSizeBase(0);
+		setFrameTimeLength(0.0);
+	}
+
+
+	/**
+	 * 
+	 */
+	public boolean isINTEL()
+	{
+		return (impl == null ? INTEL : impl.isINTEL());
 	}
 
 	/**
 	 * 
 	 */
-	public int getLastModeExtension()
+	public void setINTEL(boolean b)
 	{
-		return lMode_extension;
+		if (impl != null)
+			impl.setINTEL(b);
+
+		INTEL = b;
 	}
 
 	/**
@@ -196,7 +201,18 @@ public class AudioFormat extends Object {
 	 */
 	public int getID()
 	{
-		return ID;
+		return (impl == null ? ID : impl.getID());
+	}
+
+	/**
+	 * 
+	 */
+	public void setID(int val)
+	{
+		if (impl != null)
+			impl.setID(val);
+
+		ID = val;
 	}
 
 	/**
@@ -204,7 +220,18 @@ public class AudioFormat extends Object {
 	 */
 	public int getLayer()
 	{
-		return Layer;
+		return (impl == null ? Layer : impl.getLayer());
+	}
+
+	/**
+	 * 
+	 */
+	public void setLayer(int val)
+	{
+		if (impl != null)
+			impl.setLayer(val);
+
+		Layer = val;
 	}
 
 	/**
@@ -212,7 +239,18 @@ public class AudioFormat extends Object {
 	 */
 	public int getBitrate()
 	{
-		return Bitrate;
+		return (impl == null ? Bitrate : impl.getBitrate());
+	}
+
+	/**
+	 * 
+	 */
+	public void setBitrate(int val)
+	{
+		if (impl != null)
+			impl.setBitrate(val);
+
+		Bitrate = val;
 	}
 
 	/**
@@ -220,7 +258,18 @@ public class AudioFormat extends Object {
 	 */
 	public int getSamplingFrequency()
 	{
-		return Sampling_frequency;
+		return (impl == null ? Sampling_frequency : impl.getSamplingFrequency());
+	}
+
+	/**
+	 * 
+	 */
+	public void setSamplingFrequency(int val)
+	{
+		if (impl != null)
+			impl.setSamplingFrequency(val);
+
+		Sampling_frequency = val;
 	}
 
 	/**
@@ -228,7 +277,18 @@ public class AudioFormat extends Object {
 	 */
 	public int getMode()
 	{
-		return Mode;
+		return (impl == null ? Mode : impl.getMode());
+	}
+
+	/**
+	 * 
+	 */
+	public void setMode(int val)
+	{
+		if (impl != null)
+			impl.setMode(val);
+
+		Mode = val;
 	}
 
 	/**
@@ -236,7 +296,18 @@ public class AudioFormat extends Object {
 	 */
 	public int getModeExtension()
 	{
-		return Mode_extension;
+		return (impl == null ? Mode_extension : impl.getModeExtension());
+	}
+
+	/**
+	 * 
+	 */
+	public void setModeExtension(int val)
+	{
+		if (impl != null)
+			impl.setModeExtension(val);
+
+		Mode_extension = val;
 	}
 
 	/**
@@ -244,7 +315,18 @@ public class AudioFormat extends Object {
 	 */
 	public int getEmphasis()
 	{
-		return Emphasis;
+		return (impl == null ? Emphasis : impl.getEmphasis());
+	}
+
+	/**
+	 * 
+	 */
+	public void setEmphasis(int val)
+	{
+		if (impl != null)
+			impl.setEmphasis(val);
+
+		Emphasis = val;
 	}
 
 	/**
@@ -252,7 +334,18 @@ public class AudioFormat extends Object {
 	 */
 	public int getSize()
 	{
-		return Size;
+		return (impl == null ? Size : impl.getSize());
+	}
+
+	/**
+	 * 
+	 */
+	public void setSize(int val)
+	{
+		if (impl != null)
+			impl.setSize(val);
+
+		Size = val;
 	}
 
 	/**
@@ -260,7 +353,18 @@ public class AudioFormat extends Object {
 	 */
 	public int getSizeBase()
 	{
-		return Size_base;
+		return (impl == null ? Size_base : impl.getSizeBase());
+	}
+
+	/**
+	 * 
+	 */
+	public void setSizeBase(int val)
+	{
+		if (impl != null)
+			setSizeBase(val);
+
+		Size_base = val;
 	}
 
 	/**
@@ -268,7 +372,113 @@ public class AudioFormat extends Object {
 	 */
 	public int getChannel()
 	{
-		return Channel;
+		return (impl == null ? Channel : impl.getChannel());
+	}
+
+	/**
+	 * 
+	 */
+	public void setChannel(int val)
+	{
+		if (impl != null)
+			impl.setChannel(val);
+
+		Channel = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getPaddingBit()
+	{
+		return (impl == null ? Padding_bit : impl.getPaddingBit());
+	}
+
+	/**
+	 * 
+	 */
+	public void setPaddingBit(int val)
+	{
+		if (impl != null)
+			impl.setPaddingBit(val);
+
+		Padding_bit = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getPrivateBit()
+	{
+		return (impl == null ? Private_bit : impl.getPrivateBit());
+	}
+
+	/**
+	 * 
+	 */
+	public void setPrivateBit(int val)
+	{
+		if (impl != null)
+			impl.setPrivateBit(val);
+
+		Private_bit = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getOriginal()
+	{
+		return (impl == null ? Original : impl.getOriginal());
+	}
+
+	/**
+	 * 
+	 */
+	public void setOriginal(int val)
+	{
+		if (impl != null)
+			impl.setOriginal(val);
+
+		Original = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getCopyright()
+	{
+		return (impl == null ? Copyright : impl.getCopyright());
+	}
+
+	/**
+	 * 
+	 */
+	public void setCopyright(int val)
+	{
+		if (impl != null)
+			impl.setCopyright(val);
+
+		Copyright = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getProtectionBit()
+	{
+		return (impl == null ? Protection_bit : impl.getProtectionBit());
+	}
+
+	/**
+	 * 
+	 */
+	public void setProtectionBit(int val)
+	{
+		if (impl != null)
+			impl.setProtectionBit(val);
+
+		Protection_bit = val;
 	}
 
 	/**
@@ -276,8 +486,637 @@ public class AudioFormat extends Object {
 	 */
 	public double getFrameTimeLength()
 	{
-		return Time_length;
+		return (impl == null ? Time_length : impl.getFrameTimeLength());
 	}
+
+	/**
+	 * 
+	 */
+	public void setFrameTimeLength(double val)
+	{
+		if (impl != null)
+			impl.setFrameTimeLength(val);
+
+		Time_length = val;
+	}
+
+///////
+
+	/**
+	 * 
+	 */
+	public int getLastID()
+	{
+		return (impl == null ? lID : impl.getLastID());
+	}
+
+	/**
+	 * 
+	 */
+	public void setLastID(int val)
+	{
+		if (impl != null)
+			impl.setLastID(val);
+
+		lID = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getLastLayer()
+	{
+		return (impl == null ? lLayer : impl.getLastLayer());
+	}
+
+	/**
+	 * 
+	 */
+	public void setLastLayer(int val)
+	{
+		if (impl != null)
+			impl.setLastLayer(val);
+
+		lLayer = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getLastBitrate()
+	{
+		return (impl == null ? lBitrate : impl.getLastBitrate());
+	}
+
+	/**
+	 * 
+	 */
+	public void setLastBitrate(int val)
+	{
+		if (impl != null)
+			impl.setLastBitrate(val);
+
+		lBitrate = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getLastSamplingFrequency()
+	{
+		return (impl == null ? lSampling_frequency : impl.getLastSamplingFrequency());
+	}
+
+	/**
+	 * 
+	 */
+	public void setLastSamplingFrequency(int val)
+	{
+		if (impl != null)
+			impl.setLastSamplingFrequency(val);
+
+		lSampling_frequency = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getLastMode()
+	{
+		return (impl == null ? lMode : impl.getLastMode());
+	}
+
+	/**
+	 * 
+	 */
+	public void setLastMode(int val)
+	{
+		if (impl != null)
+			impl.setLastMode(val);
+
+		lMode = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getLastModeExtension()
+	{
+		return (impl == null ? lMode_extension : impl.getLastModeExtension());
+	}
+
+	/**
+	 * 
+	 */
+	public void setLastModeExtension(int val)
+	{
+		if (impl != null)
+			impl.setLastModeExtension(val);
+
+		lMode_extension = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getLastEmphasis()
+	{
+		return (impl == null ? lEmphasis : impl.getLastEmphasis());
+	}
+
+	/**
+	 * 
+	 */
+	public void setLastEmphasis(int val)
+	{
+		if (impl != null)
+			impl.setLastEmphasis(val);
+
+		lEmphasis = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getLastSize()
+	{
+		return (impl == null ? lSize : impl.getLastSize());
+	}
+
+	/**
+	 * 
+	 */
+	public void setLastSize(int val)
+	{
+		if (impl != null)
+			impl.setLastSize(val);
+
+		lSize = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getLastSizeBase()
+	{
+		return (impl == null ? lSize_base : impl.getLastSizeBase());
+	}
+
+	/**
+	 * 
+	 */
+	public void setLastSizeBase(int val)
+	{
+		if (impl != null)
+			impl.setLastSizeBase(val);
+
+		lSize_base = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getLastChannel()
+	{
+		return (impl == null ? lChannel : impl.getLastChannel());
+	}
+
+	/**
+	 * 
+	 */
+	public void setLastChannel(int val)
+	{
+		if (impl != null)
+			impl.setLastChannel(val);
+
+		lChannel = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getLastPaddingBit()
+	{
+		return (impl == null ? lPadding_bit : impl.getLastPaddingBit());
+	}
+
+	/**
+	 * 
+	 */
+	public void setLastPaddingBit(int val)
+	{
+		if (impl != null)
+			impl.setLastPaddingBit(val);
+
+		lPadding_bit = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getLastPrivateBit()
+	{
+		return (impl == null ? lPrivate_bit : impl.getLastPrivateBit());
+	}
+
+	/**
+	 * 
+	 */
+	public void setLastPrivateBit(int val)
+	{
+		if (impl != null)
+			impl.setLastPrivateBit(val);
+
+		lPrivate_bit = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getLastOriginal()
+	{
+		return (impl == null ? lOriginal : impl.getLastOriginal());
+	}
+
+	/**
+	 * 
+	 */
+	public void setLastOriginal(int val)
+	{
+		if (impl != null)
+			impl.setLastOriginal(val);
+
+		lOriginal = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getLastCopyright()
+	{
+		return (impl == null ? lCopyright : impl.getLastCopyright());
+	}
+
+	/**
+	 * 
+	 */
+	public void setLastCopyright(int val)
+	{
+		if (impl != null)
+			impl.setLastCopyright(val);
+
+		lCopyright = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getLastProtectionBit()
+	{
+		return (impl == null ? lProtection_bit : impl.getLastProtectionBit());
+	}
+
+	/**
+	 * 
+	 */
+	public void setLastProtectionBit(int val)
+	{
+		if (impl != null)
+			impl.setLastProtectionBit(val);
+
+		lProtection_bit = val;
+	}
+
+	/**
+	 * 
+	 */
+	public double getLastFrameTimeLength()
+	{
+		return (impl == null ? lTime_length : impl.getLastFrameTimeLength());
+	}
+
+	/**
+	 * 
+	 */
+	public void setLastFrameTimeLength(double val)
+	{
+		if (impl != null)
+			impl.setLastFrameTimeLength(val);
+
+		lTime_length = val;
+	}
+
+///////
+
+
+	/**
+	 * 
+	 */
+	public int getNextID()
+	{
+		return (impl == null ? nID : impl.getNextID());
+	}
+
+	/**
+	 * 
+	 */
+	public void setNextID(int val)
+	{
+		if (impl != null)
+			impl.setNextID(val);
+
+		nID = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getNextLayer()
+	{
+		return (impl == null ? nLayer : impl.getNextLayer());
+	}
+
+	/**
+	 * 
+	 */
+	public void setNextLayer(int val)
+	{
+		if (impl != null)
+			impl.setNextLayer(val);
+
+		nLayer = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getNextBitrate()
+	{
+		return (impl == null ? nBitrate : impl.getNextBitrate());
+	}
+
+	/**
+	 * 
+	 */
+	public void setNextBitrate(int val)
+	{
+		if (impl != null)
+			impl.setNextBitrate(val);
+
+		nBitrate = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getNextSamplingFrequency()
+	{
+		return (impl == null ? nSampling_frequency : impl.getNextSamplingFrequency());
+	}
+
+	/**
+	 * 
+	 */
+	public void setNextSamplingFrequency(int val)
+	{
+		if (impl != null)
+			impl.setNextSamplingFrequency(val);
+
+		nSampling_frequency = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getNextMode()
+	{
+		return (impl == null ? nMode : impl.getNextMode());
+	}
+
+	/**
+	 * 
+	 */
+	public void setNextMode(int val)
+	{
+		if (impl != null)
+			impl.setNextMode(val);
+
+		nMode = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getNextModeExtension()
+	{
+		return (impl == null ? nMode_extension : impl.getNextModeExtension());
+	}
+
+	/**
+	 * 
+	 */
+	public void setNextModeExtension(int val)
+	{
+		if (impl != null)
+			impl.setNextModeExtension(val);
+
+		nMode_extension = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getNextEmphasis()
+	{
+		return (impl == null ? nEmphasis : impl.getNextEmphasis());
+	}
+
+	/**
+	 * 
+	 */
+	public void setNextEmphasis(int val)
+	{
+		if (impl != null)
+			impl.setNextEmphasis(val);
+
+		nEmphasis = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getNextSize()
+	{
+		return (impl == null ? nSize : impl.getNextSize());
+	}
+
+	/**
+	 * 
+	 */
+	public void setNextSize(int val)
+	{
+		if (impl != null)
+			impl.setNextSize(val);
+
+		nSize = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getNextSizeBase()
+	{
+		return (impl == null ? nSize_base : impl.getNextSizeBase());
+	}
+
+	/**
+	 * 
+	 */
+	public void setNextSizeBase(int val)
+	{
+		if (impl != null)
+			impl.setNextSizeBase(val);
+
+		nSize_base = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getNextChannel()
+	{
+		return (impl == null ? nChannel : impl.getNextChannel());
+	}
+
+	/**
+	 * 
+	 */
+	public void setNextChannel(int val)
+	{
+		if (impl != null)
+			impl.setNextChannel(val);
+
+		nChannel = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getNextPaddingBit()
+	{
+		return (impl == null ? nPadding_bit : impl.getNextPaddingBit());
+	}
+
+	/**
+	 * 
+	 */
+	public void setNextPaddingBit(int val)
+	{
+		if (impl != null)
+			impl.setNextPaddingBit(val);
+
+		nPadding_bit = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getNextPrivateBit()
+	{
+		return (impl == null ? nPrivate_bit : impl.getNextPrivateBit());
+	}
+
+	/**
+	 * 
+	 */
+	public void setNextPrivateBit(int val)
+	{
+		if (impl != null)
+			impl.setNextPrivateBit(val);
+
+		nPrivate_bit = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getNextOriginal()
+	{
+		return (impl == null ? nOriginal : impl.getNextOriginal());
+	}
+
+	/**
+	 * 
+	 */
+	public void setNextOriginal(int val)
+	{
+		if (impl != null)
+			impl.setNextOriginal(val);
+
+		nOriginal = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getNextCopyright()
+	{
+		return (impl == null ? nCopyright : impl.getNextCopyright());
+	}
+
+	/**
+	 * 
+	 */
+	public void setNextCopyright(int val)
+	{
+		if (impl != null)
+			impl.setNextCopyright(val);
+
+		nCopyright = val;
+	}
+
+	/**
+	 * 
+	 */
+	public int getNextProtectionBit()
+	{
+		return (impl == null ? nProtection_bit : impl.getNextProtectionBit());
+	}
+
+	/**
+	 * 
+	 */
+	public void setNextProtectionBit(int val)
+	{
+		if (impl != null)
+			impl.setNextProtectionBit(val);
+
+		nProtection_bit = val;
+	}
+
+	/**
+	 * 
+	 */
+	public double getNextFrameTimeLength()
+	{
+		return (impl == null ? nTime_length : impl.getNextFrameTimeLength());
+	}
+
+	/**
+	 * 
+	 */
+	public void setNextFrameTimeLength(double val)
+	{
+		if (impl != null)
+			impl.setNextFrameTimeLength(val);
+
+		nTime_length = val;
+	}
+
+
+
+
+//////
 
 	/**
 	 *
@@ -317,23 +1156,23 @@ public class AudioFormat extends Object {
 	 */
 	public void saveHeader()
 	{
-		lID = ID;
-		lLayer = Layer;
-		lProtection_bit = Protection_bit;
-		lPrivate_bit = Private_bit;
-		lBitrate = Bitrate;
-		lSampling_frequency = Sampling_frequency;
-		lPadding_bit = Padding_bit;
-		lPrivate_bit = Private_bit;
-		lMode = Mode;
-		lMode_extension = Mode_extension;
-		lCopyright = Copyright;
-		lOriginal = Original;
-		lChannel = Channel;
-		lEmphasis = Emphasis;
-		lSize = Size;
-		lSize_base = Size_base;
-		lTime_length = Time_length;
+		setLastID(getID());
+		setLastLayer(getLayer());
+		setLastProtectionBit(getProtectionBit());
+		setLastPrivateBit(getPrivateBit());
+		setLastBitrate(getBitrate());
+		setLastSamplingFrequency(getSamplingFrequency());
+		setLastPaddingBit(getPaddingBit());
+		setLastPrivateBit(getPrivateBit());
+		setLastMode(getMode());
+		setLastModeExtension(getModeExtension());
+		setLastCopyright(getCopyright());
+		setLastOriginal(getOriginal());
+		setLastChannel(getChannel());
+		setLastEmphasis(getEmphasis());
+		setLastSize(getSize());
+		setLastSizeBase(getSizeBase());
+		setLastFrameTimeLength(getFrameTimeLength());
 	}
 	
 	/**
@@ -525,7 +1364,7 @@ public class AudioFormat extends Object {
 
 			riff.seek(3);
 
-			if (!INTEL)
+			if (!isINTEL())
 				riff.write((byte)'X');
 
 			riff.seek(4);
@@ -593,7 +1432,7 @@ public class AudioFormat extends Object {
 	 */
 	public int littleEndian(int data, int len)
 	{
-		return littleEndian(data, len, INTEL);
+		return littleEndian(data, len, isINTEL());
 	}
 
 	/**

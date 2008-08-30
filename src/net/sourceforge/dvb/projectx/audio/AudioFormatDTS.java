@@ -1,7 +1,7 @@
 /*
  * @(#)AudioFormatDTS.java - parse Audioheaders, dts
  *
- * Copyright (c) 2003-2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2003-2008 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -89,33 +89,35 @@ public class AudioFormatDTS extends AudioFormat {
 		if (frame[pos] != 0x7F || frame[pos + 1] != (byte)0xFE || frame[pos + 2] != (byte)0x80 || frame[pos + 3] != 1 ) 
 			return -1; 
 	
-		ID = 0; 
-		Emphasis = 0; 
-		Protection_bit = 0 ^ 1; 
+		setID(0); 
+		setEmphasis(0); 
+		setProtectionBit(0 ^ 1); 
 	
-		if ((Sampling_frequency = dts_frequency_index[0xF & (frame[pos + 8]>>>2)]) < 1) 
+		setSamplingFrequency(dts_frequency_index[0xF & (frame[pos + 8]>>>2)]);
+
+		if (getSamplingFrequency() < 1) 
 			return -4; 
 
-		Bitrate = dts_bitrate_index[((3 & frame[pos + 8])<<3) | (7 & (frame[pos + 9]>>>5))]; 
+		setBitrate(dts_bitrate_index[((3 & frame[pos + 8])<<3) | (7 & (frame[pos + 9]>>>5))]); 
 
-		if (Bitrate < 1) 
+		if (getBitrate() < 1) 
 			return -3; 
 	
-		Layer = 0; 
-		Padding_bit = 0; 
-		Private_bit = 0; 
+		setLayer(0); 
+		setPaddingBit(0); 
+		setPrivateBit(0); 
 	
-		Mode = ((0xF & frame[pos + 7])<<2) | ((0xC0 & frame[pos + 8])>>>6); 
-		Mode_extension = 0; 
-		Channel = dts_channels[Mode]; 
-		Copyright = 0; 
-		Original = 0; 
-		Size = ((1 & frame[pos + 4])<<6) | ((0xFC & frame[pos + 5])>>>2); 
-		Size = (Size + 1)<<5; 
-		Time_length = 90000.0 * Size / Sampling_frequency; 
-		Size = ((3 & frame[pos + 5])<<12) | ((0xFF & frame[pos + 6])<<4) | ((0xF0 & frame[pos + 7])>>>4); 
-		Size++;
-		Size_base = Size; 
+		setMode(((0xF & frame[pos + 7])<<2) | ((0xC0 & frame[pos + 8])>>>6)); 
+		setModeExtension(0); 
+		setChannel(dts_channels[getMode()]); 
+		setCopyright(0); 
+		setOriginal(0); 
+		setSize(((1 & frame[pos + 4])<<6) | ((0xFC & frame[pos + 5])>>>2)); 
+		setSize((getSize() + 1)<<5); 
+		setFrameTimeLength(90000.0 * getSize() / getSamplingFrequency()); 
+		setSize(((3 & frame[pos + 5])<<12) | ((0xFF & frame[pos + 6])<<4) | ((0xF0 & frame[pos + 7])>>>4)); 
+		setSize(getSize() + 1);
+		setSizeBase(getSize()); 
 
 		return 1; 
 	} 
@@ -125,36 +127,38 @@ public class AudioFormatDTS extends AudioFormat {
 	 */ 
 	public int parseNextHeader(byte[] frame, int pos)
 	{ 
-		if (frame[pos] != 0x7F || frame[pos + 1] != (byte)0xFE || frame[pos + 2] != (byte)0x80 || frame[pos + 3] != 1) 
+		if (frame[pos] != 0x7F || frame[pos + 1] != (byte)0xFE || frame[pos + 2] != (byte)0x80 || frame[pos + 3] != 1 ) 
 			return -1; 
-	 
-		nID = 0; 
-		nEmphasis = 0; 
-		nProtection_bit = 0 ^ 1; 
 	
-		if ((nSampling_frequency = dts_frequency_index[0xF & (frame[pos + 8]>>>2)]) < 1) 
+		setNextID(0); 
+		setNextEmphasis(0); 
+		setNextProtectionBit(0 ^ 1); 
+	
+		setNextSamplingFrequency(dts_frequency_index[0xF & (frame[pos + 8]>>>2)]);
+
+		if (getNextSamplingFrequency() < 1) 
 			return -4; 
 
-		nBitrate = dts_bitrate_index[((3 & frame[pos + 8])<<3) | (7 & (frame[pos + 9]>>>5))]; 
+		setNextBitrate(dts_bitrate_index[((3 & frame[pos + 8])<<3) | (7 & (frame[pos + 9]>>>5))]); 
 
-		if (nBitrate < 1) 
+		if (getNextBitrate() < 1) 
 			return -3; 
-
-		nLayer = 0; 
-		nPadding_bit = 0; 
-		nPrivate_bit = 0; 
 	
-		nMode = ((0xF & frame[pos + 7])<<2) | ((0xC0 & frame[pos + 8])>>>6); 
-		nMode_extension = 0; 
-		nChannel = dts_channels[nMode]; 
-		nCopyright = 0; 
-		nOriginal = 0; 
-		nSize = ((1 & frame[pos + 4])<<6) | ((0xFC & frame[pos + 5])>>>2); 
-		nSize = (nSize + 1)<<5; 
-		nTime_length = 90000.0 * nSize / nSampling_frequency; 
-		nSize = ((3 & frame[pos + 5])<<12) | ((0xFF & frame[pos + 6])<<4) | ((0xF0 & frame[pos + 7])>>>4);
-		nSize++;
-		nSize_base = nSize; 
+		setNextLayer(0); 
+		setNextPaddingBit(0); 
+		setNextPrivateBit(0); 
+	
+		setNextMode(((0xF & frame[pos + 7])<<2) | ((0xC0 & frame[pos + 8])>>>6)); 
+		setNextModeExtension(0); 
+		setNextChannel(dts_channels[getNextMode()]); 
+		setNextCopyright(0); 
+		setNextOriginal(0); 
+		setNextSize(((1 & frame[pos + 4])<<6) | ((0xFC & frame[pos + 5])>>>2)); 
+		setNextSize((getNextSize() + 1)<<5); 
+		setNextFrameTimeLength(90000.0 * getNextSize() / getNextSamplingFrequency()); 
+		setNextSize(((3 & frame[pos + 5])<<12) | ((0xFF & frame[pos + 6])<<4) | ((0xF0 & frame[pos + 7])>>>4)); 
+		setNextSize(getNextSize() + 1);
+		setNextSizeBase(getNextSize()); 
 
 		return 1; 
 	} 
@@ -164,25 +168,25 @@ public class AudioFormatDTS extends AudioFormat {
 	 */ 
 	public int compareHeader()
 	{ 
-		if (lID != ID) 
+		if (getLastID() != getID()) 
 			return 0x1; 
 
-		else if (lLayer != Layer) 
+		else if (getLastLayer() != getLayer()) 
 			return 0x2; 
 
-		else if (lSampling_frequency != Sampling_frequency) 
+		else if (getLastSamplingFrequency() != getSamplingFrequency()) 
 			return 0x4; 
 
-		else if (lBitrate != Bitrate) 
+		else if (getLastBitrate() != getBitrate()) 
 			return 0x8; 
 
-		else if (lMode != Mode) 
+		else if (getLastMode() != getMode()) 
 			return 0x10; 
 
-		else if (lMode_extension != Mode_extension) 
+		else if (getLastModeExtension() != getModeExtension()) 
 			return 0x20; 
 
-		else if (lSize != Size) 
+		else if (getLastSize() != getSize()) 
 			return 0x40; 
 
 		else 
@@ -194,7 +198,7 @@ public class AudioFormatDTS extends AudioFormat {
 	 */ 
 	public String displayHeader()
 	{ 
-		return ("DTS, " + dts_acmod[lMode] + "(" + dts_channels[lMode] + "), " + lSampling_frequency + "Hz, " + (lBitrate / 1000.0) + "kbps, " + lSize + "BpF"); 
+		return ("DTS, " + dts_acmod[getLastMode()] + "(" + dts_channels[getLastMode()] + "), " + getLastSamplingFrequency() + "Hz, " + (getLastBitrate() / 1000.0) + "kbps, " + getLastSize() + "BpF"); 
 	} 
 	//ROne18122003 
 

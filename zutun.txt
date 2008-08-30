@@ -370,9 +370,13 @@
 --192byte ts packet verarbeitung
 --mpa umbenennung korrigiert
 --m2s projectfile umbenennung korrigiert
+
+0.90.4.00b25:
+--fix: ac3 384 wird nicht als Stille genommen
+
+
+
 !-ac3 a/v sync problem
-
-
 
 !-pid in dateinamen - problem split - via FILE-ID
 !-dyn PMT ts-pid-wechseln folgen
@@ -382,7 +386,6 @@
 !!radix verschobene pakete
 !!parserliste/demuxlist vereinen, alle fileobjekte in einem pool
 !!ac3 2/0 128kbs wg vro hinzufügen, ac3 5.1 256, 320kb stille 
-!!ac3 384 wird nicht als Stille genommen, restart wenn 5.1 größer detektiert wird
 !!vro-vob timecode lese patch?
 !!multi-file-vob - pts offs nicht erkannt bei nächster cellid, manchmal
 !!multi-file-vob - fortlaufende pts nicht erkannt bei nächster cellid (nach einer erfoglten anpassung früher)

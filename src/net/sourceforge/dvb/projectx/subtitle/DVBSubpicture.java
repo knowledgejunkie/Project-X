@@ -972,6 +972,9 @@ public class DVBSubpicture extends Object {
 
 		int color = 0, color_model = IRD;
 
+if (x > 411)
+Common.setMessage("co " + color_index + " /x " + x + " /y " + y + " /w " + w + " /regionWidth " + region.getWidth() + " /fromix " + from_index + " /toix " + to_index);
+
 		color_index = mapColorIndex(color_index, depth, IRD);
 
 		if (clut.getModifyFlags() > 0 && (clut.getModifyFlags() & IRD) == 0) //remap if no alternative color def.

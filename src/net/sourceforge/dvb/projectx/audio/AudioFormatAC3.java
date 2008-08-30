@@ -1,7 +1,7 @@
 /*
  * @(#)AudioFormatAC3.java - parse Audioheaders, ac3
  *
- * Copyright (c) 2003-2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2003-2008 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -80,55 +80,58 @@ public class AudioFormatAC3 extends AudioFormat {
 		if ( !hasAC3Syncword(frame, pos)) 
 			return -1;
 	
-		ID = 0;
-		Emphasis = 0;
-		Private_bit = 0;
+		setID(0);
+		setEmphasis(0);
+		setPrivateBit(0);
+		setProtectionBit(0 ^ 1);
+		setSamplingFrequency(getAC3SamplingFrequency(frame, pos));
 
-		Protection_bit = 0 ^ 1;
-
-		if ((Sampling_frequency = getAC3SamplingFrequency(frame, pos)) < 1) 
+		if (getSamplingFrequency() < 1) 
 			return -4;
 
-		if ((Bitrate = getAC3Bitrate(frame, pos)) < 1) 
+		setBitrate(getAC3Bitrate(frame, pos)); 
+
+		if (getBitrate() < 1) 
 			return -3;
 	
-		Layer = getAC3Bsmod(frame, pos);       //bsmod
-		Padding_bit = 1 & frame[pos + 4];
-		Mode = getAC3Mode(frame, pos);
-		Mode_extension = 0;
+		setLayer(getAC3Bsmod(frame, pos));       //bsmod
+		setPaddingBit(1 & frame[pos + 4]);
+		setMode(getAC3Mode(frame, pos));
+		setModeExtension(0);
 	
 		int mode = (0xFF & frame[pos + 6])<<8 | (0xFF & frame[pos + 7]);
 		int skip=0;
 
-		if ((Mode & 1) > 0 && Mode != 1)  // cmix
+		if ((getMode() & 1) > 0 && getMode() != 1)  // cmix
 		{
-			Emphasis = 1 + (3 & frame[pos + 6]>>>3);
+			setEmphasis(1 + (3 & frame[pos + 6]>>>3));
 			skip++;
 		}
 
-		if ((Mode & 4) > 0) //surmix
+		if ((getMode() & 4) > 0) //surmix
 		{
-			Private_bit = 1 + (3 & frame[pos + 6]>>>(skip > 0 ? 1 : 3));
+			setPrivateBit(1 + (3 & frame[pos + 6]>>>(skip > 0 ? 1 : 3)));
 			skip++;
 		}
 
-		if (Mode == 2)
+		if (getMode() == 2)
 		{
-	        Mode_extension |= 6 & mode>>>(10 - (2 * skip));  //DS
+	        setModeExtension(getModeExtension() | (6 & mode>>>(10 - (2 * skip))));  //DS
 			skip++;
 		}
 
 		if (skip < 4)
 		{
-	        Mode_extension |= 1 & mode>>>(12 - (2 * skip)); //lfe
-			Original = 0x1F & mode>>>(7 - (2 * skip)); //dialnorm
+	        setModeExtension(getModeExtension() | (1 & mode>>>(12 - (2 * skip)))); //lfe
+			setOriginal(0x1F & mode>>>(7 - (2 * skip))); //dialnorm
 		}
 
-		Channel = ac3_channels[Mode] + (1 & Mode_extension);
-		Copyright = 0;
-		Time_length = 138240000.0 / Sampling_frequency;
-		Size_base = ac3_size_table[3 & frame[pos + 4]>>>6][0x1F & frame[pos + 4]>>>1];
-		Size = Sampling_frequency == ac3_frequency_index[1] ? Size_base + (Padding_bit * 2) : Size_base;
+		setChannel(ac3_channels[getMode()] + (1 & getModeExtension()));
+		setCopyright(0);
+
+		setFrameTimeLength(138240000.0 / getSamplingFrequency());
+		setSizeBase(ac3_size_table[3 & frame[pos + 4]>>>6][0x1F & frame[pos + 4]>>>1]);
+		setSize(getSamplingFrequency() == ac3_frequency_index[1] ? getSizeBase() + (getPaddingBit() * 2) : getSizeBase());
 
 		return 1;
 	}
@@ -142,54 +145,59 @@ public class AudioFormatAC3 extends AudioFormat {
 		if ( !hasAC3Syncword(frame, pos)) 
 			return -1;
 	
-		nID = 0;
-		nEmphasis = 0;
-		nPrivate_bit = 0;
+		setNextID(0);
+		setNextEmphasis(0);
+		setNextPrivateBit(0);
+		setNextProtectionBit(0 ^ 1);
 
-		nProtection_bit = 0 ^ 1;
-	
-		if ( (nSampling_frequency = getAC3SamplingFrequency(frame, pos)) < 1) 
+		setNextSamplingFrequency(getAC3SamplingFrequency(frame, pos));
+
+		if (getNextSamplingFrequency() < 1) 
 			return -4;
-	
-		if ( (nBitrate = getAC3Bitrate(frame, pos)) < 1) 
+
+		setNextBitrate(getAC3Bitrate(frame, pos)); 
+
+		if (getNextBitrate() < 1) 
 			return -3;
 	
-		nLayer = getAC3Bsmod(frame, pos);       //bsmod
-		nPadding_bit = 1 & frame[pos+4];
-		nMode = getAC3Mode(frame, pos);
-
-		int mode = (0xFF & frame[pos+6])<<8 | (0xFF & frame[pos+7]);
+		setNextLayer(getAC3Bsmod(frame, pos));       //bsmod
+		setNextPaddingBit(1 & frame[pos + 4]);
+		setNextMode(getAC3Mode(frame, pos));
+		setNextModeExtension(0);
+//
+		int mode = (0xFF & frame[pos + 6])<<8 | (0xFF & frame[pos + 7]);
 		int skip=0;
-	
-		if ( (nMode & 1) > 0 && nMode != 1)
-		{  //cmix
-			nEmphasis = 1 + (3 & frame[pos+6]>>>3);
+
+		if ((getNextMode() & 1) > 0 && getNextMode() != 1)  // cmix
+		{
+			setNextEmphasis(1 + (3 & frame[pos + 6]>>>3));
 			skip++;
 		}
 
-		if ( (nMode & 4) > 0)
-		{  //surmix
-			nPrivate_bit = 1 + (3 & frame[pos+6]>>>(skip > 0 ? 1 : 3));
+		if ((getNextMode() & 4) > 0) //surmix
+		{
+			setNextPrivateBit(1 + (3 & frame[pos + 6]>>>(skip > 0 ? 1 : 3)));
 			skip++;
 		}
-	
-		if ( nMode == 2 )
-		{  //DS mode
-		        nMode_extension |= 6 & mode>>>(10 - (2 * skip));  //DS
+
+		if (getNextMode() == 2)
+		{
+	        setNextModeExtension(getNextModeExtension() | (6 & mode>>>(10 - (2 * skip))));  //DS
 			skip++;
 		}
 
 		if (skip < 4)
 		{
-		        nMode_extension |= 1 & mode>>>(12 - (2 * skip)); //lfe
-			nOriginal = 0x1F & mode>>>(7 - (2 * skip)); //dialnorm
+	        setNextModeExtension(getNextModeExtension() | (1 & mode>>>(12 - (2 * skip)))); //lfe
+			setNextOriginal(0x1F & mode>>>(7 - (2 * skip))); //dialnorm
 		}
-	
-		nChannel = ac3_channels[nMode] + (1 & nMode_extension);
-		nCopyright = 0;
-		nTime_length = 138240000.0 / nSampling_frequency;
-		nSize_base = ac3_size_table[3 & frame[pos + 4]>>>6][0x1F & frame[pos + 4]>>>1];
-		nSize = nSampling_frequency == ac3_frequency_index[1] ? nSize_base + (nPadding_bit * 2) : nSize_base;
+
+		setNextChannel(ac3_channels[getNextMode()] + (1 & getNextModeExtension()));
+		setNextCopyright(0);
+
+		setNextFrameTimeLength(138240000.0 / getNextSamplingFrequency());
+		setNextSizeBase(ac3_size_table[3 & frame[pos + 4]>>>6][0x1F & frame[pos + 4]>>>1]);
+		setNextSize(getNextSamplingFrequency() == ac3_frequency_index[1] ? getNextSizeBase() + (getNextPaddingBit() * 2) : getNextSizeBase());
 
 		return 1;
 	}
@@ -242,28 +250,28 @@ public class AudioFormatAC3 extends AudioFormat {
 	 */
 	public int compareHeader()
 	{
-		if (lID != ID)
+		if (getLastID() != getID())
 			return 0x1;
 
-		else if (lLayer != Layer)
+		else if (getLastLayer() != getLayer())
 			return 0x2;
 
-		else if (lSampling_frequency != Sampling_frequency) 
+		else if (getLastSamplingFrequency() != getSamplingFrequency()) 
 			return 0x4;
 
-		else if (lBitrate != Bitrate) 
+		else if (getLastBitrate() != getBitrate()) 
 			return 0x8;
 
-		else if (lMode != Mode)
+		else if (getLastMode() != getMode())
 			return 0x10;
 
-		else if (lMode_extension != Mode_extension)
+		else if (getLastModeExtension() != getModeExtension())
 			return 0x20;
 
-		else if (lOriginal != Original)
+		else if (getLastOriginal() != getOriginal())
 			return 0x40;
 
-		else if (lEmphasis != Emphasis)
+		else if (getLastEmphasis() != getEmphasis())
 			return 0x80;
 
 		else 
@@ -275,21 +283,21 @@ public class AudioFormatAC3 extends AudioFormat {
 	 */
 	public String displayHeader()
 	{
-		return ("AC-3" + bsmod[lLayer] + 
+		return ("AC-3" + bsmod[getLastLayer()] + 
 			", " + 
-			acmod[lMode] + 
-			lfe[1][1 & lMode_extension] + 
+			acmod[getLastMode()] + 
+			lfe[1][1 & getLastModeExtension()] + 
 			"(" + 
-			ac3_channels[lMode] + 
-			lfe[0][1 & lMode_extension] + 
+			ac3_channels[getLastMode()] + 
+			lfe[0][1 & getLastModeExtension()] + 
 			")" + 
-			", dn -" + lOriginal + "dB" +
-			dsurmod[lMode_extension>>>1] + 
-			cmixlev[lEmphasis] + 
-			surmixlev[lPrivate_bit] + 
+			", dn -" + getLastOriginal() + "dB" +
+			dsurmod[getLastModeExtension()>>>1] + 
+			cmixlev[getLastEmphasis()] + 
+			surmixlev[getLastPrivateBit()] + 
 			", " + 
-			lSampling_frequency + "Hz, " + 
-			(lBitrate / 1000) + "kbps");
+			getLastSamplingFrequency() + "Hz, " + 
+			(getLastBitrate() / 1000) + "kbps");
 	}
 
 	/**
