@@ -373,6 +373,8 @@
 
 0.90.4.00b25:
 --fix: ac3 384 wird nicht als Stille genommen
+--integer idct (by dukios), auch ohne dll etwas schneller
+--gui -infofelder umgesetzt, hauptfenster verkleinert
 
 
 
@@ -380,7 +382,7 @@
 
 !-pid in dateinamen - problem split - via FILE-ID
 !-dyn PMT ts-pid-wechseln folgen
-!-AAC audio (roh)
+!-AAC audio (roh) ohne funktion
 !-genauere scanzuordnung - angefangen
 
 !!radix verschobene pakete

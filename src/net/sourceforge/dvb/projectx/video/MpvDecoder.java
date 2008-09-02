@@ -103,6 +103,7 @@ public class MpvDecoder extends Object {
 	private boolean ERROR2 = false;
 	private boolean ERROR3 = false;
 	private boolean ERROR4 = false;
+	private boolean ERROR5 = false;
 	private boolean viewGOP = true;
 
 	private String info_4 = "";
@@ -110,11 +111,19 @@ public class MpvDecoder extends Object {
 	private String info_2 = "";
 	private String info_1 = "";
 
+	private String[] mpg_info = new String[18];
+
 	private String processedPidAndFile = Resource.getString("CollectionPanel.Preview.offline");
 	private ArrayList PositionList = new ArrayList();
 
 	private byte[] buf = new byte[0];
 
+	/**
+	 * integer matrix by dukios
+	 */
+//
+	static int ref_dct_matrix_i[] = new int[64];
+//
 	/**
 	 *
 	 */
@@ -258,11 +267,12 @@ final String progressive_string[] = {
 };
 
 final String aspect_ratio_string[] = {
-	"bad","(1:1)","(4:3)","(16:9)","(2.21:1)","(0.8055)","(0.8437)","(0.9375)","(0.9815)","(1.0255)","(1.0695)","(1.1250)","(1.1575)","(1.2015)"
+	"bad","1:1","4:3","16:9","2.21:1","0.8055","0.8437","0.9375","0.9815","1.0255","1.0695","1.1250","1.1575","1.2015"
 };
 
 /* cosine transform matrix for 8x1 IDCT */
-final float ref_dct_matrix[][] = {
+//final float ref_dct_matrix[][] = {
+final static float ref_dct_matrix[][] = {
 	{    // [0][0-7]
 		 3.5355339059327379e-001f,  3.5355339059327379e-001f,
 		 3.5355339059327379e-001f,  3.5355339059327379e-001f,
@@ -306,6 +316,18 @@ final float ref_dct_matrix[][] = {
 	},
 };
 
+/**/
+//dukios
+	static {
+		for(int i = 0; i < 8; i++)
+		{
+			for(int j = 0; j < 8; j++)
+			{
+				ref_dct_matrix_i[i * 8 + j] = Math.round(ref_dct_matrix[i][j] * 65536.0f);
+			}
+		}
+	}
+/**/
 
 final short idct_clip_table[] = {
 	-256,-256,-256,-256,-256,-256,-256,-256,
@@ -961,7 +983,8 @@ public int extern_Get_Hdr() {
 				return 1;
 			}
 
-		} else if (viewGOP && start_code==GROUP_START_CODE){
+		}
+		else if (viewGOP && start_code==GROUP_START_CODE){
 			StartPos=BufferPos-4;
 			group_of_pictures_header();
 			next_start_code();
@@ -970,8 +993,13 @@ public int extern_Get_Hdr() {
 				return 1;
 			}
 		}
+
+		else if (!viewGOP && start_code==GROUP_START_CODE){
+			ERROR5 = true;
+		}
 		//else if (start_code==SEQUENCE_END_CODE)
 		//	return 2;
+
 		else if (DIRECTION) 
 			Flush_Bits(-40);
 	}
@@ -1040,16 +1068,14 @@ private void sequence_header(){
 	vbv_buffer_size             = Get_Bits(10);
 	constrained_parameters_flag = Get_Bits(1);
 
-	//DM05072004 081.7 int06 changed
-	info_4 = " ";
+	mpg_info[6] = "Matrix:";
 
 	if ((load_intra_quantizer_matrix = Get_Bits(1))>0)
 	{
 		for (i=0; i<64; i++)
 			intra_quantizer_matrix[scan[ZIG_ZAG][i]] = Get_Bits(8);
 
-		//DM05072004 081.7 int06 add
-		info_4 += ",iqm";
+		mpg_info[6] += " iqm";
 	}
 	else
 	{
@@ -1061,13 +1087,16 @@ private void sequence_header(){
 		for (i=0; i<64; i++)
 			non_intra_quantizer_matrix[scan[ZIG_ZAG][i]] = Get_Bits(8);
 
-		//DM05072004 081.7 int06 add
-		info_4 += ",niqm";
+		mpg_info[6] += " niqm";
 	}
 	else
 	{
 		Arrays.fill(non_intra_quantizer_matrix,16);
 	}
+
+	if (mpg_info[6].equals("Matrix:"))
+		mpg_info[6] = "Matrix: default";
+
 
 	/* copy luminance to chrominance matrices */
 	System.arraycopy(intra_quantizer_matrix,0,chroma_intra_quantizer_matrix,0,64);
@@ -1077,7 +1106,8 @@ private void sequence_header(){
 
 	extension_and_user_data();
 
-	info_3 = ", " + (bit_rate_value * 400) + "bps, vbv " + vbv_buffer_size + (constrained_parameters_flag > 0 ? ", cpf" : "");
+	mpg_info[2] = String.valueOf(bit_rate_value * 400) + " bps";
+	mpg_info[2] += " - vbv " + vbv_buffer_size + (constrained_parameters_flag > 0 ? ", cpf" : "");
 
 	Common.setLastPreviewBitrate(bit_rate_value * 400);
 }
@@ -1142,7 +1172,8 @@ private void extension_and_user_data(){
 			}
 			next_start_code();
 		}else{
-			info_4 += ", user_data"; //DM06052004 081.7 int02 add
+			mpg_info[17] = "user_data";
+
 			Flush_Bits(32);	// ISO/IEC 13818-2  sections 6.3.4.1 and 6.2.2.2.2
 			next_start_code();	// skip user data
 		}
@@ -1207,7 +1238,7 @@ private void sequence_extension(){
 	horizontal_size = (horizontal_size_extension<<12) | (horizontal_size&0xfff);
 	vertical_size = (vertical_size_extension<<12) | (vertical_size&0xfff);
 
-	info_4 += ", ld=" + low_delay; //DM26052004 081.7 int03 add
+	info_4 = " ld=" + low_delay; //DM26052004 081.7 int03 add
 }
 
 /* decode sequence display extension */
@@ -1232,9 +1263,7 @@ private void sequence_display_extension(){
 	Flush_Bits(1);	// marker bit
 	display_vertical_size   = Get_Bits(14);
 
-	//DM06052004 081.7 int02 add
-	//DM26052004 081.7 int03 changed
-	info_4 += ", SDE: " + display_horizontal_size + "*" + display_vertical_size;
+	info_3 = " / " + display_horizontal_size + " * " + display_vertical_size;
 }
 
 /* decode quant matrix entension */
@@ -1295,6 +1324,8 @@ private void picture_display_extension(){
 		}
 	}
 
+	mpg_info[15] = "Offs.: ";
+
 	/* now parse */
 	for (i=0; i<number_of_frame_center_offsets; i++){
 		frame_center_horizontal_offset[i] = Get_Bits(16);
@@ -1303,8 +1334,7 @@ private void picture_display_extension(){
 		frame_center_vertical_offset[i] = Get_Bits(16);
 		Flush_Bits(1);	// marker bit
 
-		//DM24062004 081.7 int05 add
-		info_3 += ", (" + frame_center_horizontal_offset[i] + "," + frame_center_vertical_offset[i] + ")";
+		mpg_info[15] += "(" + frame_center_horizontal_offset[i] + "," + frame_center_vertical_offset[i] + ")";
 	}
 }
 
@@ -1336,6 +1366,8 @@ private void picture_coding_extension(){
 	progressive_frame		= Get_Bits(1);
 	composite_display_flag		= Get_Bits(1);
 
+	mpg_info[13] = "iDC-Prec: " + (intra_dc_precision + 8);
+
 	if (composite_display_flag>0){
 		v_axis            = Get_Bits(1);
 		field_sequence    = Get_Bits(3);
@@ -1343,8 +1375,7 @@ private void picture_coding_extension(){
 		burst_amplitude   = Get_Bits(7);
 		sub_carrier_phase = Get_Bits(8);
 
-		//DM29082004 081.7 int10 add
-		info_3 += ", cdf";
+		mpg_info[13] += " / cdf";
 	}
 }
 
@@ -1428,10 +1459,10 @@ public void Decode_Picture(){
 	}
 
 	//moved
-	String SH[] = { "G","S" };
+	String SH[] = { "GOP","Sequence" };
 	String cf[] = { "res.","4:2:0","4:2:2","4:4:4" };
 	String fieldorder[] = {"bff","tff"}; //<==TheHorse 221003
-	String picture_struc[] = {"-","T","B","F"}; //DM08022004 081.6 int16 add
+	String picture_struc[] = {"-","Top","Bottom","Frame"}; //DM08022004 081.6 int16 add
 
 	//DM26022004 081.6 int18 changed
 	//DM06052004 081.7 int02 changed
@@ -1443,6 +1474,15 @@ public void Decode_Picture(){
 	info_2 += ", " + ((progressive_sequence==0) ? fieldorder[top_field_first] : "-") + " "; //<==TheHorse 221003 
 	info_2 += ", " + cf[chroma_format];
 	info_2 += info_3;
+
+	mpg_info[4] = "Chroma " + cf[chroma_format];
+	mpg_info[8] = "Main Header: " + SH[SequenceHeader];
+	mpg_info[9] = Common.adaptString(gop_hour, 2) + ":" + Common.adaptString(gop_minute, 2) + ":" + Common.adaptString(gop_sec, 2) + ":" + Common.adaptString(gop_frame, 2);
+	mpg_info[9] += "   " + drop_flag + "/" + closed_gop + "/" + broken_link;
+	mpg_info[12] = "Pic.Struct.: " + picture_struc[picture_structure];
+
+	if (profile_and_level_indication != 0)
+		mpg_info[13] += " / " + ((progressive_sequence==0) ? fieldorder[top_field_first] : "-");
 
 	SequenceHeader=0;
 	Update_Picture_Buffers();
@@ -2274,7 +2314,12 @@ public void motion_compensation(int MBA[], int macroblock_type[], int motion_typ
 		for (comp=0; comp<block_count; comp++)
 		{
 			/* ISO/IEC 13818-2 section Annex A: inverse DCT */
-			IDCT_reference(block[comp], FAST ? 1 : 8);
+			if (FAST)
+				IDCT_referenceFAST(block[comp]);
+			else
+				IDCT_reference1(block[comp]);
+
+		//	IDCT_reference(block[comp], FAST ? 1 : 8);
 
 			/* ISO/IEC 13818-2 section 7.6.8: Adding prediction and coefficient data */
 			Add_Block(comp, bx, by, dct_type, (macroblock_type[0] & MACROBLOCK_INTRA)==0);
@@ -2332,6 +2377,7 @@ public void motion_compensation(int MBA[], int macroblock_type[], int motion_typ
 			Arrays.fill(block, block[0]);
 	}
 
+//dukios
 	/**
 	 * integer matrix by dukios
 	 *
@@ -2345,8 +2391,10 @@ public void motion_compensation(int MBA[], int macroblock_type[], int motion_typ
 			}
 		}
 	}
-
-	public void IDCT_referenceFAST(short block[]){
+	**/
+/**/
+	public void IDCT_referenceFAST(short block[])
+	{
 		int i, j, k, v;
 
 		long tmp0  = ref_dct_matrix_i[0] * block[0];	
@@ -2358,14 +2406,15 @@ public void motion_compensation(int MBA[], int macroblock_type[], int motion_typ
 		Arrays.fill(block,block[0]);
 	}
 
-
-	
-	public void IDCT_reference(short block[]){
+	public void IDCT_reference1(short block[])
+	{
 		int i, j, k, v;
 
 		long tmp[] = new long[64];
 
 		int i8 = 0;
+
+		try{
 		for (i = 0; i < 8; i++)
 		{
 			for (j = 0; j < 8; j++)
@@ -2403,8 +2452,14 @@ public void motion_compensation(int MBA[], int macroblock_type[], int motion_typ
 				block[8 * i + j] = idct_clip_table[IDCT_CLIP_TABLE_OFFSET + v];
 			}
 		}
+		} catch (Exception e) {
+			//Common.setExceptionMessage(e);
+		}
+
 	}
-	**/
+/**/
+//dukios end
+
 
 /* move/add 8x8-Block from block[comp] to backward_reference_frame */
 /* copy reconstructed 8x8 block from block[comp] to current_frame[]
@@ -2748,14 +2803,14 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	 */
 	private void scale_Picture()
 	{
-		scale_Picture(false);
+		scale_Picture(0);
 	}
 
 	/**
 	 * scales source picture to 2nd picture of memoryimagesource
 	 * includes YUV to RGB conversion
 	 */
-	private void scale_Picture(boolean silent)
+	private void scale_Picture(int silent)
 	{
 		Arrays.fill(pixels2, 0xFF505050);
 
@@ -2822,8 +2877,14 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 		}
 
 		//file props preview
-		if (silent)
+		if (silent == 1)
 			return;
+
+		if (silent == 2)
+		{
+			Common.getGuiInterface().updatePreviewPixel();
+			return;
+		}
 
 		Common.getGuiInterface().updatePreviewPixel();
 
@@ -2854,6 +2915,19 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 			prof[7 & profile_and_level_indication>>>4] + "@" + lev[15 & profile_and_level_indication]);
 		info_1 += "(" + Coded_Picture_Width + "*" + Coded_Picture_Height + ") ";
 		info_1 += info_4;
+
+		mpg_info[1] = horizontal_size + " * " + vertical_size + prog[progressive_sequence];
+		mpg_info[1] += " @ " + String.valueOf((Math.round(frame_rate * 1000) / 1000.0f)) + " fps ";
+		mpg_info[3] = "DAR(PAR):  " + aspect_ratio_string[aspect_ratio_information];
+		mpg_info[0] = (profile_and_level_indication == 0 ? "MPEG-1" : "MPEG-2  " + prof[7 & profile_and_level_indication>>>4] + "@" + lev[15 & profile_and_level_indication]) + " " + (1 & profile_and_level_indication>>>7);
+
+		if (profile_and_level_indication != 0)
+			mpg_info[0] += info_4;
+
+		mpg_info[5] = "SDE: " + video_format_S[video_format];
+		mpg_info[5] += info_3;
+		mpg_info[11] = "Pic.Type:  " + picture_coding_type_string[picture_coding_type] + "-" + progressive_string[progressive_frame] + "   t.Ref.: " + temporal_reference;
+		mpg_info[14] = "encod.Pixel: " + Coded_Picture_Width + " * " + Coded_Picture_Height;
 	}
 
 	/**
@@ -2879,6 +2953,10 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	{
 		info_1 = "";
 		info_2 = "";
+		info_3 = "";
+		info_4 = "";
+
+		Arrays.fill(mpg_info, "");
 
 		Arrays.fill(pixels2, 0xFF505050);
 
@@ -2935,6 +3013,14 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	public String getInfo_2()
 	{
 		return info_2;
+	}
+
+	/**
+	 * 
+	 */
+	public String[] getMpgInfo()
+	{
+		return mpg_info;
 	}
 
 	/**
@@ -3054,7 +3140,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	 */
 	public int getErrors()
 	{
-		return (0 | (ERROR1 ? 1 : 0) | (ERROR2 ? 2 : 0) | (ERROR3 ? 4 : 0) | (ERROR4 ? 8 : 0));
+		return (0 | (ERROR1 ? 1 : 0) | (ERROR2 ? 2 : 0) | (ERROR3 ? 4 : 0) | (ERROR4 ? 8 : 0) | (ERROR5 ? 16 : 0));
 	}
 
 	/**
@@ -3177,6 +3263,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 		ERROR2 = false;
 		ERROR3 = false;
 		ERROR4 = false;
+		ERROR5 = false;
 
 		buf = array;
 		BufferPos = start_position;
@@ -3205,7 +3292,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 					}
 					InitialDecoder();
 					Decode_Picture();
-					scale_Picture(silent);
+					scale_Picture(silent ? 1 : 0);
 
 					return StartPos;
 				}
@@ -3232,7 +3319,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 			if (checkH264(buf, buf.length))
 				ERROR4 = true;
 
-		scale_Picture(silent);
+		scale_Picture(ERROR4 ? 2 : 1);
 
 		return 0;
 	}
@@ -3291,6 +3378,11 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 			flag = getBits(check, BitPosition, 1); //frame_mbs_only_flag 0 u(1)
 
 			info_2 = "MPEG-4/H.264, " + hori + "*" + (flag == 0 ? vert<<1 : vert);
+
+			Arrays.fill(mpg_info, "");
+
+			mpg_info[1] = "" + hori + " * " + (flag == 0 ? vert<<1 : vert);
+			mpg_info[0] = "MPEG-4/AVC/H.264";
 
 			return true;
 		} 

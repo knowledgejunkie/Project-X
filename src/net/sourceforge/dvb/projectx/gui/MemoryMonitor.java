@@ -67,17 +67,17 @@ public class MemoryMonitor extends JPanel {
         Font font = new Font("serif", Font.PLAIN, 10);
         JLabel label;
         tf = new JTextField("1000");
-        tf.setPreferredSize(new Dimension(40,20));
+        tf.setPreferredSize(new Dimension(40,14));
         controls.add(tf);
         controls.add(label = new JLabel("ms"));
 
         box = new JCheckBox("call gc()");
-        box.setPreferredSize(new Dimension(80,20));
+        box.setPreferredSize(new Dimension(80,14));
         box.setSelected(true);
         controls.add(box);
 
-        controls.setPreferredSize(new Dimension(100, 80));
-        controls.setMaximumSize(new Dimension(100, 80));
+        controls.setPreferredSize(new Dimension(100, 36));
+        controls.setMaximumSize(new Dimension(100, 36));
         label.setFont(font);
         label.setForeground(Color.black);
         addMouseListener(new MouseAdapter() {
@@ -151,7 +151,7 @@ public class MemoryMonitor extends JPanel {
         }
 
         public Dimension getPreferredSize() {
-            return new Dimension(100, 80);
+            return new Dimension(100, 36);
         }
 
             
@@ -170,111 +170,25 @@ public class MemoryMonitor extends JPanel {
             // .. Draw allocated and used strings ..
             big.setColor(Color.green);
             big.drawString(String.valueOf((int) totalMemory/1024) + "K allocated",  4.0f, (float) ascent+0.5f);
-            usedStr = String.valueOf(((int) (totalMemory - freeMemory))/1024) 
-                + "K used";
-            big.drawString(usedStr, 4, h-descent);
 
-            // Calculate remaining size
-            float ssH = ascent + descent;
-            float remainingHeight = (float) (h - (ssH*2) - 0.5f);
-            float blockHeight = remainingHeight/10;
-            float blockWidth = 20.0f;
-            float remainingWidth = (float) (w - blockWidth - 10);
+            usedStr = String.valueOf(((int) (totalMemory - freeMemory))/1024) + "K used";
+            big.drawString(usedStr, 4, 0.5f + ascent * 2);
 
-            // .. Memory Free ..
-            big.setColor(mfColor);
-            int MemUsage = (int) ((freeMemory / totalMemory) * 10);
-            int i = 0;
-            for ( ; i < MemUsage ; i++) { 
-                mfRect.setRect(5,(float) ssH+i*blockHeight,
-                                blockWidth,(float) blockHeight-1);
-                big.fill(mfRect);
-            }
+			float maxmem = 82;
+			float usedmem = ((totalMemory - freeMemory) * maxmem) / totalMemory;
 
             // .. Memory Used ..
-            big.setColor(Color.green);
-            for ( ; i < 10; i++)  {
-                muRect.setRect(5,(float) ssH+i*blockHeight,
-                                blockWidth,(float) blockHeight-1);
-                big.fill(muRect);
-            }
+            big.drawRect(4, h - 10, (int)maxmem, 6);
 
-            // .. Draw History Graph ..
-            big.setColor(graphColor);
-            int graphX = 30;
-            int graphY = (int) ssH;
-            int graphW = w - graphX - 5;
-            int graphH = (int) remainingHeight;
-            graphOutlineRect.setRect(graphX, graphY, graphW, graphH);
-            big.draw(graphOutlineRect);
-
-            int graphRow = graphH/10;
-
-            // .. Draw row ..
-            for (int j = graphY; j <= graphH+graphY; j += graphRow) {
-                graphLine.setLine(graphX,j,graphX+graphW,j);
-                big.draw(graphLine);
-            }
-        
-            // .. Draw animated column movement ..
-            int graphColumn = graphW/15;
-
-            if (columnInc == 0) {
-                columnInc = graphColumn;
-            }
-
-            for (int j = graphX+columnInc; j < graphW+graphX; j+=graphColumn) {
-                graphLine.setLine(j,graphY,j,graphY+graphH);
-                big.draw(graphLine);
-            }
-
-            --columnInc;
-
-            if (pts == null) {
-                pts = new int[graphW];
-                ptNum = 0;
-            } else if (pts.length != graphW) {
-                int tmp[] = null;
-                if (ptNum < graphW) {     
-                    tmp = new int[ptNum];
-                    System.arraycopy(pts, 0, tmp, 0, tmp.length);
-                } else {        
-                    tmp = new int[graphW];
-                    System.arraycopy(pts, pts.length-tmp.length, tmp, 0, tmp.length);
-                    ptNum = tmp.length - 2;
-                }
-                pts = new int[graphW];
-                System.arraycopy(tmp, 0, pts, 0, tmp.length);
-            } else {
-                big.setColor(Color.yellow);
-                pts[ptNum] = (int)(graphY+graphH*(freeMemory/totalMemory));
-                for (int j=graphX+graphW-ptNum, k=0;k < ptNum; k++, j++) {
-                    if (k != 0) {
-                        if (pts[k] != pts[k-1]) {
-                            big.drawLine(j-1, pts[k-1], j, pts[k]);
-                        } else {
-                            big.fillRect(j, pts[k], 1, 1);
-                        }
-                    }
-                }
-                if (ptNum+2 == pts.length) {
-                    // throw out oldest point
-                    for (int j = 1;j < ptNum; j++) {
-                        pts[j-1] = pts[j];
-                    }
-                    --ptNum;
-                } else {
-                    ptNum++;
-                }
-            }
+            big.setColor(new Color(0, 150, 0));
+			big.fillRect(5, h - 9, (int)usedmem - 2, 5);
 
 			if (gc_counter > 4)
 			{
-				//if (!Common.isRunningProcess() && thread != null && box.isSelected() && freeMemory < 2048000L)
 				if (thread != null && box.isSelected() && freeMemory < 2048000L)
 				{
 					big.setColor(Color.red);
-					big.fillRect(84, h - descent - 6, 4, 4);
+					big.fillRect(90, h - 9, 4, 4);
 
 					System.gc();
 				}

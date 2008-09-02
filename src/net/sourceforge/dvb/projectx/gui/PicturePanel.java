@@ -1,7 +1,7 @@
 /*
  * @(#)PicturePanel
  * 
- * Copyright (c) 2003-2007 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2003-2008 by dvb.matt, All Rights Reserved. 
  *
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -472,9 +472,9 @@ public class PicturePanel extends JPanel {
 		scanSlider.setMinorTickSpacing(1);
 		scanSlider.setPaintTicks(true);
 		scanSlider.setValue(50);
-		scanSlider.setPreferredSize(new Dimension(30, 400));
-		scanSlider.setMaximumSize(new Dimension(30, 400));
-		scanSlider.setMinimumSize(new Dimension(30, 400));
+		scanSlider.setPreferredSize(new Dimension(30, 356));
+		scanSlider.setMaximumSize(new Dimension(30, 356));
+		scanSlider.setMinimumSize(new Dimension(30, 356));
 
 		panel.add(scanSlider);
 
@@ -519,8 +519,8 @@ public class PicturePanel extends JPanel {
 		paintMatrixPreviewPicture(g);
 
 		paintZoomInfo(g);
-		paintVideoInfo(g);
 		paintSlideBackground(g);
+		paintVideoInfo(g);
 		paintWSSInfo(g);
 		paintErrorInfo(g);
 		paintPlayInfo(g);
@@ -638,8 +638,12 @@ public class PicturePanel extends JPanel {
 	{
 		g.setFont(font_1);
 		g.setColor(Color.white);
-		g.drawString(Common.getMpvDecoderClass().getInfo_1(), 36, 303);
-		g.drawString(Common.getMpvDecoderClass().getInfo_2(), 36, 317);
+
+		String[] mpg_info = Common.getMpvDecoderClass().getMpgInfo();
+
+		for (int i = 0, x = 522, y = 18; i < mpg_info.length - 1; i++, y += 14)
+			if (mpg_info[i] !=null)
+				g.drawString(mpg_info[i], x, y);
 	}
 
 	/**
@@ -723,33 +727,39 @@ public class PicturePanel extends JPanel {
 	 */
 	private void paintPlayInfo(Graphics g)
 	{
-		int x[] = { 10, 10, 30 };
-		int y[] = { 294, 314, 304 };
+		int x[] = { 522, 522, 542 };
+		int y[] = { 308, 328, 318 };
 
-		if (PLAY)
+		if (isFilterActive && PLAY)
+		{
+			g.setColor(Color.yellow);
+			g.drawString("Export Filter Mismatch !", 546, 322);
+
+			g.fillRect(522, 308, 8, 20);
+			g.fillRect(534, 308, 8, 20);
+
+			//yellow border around pic
+			g.drawRect(0, 0, 513, 289);
+			g.drawRect(1, 1, 511, 287);
+		}
+
+		else if (PLAY)
 		{
 			g.setColor(Color.green);
 			g.fillPolygon(x, y, 3);
+			g.drawString("Inside Export Range", 546, 322);
 		}
 
 		else
 		{
 			g.setColor(Color.red);
-			g.fillRect(10, 294, 20, 20);
+			g.fillRect(522, 308, 20, 20);
+			g.drawString("Outside Export Range", 546, 322);
 
 			//red border around pic
 			g.drawRect(0, 0, 513, 289);
 			g.drawRect(1, 1, 511, 287);
 		}
-
-		if (!isFilterActive)
-			return;
-
-		g.setColor(Color.yellow);
-		g.drawString("active export filter !", 522, 18);
-		//red border around pic
-		g.drawRect(0, 0, 513, 289);
-		g.drawRect(1, 1, 511, 287);
 	}
 
 	/**
@@ -783,6 +793,14 @@ public class PicturePanel extends JPanel {
 			g.drawString("cannot find sequence header", 160, 163);
 		}
 
+		if ((ErrorFlag & 16) != 0)
+		{
+			g.setColor(Color.white);
+			g.fill3DRect(150, 150, 200, 20, true);
+			g.setColor(Color.red);
+			g.drawString("no Sequ. but GOP header found", 160, 163);
+		}
+
 		if ((ErrorFlag & 8) != 0)
 		{
 			g.setColor(Color.white);
@@ -800,7 +818,8 @@ public class PicturePanel extends JPanel {
 		if (cutfiles_length <= 0)
 			return;
 
-		int x1 = 10, y1 = 327, w1 = 492, h1 = 6;
+	//	int x1 = 10, y1 = 327, w1 = 492, h1 = 6;
+		int x1 = 10, y1 = 302, w1 = 492, h1 = 6;
 
 		g.setColor(new Color(0, 200, 0));
 		g.fillRect(x1, y1, w1, h1);
@@ -858,7 +877,9 @@ public class PicturePanel extends JPanel {
 	 */
 	private void paintPositionInfo(Graphics g)
 	{
-		int x1 = 10, y1 = 346, w1 = 492, h1 = 8;
+	//	int x1 = 10, y1 = 346, w1 = 492, h1 = 8;
+		int x1 = 10, y1 = 320, w1 = 492, h1 = 8;
+
 		List positions = Common.getMpvDecoderClass().getPositions();
 
 		/**
@@ -892,7 +913,21 @@ public class PicturePanel extends JPanel {
 
 		g.setFont(font_2);
 		g.setColor(Color.green);
-		g.drawString(Common.getMpvDecoderClass().getPidAndFileInfo(), 10, 370);
+	//	g.drawString(Common.getMpvDecoderClass().getPidAndFileInfo(), 522, 330);
+
+		String str = Common.getMpvDecoderClass().getPidAndFileInfo();
+		int sep1 = str.indexOf("-");
+		int sep2 = sep1;
+		if (sep1 < 0)
+			sep1 = sep2 = str.length();
+		else
+		{
+			sep1 -= 1;
+			sep2 += 2;
+		}
+
+		g.drawString(str.substring(0, sep1), 522, 302); //pid
+		g.drawString(str.substring(sep2), 522, 288); //file
 
 		//matrix
 		if (!isMatrixImageAvailable)
@@ -925,7 +960,8 @@ public class PicturePanel extends JPanel {
 		if (chapter_length <= 0)
 			return;
 
-		int x1 = 10, y1 = 327, w1 = 492, h1 = 6;
+	//	int x1 = 10, y1 = 327, w1 = 492, h1 = 6;
+		int x1 = 10, y1 = 302, w1 = 492, h1 = 6;
 
 		/**
 		 * paint chapter markers

@@ -182,7 +182,7 @@ public class Preview extends Object {
 		if (!silent)
 		{
 			Common.getMpvDecoderClass().setProcessedPosition(startposition, previewList);
-			Common.getMpvDecoderClass().setPidAndFileInfo(getProcessedPID() + " : " + getProcessedFile());
+			Common.getMpvDecoderClass().setPidAndFileInfo(getProcessedPID() + "   Part: " + getProcessedFile());
 			Common.getGuiInterface().repaintPicturePanel();
 		}
 

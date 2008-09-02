@@ -1,7 +1,7 @@
 /*
  * @(#)MainFrame.java - holds main gui
  *
- * Copyright (c) 2001-2007 by dvb.matt, All rights reserved.
+ * Copyright (c) 2001-2008 by dvb.matt, All rights reserved.
  *
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -2482,9 +2482,9 @@ public class MainFrame extends JPanel {
 		panel_1.add(buildProcessControlPanel());
 		panel_1.add(buildCollectionControlPanel());
 
-		panel_1.setPreferredSize(new Dimension(115, 406));
-		panel_1.setMaximumSize(new Dimension(115, 406));
-		panel_1.setMinimumSize(new Dimension(115, 406));
+		panel_1.setPreferredSize(new Dimension(115, 362));
+		panel_1.setMaximumSize(new Dimension(115, 362));
+		panel_1.setMinimumSize(new Dimension(115, 362));
 
 		/**
 		 *
@@ -2495,9 +2495,9 @@ public class MainFrame extends JPanel {
 		panel_2.add(panel_1, BorderLayout.WEST);
 		panel_2.add(collection_panel = new CollectionPanel(), BorderLayout.CENTER);
 
-		panel_2.setPreferredSize(new Dimension(860, 406));
-		panel_2.setMaximumSize(new Dimension(860, 406));
-		panel_2.setMinimumSize(new Dimension(860, 406));
+		panel_2.setPreferredSize(new Dimension(860, 362));
+		panel_2.setMaximumSize(new Dimension(860, 362));
+		panel_2.setMinimumSize(new Dimension(860, 362));
 
 		/**
 		 *
