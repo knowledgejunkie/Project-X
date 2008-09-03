@@ -995,6 +995,9 @@ public int extern_Get_Hdr() {
 		}
 
 		else if (!viewGOP && start_code==GROUP_START_CODE){
+			if (DIRECTION) 
+				Flush_Bits(-40);
+
 			ERROR5 = true;
 		}
 		//else if (start_code==SEQUENCE_END_CODE)
@@ -2867,6 +2870,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 		float Xdecimate = z_horizontal_size / (float) (nx - x_offset);
 		float Ydecimate = z_vertical_size / (float) preview_vertical_size;
 
+		//~50ms
 		for (int y = 0, tmp1, tmp2; Y < vertical_size && y < preview_vertical_size; Y += Ydecimate, y++, X = X_Off)
 		{
 			tmp1 = y * preview_horizontal_size;
@@ -2886,6 +2890,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 			return;
 		}
 
+		//~100ms
 		Common.getGuiInterface().updatePreviewPixel();
 
 		messageStreamInfo();

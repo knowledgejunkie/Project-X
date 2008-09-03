@@ -793,7 +793,7 @@ public class PicturePanel extends JPanel {
 			g.drawString("cannot find sequence header", 160, 163);
 		}
 
-		if ((ErrorFlag & 16) != 0)
+		if ((ErrorFlag & 0x13) > 0x10) //5 + 2 + 1
 		{
 			g.setColor(Color.white);
 			g.fill3DRect(150, 150, 200, 20, true);
