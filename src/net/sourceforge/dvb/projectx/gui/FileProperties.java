@@ -1,7 +1,7 @@
 /*
  * @(#)FileProperties.java
  *
- * Copyright (c) 2006-2007 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2006-2008 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -468,6 +468,7 @@ public class FileProperties extends JFrame {
 		case CommonParsing.MPEG2PS_TYPE:
 		case CommonParsing.PVA_TYPE:
 		case CommonParsing.TS_TYPE:
+		case CommonParsing.ES_MPV_TYPE:
 			long position = Preview.previewFile(inputfile, value, loadSizeForward, Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops), Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode), Common.getSettings().getIntProperty(Keys.KEY_Preview_YGain));
 			view.setImage(Common.getMpvDecoderClass().getScaledCutImage());
 			break;
@@ -477,7 +478,6 @@ public class FileProperties extends JFrame {
 			view.setImage("PES Audio");
 			break;
 
-		case CommonParsing.ES_MPV_TYPE:
 		case CommonParsing.ES_MPA_TYPE:
 		case CommonParsing.ES_AC3_TYPE:
 		case CommonParsing.ES_AC3_A_TYPE:
@@ -485,8 +485,11 @@ public class FileProperties extends JFrame {
 		case CommonParsing.ES_DTS_A_TYPE:
 		case CommonParsing.ES_RIFF_TYPE:
 		case CommonParsing.ES_cRIFF_TYPE:
-		case CommonParsing.ES_SUP_TYPE:
 			view.setImage("RAW Audio");
+			break;
+
+		case CommonParsing.ES_SUP_TYPE:
+			view.setImage("RAW Subpicture");
 			break;
 
 		case CommonParsing.Unsupported:

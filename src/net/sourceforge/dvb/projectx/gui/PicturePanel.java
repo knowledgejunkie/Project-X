@@ -309,6 +309,11 @@ public class PicturePanel extends JPanel {
 
 				else if (e.getClickCount() >= 1 && e.getModifiers() == MouseEvent.BUTTON3_MASK)
 					popup.show(getParent(), e.getX(), e.getY());
+
+				if (e.getClickCount() >= 2 && e.getModifiers() == MouseEvent.BUTTON1_MASK)
+				{
+					CommonGui.getPlayerFrame().repaintPicture();
+				}
 			}
 
 			public void mouseEntered(MouseEvent e)

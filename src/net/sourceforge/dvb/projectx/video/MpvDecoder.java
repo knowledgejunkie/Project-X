@@ -118,6 +118,8 @@ public class MpvDecoder extends Object {
 
 	private byte[] buf = new byte[0];
 
+	private int[] LastPosVal = new int[2];
+
 	/**
 	 * integer matrix by dukios
 	 */
@@ -884,22 +886,32 @@ private int broken_link;
 	 */
 	private int Get_Bits(int N)
 	{
-		int Pos, Val;
+		int Pos, Val, a;
 		Pos = BitPos>>>3;
+		a = Pos;
 
-		if (Pos >= buf.length)
+		if (a >= buf.length)
 			ERROR3 = true;
 
-		Val =  (0xFF & buf[Pos++])<<24;
+		if (a == LastPosVal[0])
+			Val = LastPosVal[1];
 
-		if (Pos < buf.length)
-			Val |= (0xFF & buf[Pos++])<<16;
+		else
+		{
+			Val =  (0xFF & buf[a++])<<24;
 
-		if (Pos < buf.length)
-			Val |= (0xFF & buf[Pos++])<<8;
+			if (a < buf.length)
+				Val |= (0xFF & buf[a++])<<16;
 
-		if (Pos < buf.length)
-			Val |= (0xFF & buf[Pos]);
+			if (a < buf.length)
+				Val |= (0xFF & buf[a++])<<8;
+
+			if (a < buf.length)
+				Val |= (0xFF & buf[a]);
+		}
+
+		LastPosVal[0] = Pos;
+		LastPosVal[1] = Val;
 
 		Val <<= BitPos & 7;
 		Val >>>= 32-N;
@@ -915,22 +927,32 @@ private int broken_link;
 	 */
 	private int Show_Bits(int N)
 	{
-		int Pos, Val;
+		int Pos, Val, a;
 		Pos = BitPos>>>3;
+		a = Pos;
 
-		if (Pos >= buf.length)
+		if (a >= buf.length)
 			ERROR3 = true;
 
-		Val =  (0xFF & buf[Pos++])<<24;
+		if (a == LastPosVal[0])
+			Val = LastPosVal[1];
 
-		if (Pos < buf.length)
-			Val |= (0xFF & buf[Pos++])<<16;
+		else
+		{
+			Val =  (0xFF & buf[a++])<<24;
 
-		if (Pos < buf.length)
-			Val |= (0xFF & buf[Pos++])<<8;
+			if (a < buf.length)
+				Val |= (0xFF & buf[a++])<<16;
 
-		if (Pos < buf.length)
-			Val |= (0xFF & buf[Pos]);
+			if (a < buf.length)
+				Val |= (0xFF & buf[a++])<<8;
+
+			if (a < buf.length)
+				Val |= (0xFF & buf[a]);
+		}
+
+		LastPosVal[0] = Pos;
+		LastPosVal[1] = Val;
 
 		Val <<= BitPos & 7;
 		Val >>>= 32 - N;
@@ -1071,7 +1093,7 @@ private void sequence_header(){
 	vbv_buffer_size             = Get_Bits(10);
 	constrained_parameters_flag = Get_Bits(1);
 
-	mpg_info[6] = "Matrix:";
+	mpg_info[6] = "QMatrix:";
 
 	if ((load_intra_quantizer_matrix = Get_Bits(1))>0)
 	{
@@ -3269,6 +3291,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 		ERROR3 = false;
 		ERROR4 = false;
 		ERROR5 = false;
+		Arrays.fill(LastPosVal, -1);
 
 		buf = array;
 		BufferPos = start_position;

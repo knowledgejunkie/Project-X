@@ -1,7 +1,7 @@
 /*
  * @(#)CommonGui
  *
- * Copyright (c) 2004-2005 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2004-2008 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -37,6 +37,7 @@ import net.sourceforge.dvb.projectx.gui.FileProperties;
 import net.sourceforge.dvb.projectx.gui.CollectionProperties;
 import net.sourceforge.dvb.projectx.gui.PatchDialog;
 import net.sourceforge.dvb.projectx.gui.CutPanel;
+import net.sourceforge.dvb.projectx.gui.PlayerFrame;
 
 import net.sourceforge.dvb.projectx.common.Resource;
 
@@ -60,6 +61,8 @@ public class CommonGui extends Object {
 	private static CollectionProperties collection_properties;
 
 	private static PatchDialog patch_dialog = null;
+
+	private static PlayerFrame player_frame = null;
 
 	/**
 	 *
@@ -245,5 +248,15 @@ public class CommonGui extends Object {
 		return patch_dialog;
 	}
 
+	/**
+	 *
+	 */
+	public static PlayerFrame getPlayerFrame()
+	{
+		if (player_frame == null)
+			player_frame = new PlayerFrame();
+
+		return player_frame;
+	}
 }
 

@@ -509,7 +509,8 @@ public class CutPanel extends JPanel {
 			if (clockThread == null)
 			{
 				clockThread = new Thread(this, "SlideShow");
-				clockThread.setPriority(Thread.MIN_PRIORITY);
+			//	clockThread.setPriority(Thread.MIN_PRIORITY);
+				clockThread.setPriority(Thread.NORM_PRIORITY);
 
 				value = _value;
 				skip = getLoadSize()>>>5;
@@ -543,6 +544,8 @@ public class CutPanel extends JPanel {
 					{
 						val = update(value);
 						Thread.sleep(5);
+
+					CommonGui.getPlayerFrame().repaintPicture(1);
 
 						if (!slideshow || val < value)
 							break;

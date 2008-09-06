@@ -123,3 +123,5 @@ src/net/sourceforge/dvb/projectx/gui/CollectionProperties.java
 src/net/sourceforge/dvb/projectx/gui/CutPanel.java
 src/net/sourceforge/dvb/projectx/gui/ScanView.java
 src/net/sourceforge/dvb/projectx/gui/FilterPanel.java
+
+src/net/sourceforge/dvb/projectx/gui/PlayerFrame.java
