@@ -882,6 +882,9 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 					minSync = 0;
 
+//if (FrameExportInfo.getWrittenFrames() > 77000)
+//Common.setMessage("A  " + WriteEnabled + " / " + FrameExportInfo.getWrittenFrames() + " / " + video_timeIndex[2] + " / " + video_timeIndex[3] + " / " + (audio.getFrameTimeLength() / 2.0) + " / " + formatFrameTime(getTimeCounter()));
+
 					if ( (double) Math.abs(ptsval[x + 1] - getTimePosition()) < (double) audio.getFrameTimeLength() / 2.0 )
 					{
 						setTimePosition(ptsval[++x]);
@@ -891,8 +894,6 @@ public class StreamProcessAudio extends StreamProcessBase {
 						insertion_counter[0] = (long) getTimeCounter();
 						insertion_counter[1] = 0;
 
-//if (FrameExportInfo.getWrittenFrames() > 77000)
-//Common.setMessage("" + WriteEnabled + " / " + FrameExportInfo.getWrittenFrames() + " / " + video_timeIndex[2] + " / " + video_timeIndex[3] + " / " + (audio.getFrameTimeLength() / 2.0) + " / " + formatFrameTime(getTimeCounter()));
 						// check sync after resetting
 						if (Math.abs(video_timeIndex[2]) >= (audio.getFrameTimeLength() / 2.0) || Math.abs(video_timeIndex[3]) >= (audio.getFrameTimeLength() / 2.0))
 						{
@@ -912,6 +913,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 									insertion_counter[1]++;
 
 									Common.setMessage(Resource.getString("audio.msg.summary.insert", "" + insertion_counter[1], FramesToTime((int)insertion_counter[1], audio.getFrameTimeLength())) + " " + formatFrameTime(insertion_counter[0]));
+								}
+
+								else // a-v async in schnittpause
+								{
+									countTimeCounter(-audio.getFrameTimeLength());
+									Common.setMessage("!> A/V sync discontinuity in next audio packet @ " + formatFrameTime(getTimeCounter()));
+									Common.setMessage(Resource.getString("audio.msg.summary.skip") + " " + formatFrameTime(getTimeCounter()));
 								}
 
 								if (Debug)
@@ -1019,6 +1027,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 									FrameExportInfo.countInsertedFrames(1);
 									insertion_counter[1]++;
+								}
+
+								else // a-v async in schnittpause
+								{
+									countTimeCounter(-audio.getFrameTimeLength());
+									Common.setMessage("!> A/V sync discontinuity in next audio packet (insert) @ " + formatFrameTime(getTimeCounter()));
+									Common.setMessage(Resource.getString("audio.msg.summary.skip") + " " + formatFrameTime(getTimeCounter()));
 								}
 
 								if (Debug)
@@ -1496,6 +1511,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 									Common.setMessage(Resource.getString("audio.msg.summary.insert", "" + insertion_counter[1], FramesToTime((int)insertion_counter[1], audio.getFrameTimeLength())) + " " + formatFrameTime(insertion_counter[0]));
 								}
 
+								else // a-v async in schnittpause
+								{
+									countTimeCounter(-audio.getFrameTimeLength());
+									Common.setMessage("!> A/V sync discontinuity in next audio packet @ " + formatFrameTime(getTimeCounter()));
+									Common.setMessage(Resource.getString("audio.msg.summary.skip") + " " + formatFrameTime(getTimeCounter()));
+								}
+
 								if (Debug)
 								{
 									System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()));
@@ -1594,6 +1616,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 									FrameExportInfo.countInsertedFrames(1);
 									insertion_counter[1]++;
+								}
+
+								else // a-v async in schnittpause
+								{
+									countTimeCounter(-audio.getFrameTimeLength());
+									Common.setMessage("!> A/V sync discontinuity in next audio packet (insert) @ " + formatFrameTime(getTimeCounter()));
+									Common.setMessage(Resource.getString("audio.msg.summary.skip") + " " + formatFrameTime(getTimeCounter()));
 								}
 
 								if (Debug)

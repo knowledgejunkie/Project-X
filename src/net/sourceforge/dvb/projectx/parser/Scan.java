@@ -335,7 +335,7 @@ public class Scan extends Object {
 			scanloop:
 			for (int index = streamtype; returncode < CommonParsing.Unsupported; index++)
 			{
-				returncode = scanPjxOwn(check, bs0);
+				returncode = scanPjxOwn(aXif, check, bs0);
 
 				if (returncode != -1)
 					break;
@@ -416,13 +416,26 @@ public class Scan extends Object {
 	/**
 	 *
 	 */
-	private int scanPjxOwn(byte[] check, int buffersize) throws Exception
+	private int scanPjxOwn(XInputFile xInputFile, byte[] check, int buffersize) throws Exception
 	{
 		for (int i = 0; i < 16; i++)
 		{
 			if (check[i] != CommonParsing.PTSVideoHeader[i])
 				return -1;
 		}
+
+		int length = (int) xInputFile.length();
+		byte[] data = new byte[length];
+
+		xInputFile.randomAccessSingleRead(data, 0);
+
+		long pts1 = CommonParsing.readPTS(data, 16, 8, false, false);
+		long pts2 = CommonParsing.readPTS(data, length - 24, 8, false, false);
+		long pts3 = CommonParsing.readPTS(data, 32, 8, false, false);
+		long pts4 = CommonParsing.readPTS(data, length - 8, 8, false, false);
+
+		playtime = "Src  " + Common.formatTime_1(pts1 / 90L) + " -- " + Common.formatTime_1(pts2 / 90L);
+		playtime += " /  Out  " + Common.formatTime_1(pts3 / 90L) + " -- " + Common.formatTime_1(pts4 / 90L);
 
 		return CommonParsing.PJX_PTS_TYPE;
 	}

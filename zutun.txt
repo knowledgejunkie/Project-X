@@ -375,10 +375,9 @@
 --fix: ac3 384 wird nicht als Stille genommen
 --integer idct (by dukios), auch ohne dll etwas schneller
 --gui -infofelder umgesetzt, hauptfenster verkleinert
+--ac3 a/v sync problem
 
 
-
-!-ac3 a/v sync problem
 
 !-pid in dateinamen - problem split - via FILE-ID
 !-dyn PMT ts-pid-wechseln folgen
