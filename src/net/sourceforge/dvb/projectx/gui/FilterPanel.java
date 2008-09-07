@@ -446,7 +446,8 @@ public class FilterPanel extends JPanel {
 		});
 
 
-		JButton pids = new JButton(Resource.getString("CollectionPanel.transferPids1"));
+	//	JButton pids = new JButton(Resource.getString("CollectionPanel.transferPids1"));
+		JButton pids = new JButton(CommonGui.loadIcon("trans.gif"));
 		pids.setPreferredSize(new Dimension(80, 22));
 		pids.setMaximumSize(new Dimension(80, 22));
 		pids.setActionCommand("transferPIDs");

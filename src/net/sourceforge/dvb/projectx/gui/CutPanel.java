@@ -1,7 +1,7 @@
 /*
  * @(#)CutPanel
  *
- * Copyright (c) 2006 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2006-2008 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -1149,6 +1149,7 @@ public class CutPanel extends JPanel {
 		cut_savelist.addActionListener(jumpAction);
 
 		//JButton cut_scan = new JButton("scan");
+	//	JButton cut_scan = new JButton(CommonGui.loadIcon("scan2.gif"));
 		JButton cut_scan = new JButton(CommonGui.loadIcon("matrix.gif"));
 		cut_scan.setPreferredSize(new Dimension(50, 24));
 		cut_scan.setMaximumSize(new Dimension(50, 24));
@@ -1281,7 +1282,8 @@ public class CutPanel extends JPanel {
 		chapter_savelist.setActionCommand("save_chapterlist");
 		chapter_savelist.addActionListener(jumpAction);
 
-		JButton chapter_scan = new JButton("scan");
+	//	JButton chapter_scan = new JButton("scan");
+		JButton chapter_scan = new JButton(CommonGui.loadIcon("scan2.gif"));
 		chapter_scan.setPreferredSize(new Dimension(50, 24));
 		chapter_scan.setMaximumSize(new Dimension(50, 24));
 		chapter_scan.setActionCommand("chapter_scan");

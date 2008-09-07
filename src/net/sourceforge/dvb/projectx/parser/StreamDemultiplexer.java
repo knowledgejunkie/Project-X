@@ -610,17 +610,18 @@ public class StreamDemultiplexer extends Object {
 			 */
 			else if (pes_extensionlength > 0 && pes_payloadlength >= 0)
 			{
+//--> ändern
 				pts = CommonParsing.getPTSfromBytes(pes_packet, offset); //returns 32bit
 
 				pts -= job_processing.getNextFileStartPts();
-				pts &= 0xFFFFFFFFL;
+				pts &= 0xFFFFFFFFL; //trim to 32bit
 
 				if ( (pts & 0xFF000000L) == 0xFF000000L ) 
 					ptsover = true;      // bit 33 was set
 
 				if (ptsover && pts < 0xF0000000L) 
 					pts |= 0x100000000L;
-
+//<--
 				pts += ptsoffset;
 				pts += AddOffset;
 
@@ -1137,10 +1138,12 @@ public class StreamDemultiplexer extends Object {
 		 */
 		if (pes_extensionlength > 0 && pes_payloadlength >= 0)
 		{
+//--> ändern
 			pts = !pes_hasHeader ? job_processing.getPvaVideoPts() : CommonParsing.getPTSfromBytes(pes_packet, offset); //returns 32bit
 
 			pts -= job_processing.getNextFileStartPts();
-			pts &= 0xFFFFFFFFL;
+
+			pts &= 0xFFFFFFFFL;  // trim to 32bit
 
 			if ( (pts & 0xFF000000L) == 0xFF000000L ) 
 				ptsover = true;      // bit 33 was set
@@ -1148,7 +1151,7 @@ public class StreamDemultiplexer extends Object {
 			if (ptsover && pts < 0xF0000000L) 
 
 				pts |= 0x100000000L;
-
+//<--
 			pts += ptsoffset;
 
 			if (Debug)
