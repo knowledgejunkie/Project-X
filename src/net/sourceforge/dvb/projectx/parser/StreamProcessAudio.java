@@ -915,13 +915,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 									Common.setMessage(Resource.getString("audio.msg.summary.insert", "" + insertion_counter[1], FramesToTime((int)insertion_counter[1], audio.getFrameTimeLength())) + " " + formatFrameTime(insertion_counter[0]));
 								}
 
-								else // a-v async in schnittpause
+/**								else // a-v async in schnittpause
 								{
 									countTimeCounter(-audio.getFrameTimeLength());
 									Common.setMessage("!> A/V sync discontinuity in next audio packet @ " + formatFrameTime(getTimeCounter()));
 									Common.setMessage(Resource.getString("audio.msg.summary.skip") + " " + formatFrameTime(getTimeCounter()));
 								}
-
+**/
 								if (Debug)
 								{
 									System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()));
@@ -1029,13 +1029,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 									insertion_counter[1]++;
 								}
 
-								else // a-v async in schnittpause
+/**								else // a-v async in schnittpause
 								{
 									countTimeCounter(-audio.getFrameTimeLength());
 									Common.setMessage("!> A/V sync discontinuity in next audio packet (insert) @ " + formatFrameTime(getTimeCounter()));
 									Common.setMessage(Resource.getString("audio.msg.summary.skip") + " " + formatFrameTime(getTimeCounter()));
 								}
-
+**/
 								if (Debug)
 								{
 									System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()));
@@ -1511,13 +1511,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 									Common.setMessage(Resource.getString("audio.msg.summary.insert", "" + insertion_counter[1], FramesToTime((int)insertion_counter[1], audio.getFrameTimeLength())) + " " + formatFrameTime(insertion_counter[0]));
 								}
 
-								else // a-v async in schnittpause
+/**								else // a-v async in schnittpause
 								{
 									countTimeCounter(-audio.getFrameTimeLength());
 									Common.setMessage("!> A/V sync discontinuity in next audio packet @ " + formatFrameTime(getTimeCounter()));
 									Common.setMessage(Resource.getString("audio.msg.summary.skip") + " " + formatFrameTime(getTimeCounter()));
 								}
-
+**/
 								if (Debug)
 								{
 									System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()));
@@ -1618,13 +1618,13 @@ public class StreamProcessAudio extends StreamProcessBase {
 									insertion_counter[1]++;
 								}
 
-								else // a-v async in schnittpause
+/**								else // a-v async in schnittpause
 								{
 									countTimeCounter(-audio.getFrameTimeLength());
 									Common.setMessage("!> A/V sync discontinuity in next audio packet (insert) @ " + formatFrameTime(getTimeCounter()));
 									Common.setMessage(Resource.getString("audio.msg.summary.skip") + " " + formatFrameTime(getTimeCounter()));
 								}
-
+**/
 								if (Debug)
 								{
 									System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()));
