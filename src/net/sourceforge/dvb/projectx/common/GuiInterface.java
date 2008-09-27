@@ -1,7 +1,7 @@
 /*
  * @(#)GuiInterface.java
  *
- * Copyright (c) 2005 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2005-2008 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -59,6 +59,7 @@ public class GuiInterface implements GuiInterfaceIF {
 			}
 
 		} catch (Exception e) {
+			System.out.println(e.toString());
 			// no gui class found
 		}
 	}
@@ -440,6 +441,17 @@ public class GuiInterface implements GuiInterfaceIF {
 	{
 		if (isAvailable())
 			impl.repaintPicturePanel();
+	}
+
+	/**
+	 *
+	 */
+	public byte[] editGOP(byte[] data, long[][] pts_indices)
+	{
+		if (isAvailable())
+			return impl.editGOP(data, pts_indices);
+
+		return data;
 	}
 }
 
