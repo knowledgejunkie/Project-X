@@ -153,6 +153,7 @@ import net.sourceforge.dvb.projectx.gui.CheckBoxListener;
 import net.sourceforge.dvb.projectx.gui.TextFieldListener;
 
 import net.sourceforge.dvb.projectx.gui.CommonGui;
+import net.sourceforge.dvb.projectx.gui.GOPEditor;
 
 
 import java.awt.datatransfer.Clipboard;
@@ -212,7 +213,9 @@ public class MainFrame extends JPanel {
 	private Thread thread = null;
 
 	private PatchDialog patch_panel;
-
+//
+	private static GOPEditor gop_editor;
+//
 	/**
 	 * copy fileinfo to clipboard, see popup, menulistener
 	 */
@@ -3208,5 +3211,16 @@ public class MainFrame extends JPanel {
 	public static void updateCollectionPanel(int index)
 	{
 		CommonGui.getCutPanel().entry(index);
+	}
+
+	/**
+	 *
+	 */
+	public static byte[] editGOP(byte[] data, long[][] pts_indices)
+	{
+		if (gop_editor == null)
+			gop_editor = new GOPEditor(frame);
+
+		return gop_editor.editGOP(data, pts_indices);
 	}
 }

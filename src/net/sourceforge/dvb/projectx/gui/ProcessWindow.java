@@ -1,7 +1,7 @@
 /*
  * @(#)ProcessWindow
  *
- * Copyright (c) 2005-2006 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2005-2008 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -313,7 +313,8 @@ public class ProcessWindow extends JFrame {
 			Keys.KEY_ExportPanel_createSubDirVdr,
 			Keys.KEY_enablePostProcessing,
 			Keys.KEY_simpleMPG,
-			Keys.KEY_enhancedPES
+			Keys.KEY_enhancedPES,
+			Keys.KEY_useGOPEditor
 		};
 
 		for (int i = 0, sep_offs = 3; i < objects.length; i++)
@@ -324,7 +325,7 @@ public class ProcessWindow extends JFrame {
 			box.setState(Common.getSettings().getBooleanProperty(objects[i]));
 			box.addActionListener(_BoxListener);
 
-			if (i == sep_offs || i == sep_offs + 1 || i == sep_offs + 4 || i == sep_offs + 5)
+			if (i == sep_offs || i == sep_offs + 1 || i == sep_offs + 4 || i == sep_offs + 5 || i == sep_offs + 7)
 				editMenu.addSeparator();
 
 			editMenu.add(box);
@@ -984,7 +985,10 @@ public class ProcessWindow extends JFrame {
 
 		TextArea.append(Common.getLineSeparator() + msg);
 
-		viewport.setViewPosition(new Point(0, TextArea.getHeight()));
+		// handle a crash
+		try {
+			viewport.setViewPosition(new Point(0, TextArea.getHeight()));
+		} catch (Exception e) {}
 	}
 
 	/**

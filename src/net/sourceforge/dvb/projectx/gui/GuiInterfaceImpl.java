@@ -449,5 +449,13 @@ public class GuiInterfaceImpl implements GuiInterfaceIF {
 	{
 		CommonGui.getPicturePanel().repaint();
 	}
+
+	/**
+	 *
+	 */
+	public byte[] editGOP(byte[] data, long[][] pts_indices)
+	{
+		return MainFrame.editGOP(data, pts_indices);
+	}
 }
 

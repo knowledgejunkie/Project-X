@@ -80,6 +80,8 @@ public class Gop extends Object {
 	private boolean InsertEndcode;
 	private boolean DumpDroppedGop;
 
+	private boolean UseGOPEditor;
+
 	private int ChangeBitrateInAllSequences;
 	private int ChangeVbvDelay;
 	private int CutMode;
@@ -131,6 +133,8 @@ public class Gop extends Object {
 
 		ExportHorizontalResolution = collection.getSettings().getProperty(Keys.KEY_ExportHorizontalResolution);
 		SDE_Value = collection.getSettings().getProperty(Keys.KEY_VideoPanel_SdeValue);
+
+		UseGOPEditor = collection.getSettings().getBooleanProperty(Keys.KEY_useGOPEditor);
 	}
 
 
@@ -1028,6 +1032,15 @@ public class Gop extends Object {
 			 * return last orig pts for plain mpv
 			 */
 			job_processing.setLastSimplifiedPts(startpts + (long)(trefcheck * CommonParsing.getVideoFramerate()) + (long)((maxtref - trefcheck + 1) * CommonParsing.getVideoFramerate()));
+
+
+// test - edit fehlerhafte gop
+			if (error)
+			{
+				if (UseGOPEditor)
+					gop = Common.getGuiInterface().editGOP(gop, vpts);
+			}
+//
 
 			/** 
 			 * message error

@@ -1,7 +1,7 @@
 /*
  * @(#)GuiInterfaceIF.java
  *
- * Copyright (c) 2005 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2005-2008 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -68,6 +68,7 @@ public interface GuiInterfaceIF {
 	public void showChapterIcon(Object[] obj, Object list);
 	public void updatePreviewPixel();
 	public void repaintPicturePanel();
+	public byte[] editGOP(byte[] data, long[][] pts_indices);
 
 }
 

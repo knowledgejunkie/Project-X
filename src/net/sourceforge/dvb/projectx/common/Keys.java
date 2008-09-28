@@ -91,6 +91,7 @@ public class Keys extends Object {
 	public final static String[] KEY_enhancedPES = { "MainPanel.enhancedPES", "0" }; //cbox[14]
 	public final static String[] KEY_useAutoPidFilter = { "MainPanel.useAutoPidFilter", "0" };
 	public final static String[] KEY_PostProcessCompletion = { "MainPanel.PostProcessCompletion", "0" };
+	public final static String[] KEY_useGOPEditor = { "MainPanel.useGOPEditor", "0" };
 
 	/**
 	 * LogWindowPanel

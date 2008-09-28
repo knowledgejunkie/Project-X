@@ -782,16 +782,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 							if (WriteEnabled)
 							{
 								writeFrame(audio, silentFrameBuffer.toByteArray(), newframes, ContainsVideoPTS, es_streamtype);
-/**
-								writeChannel1(silentFrameBuffer.toByteArray());
 
-								//RIFF 
-								if (!is_DTS && AddWaveHeaderAC3) 
-									audio.parseRiffData(frame, 1); 
-
-								FrameExportInfo.countWrittenFrames(1);
-								countTimeCounter(audio.getFrameTimeLength());
-**/
 								FrameExportInfo.countPreInsertedFrames(1);
 								insertion_counter[1]++;
 							}
@@ -818,7 +809,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 					 * check if frame write should pause 
 					 */
 					if (ContainsVideoPTS)
-						WriteEnabled = SyncCheck(video_timeIndex, getTimeCounter(), audio.getFrameTimeLength(), getTimePosition(), FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug);
+						WriteEnabled = SyncCheck(video_timeIndex, getTimeCounter(), audio.getFrameTimeLength(), getTimePosition(), FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug, "ac3-1");
 
 					/**
 					 * message
@@ -857,7 +848,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 						System.out.println(" x" + ((x < ptspos.length - 1) ? x + "/" + ptsval[x + 1] + "/" + ptspos[x + 1] : "-"));
 					}
 
-					// pts for next frame!! 
+					// end pts of this, start pts for next frame!! 
 					countTimePosition(audio.getFrameTimeLength());
 
 					silentFrameBuffer.reset();
@@ -876,16 +867,16 @@ public class StreamProcessAudio extends StreamProcessBase {
 					}
 
 					// frame is in last pes packet or packet end not yet reached 
+					// normal condition
 					if (writeSuccessiveFrame(audio, frame, newframes, ContainsVideoPTS, getFramePosition(), ptspos, x, es_streamtype))
 						continue readloopdd;
 
 
 					minSync = 0;
 
-//if (FrameExportInfo.getWrittenFrames() > 77000)
-//Common.setMessage("A  " + WriteEnabled + " / " + FrameExportInfo.getWrittenFrames() + " / " + video_timeIndex[2] + " / " + video_timeIndex[3] + " / " + (audio.getFrameTimeLength() / 2.0) + " / " + formatFrameTime(getTimeCounter()));
-
-					if ( (double) Math.abs(ptsval[x + 1] - getTimePosition()) < (double) audio.getFrameTimeLength() / 2.0 )
+					// frame is on pes packet corner 
+					// less than a half of frame time to packet end, so write it and count to next index
+					if ((double) Math.abs(ptsval[x + 1] - getTimePosition()) < (audio.getFrameTimeLength() / 2.0))
 					{
 						setTimePosition(ptsval[++x]);
 
@@ -972,6 +963,12 @@ public class StreamProcessAudio extends StreamProcessBase {
 						insertion_counter[0] = (long) getTimeCounter();
 						insertion_counter[1] = 0;
 
+//
+			// check a+v sync
+			if (ContainsVideoPTS)
+				WriteEnabled = SyncCheck(video_timeIndex, getTimeCounter(), audio.getFrameTimeLength(), getTimePosition(), FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug, "ac3-2sil");
+//
+
 						while (ptsval[x + 1] > (getTimePosition() - (audio.getFrameTimeLength() / 2.0)) )
 						{
 							Common.getGuiInterface().showExportStatus((WriteEnabled || !ContainsVideoPTS) ? Resource.getString("audio.status.insert") : Resource.getString("audio.status.pause"));
@@ -993,7 +990,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 							// check a+v sync
 							if (ContainsVideoPTS)
-								WriteEnabled = SyncCheck(video_timeIndex, getTimeCounter(), audio.getFrameTimeLength(), getTimePosition(), FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug);
+								WriteEnabled = SyncCheck(video_timeIndex, getTimeCounter(), audio.getFrameTimeLength(), getTimePosition(), FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug, "ac3-3sil");
 
 							countTimePosition(audio.getFrameTimeLength());
 
@@ -1006,7 +1003,11 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 						// reset PTS after inserting
 						setTimePosition(ptsval[++x]);
-
+//
+							// check a+v sync
+							if (ContainsVideoPTS)
+								WriteEnabled = SyncCheck(video_timeIndex, getTimeCounter(), audio.getFrameTimeLength(), getTimePosition(), FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug, "ac3-4sil");
+//
 						insertion_counter[0] = (long) getTimeCounter();
 						insertion_counter[1] = 0;
 
@@ -1036,6 +1037,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 									Common.setMessage(Resource.getString("audio.msg.summary.skip") + " " + formatFrameTime(getTimeCounter()));
 								}
 **/
+
 								if (Debug)
 								{
 									System.out.println(FrameExportInfo.getSummary() + "  @ " + formatFrameTime(getTimeCounter()));
@@ -1426,7 +1428,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 					// check for A+V sync
 					if (ContainsVideoPTS)
-						WriteEnabled = SyncCheck(video_timeIndex, getTimeCounter(), audio.getFrameTimeLength(), getTimePosition(), FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug);
+						WriteEnabled = SyncCheck(video_timeIndex, getTimeCounter(), audio.getFrameTimeLength(), getTimePosition(), FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug, "mpa-1");
 
 					// gui message 
 					Common.getGuiInterface().showExportStatus((WriteEnabled || !ContainsVideoPTS) ? Resource.getString("audio.status.write") : Resource.getString("audio.status.pause"));
@@ -1582,7 +1584,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 							// check a+v sync
 							if (ContainsVideoPTS)
-								WriteEnabled = SyncCheck(video_timeIndex, getTimeCounter(), audio.getFrameTimeLength(), getTimePosition(), FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug);
+								WriteEnabled = SyncCheck(video_timeIndex, getTimeCounter(), audio.getFrameTimeLength(), getTimePosition(), FrameExportInfo.getWrittenFrames(), vptsval, vtime, WriteEnabled, Debug, "mpac-2sil");
 
 							countTimePosition(audio.getFrameTimeLength());
 

@@ -125,3 +125,4 @@ src/net/sourceforge/dvb/projectx/gui/ScanView.java
 src/net/sourceforge/dvb/projectx/gui/FilterPanel.java
 
 src/net/sourceforge/dvb/projectx/gui/PlayerFrame.java
+src/net/sourceforge/dvb/projectx/gui/GOPEditor.java

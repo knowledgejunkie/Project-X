@@ -59,7 +59,8 @@ public class GuiInterface implements GuiInterfaceIF {
 			}
 
 		} catch (Exception e) {
-			System.out.println(e.toString());
+			//System.out.println(e.toString());
+			Common.setExceptionMessage(e);
 			// no gui class found
 		}
 	}
