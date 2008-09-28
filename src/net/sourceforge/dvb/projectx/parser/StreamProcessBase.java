@@ -351,65 +351,93 @@ public class StreamProcessBase extends Object {
 	 */
 	public boolean SyncCheck(int[] vw, double timecount, double frametimelength, long timeline, int writtenframes, long[] vptsval, long[] vtime, boolean awrite, boolean debug)
 	{
+		return SyncCheck(vw, timecount, frametimelength, timeline, writtenframes, vptsval, vtime, awrite, debug, "");
+	}
+
+	/**
+	 * synccheck A/V
+	 */
+	public boolean SyncCheck(int[] vw, double timecount, double frametimelength, long timeline, int writtenframes, long[] vptsval, long[] vtime, boolean awrite, boolean debug, String src)
+	{
 		int v = vw[0];
 		int w = vw[1];
 
+		// w = gop end time index
 		if (w < vptsval.length)
 		{
 			sync_value_1 = (double)(timeline - vptsval[w + 1]);
 			sync_value_2 = (double)(timecount - vtime[w + 1]);
 
 			if (debug) 
-				System.out.println("A " + awrite + "/" + v + "/" + w + "/  " + writtenframes + " #nve " + vtime[w + 1] + " /nae " + timecount + " #nvp " + vptsval[w + 1] + " /nap " + timeline + " /sy " + sync_value_2 + "/" + sync_value_1 + "/" + (sync_value_2 - sync_value_1));
+				System.out.println("A " + src + " / " + awrite + "/" + v + "/" + w + "/  " + writtenframes + " #nve " + vtime[w + 1] + " /nae " + timecount + " #nvp " + vptsval[w + 1] + " /nap " + timeline + " /sy " + sync_value_2 + "/" + sync_value_1 + "/" + (sync_value_2 - sync_value_1));
 
+			// GOP ende übereinstimmung <= halbe framelänge, mit Timecode Diff Auswertung
+			// schreibpause setzen, nächstes gop ende zur berechnung vormerken
 			if (Math.abs(sync_value_2) <= (frametimelength / 2.0))
 			{
 				awrite = false;
 				w += 2;
+//Common.setMessage("GE1 " + src + " / " + awrite + " / " + w);
 			}
 
+			// GOP ende übereinstimmung <= halbe framelänge, mit PTS Diff Auswertung
+			// schreibpause setzen, nächstes gop ende zur berechnung vormerken
 			else if (Math.abs(sync_value_1) <= (frametimelength / 2.0))
 			{
 				awrite = false;
 				w += 2;
+//Common.setMessage("GE2 " + src + " / " + awrite + " / " + w);
 			}
 
 			if (debug) 
-				System.out.println("B " + awrite + "/" + v + "/" + w);
+				System.out.println("B " + src + " / " + awrite + "/" + v + "/" + w);
 		}
 
+		// v = gop start time index
 		if (v < vptsval.length)
 		{
 			boolean show = false;
 
-			sync_value_3 = (double)(timeline - vptsval[v]);
-			sync_value_4 = (double)(timecount - vtime[v]);
+			sync_value_3 = (double)(timeline - vptsval[v]); // PTS Unterschied, frame start zu  gop start
+			sync_value_4 = (double)(timecount - vtime[v]); // timecode Unterschied, frame start zu  gop start
 
 			if (debug) 
 				System.out.println("C " + awrite + "/" + v + "/" + w + "/  " + writtenframes + " #cve " + vtime[v] + " /cae " + timecount + " #cvp " + vptsval[v] + " /cap " + timeline + " /sy " + sync_value_4 + "/" + sync_value_3 + "/" + (sync_value_4 - sync_value_3));
 
+			// schreibpause, GOP start übereinstimmung <= halbe framelänge, mit PTS Diff Auswertung
+			// schreibpause aufheben, nächsten gop start zur berechnung vormerken
 			if (!awrite && Math.abs(sync_value_3) <= (frametimelength / 2.0))
 			{
 				awrite = true; 
 				show = true;
 				v += 2;
+//Common.setMessage("GS1 " + src + " / " + awrite + " / " + v);
+
 			}
 
+			// schreibpause, GOP start übereinstimmung <= halbe framelänge, mit Timecode Diff + PTS Auswertung
+			// schreibpause aufheben, nächsten gop start zur berechnung vormerken
 			else if (!awrite && Math.abs(Math.abs(sync_value_4) - Math.abs(sync_value_3)) <= (frametimelength / 2.0))
 			{
 				awrite = true; 
 				show = true;
 				v += 2;
+//Common.setMessage("GS2 " + src + " / " + awrite + " / " + v);
 			}
 
 			if (debug)
-				System.out.println("D " + awrite + "/" + v + "/" + w);
+				System.out.println("D " + src + " / " + awrite + "/" + v + "/" + w);
 
+//Common.setMessage("A " + src + " / " + awrite + " / " + v + " / " + timecount + " / " + (timecount + (frametimelength / 2.0)) + " / " + vtime[v]);
+/**/
+			// schreibmodus an, halbe framelänge + pts start ist größer als nächster gop start
+			// schreibpause
 			if (v < vptsval.length && awrite && (timecount + (frametimelength / 2.0)) > vtime[v] ) 
 				awrite = false;
+/**/
 
 			if (debug) 
-				System.out.println("E " + awrite + "/" + v + "/" + w);
+				System.out.println("E " + src + " / " + awrite + "/" + v + "/" + w);
 
 			if (show && awrite) 
 				Common.getGuiInterface().showAVOffset("" + (int)(sync_value_3 / 90) + "/" + (int)(sync_value_4 / 90) + "/" + (int)((sync_value_4 - sync_value_3) / 90));
