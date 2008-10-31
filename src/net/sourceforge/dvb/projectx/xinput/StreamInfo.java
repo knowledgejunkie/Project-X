@@ -1,7 +1,7 @@
 /*
  * @(#)StreamInfo
  *
- * Copyright (c) 2005-2007 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2005-2008 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -362,6 +362,14 @@ public class StreamInfo extends Object {
 	public int getStreamSubType()
 	{
 		return (0xFF & streamtype>>>8);
+	}
+
+	/**
+	 *
+	 */
+	public int getStreamFullType()
+	{
+		return streamtype;
 	}
 
 	/**

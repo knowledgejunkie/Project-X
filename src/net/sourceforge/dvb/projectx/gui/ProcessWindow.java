@@ -402,6 +402,16 @@ public class ProcessWindow extends JFrame {
 
 		preferencesMenu.add(coll_preferences);
 
+		preferencesMenu.addSeparator();
+
+		JCheckBoxMenuItem priority = new JCheckBoxMenuItem(Resource.getString(Keys.KEY_ConversionModePriority[0]));
+		priority.setToolTipText(Resource.getString(Keys.KEY_ConversionModePriority[0] + Keys.KEY_Tip));
+		priority.setActionCommand(Keys.KEY_ConversionModePriority[0]);
+		priority.setState(Common.getSettings().getBooleanProperty(Keys.KEY_ConversionModePriority));
+		priority.addActionListener(_BoxListener);
+
+		preferencesMenu.add(priority);
+
 		return preferencesMenu;
 	}
 
@@ -831,14 +841,6 @@ public class ProcessWindow extends JFrame {
 		}
 
 		panel.add(Box.createRigidArea(new Dimension(10, 1)));
-
-		JCheckBox priority = new JCheckBox(Resource.getString(Keys.KEY_ConversionModePriority[0]));
-		priority.setToolTipText(Resource.getString(Keys.KEY_ConversionModePriority[0] + Keys.KEY_Tip));
-		priority.setActionCommand(Keys.KEY_ConversionModePriority[0]);
-		priority.setSelected(Common.getSettings().getBooleanProperty(Keys.KEY_ConversionModePriority));
-		priority.addActionListener(_CheckBoxListener);
-
-		panel.add(priority);
 
 		return panel;
 	}

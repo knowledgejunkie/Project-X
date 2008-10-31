@@ -357,7 +357,8 @@ public class Keys extends Object {
 			Resource.getString("MainPanel.ConversionMode.toM2P"),
 			Resource.getString("MainPanel.ConversionMode.toPVA"),
 			Resource.getString("MainPanel.ConversionMode.toTS"),
-			Resource.getString("MainPanel.ConversionMode.PidFilter")
+			Resource.getString("MainPanel.ConversionMode.PidFilter"),
+			Resource.getString("MainPanel.ConversionMode.binaryCopy")
 		};
 		this.ITEMS_ConversionMode = ITEMS_ConversionMode;
 

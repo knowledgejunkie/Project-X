@@ -1,7 +1,7 @@
 /*
  * @(#)MainProcess
  *
- * Copyright (c) 2001-2007 by dvb.matt, All rights reserved.
+ * Copyright (c) 2001-2008 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -921,7 +921,17 @@ public class MainProcess extends Thread {
 
 				Common.setMessage(Resource.getString("working.filetype", Keys.ITEMS_FileTypes[filetype]));
 
-				
+		/**
+		 * direct copy
+		 */
+		if (action == CommonParsing.ACTION_COPY)
+		{
+			Common.setMessage("-> direct file copy (from selection set)");
+			directCopy(collection, job_processing, xInputFile);
+		//	directCopy(collection, job_processing, xInputFile, i > 0 ? true : false);
+			break;
+		}
+
 				/**
 				 * the parsing
 				 */
@@ -1147,6 +1157,124 @@ Common.setMessage("del " + tempfiles);
 		try {
 			Toolkit.getDefaultToolkit().beep();
 		} catch (Exception e) {}
+
+	}
+
+
+	/**
+	 *
+	 */
+	private void directCopy(JobCollection collection, JobProcessing job_processing, XInputFile xinputFile)
+	{
+		boolean append = false; //later
+
+		if (collection.getCutpointCount() > 0 && collection.getSettings().getIntProperty(Keys.KEY_CutMode) != CommonParsing.CUTMODE_BYTE)
+		{
+			Common.setMessage("!> direct copy only at byte pos cut mode; processing cancelled..");
+			return;
+		}
+
+		StreamParserBase parser = new StreamParserBase();
+
+		parser.setFileName(collection, job_processing, xinputFile);
+
+		String newfile = parser.fparent + "[copy]" + parser.fchild.substring(parser.fchild.lastIndexOf("."));
+
+		List CutpointList = collection.getCutpointList();
+
+		long offset = 0;
+
+		if (xinputFile.getStreamInfo().getStreamFullType() == CommonParsing.TS_TYPE_192BYTE)
+			offset = -4;
+
+		long len = xinputFile.length();
+
+		//always multiple of 2
+		long[] cuts = new long[(1 + CutpointList.size()) & ~1];
+
+		//cut positions, in = 0,2,... , out = 1,3,...
+		for (int i = 0; i < CutpointList.size(); i++)
+			cuts[i] = Long.parseLong(CutpointList.get(i).toString()) + offset;
+
+		//whole file, start always 0
+		if (CutpointList.size() == 0)
+			cuts = new long[2];
+
+		//file end, no offset
+		if (cuts[cuts.length - 1] == 0)
+			cuts[cuts.length - 1] = len;
+
+
+		try {
+
+			int buf = Integer.parseInt(Common.getSettings().getProperty(Keys.KEY_MainBuffer));
+			Common.setMessage("-> copy buffer size: " + String.valueOf(buf) + " bytes");
+
+			BufferedInputStream hex = new BufferedInputStream(xinputFile.getInputStream(), buf);
+			BufferedOutputStream hex1 = new BufferedOutputStream(new FileOutputStream(newfile, append), buf);
+
+			byte[] data = new byte[0];
+			int datalen;
+
+			long startPos = 0;
+			long filePos = 0;
+			long endPos = 0;
+
+			export:
+			for (int i = 0; i < cuts.length; i += 2)
+			{
+				startPos = cuts[i];
+				endPos = cuts[i + 1];
+
+				if (startPos >= len || startPos >= endPos)
+					break;
+
+				if (endPos > len)
+					endPos = len;
+
+				Common.setMessage("-> copying range from " + String.valueOf(cuts[i]) + " to " + String.valueOf(cuts[i + 1]));
+
+				while (filePos < startPos)
+					filePos += hex.skip(startPos - filePos);
+
+				while (filePos < endPos)
+				{
+					while (parser.pause())
+					{}
+
+					if (CommonParsing.isProcessCancelled())
+					{
+						CommonParsing.setProcessCancelled(false);
+						job_processing.setSplitSize(0); 
+
+						break export; 
+					}
+
+					datalen = (endPos - filePos) < (long) buf ? (int)(endPos - filePos) : buf;
+
+					if (data.length != datalen)
+						data = new byte[datalen];
+
+					datalen = hex.read(data);
+					hex1.write(data, 0, datalen);
+					filePos += datalen;
+
+					job_processing.countMediaFilesExportLength(datalen);
+					job_processing.countAllMediaFilesExportLength(datalen);
+
+					Common.updateProgressBar(filePos, len);
+				}
+			}
+
+			hex.close();
+			hex1.flush();
+			hex1.close();
+
+			job_processing.addSummaryInfo(Resource.getString("StreamConverter.Summary") + "\t'" + newfile + "'");
+
+		} catch (IOException e) { 
+			Common.setExceptionMessage(e); 
+		}
 
 	}
 }

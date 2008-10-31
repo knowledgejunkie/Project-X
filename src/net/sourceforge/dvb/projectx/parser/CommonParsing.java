@@ -111,6 +111,7 @@ public class CommonParsing extends Object {
 	public final static int ACTION_TO_PVA = 3;	
 	public final static int ACTION_TO_TS  = 4;	
 	public final static int ACTION_FILTER = 5;	
+	public final static int ACTION_COPY   = 6;	
 
 	public final static int CUTMODE_BYTE  = 0;	
 	public final static int CUTMODE_GOP   = 1;	

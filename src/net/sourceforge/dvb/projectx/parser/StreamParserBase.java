@@ -653,6 +653,9 @@ Common.setMessage("tmpfiles " + tempfiles.size());
 
 		case CommonParsing.ACTION_FILTER:
 			streamconverter.init(collection, parent + "[filter]" + ext[source], MainBufferSize, action, splitpart);
+			break;
+
+		case CommonParsing.ACTION_COPY:
 		}
 	}
 

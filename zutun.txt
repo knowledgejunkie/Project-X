@@ -377,12 +377,16 @@
 --gui -infofelder umgesetzt, hauptfenster verkleinert
 --ac3 a/v sync problem
 
+0.90.4.00b26:
+--1:1 direct cut aufgeteilt, 'echte' kopie von dateisegmenten, zzt nur 1 datei
+!-ac3 a/v sync problem noch offen
+
 
 
 !-pid in dateinamen - problem split - via FILE-ID
 !-dyn PMT ts-pid-wechseln folgen
 !-AAC audio (roh) ohne funktion
-!-genauere scanzuordnung - angefangen
+!-genauere scanzuordnung - angefangen, ts192
 
 !!radix verschobene pakete
 !!parserliste/demuxlist vereinen, alle fileobjekte in einem pool

@@ -367,6 +367,7 @@ public class StreamProcessBase extends Object {
 		{
 			sync_value_1 = (double)(timeline - vptsval[w + 1]);
 			sync_value_2 = (double)(timecount - vtime[w + 1]);
+Common.setMessage("End1 " + src + " / " + awrite + " / " + v + " / " + timeline + " / " + vptsval[v] + " / " + timecount + " / " + vtime[v]);
 
 			if (debug) 
 				System.out.println("A " + src + " / " + awrite + "/" + v + "/" + w + "/  " + writtenframes + " #nve " + vtime[w + 1] + " /nae " + timecount + " #nvp " + vptsval[w + 1] + " /nap " + timeline + " /sy " + sync_value_2 + "/" + sync_value_1 + "/" + (sync_value_2 - sync_value_1));
@@ -377,7 +378,7 @@ public class StreamProcessBase extends Object {
 			{
 				awrite = false;
 				w += 2;
-//Common.setMessage("GE1 " + src + " / " + awrite + " / " + w);
+Common.setMessage("GE1 " + src + " / " + awrite + " / " + w);
 			}
 
 			// GOP ende übereinstimmung <= halbe framelänge, mit PTS Diff Auswertung
@@ -386,7 +387,7 @@ public class StreamProcessBase extends Object {
 			{
 				awrite = false;
 				w += 2;
-//Common.setMessage("GE2 " + src + " / " + awrite + " / " + w);
+Common.setMessage("GE2 " + src + " / " + awrite + " / " + w);
 			}
 
 			if (debug) 
@@ -400,6 +401,7 @@ public class StreamProcessBase extends Object {
 
 			sync_value_3 = (double)(timeline - vptsval[v]); // PTS Unterschied, frame start zu  gop start
 			sync_value_4 = (double)(timecount - vtime[v]); // timecode Unterschied, frame start zu  gop start
+Common.setMessage("Star1 " + src + " / " + awrite + " / " + v + " / " + timeline + " / " + vptsval[v] + " / " + timecount + " / " + vtime[v]);
 
 			if (debug) 
 				System.out.println("C " + awrite + "/" + v + "/" + w + "/  " + writtenframes + " #cve " + vtime[v] + " /cae " + timecount + " #cvp " + vptsval[v] + " /cap " + timeline + " /sy " + sync_value_4 + "/" + sync_value_3 + "/" + (sync_value_4 - sync_value_3));
@@ -411,7 +413,7 @@ public class StreamProcessBase extends Object {
 				awrite = true; 
 				show = true;
 				v += 2;
-//Common.setMessage("GS1 " + src + " / " + awrite + " / " + v);
+Common.setMessage("GS1 " + src + " / " + awrite + " / " + v);
 
 			}
 
@@ -422,20 +424,23 @@ public class StreamProcessBase extends Object {
 				awrite = true; 
 				show = true;
 				v += 2;
-//Common.setMessage("GS2 " + src + " / " + awrite + " / " + v);
+Common.setMessage("GS3 " + src + " / " + awrite + " / " + v);
 			}
 
 			if (debug)
 				System.out.println("D " + src + " / " + awrite + "/" + v + "/" + w);
 
-//Common.setMessage("A " + src + " / " + awrite + " / " + v + " / " + timecount + " / " + (timecount + (frametimelength / 2.0)) + " / " + vtime[v]);
+if (v < vtime.length)
+Common.setMessage("A1 " + src + " / " + awrite + " / " + v + " / " + timecount + " / " + (timecount + (frametimelength / 2.0)) + " / " + vtime[v]);
+else
+Common.setMessage("A2 " + src + " / " + awrite + " / " + v + " / " + timecount + " / " + (timecount + (frametimelength / 2.0)));
 /**/
 			// schreibmodus an, halbe framelänge + pts start ist größer als nächster gop start
 			// schreibpause
 			if (v < vptsval.length && awrite && (timecount + (frametimelength / 2.0)) > vtime[v] ) 
 				awrite = false;
 /**/
-
+	
 			if (debug) 
 				System.out.println("E " + src + " / " + awrite + "/" + v + "/" + w);
 
