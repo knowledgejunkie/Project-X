@@ -367,7 +367,6 @@ public class StreamProcessBase extends Object {
 		{
 			sync_value_1 = (double)(timeline - vptsval[w + 1]);
 			sync_value_2 = (double)(timecount - vtime[w + 1]);
-Common.setMessage("End1 " + src + " / " + awrite + " / " + v + " / " + timeline + " / " + vptsval[v] + " / " + timecount + " / " + vtime[v]);
 
 			if (debug) 
 				System.out.println("A " + src + " / " + awrite + "/" + v + "/" + w + "/  " + writtenframes + " #nve " + vtime[w + 1] + " /nae " + timecount + " #nvp " + vptsval[w + 1] + " /nap " + timeline + " /sy " + sync_value_2 + "/" + sync_value_1 + "/" + (sync_value_2 - sync_value_1));
@@ -378,7 +377,6 @@ Common.setMessage("End1 " + src + " / " + awrite + " / " + v + " / " + timeline 
 			{
 				awrite = false;
 				w += 2;
-Common.setMessage("GE1 " + src + " / " + awrite + " / " + w);
 			}
 
 			// GOP ende übereinstimmung <= halbe framelänge, mit PTS Diff Auswertung
@@ -387,7 +385,6 @@ Common.setMessage("GE1 " + src + " / " + awrite + " / " + w);
 			{
 				awrite = false;
 				w += 2;
-Common.setMessage("GE2 " + src + " / " + awrite + " / " + w);
 			}
 
 			if (debug) 
@@ -401,7 +398,6 @@ Common.setMessage("GE2 " + src + " / " + awrite + " / " + w);
 
 			sync_value_3 = (double)(timeline - vptsval[v]); // PTS Unterschied, frame start zu  gop start
 			sync_value_4 = (double)(timecount - vtime[v]); // timecode Unterschied, frame start zu  gop start
-Common.setMessage("Star1 " + src + " / " + awrite + " / " + v + " / " + timeline + " / " + vptsval[v] + " / " + timecount + " / " + vtime[v]);
 
 			if (debug) 
 				System.out.println("C " + awrite + "/" + v + "/" + w + "/  " + writtenframes + " #cve " + vtime[v] + " /cae " + timecount + " #cvp " + vptsval[v] + " /cap " + timeline + " /sy " + sync_value_4 + "/" + sync_value_3 + "/" + (sync_value_4 - sync_value_3));
@@ -413,8 +409,6 @@ Common.setMessage("Star1 " + src + " / " + awrite + " / " + v + " / " + timeline
 				awrite = true; 
 				show = true;
 				v += 2;
-Common.setMessage("GS1 " + src + " / " + awrite + " / " + v);
-
 			}
 
 			// schreibpause, GOP start übereinstimmung <= halbe framelänge, mit Timecode Diff + PTS Auswertung
@@ -424,22 +418,15 @@ Common.setMessage("GS1 " + src + " / " + awrite + " / " + v);
 				awrite = true; 
 				show = true;
 				v += 2;
-Common.setMessage("GS3 " + src + " / " + awrite + " / " + v);
 			}
 
 			if (debug)
 				System.out.println("D " + src + " / " + awrite + "/" + v + "/" + w);
 
-if (v < vtime.length)
-Common.setMessage("A1 " + src + " / " + awrite + " / " + v + " / " + timecount + " / " + (timecount + (frametimelength / 2.0)) + " / " + vtime[v]);
-else
-Common.setMessage("A2 " + src + " / " + awrite + " / " + v + " / " + timecount + " / " + (timecount + (frametimelength / 2.0)));
-/**/
 			// schreibmodus an, halbe framelänge + pts start ist größer als nächster gop start
 			// schreibpause
 			if (v < vptsval.length && awrite && (timecount + (frametimelength / 2.0)) > vtime[v] ) 
 				awrite = false;
-/**/
 	
 			if (debug) 
 				System.out.println("E " + src + " / " + awrite + "/" + v + "/" + w);
