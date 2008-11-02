@@ -1,7 +1,7 @@
 /*
  * @(#)UnicodeWriter.java 
  *
- * Copyright (c) 2005-2006 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2008 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -106,6 +106,10 @@ public class UnicodeWriter extends Object {
 		// UTF8
 		if (useUTF8)
 		{
+			// mark file as UTF-8, from akin
+			if (out1.size() == 0) 
+				out1.write( new byte[] { (byte)0xEF, (byte)0xBB, (byte)0xBF}, 0, 3); 
+
 			char[] chars = str.toCharArray();
 
 			for (int i = 0, j = chars.length; i < j; i++)
