@@ -412,7 +412,7 @@ public class DVBSubpicture extends Object {
 				for (int a = 0; a < region.getHeight(); a++)
 					System.arraycopy(pixel_data, a * region.getWidth(), preview_pixel_data, region.getXBound() + ((region.getYBound() + a) * width), region.getWidth());
 
-			} catch (Exception e) {
+			} catch (Exception ex) {
 
 				region.setError(8);
 				Common.setMessage(Resource.getString("subpicture.msg.error.dvbdecoding", "" + region.getErrors(), "" + region.getId(), "" + page.getTimeIn()));
