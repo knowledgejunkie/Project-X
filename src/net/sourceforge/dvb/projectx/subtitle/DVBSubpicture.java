@@ -407,8 +407,16 @@ public class DVBSubpicture extends Object {
 
 			page.addArea(region.getXBound(), region.getYBound(), region.getWidth(), region.getHeight());
 
-			for (int a = 0; a < region.getHeight(); a++)
-				System.arraycopy(pixel_data, a * region.getWidth(), preview_pixel_data, region.getXBound() + ((region.getYBound() + a) * width), region.getWidth());
+			try {
+
+				for (int a = 0; a < region.getHeight(); a++)
+					System.arraycopy(pixel_data, a * region.getWidth(), preview_pixel_data, region.getXBound() + ((region.getYBound() + a) * width), region.getWidth());
+
+			} catch (Exception e) {
+
+				region.setError(8);
+				Common.setMessage(Resource.getString("subpicture.msg.error.dvbdecoding", "" + region.getErrors(), "" + region.getId(), "" + page.getTimeIn()));
+			}
 
 			segment_type = 0x80;
 
