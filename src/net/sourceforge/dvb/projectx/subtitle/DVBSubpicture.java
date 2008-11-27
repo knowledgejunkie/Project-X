@@ -333,6 +333,13 @@ public class DVBSubpicture extends Object {
 		if (page.getTimeOut() > 0 && pts == -1) // -1 means take proposed play time
 			new_time_out = page.getTimeOut() / 10;
 
+
+		if (page.getWidth() < 0 || page.getHeight() < 0)
+		{
+			Common.setMessage("!> Page ignored (VN): " + page.getVersionNumber() + "; (size error) " + page.getWidth() + " * " + page.getHeight());
+			return;
+		}
+
 		int page_pixel_data[] = new int[page.getWidth() * page.getHeight()];
 
 		for (int y = 0; y < page.getHeight(); y++)
