@@ -334,7 +334,7 @@ public class DVBSubpicture extends Object {
 			new_time_out = page.getTimeOut() / 10;
 
 
-		if (page.getWidth() < 0 || page.getHeight() < 0)
+		if (page.getWidth() <= 0 || page.getHeight() <= 0)
 		{
 			Common.setMessage("!> Page ignored (VN): " + page.getVersionNumber() + "; (size error) " + page.getWidth() + " * " + page.getHeight());
 			return;
