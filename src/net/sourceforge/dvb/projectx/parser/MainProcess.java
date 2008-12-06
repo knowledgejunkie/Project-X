@@ -623,6 +623,10 @@ public class MainProcess extends Thread {
 		messageSetting(collection, Keys.KEY_Conversion_startWithVideo);
 		messageSetting(collection, Keys.KEY_Conversion_addPcrToStream);
 
+		//new header addition
+		if (collection.getSettings().getIntProperty(Keys.KEY_TsHeaderMode) > 0)
+				Common.setMessage("-> " + Keys.ITEMS_TsHeaderMode[collection.getSettings().getIntProperty(Keys.KEY_TsHeaderMode)].toString());
+
 		Common.setMessage(" ");
 	}
 
@@ -728,7 +732,8 @@ public class MainProcess extends Thread {
 			Resource.getString("working.convertType.makeMPG2"),
 			Resource.getString("working.convertType.makePVA"),
 			Resource.getString("working.convertType.makeTS"), 
-			Resource.getString("working.convertType.packetFilter") 
+			Resource.getString("working.convertType.packetFilter"),
+			Resource.getString("working.convertType.copy") 
 		};
 
 		/**

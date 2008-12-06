@@ -1,7 +1,7 @@
 /*
  * @(#)TS.java - constants to create TS packets
  *
- * Copyright (c) 2002-2007 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2002-2008 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -24,6 +24,12 @@
  *
  */
 
+/*
+ * Arion export introduced by Cameron D (AU)
+ * from 0.90.4.00b27
+ */
+
+
 package net.sourceforge.dvb.projectx.thirdparty;
 
 import java.util.List;
@@ -38,6 +44,7 @@ import java.io.RandomAccessFile;
 
 import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.common.Resource;
+import net.sourceforge.dvb.projectx.common.JobProcessing;
 
 public class TS {
 
@@ -135,6 +142,155 @@ public class TS {
 		// Extended Event text
 
 	};
+
+
+	/*
+	 * header code for Arion TS file (.AVR file)
+	 * There are two file formats, .AVR (the AV stream), and .AVF, the real header file.
+	 */
+		// The AVF filename must be retained for inclusion into each AVR header file.
+		// the filename format is:
+		// <user-supplied-rootname>_#00n_<date-time>.AVx
+		// Where n is the part number (starting from 1)
+		// 	date-time is in the format yyyymmddhhmm
+			// full pathname on PVR disc,
+	private static StringBuffer ArionAVFPathname_onPVR = new StringBuffer( 128 );
+			// local filename - as finally named on this system; may or may not include directories.
+	private static StringBuffer ArionAVRLocalFilename = new StringBuffer( 1024 );
+	private static File ArionAVFLocalPathname ;
+		// the initial date+time used must be remembered so we can rebuild the
+		// matching name for second and later file parts.
+	private static StringBuffer ArionAVFTime = new StringBuffer( 128 );
+		// same the initial filename prefix for building other names later
+	private static StringBuffer ArionFilenameRoot = new StringBuffer( 128 );
+
+		// we need to keep track of total file sizes and playback length.
+	private static long ArionCumulativeTime = 0L;		// seconds
+		// bytes (excluding header) - note Java long is 64 bits, so
+		//  it has no problems with large files.
+	private static long ArionCumulativeStreamSize = 0L;
+
+	private static final int ArionAVR_HEADERSIZE = 0x8000;
+	private static byte[] ArionAVR_Header = {
+		// HEADER 32k bytes, start at 0
+		0x41, 0x52, 0x41, 0x56,  // Id "ARAV" *
+		0x10, 0,                 // unknown  *
+		0, (byte)0x86,           // unknown *
+		(byte)0x80, 0,                    // possibly length of header
+		0x43, 0x3a, 0x5c, 0x50, 0x56, 0x52, 0x5c, 0x41, 0x56, 0x5c,     // pathname of AVF file.
+
+		// the rest is 0 so it's not defined explicitly
+
+
+	};
+
+	private static final int ArionAVF_HEADERSIZE = 15160;		// File is 15k bytes
+	private static byte[] ArionAVF_Header = {
+		
+		0x41, 0x52, 0x4e, 0x46,  // Id "ARNF" *
+		0x11, 0, 0, 0x04,         // unknown 
+		0x3f, 0x04, 0, 0x0a,     // unknown
+
+		// Channel-related info
+		0,                       // unknown
+		0, 0, 0,                 // varies with broadcast channel
+		0, 0x01,                 // 0x10: channel number
+		0x07, 0,                 // constant
+		0, 0x48,                 // constant
+		0x01, 0,                 // 1 = TV, 2 = radio
+
+		// SID/PID details
+		1, 2,                 // SID
+		0, 1,			// number of audio streams
+		0, (byte)0xc0,		// audio PID 1
+		0x7f, (byte)0xff,	// audio PID 2
+		0x11, 0x10,		// 0x20:  unknown
+		0, (byte)0xe0,		// PID for video
+		0, 0,			// unknown
+		0, (byte)0x90,		// PID for text/subtitles
+		1, 0,			// varies with channel
+		0,			// 0x2a:  unknown...
+		0x50, 0x72, 0x6f, 0x6a, 0x65,		// Program stream name
+		0x63, 0x74, 0x2d, 0x58, 0x20, 0x63, 0x6f, 0x6e,    // 0x30:
+		0x76, 0x65, 0x72, 0x74, 0x65, 0x64, 0x0a, 0x00,
+		0, 0, 0, 0,	  		// 0x40:
+		1, 0x11,		// unknown, sometimes zero.
+		0, 0,			// unknown
+		0, 1,			// unknown - zero or 1
+		0, 0,			// 0x4a: unknown - quite variable
+		// block of zeroes - unknown
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		// EPG start - this is EPG "now" when recording started.
+		2, (byte)0xca,		// size of EPG block
+		7, (byte)0xd6,		//        year of scheduled start of tv program
+		9,			// 0x60: month of scheduled start of tv program
+		8,			//         day of scheduled start of tv program
+		7,			//        hour of scheduled start of tv program
+		6,			//      minute of scheduled start of tv program
+		3,			// scheduled duration (hours)
+		30, 			// scheduled duration (minutes)
+			// the program title - filled in with file name
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,		// total 64 bytes, null padded
+
+			// the program subtitle or description
+		0x53, 0x75, 0x62, 0x74, 0x69, 0x74, 0x6c, 0x65,
+		0x20, 0x69, 0x6e, 0x73, 0x65, 0x72, 0x74, 0x65,
+		0x64, 0x20, 0x62, 0x79, 0x20, 0x50, 0x72, 0x6f,
+		0x6a, 0x65, 0x63, 0x74, 0x2d, 0x58, 0x0a, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+
+		// the rest is 0 so it's not defined explicitly - actually - filled at run-time.
+
+
+	};
+
+	/*
+	 * data structure defining the layout of EPG data stored in file in two places
+	 */
+
+	private static final int ArionEPG_BLOCKSIZE = 714;
+	private static byte[] Arion_EPG_Block = {
+			// EPG  - this is EPG "now" during recording or when started.
+		2, (byte)0xca,		// size of EPG block
+		7, (byte)0xd6,		//        year of scheduled start of tv program
+		9,			// 0x60: month of scheduled start of tv program
+		8,			//         day of scheduled start of tv program
+		7,			//        hour of scheduled start of tv program
+		6,			//      minute of scheduled start of tv program
+		5,			// scheduled duration (hours)
+		30, 			// scheduled duration (minutes)
+			// the program title
+		0x70, 0x72, 0x6f, 0x67, 0x72, 0x61, 0x6d, 0x20, 0x74, 0x69, 0x74, 0x6c, 0x65, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,		// total 64 bytes, null padded
+
+			// the program subtitle or description
+		0x53, 0x75, 0x62, 0x74, 0x69, 0x74, 0x6c, 0x65,
+		0x20, 0x69, 0x6e, 0x73, 0x65, 0x72, 0x74, 0x65,
+		0x64, 0x20, 0x62, 0x79, 0x20, 0x50, 0x72, 0x6f,
+		0x6a, 0x65, 0x63, 0x74, 0x2d, 0x58, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,		// total 128 bytes
+
+			// program description (apparently not used)
+
+		// the rest is 0 so it's not defined explicitly - actually - filled at run-time.
+	};
+
 
 
 	private static byte[] pmt1 = { 
@@ -382,7 +538,7 @@ public class TS {
 	}
 
 
-	public static byte[] init(String name, boolean ac3, boolean _myTTX, int mode)
+	public static byte[] init( JobProcessing job_processing, String name, boolean ac3, boolean _myTTX, int mode)
 	{ 
 		count1 = count2 = count3 = 0;
 		myTTX = _myTTX;
@@ -405,6 +561,9 @@ public class TS {
 
 		case 3:
 			return initTF5000header(name, ac3, 3760);
+
+		case 4:
+			return initArionHeader(name, ac3, ArionAVR_HEADERSIZE , job_processing);
 		}
 
 		return (new byte[0]);
@@ -418,7 +577,7 @@ public class TS {
 		TF5000header[pos] = (byte) val;
 	}
 
-	public static String updateAdditionalHeader(String old_name, long time[], int mode) throws IOException
+	public static String updateAdditionalHeader(String old_name, long time[], int mode, JobProcessing job_processing) throws IOException
 	{
 		String new_name = "";
 
@@ -448,6 +607,11 @@ public class TS {
 			Common.renameTo(old_name, new_name);
 
 			finishTF5000header(new_name, time);
+			break;
+
+		case 4:
+			new_name = finishArionheaders(old_name, time, job_processing);
+
 			break;
 		}
 
@@ -592,6 +756,197 @@ public class TS {
 
 		return header;
 	}
+
+
+	private static byte[] initArionHeader(String name, boolean ac3, int headerlength, JobProcessing job_processing)
+	{
+
+		int splitPart = job_processing.getSplitPart();
+
+		if ( splitPart == 0 )
+		{
+			/*
+			 * this is the first part, so build the AVF info file as well as the AVR header
+			 */
+			long now = System.currentTimeMillis();		// time now
+
+			Calendar datum = Calendar.getInstance();
+			datum.setTime( new Date(now) );
+
+			ArionAVFPathname_onPVR.setLength( 0 );
+			ArionAVFTime.setLength( 0 );
+			ArionFilenameRoot.setLength( 0 );
+			ArionCumulativeTime  = 0L;
+			ArionCumulativeStreamSize  = 0L;
+
+		//	ArionAVFTime.append( String.format( "%1$tY%1$tm%1$td%1$tH%1$tM", now ) );
+			ArionAVFTime.append(Common.formatTime_5(now));
+
+			// ProjectX automatically appends (<partnumber>).ts to the filename.
+			// we want to remove those bits and any leading path component.
+			// The file will be renamed at the end (in the finishArionHeader routine),
+			// we just save the details for now. 
+			ArionFilenameRoot.append( new File(name).getName() );	// start with leading path removed
+			int parenIndex = ArionFilenameRoot.toString().lastIndexOf( "(" );
+			if ( parenIndex > 0 )
+				ArionFilenameRoot.delete( parenIndex, ArionFilenameRoot.length() );
+
+			/*
+			 * now check for total length of file name:
+			 * "C:\PVR\AV\"		= 10
+			 * "_#001_"		= 6
+			 * "yyyymmddhhmm"	= 12
+			 * ".AVR"		= 4
+			 *  total 32. Max allowed is 125 plus null terminator.
+			 */
+			if ( ArionFilenameRoot.length() > 93 )
+				ArionFilenameRoot.setLength( 93 );
+
+			String avf_name = new String(	ArionFilenameRoot.toString( ) +
+							"_#001_" +
+							ArionAVFTime.toString( ) +
+				       			".avf"	);
+
+			ArionAVFPathname_onPVR.append( "C:\\PVR\\AV\\" + avf_name.toUpperCase() );
+			StringBuffer arionAVRPathname_onPVR = new StringBuffer( ArionAVFPathname_onPVR.toString() );
+			// full DOS-style pathname is only used in AVF header.
+			arionAVRPathname_onPVR.setCharAt( arionAVRPathname_onPVR.length()-1, 'R' );
+			// now create AVF file in same place as new avr file.
+
+			ArionAVFLocalPathname = new File( new File(name).getParentFile(), avf_name );
+
+			try {
+				Common.setMessage("Arion: Creating initial AVF file");
+				RandomAccessFile avf_fd = new RandomAccessFile(ArionAVFLocalPathname, "rw");
+				byte avf_header[] = new byte[ ArionAVF_HEADERSIZE ];
+				System.arraycopy(ArionAVF_Header , 0, avf_header, 0, ArionAVF_Header.length);
+				System.arraycopy(arionAVRPathname_onPVR.toString().getBytes() , 0,
+								avf_header, 0x326, arionAVRPathname_onPVR.length());
+				// now do the time/date for EPG and recording info.
+				// since we have no meaningful information we will just use current time
+				// for both sets of data.
+				short year = (short) datum.get( datum.YEAR );
+				byte month = (byte) datum.get( datum.MONTH );
+				byte day = (byte) datum.get( datum.DAY_OF_MONTH );
+				byte hour = (byte) datum.get( datum.HOUR_OF_DAY );
+				byte minute = (byte) datum.get( datum.MINUTE );
+				avf_header[0x1f48] = 0x1b;
+				avf_header[0x1f49] = (byte)0xee;
+				avf_header[0x1f4a] = (byte)(year >>> 8 );
+				avf_header[0x1f4b] = (byte)(year & 0xff);
+				avf_header[0x1f4c] = month;
+				avf_header[0x1f4d] = day;
+				avf_header[0x1f4e] = hour;
+				avf_header[0x1f4f] = minute;
+				avf_header[0x1f50] = 1;			// one EPG entry.
+
+				byte epg_entry[] = new byte[ ArionEPG_BLOCKSIZE ];
+				System.arraycopy(Arion_EPG_Block , 0, epg_entry, 0, Arion_EPG_Block.length);
+				epg_entry[2] = (byte)(year >>> 8 );
+				epg_entry[3] = (byte)(year & 0xff);
+				epg_entry[4] = month;
+				epg_entry[5] = day;
+				epg_entry[6] = hour;
+				epg_entry[7] = minute;
+				// assume the filename is useful as a program name.
+				System.arraycopy(ArionFilenameRoot.toString().getBytes() , 0,
+							epg_entry, 10, ArionFilenameRoot.length() );
+
+				// first copy into the "epg at start" area
+				System.arraycopy(epg_entry , 0, avf_header, 0x5c, epg_entry.length);
+				// then create the EPG table - with a single entry.
+				System.arraycopy(epg_entry , 0, avf_header, 0x1f52, epg_entry.length);
+
+				avf_fd.write( avf_header);
+				avf_fd.close( );
+
+			} catch ( IOException e ) {
+				Common.setExceptionMessage(e);
+			}
+		}
+		/* create the local AVR filename for use in the finish.
+		 */
+		ArionAVRLocalFilename.setLength( 0 );
+//		ArionAVRLocalFilename.append(ArionFilenameRoot.toString() +	String.format( "_#%03d_", splitPart+1) + ArionAVFTime.toString( ) + ".avr");
+		ArionAVRLocalFilename.append(ArionFilenameRoot.toString() +	"_#" + Common.adaptString(splitPart + 1, 3) + "_" + ArionAVFTime.toString() + ".avr");
+
+		// Now create the AVR header, populate, and return it to caller.
+		byte header[] = new byte[headerlength];
+		System.arraycopy(ArionAVR_Header , 0, header, 0, ArionAVR_Header.length);
+
+		// copy the AVF filename into the AVR file header.
+		System.arraycopy( ArionAVFPathname_onPVR.toString().getBytes(), 0, header, 10, ArionAVFPathname_onPVR.length() );
+
+
+		return header;
+	}
+
+	/*
+	 * called each time a file part has been written and been closed.
+	 * Need to:
+	 * rename AVR file to Arion style.
+	 * add entries to AVF header for:
+	 * size of this file, number of file parts, bitrate,
+	 * total playback time (minutes), total size of stream (redundant, but...)
+	 */
+	// todo--- PIDs, file sizes, and total size.; bitrate.
+	private static String finishArionheaders(String old_name, long time[], JobProcessing job_processing )	 throws IOException
+	{
+			// duration of recording - convert from 90kHz clock to ms.
+		long millis = (time[1] - time[0]) / 90L;
+		long duration_seconds = Math.round( millis / 1000.0f );    //total duration in seconds
+		ArionCumulativeTime += duration_seconds;
+		
+		long duration_minutes = Math.round( ArionCumulativeTime / 60.0f );    //total duration in minutes
+
+		int splitPart = job_processing.getSplitPart();
+
+		File avrFile = new File( new File(old_name).getParentFile(), ArionAVRLocalFilename.toString() );
+		if ( avrFile.exists() ) 
+			 avrFile.delete();
+
+		Common.renameTo( new File(old_name), avrFile);
+
+		// now get the AVR file  length
+		//RandomAccessFile ts = new RandomAccessFile(avrFile, "rw");
+		long currentStreamSize = avrFile.length() - ArionAVR_HEADERSIZE;
+		ArionCumulativeStreamSize  += currentStreamSize;
+		//ts.close();
+
+		if ( currentStreamSize > 0x7f9a0000 ) {
+			// not sure how to abort this cleanly.
+			Common.setMessage("!> Arion: File is too large " + String.valueOf(avrFile.length()) + " bytes)");
+			return (new String( "noFileCreated" ) );
+		}
+
+		// now reopen the AVF file and update the timing info...
+		RandomAccessFile ts = new RandomAccessFile( ArionAVFLocalPathname, "rw");
+
+		Common.setMessage("Arion: renamed '" + old_name + "'");
+		Common.setMessage("            to '" + avrFile.getPath() + "'");
+		Common.setMessage("    size 0x" + Long.toHexString(currentStreamSize).toUpperCase() + ", duration " + String.valueOf(duration_seconds) + " sec (cumulative: " + String.valueOf(duration_minutes) + " min)");
+
+		int byterate = (int) (ArionCumulativeStreamSize / ArionCumulativeTime);
+		Common.setMessage("Arion: bitrate = " + String.valueOf(byterate) + " bytes/s");
+
+		// write the nth stream size ...
+		ts.seek(0x3a4 + 4 * splitPart  );
+		ts.writeInt( (int)currentStreamSize );
+
+
+		ts.seek(0x6c4);
+		ts.writeInt( byterate );
+		ts.writeInt( (int)duration_minutes );
+		ts.writeShort( splitPart+1 );
+		ts.seek(0x6d0);
+		ts.writeLong( ArionCumulativeStreamSize );
+		Common.setMessage("Arion: Written " + String.valueOf(ArionCumulativeStreamSize) + " bytes");
+
+		ts.close();
+
+		return old_name;
+	}
+
 
 	private static byte[] generateCRC32(byte[] data, int offset)
 	{

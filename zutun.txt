@@ -379,6 +379,11 @@
 
 0.90.4.00b26:
 --1:1 direct cut aufgeteilt, 'echte' kopie von dateisegmenten, zzt nur 1 datei
+--ts payload erkennung erweitert
+
+0.90.4.00b27:
+--arion avr export
+--handled exception HD dvb subtitle (?)
 !-ac3 a/v sync problem noch offen
 
 

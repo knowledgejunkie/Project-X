@@ -251,7 +251,6 @@ public class PreSettings extends JFrame {
 		String[][] objects = {
 			Keys.KEY_PVA_FileOverlap,
 			Keys.KEY_PVA_Audio,
-			Keys.KEY_VOB_resetPts,
 			Keys.KEY_TS_ignoreScrambled,
 			Keys.KEY_TS_blindSearch,
 			Keys.KEY_TS_joinPackets,
@@ -259,6 +258,7 @@ public class PreSettings extends JFrame {
 			Keys.KEY_TS_FinepassAdaption,
 			Keys.KEY_TS_JepssenAdaption,
 			Keys.KEY_TS_KoscomAdaption,
+			Keys.KEY_TS_ArionAdaption,
 			Keys.KEY_TS_generatePmt,
 			Keys.KEY_TS_generateTtx,
 			Keys.KEY_TS_setMainAudioAc3
@@ -317,6 +317,7 @@ public class PreSettings extends JFrame {
 		idPanel2.add(spec5);
 
 		String[][] objects_2 = {
+			Keys.KEY_VOB_resetPts,
 			Keys.KEY_Input_getEnclosedPackets,
 			Keys.KEY_Input_concatenateForeignRecords,
 			Keys.KEY_Input_useReadOverhead,
@@ -337,13 +338,13 @@ public class PreSettings extends JFrame {
 			box.setSelected(Common.getSettings().getBooleanProperty(objects_2[i]));
 			box.addActionListener(_CheckBoxListener);
 
-			if (i == 3 || i == 6)
-				idPanel2.add(Box.createRigidArea(new Dimension(1, 6)));
+			if (i == 4 || i == 7)
+				idPanel2.add(Box.createRigidArea(new Dimension(1, 2)));
 
 			idPanel2.add(box);
 		}
 
-		idPanel2.add(Box.createRigidArea(new Dimension(1, 10)));
+		//idPanel2.add(Box.createRigidArea(new Dimension(1, 4)));
 
 		idPanel2.add(new JLabel(Resource.getString("SpecialPanel.Conversion")));
 

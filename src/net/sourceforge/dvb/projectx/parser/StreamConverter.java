@@ -1047,7 +1047,7 @@ public class StreamConverter extends Object {
 			 */
 			if (FirstPacket)
 			{
-				Buffer.write(TS.init( FileName, SetMainAudioAc3, GenerateTTX, TsHeaderMode));
+				Buffer.write(TS.init( job_processing, FileName, SetMainAudioAc3, GenerateTTX, TsHeaderMode));
 				FirstPacket = false; 
 			}
 
@@ -1359,7 +1359,7 @@ public class StreamConverter extends Object {
 				if (qinfo && GeneratePMT)
 					TS.setPmtPids(IDs);
 
-				FileName = TS.updateAdditionalHeader(FileName, time, TsHeaderMode);
+				FileName = TS.updateAdditionalHeader(FileName, time, TsHeaderMode, job_processing);
 
 				break;
 

@@ -333,8 +333,9 @@ public class DVBSubpicture extends Object {
 		if (page.getTimeOut() > 0 && pts == -1) // -1 means take proposed play time
 			new_time_out = page.getTimeOut() / 10;
 
+//Common.setMessage("!> debug Info : px " + page.getX() + " / py " + page.getY() + " / pw " + page.getWidth() + " / ph " + page.getHeight() + " (VN): " + page.getVersionNumber());
 
-		if (page.getWidth() <= 0 || page.getHeight() <= 0)
+		if (page.getWidth() <= 0 || page.getHeight() <= 0 || page.getWidth() > 720 || page.getHeight() > 576)
 		{
 			Common.setMessage("!> Page ignored (VN): " + page.getVersionNumber() + "; (size error) " + page.getWidth() + " * " + page.getHeight());
 			return;

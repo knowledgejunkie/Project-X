@@ -161,6 +161,7 @@ public class Keys extends Object {
 	public final static String[] KEY_TS_FinepassAdaption = { "SpecialPanel.TS.FinepassAdaption", "0" };
 	public final static String[] KEY_TS_JepssenAdaption = { "SpecialPanel.TS.JepssenAdaption", "0" };
 	public final static String[] KEY_TS_KoscomAdaption = { "SpecialPanel.TS.KoscomAdaption", "0" };
+	public final static String[] KEY_TS_ArionAdaption = { "SpecialPanel.TS.ArionAdaption", "0" };
 	public final static String[] KEY_TS_generatePmt = { "SpecialPanel.TS.generatePmt", "1" }; //cbox[41], true
 	public final static String[] KEY_TS_generateTtx = { "SpecialPanel.TS.generateTtx", "0" }; //cbox[42] --ts !!
 	public final static String[] KEY_TS_setMainAudioAc3 = { "SpecialPanel.TS.setMainAudioAc3", "0" }; //cbox[37] --ts  !!
@@ -366,7 +367,8 @@ public class Keys extends Object {
 			Resource.getString("SpecialPanel.TS.HeaderMode0"), 
 			Resource.getString("SpecialPanel.TS.HeaderMode1"), 
 			Resource.getString("SpecialPanel.TS.HeaderMode2"), 
-			Resource.getString("SpecialPanel.TS.HeaderMode3") 
+			Resource.getString("SpecialPanel.TS.HeaderMode3"),
+			Resource.getString("SpecialPanel.TS.HeaderMode4") 
 		};
 		this.ITEMS_TsHeaderMode = ITEMS_TsHeaderMode;
 

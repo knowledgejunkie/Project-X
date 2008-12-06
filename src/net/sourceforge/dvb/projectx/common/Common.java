@@ -81,8 +81,8 @@ import net.sourceforge.dvb.projectx.net.WebInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90.4.00.b26";
-	private static String version_date = "30.10.2008";
+	private static String version_name = "ProjectX 0.90.4.00.b27";
+	private static String version_date = "06.12.2008";
 
 	private static String line_separator = System.getProperty("line.separator");
 
@@ -123,6 +123,7 @@ public final class Common extends Object {
 	private static DateFormat time_format_2 = new SimpleDateFormat("HH:mm:ss:SSS");
 	private static DateFormat time_format_3 = new SimpleDateFormat("dd.MM.yy  HH:mm");
 	private static DateFormat time_format_4 = new SimpleDateFormat("HH:mm:ss");
+	private static DateFormat time_format_5 = new SimpleDateFormat("yyyyMMHHmm");
 
 	private static byte temp_byte;
 
@@ -826,6 +827,15 @@ public final class Common extends Object {
 	{
 		time_format_4.setTimeZone(TimeZone.getTimeZone("GMT+0:00"));
 		return time_format_4.format(new Date(time_value));
+	}
+
+	/**
+	 *
+	 */
+	public static String formatTime_5(long time_value)
+	{
+		time_format_5.setTimeZone(TimeZone.getDefault());
+		return time_format_5.format(new Date(time_value));
 	}
 
 	/**
