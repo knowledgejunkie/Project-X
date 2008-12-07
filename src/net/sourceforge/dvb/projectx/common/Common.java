@@ -123,7 +123,7 @@ public final class Common extends Object {
 	private static DateFormat time_format_2 = new SimpleDateFormat("HH:mm:ss:SSS");
 	private static DateFormat time_format_3 = new SimpleDateFormat("dd.MM.yy  HH:mm");
 	private static DateFormat time_format_4 = new SimpleDateFormat("HH:mm:ss");
-	private static DateFormat time_format_5 = new SimpleDateFormat("yyyyMMHHmm");
+	private static DateFormat time_format_5 = new SimpleDateFormat("yyyyMMddHHmm");
 
 	private static byte temp_byte;
 
