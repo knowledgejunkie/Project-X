@@ -2893,7 +2893,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 		float Ydecimate = z_vertical_size / (float) preview_vertical_size;
 
 		//~50ms
-		for (int y = 0, tmp1, tmp2; Y < vertical_size && y < preview_vertical_size; Y += Ydecimate, y++, X = X_Off)
+		for (int y = 0, tmp1, tmp2; Coded_Picture_Width >= 0 && Y < vertical_size && y < preview_vertical_size; Y += Ydecimate, y++, X = X_Off)
 		{
 			tmp1 = y * preview_horizontal_size;
 			tmp2 = (int)Y * Coded_Picture_Width;
