@@ -129,6 +129,8 @@ import net.sourceforge.dvb.projectx.xinput.DirType;
 import net.sourceforge.dvb.projectx.xinput.XInputDirectory;
 import net.sourceforge.dvb.projectx.xinput.XInputFile;
 
+import net.sourceforge.dvb.projectx.video.Preview;
+
 import net.sourceforge.dvb.projectx.gui.FtpChooser;
 
 import net.sourceforge.dvb.projectx.common.JobCollection;
@@ -213,7 +215,12 @@ public class MainFrame extends JPanel {
 	private Thread thread = null;
 
 	private PatchDialog patch_panel;
+
 //
+	private int loadSizeForward = 1024000;
+
+	private Preview Preview = new Preview(loadSizeForward);
+
 	private static GOPEditor gop_editor;
 //
 	/**
@@ -2973,6 +2980,25 @@ public class MainFrame extends JPanel {
 	{
 		if (aXInputFile.getStreamInfo() == null || streamtype > -1)
 			Common.getScanClass().getStreamInfo(aXInputFile, 0, streamtype);
+
+		if (aXInputFile.getStreamInfo().getThumbnail() == null)
+		{
+			switch (aXInputFile.getStreamInfo().getStreamType())
+			{
+				case CommonParsing.PES_AV_TYPE:
+				case CommonParsing.MPEG1PS_TYPE:
+				case CommonParsing.MPEG2PS_TYPE:
+				case CommonParsing.PVA_TYPE:
+				case CommonParsing.TS_TYPE:
+				case CommonParsing.ES_MPV_TYPE:
+					Preview.previewFile(aXInputFile, 0, loadSizeForward, Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops), Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode), Common.getSettings().getIntProperty(Keys.KEY_Preview_YGain));
+					aXInputFile.getStreamInfo().setThumbnail(Common.getMpvDecoderClass().getScaledCutImage());
+					break;
+
+				default:
+					aXInputFile.getStreamInfo().setThumbnail(new int[0]);
+			}
+		}
 
 		CommonGui.getPicturePanel().setStreamInfo(aXInputFile.getStreamInfo());
 	}

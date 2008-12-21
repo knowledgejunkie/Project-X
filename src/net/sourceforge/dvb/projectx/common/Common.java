@@ -82,7 +82,7 @@ public final class Common extends Object {
 
 	/* main version index */
 	private static String version_name = "ProjectX 0.90.4.00.b27";
-	private static String version_date = "06.12.2008";
+	private static String version_date = "21.12.2008";
 
 	private static String line_separator = System.getProperty("line.separator");
 

@@ -752,6 +752,8 @@ public class FileProperties extends JFrame {
 			alternative = "";
 			System.arraycopy(new_image_data, 0, image_data, 0, new_image_data.length);
 
+			inputfile.getStreamInfo().setThumbnail(image_data);
+
 			source.newPixels();
 			repaint();
 		}

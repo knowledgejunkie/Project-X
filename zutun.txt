@@ -384,6 +384,7 @@
 0.90.4.00b27:
 --arion avr export
 --handled exception HD dvb subtitle (?)
+--thumbnails
 !-ac3 a/v sync problem noch offen
 
 

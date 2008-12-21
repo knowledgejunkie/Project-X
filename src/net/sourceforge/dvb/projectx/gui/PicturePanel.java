@@ -89,15 +89,18 @@ public class PicturePanel extends JPanel {
 	private Image SubpictureImage;
 	private Image image;
 	private Image mixed_image;
+	private Image thumb_image;
 //
 	private Image InfoBackground = Resource.loadImage("ibg.gif");
 	private Image SlideBackground = Resource.loadImage("sbg.gif");
 
 	private MemoryImageSource source;
 	private MemoryImageSource mixed_source;
+	private MemoryImageSource thumb_source;
 
 	private boolean showFileInfo = false;
 	private boolean isSubpictureAvailable = false;
+	private boolean isThumbnailAvailable = false;
 	private boolean isOSDInfoAvailable = false;
 	private boolean isOSDErrorInfo = false;
 	private boolean PLAY = true;
@@ -110,6 +113,7 @@ public class PicturePanel extends JPanel {
 	private int[] zoomrect = new int[6];
 
 	private int[] mixed_image_array;
+	private int[] thumb_image_array;
 	private String mixed_image_info = "";
 
 	private int matrix_index = -1;
@@ -253,6 +257,11 @@ public class PicturePanel extends JPanel {
 		mixed_source = new MemoryImageSource(512, 288, mixed_image_array, 0, 512);
 		mixed_source.setAnimated(true);
 		mixed_image = createImage(mixed_source);
+
+		thumb_image_array = new int[160 * 90];
+		thumb_source = new MemoryImageSource(160, 90, thumb_image_array, 0, 160);
+		thumb_source.setAnimated(true);
+		thumb_image = createImage(thumb_source);
 
 		font_1 = new Font("Tahoma", Font.PLAIN, 12);
 		font_2 = new Font("Tahoma", Font.BOLD, 12);
@@ -1065,6 +1074,20 @@ public class PicturePanel extends JPanel {
 		g.drawString(streamInfo.getFileDate(), x3 + 6, y3 + h3 + 16);
 		g.drawString(streamInfo.getFileSize(), x3 + 6, y3 + h3 + 30);
 
+		//thumbnail
+		if (isThumbnailAvailable)
+		{
+		//	g.setColor(new Color(20, 20, 20, 150));
+		//	g.fillRect(x3 * 2 + w3 + 8 + 8, y3 + 8, 160, 90);
+		//	g.drawImage(thumb_image, x3 * 2 + w3 + 8, y3, this);
+
+			g.setColor(Color.gray);
+			g.drawRect(x3 + w3 - 160 - 5, y3 + h3 - 90 - 5, 162, 92);
+			g.drawImage(thumb_image, x3 + w3 - 160 - 4, y3 + h3 - 90 - 4, this);
+		}
+
+		g.setColor(Color.white);
+
 		yOffset = y3 + 24;
 
 		yOffset = paintSubInfo(g, streamInfo.getFileType(), StreamTypeImage, x3, yOffset);
@@ -1159,6 +1182,15 @@ public class PicturePanel extends JPanel {
 	{
 		streamInfo = _streamInfo.getNewInstance();  //betta to get a copy
 		showFileInfo = streamInfo != null;
+
+		isThumbnailAvailable = showFileInfo && streamInfo.getThumbnail() != null && streamInfo.getThumbnail().length > 0;
+
+		if (isThumbnailAvailable)
+		{
+			int[] thumb = streamInfo.getThumbnail();
+			System.arraycopy(thumb, 0, thumb_image_array, 0, thumb.length);
+			thumb_source.newPixels();
+		}
 
 		if (showFileInfo && !Common.getSettings().getBooleanProperty(Keys.KEY_holdStreamInfoOnOSD))
 			startClock(10000);

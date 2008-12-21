@@ -53,6 +53,8 @@ public class StreamInfo extends Object {
 	private Object[] pids;
 	private byte[] videoheader;
 
+	private int[] thumbnail;
+
 	private long scanposition = 0;
 
 	private String line_separator = System.getProperty("line.separator");
@@ -84,11 +86,12 @@ public class StreamInfo extends Object {
 	/**
 	 *
 	 */
-	public StreamInfo(int _streamtype, String _file_source, String _file_type, String _file_name, String _file_location, String _file_date, String _file_size, String _file_playtime, Object[] _videostreams, Object[] _audiostreams, Object[] _teletextstreams, Object[] _subpicturestreams, Object[] _pids, byte[] _videoheader)
+	public StreamInfo(int _streamtype, String _file_source, String _file_type, String _file_name, String _file_location, String _file_date, String _file_size, String _file_playtime, Object[] _videostreams, Object[] _audiostreams, Object[] _teletextstreams, Object[] _subpicturestreams, Object[] _pids, byte[] _videoheader, int[] _thumbnail)
 	{
 		streamtype = _streamtype;
 		pids = _pids;
 		videoheader = _videoheader;
+		thumbnail = _thumbnail;
 
 		setStreamInfo(_file_source, _file_type, _file_name, _file_location, _file_date, _file_size, _file_playtime, _videostreams, _audiostreams, _teletextstreams, _subpicturestreams);
 	}
@@ -118,6 +121,23 @@ public class StreamInfo extends Object {
 		file_location = _file_location;
 		file_playtime = _file_playtime;
 		file_source = _file_source;
+	}
+
+	/**
+	 *
+	 */
+	public int[] getThumbnail()
+	{
+		return thumbnail;
+	}
+
+	/**
+	 *
+	 */
+	public void setThumbnail(int[] pic)
+	{
+		thumbnail = new int[pic.length];
+		System.arraycopy(pic, 0, thumbnail, 0, pic.length);
 	}
 
 	/**
@@ -464,11 +484,26 @@ public class StreamInfo extends Object {
 	}
 
 	/**
+	 * 
+	 */
+	private int[] copyContent(int[] _array)
+	{
+		if (_array == null)
+			return null;
+
+		int[] array = new int[_array.length];
+
+		System.arraycopy(_array, 0, array, 0, array.length);
+
+		return array;
+	}
+
+	/**
 	 *
 	 */
 	public StreamInfo getNewInstance()
 	{
-		return new StreamInfo(streamtype, file_source, file_type, file_name, file_location, file_date, file_size, file_playtime, copyContent(videostreams), copyContent(audiostreams), copyContent(teletextstreams), copyContent(subpicturestreams), copyContent(pids), copyContent(videoheader));
+		return new StreamInfo(streamtype, file_source, file_type, file_name, file_location, file_date, file_size, file_playtime, copyContent(videostreams), copyContent(audiostreams), copyContent(teletextstreams), copyContent(subpicturestreams), copyContent(pids), copyContent(videoheader), copyContent(thumbnail));
 	}
 
 }
