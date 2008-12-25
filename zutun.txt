@@ -385,6 +385,7 @@
 --arion avr export
 --handled exception HD dvb subtitle (?)
 --thumbnails
+--fix: recognition of multi area dvd subpics
 !-ac3 a/v sync problem noch offen
 
 
@@ -393,6 +394,7 @@
 !-dyn PMT ts-pid-wechseln folgen
 !-AAC audio (roh) ohne funktion
 !-genauere scanzuordnung - angefangen, ts192
+!-multicolor je zeile - sup
 
 !!radix verschobene pakete
 !!parserliste/demuxlist vereinen, alle fileobjekte in einem pool
@@ -430,7 +432,6 @@
 !!pmt 0xC3 -> string epg - nur inter Typ 0 - mtv2 cyfra 11282v hotbird 
 !-PAT mit adaptionfield ?? 6400 10977 h 16°E, neue klasse
 !!sendername aus SDT anzeigen?
-!!multicolor je zeile - sup
 
 //
 java.applet.AudioClip ac = java.applet.Applet.newAudioClip(Resource.getResourceURL("bsp.wav"));

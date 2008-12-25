@@ -203,6 +203,7 @@ public class Subpicture extends Object {
 	private int option[] = new int[11];
 	private int standard_values[] = { 26, 10, 32, 80, 560, 720, 576, -1, 4, 3, 1 };
 	private int isforced_status = 0;
+	private int ismulticolor_status = 0;
 	private int line_offset = 28;
 
 	private ArrayList user_color_table = new ArrayList();
@@ -1019,6 +1020,7 @@ public class Subpicture extends Object {
 	public void reset()
 	{
 		isforced_status = 0;
+		ismulticolor_status = 0;
 		set_XY_Offset(0, 0);
 		setDisplayMode(0);
 	}
@@ -1059,10 +1061,10 @@ public class Subpicture extends Object {
 		boolean simple_picture = false;
 		int picture_length = packet.length;
 
-		int BPos[] = { off, off<<3 }; //BytePos, BitPos
-		int position[] = new int[4];
-		int start_pos[] = new int[3];
-		int print_colors[] = new int[4];
+		int[] BPos = { off, off<<3 }; //BytePos, BitPos
+		int[] position = new int[4];
+		int[] start_pos = new int[3];
+		int[] print_colors = new int[4];
 
 		if (BPos[0] > picture_length)
 			return -4;
@@ -1090,7 +1092,9 @@ public class Subpicture extends Object {
 		start_pos[2] = Get_Bits(packet, BPos, 16) - 2;
 		Flush_Bits(BPos, start_pos[2]<<3); // jump to sections chunk
 
-		int playtime_pos = Get_Bits(packet, BPos, 16);  //fixed pos, so it must follow the 1st ctrl sequ,
+		//fixed pos, so it must follow the 1st ctrl sequ,
+		//delay of 2nd ctrl sequ execution - usually stop displaying
+		int playtime_pos = Get_Bits(packet, BPos, 16);  
 
 		if (playtime_pos == start_pos[2] + 2)
 		{
@@ -1101,7 +1105,7 @@ public class Subpicture extends Object {
 		else
 			start_pos[2] += off + 2;
 
-		int color_table[] = getColorTable(0);
+		int[] color_table = getColorTable(0);
 
 		while (BPos[0] < off + playtime_pos)  // read sections chunk
 		{
@@ -1132,7 +1136,6 @@ public class Subpicture extends Object {
 				break;
 
 			case 2: // stop display flag
-			case 0xFF: // end of ctrl sequ.
 				Flush_Bits(BPos, 8);
 				break;
 
@@ -1195,7 +1198,19 @@ public class Subpicture extends Object {
 
 			case 7: // extra alpha + color area definition
 				Flush_Bits(BPos, 8);
-				Flush_Bits(BPos, 16);
+				int blen = Show_Bits(packet, BPos, 16); // get length
+				Flush_Bits(BPos, blen<<3);  // skip size word + data
+
+				if (ismulticolor_status == 0)
+				{
+					ismulticolor_status |= 1;
+					Common.setMessage("-> contains extra area definitions!");
+				}
+
+				break;
+
+			case 0xFF: // end of ctrl sequ.
+				Flush_Bits(BPos, 8);
 				break;
 
 			default:

@@ -484,18 +484,20 @@ public class Scan extends Object {
 		supcheck:
 		for (int i = 0, supframe_size, supframe_link, supframe_check, supframe_check2; i < buffersize; i++) 
 		{
-			if (check[i] != 0x53 || check[i + 1]!=0x50)
+			if (check[i] != 0x53 || check[i + 1] != 0x50)
 				continue supcheck;
 
 			supframe_size = (0xFF & check[i + 10])<<8 | (0xFF & check[i + 11]);
 			supframe_link = (0xFF & check[i + 12])<<8 | (0xFF & check[i + 13]);
 			supframe_check = (0xFF & check[i + 12 + supframe_link])<<8 | (0xFF & check[i + 13 + supframe_link]);
-			supframe_check2 = (0xFF & check[i + 36 + supframe_link])<<8 | (0xFF & check[i + 37 + supframe_link]);
+		//	supframe_check2 = (0xFF & check[i + 36 + supframe_link])<<8 | (0xFF & check[i + 37 + supframe_link]);
 
-			if (supframe_link == supframe_check - 24 && supframe_check == supframe_check2)
+		//	if (supframe_link == supframe_check - 24 && supframe_check == supframe_check2) // 24 is wrong
+			if ((0xFF & check[i + supframe_size + 9]) == 0xFF) // end stuffing, at least one
 			{
 				if (more)
 				{
+				//	int b = i + 14 + supframe_link, c = b + 24, d, xa, xe, ya, ye; // 24 is wrong
 					int b = i + 14 + supframe_link, c = b + 24, d, xa, xe, ya, ye;
 
 					for (d = b; d < c; d++)
@@ -507,7 +509,7 @@ public class Scan extends Object {
 							continue;
 
 						case 2:
-							d += 24;
+							d += 24; // is wrong
 							continue;
 
 						case 3:
@@ -526,6 +528,7 @@ public class Scan extends Object {
 							ye= (0xF & check[d])<<8 | (0xFF & check[++d]);
 
 							pic_streams.add("up.left x" + xa + ",y" + ya + " @ size " + (xe - xa + 1) + "*" + (ye - ya + 1));
+							continue;
 						}
 						break;
 					}
