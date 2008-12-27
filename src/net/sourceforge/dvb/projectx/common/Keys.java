@@ -48,8 +48,8 @@ public class Keys extends Object {
 	public final static String[] KEY_FtpServer_Commands = { "FtpServer.Commands", "" }; 
 	public final static String[] KEY_WindowPositionMain_X = { "WindowPosition.Main.X", "50" }; 
 	public final static String[] KEY_WindowPositionMain_Y = { "WindowPosition.Main.Y", "50" }; 
-	public final static String[] KEY_WindowPositionMain_Width = { "WindowPosition.Main.Width", "866" }; //906
-	public final static String[] KEY_WindowPositionMain_Height = { "WindowPosition.Main.Height", "626" }; //694
+	public final static String[] KEY_WindowPositionMain_Width = { "WindowPosition.Main.Width", "852" }; //866
+	public final static String[] KEY_WindowPositionMain_Height = { "WindowPosition.Main.Height", "632" }; //626
 
 	/**
 	 * PostCommands
@@ -324,6 +324,7 @@ public class Keys extends Object {
 	public final static String[] KEY_Preview_disable = { "CollectionPanel.Preview.disable", "0" }; 
 	public final static String[] KEY_Preview_fastDecode = { "CollectionPanel.Preview.fastDecode", "0" }; //rbutton[10] 
 	public final static String[] KEY_Preview_LiveUpdate = { "CollectionPanel.Preview.LiveUpdate", "1" }; //rbutton[16] 
+	public final static String[] KEY_Preview_fullScaled = { "CollectionPanel.Preview.fullScaled", "0" };
 	public final static String[] KEY_Preview_AllGops = { "CollectionPanel.Preview.AllGops", "0" }; //rbutton[6] 
 	public final static String[] KEY_Preview_YGain = { "CollectionPanel.Preview.YGain", "0" };
 	public final static String[] KEY_OptionHorizontalResolution = { "CollectionPanel.OptionHorizontalResolution", "0" }; //cbox[52]

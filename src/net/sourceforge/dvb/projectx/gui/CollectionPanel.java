@@ -26,74 +26,23 @@
 
 package net.sourceforge.dvb.projectx.gui;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Comparator;
-
-import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 import javax.swing.JLabel;
-import javax.swing.JButton;
-import javax.swing.JList;
-import javax.swing.JSlider;
-import javax.swing.JTabbedPane;
 import javax.swing.JComboBox;
-import javax.swing.JScrollPane;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
-import javax.swing.JFileChooser;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingConstants;
-import javax.swing.UIManager;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
-import javax.swing.JComponent;
-
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 
 import java.awt.BorderLayout;
-import java.awt.GridLayout;
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.dnd.DropTarget;
-import java.awt.dnd.DropTargetDragEvent;
-import java.awt.dnd.DropTargetDropEvent;
-import java.awt.dnd.DropTargetEvent;
-import java.awt.dnd.DropTargetListener;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
 import net.sourceforge.dvb.projectx.common.Keys;
 import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.common.Resource;
-import net.sourceforge.dvb.projectx.common.JobCollection;
 
-import net.sourceforge.dvb.projectx.parser.CommonParsing;
-
-import net.sourceforge.dvb.projectx.video.Preview;
-import net.sourceforge.dvb.projectx.video.PreviewObject;
-
-import net.sourceforge.dvb.projectx.xinput.XInputFile;
-
-import net.sourceforge.dvb.projectx.gui.ComboBoxIndexListener;
 import net.sourceforge.dvb.projectx.gui.ComboBoxItemListener;
 import net.sourceforge.dvb.projectx.gui.CheckBoxListener;
 import net.sourceforge.dvb.projectx.gui.CommonGui;
@@ -103,11 +52,8 @@ import net.sourceforge.dvb.projectx.gui.CommonGui;
  */
 public class CollectionPanel extends JPanel {
 
-	private X_JFileChooser chooser;
-
 	private boolean ToggleControls;
 
-	private ComboBoxIndexListener _ComboBoxIndexListener;
 	private ComboBoxItemListener _ComboBoxItemListener;
 	private CheckBoxListener _CheckBoxListener;
 
@@ -124,11 +70,8 @@ public class CollectionPanel extends JPanel {
 	 */
 	private void initialize()
 	{
-		_ComboBoxIndexListener = new ComboBoxIndexListener();
 		_ComboBoxItemListener = new ComboBoxItemListener();
 		_CheckBoxListener = new CheckBoxListener();
-
-		chooser = CommonGui.getMainFileChooser();
 
 		setLayout( new BorderLayout() );
 
@@ -170,7 +113,7 @@ public class CollectionPanel extends JPanel {
 
 
 		grid.add(previewPanel);
-		grid.add(CommonGui.getPicturePanel().getSliderPanel(), BorderLayout.EAST);
+	//	grid.add(CommonGui.getPicturePanel().getSliderPanel(), BorderLayout.EAST);
 
 		add(grid);
 	}
@@ -188,7 +131,8 @@ public class CollectionPanel extends JPanel {
 			Keys.KEY_Preview_disable,
 			Keys.KEY_Preview_fastDecode,
 			Keys.KEY_Preview_LiveUpdate,
-			Keys.KEY_Preview_AllGops
+			Keys.KEY_Preview_AllGops,
+			Keys.KEY_Preview_fullScaled
 		};
 
 		for (int i = 0; i < objects.length; i++)

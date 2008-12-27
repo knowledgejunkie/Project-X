@@ -386,6 +386,7 @@
 --handled exception HD dvb subtitle (?)
 --thumbnails
 --fix: recognition of multi area dvd subpics
+--preview resizable
 !-ac3 a/v sync problem noch offen
 
 

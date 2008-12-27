@@ -177,10 +177,6 @@ public class MainFrame extends JPanel {
 	//create empty table
 	private static Object[][] FileObjectTable = new Object[10][12];
 
-	private static CollectionPanel collection_panel;
-
-	private static FilterPanel filter_panel;
-
 	private static JFrame frame = new JFrame();
 
 //	static {
@@ -195,34 +191,23 @@ public class MainFrame extends JPanel {
 	 */
 	private JRadioButtonMenuItem lf_item[] = null;
 
-
-//	private static JTable tableView;
 	private JTable tableView;
 
 	private JList list1;
 
 	private JViewport viewport;
 	private JTextField outfield;
-
-	private ComboBoxIndexListener _ComboBoxIndexListener = new ComboBoxIndexListener();
-	private ComboBoxItemListener _ComboBoxItemListener = new ComboBoxItemListener();
-	private CheckBoxListener _CheckBoxListener = new CheckBoxListener();
-	private TextFieldListener _TextFieldListener = new TextFieldListener();
-
 	private JPopupMenu popup;
 	private JFrame autoload;
 
-	private Thread thread = null;
-
 	private PatchDialog patch_panel;
 
-//
 	private int loadSizeForward = 1024000;
 
 	private Preview Preview = new Preview(loadSizeForward);
 
 	private static GOPEditor gop_editor;
-//
+
 	/**
 	 * copy fileinfo to clipboard, see popup, menulistener
 	 */
@@ -2481,7 +2466,8 @@ public class MainFrame extends JPanel {
 		 *
 		 */
 		JPanel panel_1 = new JPanel();
-		panel_1.setLayout(new ColumnLayout());
+	//	panel_1.setLayout(new ColumnLayout());
+		panel_1.setLayout(new BorderLayout());
 
 		MemoryMonitor memo = new MemoryMonitor();
 
@@ -2489,31 +2475,38 @@ public class MainFrame extends JPanel {
 			memo.surf.start();
 
 		panel_1.add(memo, BorderLayout.NORTH);
-		panel_1.add(buildProcessControlPanel());
-		panel_1.add(buildCollectionControlPanel());
 
-		panel_1.setPreferredSize(new Dimension(115, 362));
-		panel_1.setMaximumSize(new Dimension(115, 362));
-		panel_1.setMinimumSize(new Dimension(115, 362));
+		JPanel panel_3 = new JPanel();
+		panel_3.setLayout(new ColumnLayout());
+		panel_3.add(buildProcessControlPanel());
+		panel_3.add(buildCollectionControlPanel());
+
+		panel_1.add(panel_3, BorderLayout.SOUTH);
+
+		//panel_1.setPreferredSize(new Dimension(115, 362));
+		//panel_1.setMaximumSize(new Dimension(115, 362));
+		//panel_1.setMinimumSize(new Dimension(115, 362));
 
 		/**
 		 *
 		 */
 		JPanel panel_2 = new JPanel();
-		panel_2.setLayout(new BoxLayout(panel_2, BoxLayout.X_AXIS));
+	//	panel_2.setLayout(new BoxLayout(panel_2, BoxLayout.X_AXIS));
+		panel_2.setLayout(new BorderLayout());
 
 		panel_2.add(panel_1, BorderLayout.WEST);
-		panel_2.add(collection_panel = new CollectionPanel(), BorderLayout.CENTER);
+		panel_2.add(new CollectionPanel(), BorderLayout.CENTER);
 
-		panel_2.setPreferredSize(new Dimension(860, 362));
-		panel_2.setMaximumSize(new Dimension(860, 362));
-		panel_2.setMinimumSize(new Dimension(860, 362));
+		//panel_2.setPreferredSize(new Dimension(860, 362));
+		//panel_2.setMaximumSize(new Dimension(860, 362));
+		//panel_2.setMinimumSize(new Dimension(860, 362));
 
 		/**
 		 *
 		 */
 		JPanel panel = new JPanel();
-		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+	//	panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		panel.setLayout(new BorderLayout());
 
 		panel.add(panel_2, BorderLayout.CENTER);
 		panel.add(buildFilePanel1(), BorderLayout.SOUTH);
@@ -2534,7 +2527,7 @@ public class MainFrame extends JPanel {
 
 		tabbedPane.addTab(Resource.getString("General.FileTable"), buildFilePanel());
 		tabbedPane.addTab(Resource.getString("General.CutControl"), CommonGui.getCutPanel());
-		tabbedPane.addTab(Resource.getString("General.FilterControl"), (filter_panel = new FilterPanel()));
+		tabbedPane.addTab(Resource.getString("General.FilterControl"), new FilterPanel());
 
 		panel.add(CommonGui.getCutPanel().getSliderPanel(), BorderLayout.NORTH);
 		panel.add(tabbedPane);
@@ -2557,9 +2550,9 @@ public class MainFrame extends JPanel {
 		JButton process = new JButton(Resource.getString("MainPanel.QuickStart"));
 		process.setToolTipText(Resource.getString("MainPanel.QuickStart.Tip"));
 		process.setMnemonic('q');
-		process.setPreferredSize(new Dimension(100, 24));
-		process.setMaximumSize(new Dimension(100, 24));
-		process.setMinimumSize(new Dimension(100, 24));
+		process.setPreferredSize(new Dimension(120, 24));
+		process.setMaximumSize(new Dimension(120, 24));
+		process.setMinimumSize(new Dimension(120, 24));
 		process.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -2576,9 +2569,9 @@ public class MainFrame extends JPanel {
 		 * process window open
 		 */
 		JButton processwindow = new JButton(Resource.getString("ProcessWindowPanel.Button"));
-		processwindow.setPreferredSize(new Dimension(100, 24));
-		processwindow.setMaximumSize(new Dimension(100, 24));
-		processwindow.setMinimumSize(new Dimension(100, 24));
+		processwindow.setPreferredSize(new Dimension(120, 24));
+		processwindow.setMaximumSize(new Dimension(120, 24));
+		processwindow.setMinimumSize(new Dimension(120, 24));
 		processwindow.setToolTipText(Resource.getString("MainPanel.Process") + " " + Resource.getString("ProcessWindowPanel.Button"));
 		processwindow.setMnemonic('p');
 		processwindow.addActionListener(new ActionListener() {
@@ -2619,9 +2612,9 @@ public class MainFrame extends JPanel {
 		JPanel panel_2 = new JPanel();
 		panel_2.setLayout(new GridLayout(1,1));
 		panel_2.setBorder(BorderFactory.createLoweredBevelBorder());
-		panel_2.setPreferredSize(new Dimension(100, 138));
-		panel_2.setMaximumSize(new Dimension(100, 138));
-		panel_2.setMinimumSize(new Dimension(100, 138));
+		panel_2.setPreferredSize(new Dimension(120, 138));
+		panel_2.setMaximumSize(new Dimension(120, 138));
+		panel_2.setMinimumSize(new Dimension(120, 138));
 		panel_2.add(textarea);
 
 		panel.add(panel_2);
@@ -2630,8 +2623,8 @@ public class MainFrame extends JPanel {
 		 *  collection label
 		 */
 		JLabel coll_label = new JLabel(Resource.getString("FilePanel.CollectionNumber"));
-		coll_label.setPreferredSize(new Dimension(50, 24));
-		coll_label.setMaximumSize(new Dimension(50, 24));
+		coll_label.setPreferredSize(new Dimension(60, 24));
+		coll_label.setMaximumSize(new Dimension(60, 24));
 		coll_label.setHorizontalAlignment(SwingConstants.CENTER);
 		coll_label.setToolTipText(Resource.getString("FilePanel.CollectionNumber.Tip"));
 
@@ -2639,9 +2632,9 @@ public class MainFrame extends JPanel {
 		 *  number of act. coll.
 		 */
 		comboBox_0 = new JComboBox();
-		comboBox_0.setPreferredSize(new Dimension(50, 24));
-		comboBox_0.setMaximumSize(new Dimension(50, 24));
-		comboBox_0.setMinimumSize(new Dimension(50, 24));
+		comboBox_0.setPreferredSize(new Dimension(60, 24));
+		comboBox_0.setMaximumSize(new Dimension(60, 24));
+		comboBox_0.setMinimumSize(new Dimension(60, 24));
 		comboBox_0.setMaximumRowCount(6);
 		comboBox_0.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
@@ -2675,8 +2668,8 @@ public class MainFrame extends JPanel {
 		 *  remove collection
 		 */
 		JButton remove_coll = new JButton(CommonGui.loadIcon("remcoll.gif"));
-		remove_coll.setPreferredSize(new Dimension(50, 24));
-		remove_coll.setMaximumSize(new Dimension(50, 24));
+		remove_coll.setPreferredSize(new Dimension(60, 24));
+		remove_coll.setMaximumSize(new Dimension(60, 24));
 		remove_coll.setToolTipText(Resource.getString("FilePanel.removeCollection.Tip"));
 		remove_coll.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
@@ -2709,8 +2702,8 @@ public class MainFrame extends JPanel {
 		 *  add collection
 		 */
 		JButton add_coll = new JButton(CommonGui.loadIcon("addcoll.gif"));
-		add_coll.setPreferredSize(new Dimension(50, 24));
-		add_coll.setMaximumSize(new Dimension(50, 24));
+		add_coll.setPreferredSize(new Dimension(60, 24));
+		add_coll.setMaximumSize(new Dimension(60, 24));
 		add_coll.setToolTipText(Resource.getString("FilePanel.addCollection.Tip"));
 		add_coll.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
@@ -3051,7 +3044,6 @@ public class MainFrame extends JPanel {
 			frame.addWindowListener (new WindowAdapter() {
 				public void windowClosing(WindowEvent e)
 				{
-				//	X.closeProgram(true);
 					Common.exitApplication(0);
 				}
 			});
@@ -3071,6 +3063,20 @@ public class MainFrame extends JPanel {
 
 					double newHeight = (preferred.getHeight() > current.getHeight()) ? preferred.getHeight() : current.getHeight();
 					double newWidth = (preferred.getWidth() > current.getWidth()) ? preferred.getWidth() : current.getWidth();
+
+					Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+
+					if (newHeight > preferred.getHeight())
+						newWidth = (newHeight - 344) * 16 / 9 + 340;
+
+					if (newWidth > screen.getWidth())
+					{
+						newWidth = screen.getWidth();
+						newHeight = (newWidth - 340) * 9 / 16 + 344;
+					}
+
+					else if (newWidth > preferred.getWidth())
+						newHeight = (newWidth - 340) * 9 / 16 + 344;
 
 					c.setSize(new Dimension((int)newWidth, (int)newHeight));
 				}

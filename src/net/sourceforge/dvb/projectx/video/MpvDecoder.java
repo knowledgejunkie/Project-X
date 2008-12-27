@@ -75,8 +75,8 @@ public class MpvDecoder extends Object {
 	private IDCTRefNative idct;
 	private IDCTSseNative idctsse;
 
-	private final int preview_horizontal_size = 512;
-	private final int preview_vertical_size = 288;
+	private int preview_horizontal_size = 512;
+	private int preview_vertical_size = 288;
 	private final int cutview_horizontal_size = 160;
 	private final int cutview_vertical_size = 90;
 
@@ -2840,6 +2840,10 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 		Arrays.fill(pixels2, 0xFF505050);
 
 		int x_offset = getMpg2AspectRatioOffset();
+
+		if (x_offset > 0 && preview_horizontal_size != 512)
+			x_offset = (int)((preview_horizontal_size - Math.round(preview_vertical_size * 1.33333)) / 2.0);
+
 		int z_horizontal_size = horizontal_size;
 		int z_vertical_size = vertical_size;
 		int new_x = zoomArea[0];
@@ -2971,6 +2975,19 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	public int[] getPreviewPixel()
 	{
 		return pixels2;
+	}
+
+	/**
+	 * 
+	 */
+	public void setPreviewSize(int w, int h)
+	{
+		preview_horizontal_size = w;
+		preview_vertical_size = h;
+
+		pixels2 = new int[preview_horizontal_size * preview_vertical_size];
+
+		scale_Picture(2);
 	}
 
 	/**
