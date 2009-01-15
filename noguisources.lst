@@ -60,6 +60,7 @@ src/net/sourceforge/dvb/projectx/subtitle/Subpicture.java
 src/net/sourceforge/dvb/projectx/subtitle/Teletext.java
 src/net/sourceforge/dvb/projectx/subtitle/UnicodeWriter.java
 src/net/sourceforge/dvb/projectx/subtitle/Sup2VobSub.java
+src/net/sourceforge/dvb/projectx/subtitle/ColorAreas.java
 src/net/sourceforge/dvb/projectx/thirdparty/Chapters.java
 src/net/sourceforge/dvb/projectx/thirdparty/D2V.java
 src/net/sourceforge/dvb/projectx/thirdparty/Ifo.java

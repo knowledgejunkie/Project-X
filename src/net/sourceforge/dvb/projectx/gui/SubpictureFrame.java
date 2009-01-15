@@ -1,7 +1,7 @@
 /*
  * @(#)SubpictureFrame
  *
- * Copyright (c) 2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2009 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -27,6 +27,7 @@
 
 package net.sourceforge.dvb.projectx.gui;
 
+import java.awt.Font;
 import java.awt.Image;
 import java.awt.Color;
 import java.awt.Graphics;
@@ -38,6 +39,10 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.KeyEvent;
 
+import java.io.File;
+import java.util.ArrayList;
+
+import javax.swing.event.*;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.BorderFactory;
@@ -48,18 +53,31 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
+import javax.swing.JSlider;
+import javax.swing.JCheckBoxMenuItem;
 
 import net.sourceforge.dvb.projectx.gui.CommonGui;
 
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Common;
+import net.sourceforge.dvb.projectx.xinput.XInputFile;
+import net.sourceforge.dvb.projectx.parser.CommonParsing;
 
 
 public class SubpictureFrame extends JFrame {
 
 	String title = Resource.getString("subpicture.title");
+	String info = "";
 
 	private Picture picture;
+
+	private JSlider slider;
+
+	private ArrayList picture_indices = null;
+	private int picture_index = 0;
+	private byte[] picture_data = null;
+	private int[] color_table = null;
+	private int usePreviewBackground = 0;
 
 	/**
 	 *
@@ -75,10 +93,16 @@ public class SubpictureFrame extends JFrame {
 
 		buildMenu();
 
-		getContentPane().add("Center", picture = new Picture());
+		JPanel panel = new JPanel();
+		panel.setLayout(new BorderLayout());
+
+		panel.add(picture = new Picture(), BorderLayout.CENTER);
+		panel.add(buildSliderPanel(), BorderLayout.SOUTH);
+
+		getContentPane().add("Center", panel);
 
 		setTitle(title);
-		setBounds(200, 100, 726, 621);
+		setBounds(200, 0, 726, 726);
 		setResizable(false);
 
 		UIManager.addPropertyChangeListener(new UISwitchListener(getRootPane()));
@@ -87,24 +111,9 @@ public class SubpictureFrame extends JFrame {
 	/**
 	 *
 	 */
-	public void setFrameTitle(String newtitle)
-	{
-		setTitle(title + " " + newtitle); 
-	}
-
-	/**
-	 *
-	 */
-	public void repaintSubpicture()
-	{
-		picture.repaint();
-	}
-
-	/**
-	 *
-	 */
 	public void close()
 	{ 
+		resetPreview();
 		dispose();
 	}
 
@@ -128,6 +137,32 @@ public class SubpictureFrame extends JFrame {
 		JMenu fileMenu = new JMenu();
 		CommonGui.localize(fileMenu, "Common.File");
 
+		final JCheckBoxMenuItem background = new JCheckBoxMenuItem("use Preview Picture as Background");
+		background.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.ALT_MASK));
+		background.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				usePreviewBackground = background.getState() ? usePreviewBackground | 1 : usePreviewBackground & ~1;
+				getPictureData(slider.getValue());
+			}
+		});
+
+		fileMenu.add(background);
+
+		final JCheckBoxMenuItem letterbox = new JCheckBoxMenuItem("use Letterbox");
+		letterbox.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.ALT_MASK));
+		letterbox.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				usePreviewBackground = letterbox.getState() ? usePreviewBackground | 2 : usePreviewBackground & ~2;
+				getPictureData(slider.getValue());
+			}
+		});
+
+		fileMenu.add(letterbox);
+
+		fileMenu.addSeparator();
+
 		JMenuItem close = new JMenuItem();
 		CommonGui.localize(close, "Common.Close");
 		close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, ActionEvent.ALT_MASK));
@@ -143,21 +178,233 @@ public class SubpictureFrame extends JFrame {
 		return fileMenu;
 	}
 
+	/**
+	 *
+	 */
+	protected JPanel buildSliderPanel()
+	{
+		JPanel panel = new JPanel();
+		panel.setLayout(new BorderLayout());
+
+		slider = new JSlider();
+		slider.setMajorTickSpacing(1);
+		slider.setPaintTicks(true);
+		slider.setSnapToTicks(true);
+		slider.setMaximum(1);
+		slider.setValue(0);
+
+		slider.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e)
+			{
+				getPictureData(slider.getValue());
+			}
+		});
+
+		panel.add(slider);
+
+		return panel;
+	}
+
+	/**
+	 *
+	 */
+	public void setFrameTitle(String newtitle)
+	{
+		setTitle(title + " " + newtitle); 
+		info = newtitle;
+	}
+
+	/**
+	 *
+	 */
+	public void loadPreview(XInputFile xif)
+	{
+		scanIFO(xif.toString() + ".IFO");
+
+		if (scanData(xif))
+			show();
+	}
+
+	/**
+	 *
+	 */
+	public void resetPreview()
+	{
+		picture_indices = null;
+		picture_index = 0;
+		picture_data = null;
+		color_table = null;
+		info = "";
+		slider.setMaximum(1);
+		slider.setValue(0);
+	}
+
+	/**
+	 * read colors from ifo (pjx auto generated)
+	 */
+	private void scanIFO(String ifoname)
+	{
+		try {
+
+			File f = new File(ifoname);
+
+			if (!f.exists())
+			{
+				color_table = null;
+				return;
+			}
+
+			XInputFile xif = new XInputFile(f);
+
+			byte[] data = new byte[64];
+			color_table = new int[16];
+
+			xif.randomAccessSingleRead(data, 0x10B4); //read 16x 4bytes from pos 0x10B4
+
+			for (int i = 0, j = color_table.length; i < j; i++)
+				color_table[i] = YUVtoRGB(CommonParsing.getIntValue(data, i * 4, 4, !CommonParsing.BYTEREORDERING));
+
+		} catch (Exception e) {
+
+			color_table = null;
+
+			Common.setExceptionMessage(e);
+		}
+	}
+
+	/**
+	 * convert colors from ifo (pjx auto generated)
+	 */
+	private int YUVtoRGB(int values)
+	{
+		int Y = 0xFF & values>>16;
+		int Cr = 0xFF & values>>8;
+		int Cb = 0xFF & values;
+
+		if (Y == 0)
+			return 0;
+
+		int R = (int)((float)Y +1.402f * (Cr-128));
+		int G = (int)((float)Y -0.34414 * (Cb-128) -0.71414 * (Cr-128));
+		int B = (int)((float)Y +1.722 * (Cb-128));
+		R = R < 0 ? 0 : (R > 0xFF ? 0xFF : R);
+		G = G < 0 ? 0 : (G > 0xFF ? 0xFF : G);
+		B = B < 0 ? 0 : (B > 0xFF ? 0xFF : B);
+		int T = 0xFF;
+
+		return (T<<24 | R<<16 | G<<8 | B);
+	}
+
+	/**
+	 *
+	 */
+	private boolean scanData(XInputFile xif)
+	{
+		boolean b = false;
+
+		picture_indices = new ArrayList();
+
+		try {
+
+			if (!xif.exists())
+				return b;
+
+			picture_data = new byte[(int) xif.length()];
+			info = xif.toString();
+
+			xif.randomAccessSingleRead(picture_data, 0); // read all
+
+			long pts = 0;
+			for (int i = 0; i < picture_data.length; i++)
+			{
+				if (picture_data[i] != 0x53 || picture_data[i + 1] != 0x50) // header
+					continue;
+
+				pts = CommonParsing.readPTS(picture_data, i + 2, 8, CommonParsing.BYTEREORDERING, false);
+
+				picture_indices.add(new Long[] { new Long(i), new Long(CommonParsing.readPTS(picture_data, i + 2, 8, CommonParsing.BYTEREORDERING, false) / 90), null } );
+
+				i += 8;
+			}
+
+			slider.setMaximum(picture_indices.size() - 1);
+
+		} catch (Exception e) {
+
+			slider.setMaximum(1);
+
+			info = "file read error!";
+			//Common.setExceptionMessage(e);
+			return b;
+		}
+
+		slider.setValue(0);
+
+		return !b;
+	}
+
+	/**
+	 *
+	 */
+	private void getPictureData(int index)
+	{
+		picture_index = index;
+
+		if (picture_index < 0 || picture_indices == null || picture_index >= picture_indices.size())
+			return;
+
+		Long[] values = (Long[]) picture_indices.get(picture_index);
+		int pos = values[0].intValue(); //start pos
+
+
+		int length = picture_data.length - pos;
+
+		if (picture_index + 1 < picture_indices.size())
+		{
+			Long[] nvalues = (Long[]) picture_indices.get(picture_index + 1);
+			int npos = nvalues[0].intValue(); //start pos
+
+			length = npos - pos;
+		}
+
+		Common.getSubpictureClass().setColorTable(color_table);
+
+		byte[] array = new byte[length];
+		System.arraycopy(picture_data, pos, array, 0, length);
+
+		int duration = Common.getSubpictureClass().decode_picture(array, 10, true, new String[2], (usePreviewBackground & 1) == 1 ? new Object[] { CommonGui.getPicturePanel().getPreviewImage(), new Integer(usePreviewBackground) } : null);
+
+		values[2] = new Long(duration / 90);
+
+		repaintSubpicture();
+	}
+
+	/**
+	 *
+	 */
+	public void repaintSubpicture()
+	{
+		picture.repaint();
+	}
 
 	/**
 	 *
 	 */
 	public class Picture extends JPanel {
 
+		private Font font;
+
 		/**
 		 *
 		 */
 		public Picture()
 		{ 
+			font = new Font("Tahoma", Font.PLAIN, 14);
+
 			setBackground(Color.gray);
-			setPreferredSize(new Dimension(720, 576));
-			setMinimumSize(new Dimension(720, 576));
-			setMaximumSize(new Dimension(720, 576));
+			setPreferredSize(new Dimension(720, 704));
+			setMinimumSize(new Dimension(720, 704));
+			setMaximumSize(new Dimension(720, 704));
 		}
 
 		/**
@@ -165,11 +412,110 @@ public class SubpictureFrame extends JFrame {
 		 */
 		public void paint(Graphics g)
 		{
+			paintPicture(g);
+			paintInfoBackground(g);
+			paintInfoField(g);
+			paintPreviewInfo(g);
+		}
+
+		/**
+		 *
+		 */
+		private void paintPicture(Graphics g)
+		{
 			Image image = Common.getSubpictureClass().getImage();
 
 			if (image != null)
-				g.drawImage(image, 0, 0, this);
+				g.drawImage(image, 0, 0, this); //unscaled, orig size
 		}
 
+		/**
+		 *
+		 */
+		private void paintInfoBackground(Graphics g)
+		{
+			g.setColor(Color.black);
+			g.fillRect(0, 576, 720, 140);
+
+			//divide
+			g.setColor(Color.white);
+			g.fillRect(0, 576, 720, 2);
+		}
+
+		/**
+		 *
+		 */
+		private void paintInfoField(Graphics g)
+		{
+			g.setColor(Color.white);
+			g.setFont(font);
+			g.drawString(info, 4, 608);
+		}
+
+		/**
+		 *
+		 */
+		private void paintPreviewInfo(Graphics g)
+		{
+			if (picture_indices == null)
+				return;
+
+			if (picture_indices.size() == 0)
+				return;
+
+			Long[] values = (Long[]) picture_indices.get(picture_index);
+
+			String str1 = "Pos: " + values[0]
+						+ " / Picture: " + (picture_index + 1) + " of " + picture_indices.size()
+						+ " / " + Common.getSubpictureClass().isForced_Msg(1);
+
+			g.setColor(Color.white);
+			g.setFont(font);
+			g.drawString(str1, 4, 626);
+
+			String str2 = "PTS In " + Common.formatTime_1(values[1].longValue())
+						+ " Duration " + Common.formatTime_1(values[2].longValue())
+						+ " PTS Out " + Common.formatTime_1(values[1].longValue() + values[2].longValue());
+
+			if (picture_index + 1 < picture_indices.size())
+			{
+				Long[] nvalues = (Long[]) picture_indices.get(picture_index + 1);
+				long diff = nvalues[1].longValue() - (values[1].longValue() + values[2].longValue());
+
+				str2 += " Next In " + Common.formatTime_1(nvalues[1].longValue());
+
+				if (diff < 0)
+					str2 += " Overlap " + Common.formatTime_1(Math.abs(diff));
+				else
+					str2 += " Gap " + Common.formatTime_1(diff);
+			}
+
+			else
+				str2 += " Next File End ";
+
+			g.drawString(str2, 4, 644);
+
+			paintColorIndex(g);
+		}
+
+		/**
+		 *
+		 */
+		private void paintColorIndex(Graphics g)
+		{
+			g.setFont(font);
+
+			int[] colors = Common.getSubpictureClass().getColorTable(0);
+
+			for (int i = 0, x = 4; i < 16; i++, x += 44)
+			{
+				g.setColor(new Color(colors[i]));
+				g.fillRect(x + 20, 580, 12, 12);
+
+				g.setColor(Color.white);
+				g.drawString(Integer.toHexString(i).toUpperCase(), x, 592);
+				g.drawRect(x + 20, 580, 12, 12);
+			}
+		}
 	}
 }

@@ -1,7 +1,7 @@
 /*
  * @(#)DVBSubpicture.java - decodes DVB subtitles
  *
- * Copyright (c) 2004-2007 by dvb.matt, All rights reserved
+ * Copyright (c) 2004-2009 by dvb.matt, All rights reserved
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -30,6 +30,10 @@
  * it does not yet implement export (only log it) of encoded string characters, only bitmapped pictures
  * 
  */
+/*
+ * stenographic subtitling patch (BBC) by Duncan (Shannock9) UK
+ * 2008-12
+ */
 
 package net.sourceforge.dvb.projectx.subtitle;
 
@@ -44,6 +48,8 @@ import java.util.Arrays;
 
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Common;
+
+import net.sourceforge.dvb.projectx.subtitle.ColorAreas;                                         //S9
 
 public class DVBSubpicture extends Object {
 
@@ -87,13 +93,25 @@ public class DVBSubpicture extends Object {
 	{
 		IRD = val;  //2,4,8 = 4,16,256-color support
 
-		//DM13062004 081.7 int04 add++
-		user_table = table;
-		user_table_enabled = !user_table.isEmpty(); //DM23062004 081.7 int05 changed
+		if (!table.isEmpty())
+			IRD = Integer.parseInt(table.get("model").toString().trim());
 
-		if (user_table_enabled)
-			IRD = Integer.parseInt(user_table.get("model").toString().trim());
-		//DM13062004 081.7 int04 add--
+		//goes inactive if bit0 is not set through model ID
+		ColorAreas.initialise(IRD, log, table);                           //stream startup event //S9 20090113
+
+		//sets full 8 bit decode and disable colortable if CA is active
+		if ((IRD & 1) == 1)
+		{
+			IRD = 8;
+			user_table = null;
+			user_table_enabled = false;
+		}
+
+		else
+		{
+			user_table = table;
+			user_table_enabled = true;
+		}
 
 		biglog = log;
 		resetEpoch();
@@ -356,7 +374,8 @@ public class DVBSubpicture extends Object {
 
 		picture_saved = true;
 
-		addBigMessage("time: in " + page.getTimeIn() + " /len " + new_time_out + " /save " + save + " /prev " + preview_visible);
+		addBigMessage("time: in " + page.getTimeIn() + " /len " + new_time_out + " /save " + save + " /prev " + preview_visible    //S9dbg
+					+ "                               <<prepare.output>>");                                                        //S9dbg
 	}
 
 	private int page_composition()
@@ -375,7 +394,8 @@ public class DVBSubpicture extends Object {
 
 		flushBits(2);
 
-		addBigMessage("pagecomp: state " + page.getState() + " /page " + page.getId() + " /pv " + page.getVersionNumber() + " /to " + time_out);
+		addBigMessage("pagecomp: state " + page.getState() + " /page " + page.getId() + " /pv " + page.getVersionNumber() + " /to " + time_out   //S9dbg
+		              + "                      " + ((page.getState()<1) ? "" : (page.getState()<2) ? "<<acquisition pt>>" : "<<new epoch>>"));   //S9dbg
 
 		if (page.getState() > 0)
 		{
@@ -444,6 +464,8 @@ public class DVBSubpicture extends Object {
 			epoch.clearObjects();
 		}
 
+		page.setTimeIn(pts);                          // for stenographic  subtitling    //S9
+
 		page.setTimeOut(time_out); //page_time_out, seconds to stand
 
 		//empty pages may define CLUTs without regions
@@ -489,13 +511,21 @@ public class DVBSubpicture extends Object {
 		region.setPixelCode_4bit(getBits(4));
 		region.setPixelCode_2bit(getBits(2));
 
-		pixel_data = region.initPixel();
+		if (!region.isActive() || !region.getFillFlag())      //retain prev obj data     //S9
+			pixel_data = region.getPixel();                   //...for stenographic      //S9
+		else                                                                             //S9
+			pixel_data = region.initPixel();
+
+		if (pixel_data==null)                                 //but during acquisition   //S9
+			pixel_data = region.initPixel();                  //...need dummy previous   //S9
 
 		flushBits(2);
 
 		paintRegionBackground();
 
-		addBigMessage("regcomp: page " + page.getId() + " /reg " + region.getId() + " /rv " + region.getVersionNumber() + " /lv " + region.getCompatibility() + " /clut " + clut.getId() + " /activ " + region.isActive());
+		addBigMessage("regcomp: page " + page.getId() + " /reg " + region.getId() + " /rv " + region.getVersionNumber()
+				+ " /lv " + region.getCompatibility() + " /clut " + clut.getId()
+				+ " /activ " + region.isActive() + " /fill " + region.getFillFlag());                              //S9
 
 		while (BytePosition < segment_end)
 		{

@@ -594,7 +594,7 @@ public class PicturePanel extends JPanel {
 			return;
 		}
 
-		g.drawImage(mixed_image, 2, 2, this);
+		g.drawImage(mixed_image, 0, 0, this);
 
 		if (matrix_index < 0 || matrix_index >= matrix_table.length) {
 			return;
@@ -605,7 +605,8 @@ public class PicturePanel extends JPanel {
 		}
 
 		g.setColor(Color.green);
-		g.drawRect(matrix_table[matrix_index][0] + 1, matrix_table[matrix_index][1] + 1, matrix_new_width + 1, matrix_new_height + 1);
+		g.drawRect(matrix_table[matrix_index][0], matrix_table[matrix_index][1], matrix_new_width + 1, matrix_new_height + 1);
+	//	g.drawRect(matrix_table[matrix_index][0] + 1, matrix_table[matrix_index][1] + 1, matrix_new_width + 1, matrix_new_height + 1);
 
 		g.setFont(font_2);
 		g.drawString(String.valueOf(matrix_index), matrix_table[matrix_index][0] + 5, matrix_table[matrix_index][1] + 14);
@@ -1127,17 +1128,17 @@ public class PicturePanel extends JPanel {
 			return;
 		}
 
-		if (!fullScaled) 
+	//	if (!fullScaled) 
 			g2.drawImage(SubpictureImage, 0, 0, previewImageSize.width, previewImageSize.height, this);
-		else
-			g.drawImage(SubpictureImage, 66, 0, this);
+	//	else
+	//		g.drawImage(SubpictureImage, 66, 0, this);
 	}
 
 	/**
 	 * 
 	 */
 	private void loadSubpicture() {
-		SubpictureImage = !isSubpictureAvailable ? null : Common.getSubpictureClass().getScaledImage();
+		SubpictureImage = !isSubpictureAvailable ? null : Common.getSubpictureClass().getScaledImage(previewImageSize.width, previewImageSize.height);
 	}
 
 	/**
@@ -1242,6 +1243,13 @@ public class PicturePanel extends JPanel {
 
 		startClock();
 		repaint();
+	}
+
+	/**
+	 *
+	 */
+	public Image getPreviewImage() {
+		return image;
 	}
 
 	/**

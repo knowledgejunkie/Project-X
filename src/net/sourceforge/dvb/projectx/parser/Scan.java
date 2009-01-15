@@ -28,6 +28,7 @@ package net.sourceforge.dvb.projectx.parser;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.File;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -350,7 +351,7 @@ public class Scan extends Object {
 					break;
 
 				case 1:
-					returncode = scanSubpicture(check, bs0, more);
+					returncode = scanSubpicture(check, bs0, more, aXif.toString());
 					break;
 
 				case 2:
@@ -479,7 +480,7 @@ public class Scan extends Object {
 	/**
 	 *
 	 */
-	private int scanSubpicture(byte[] check, int buffersize, boolean more) throws Exception
+	private int scanSubpicture(byte[] check, int buffersize, boolean more, String supname) throws Exception
 	{
 		supcheck:
 		for (int i = 0, supframe_size, supframe_link, supframe_check, supframe_check2; i < buffersize; i++) 
@@ -538,6 +539,9 @@ public class Scan extends Object {
 					System.arraycopy(check, i, packet, 0, 10 + supframe_size);
 
 				//  shows first found subpicture scaled on OSD
+					supname = supname + ".IFO";
+
+					Common.getSubpictureClass().setColorTable(setIFOColorTable(supname));
 					Common.getSubpictureClass().decode_picture(packet, 10, true, new String[2]);
 				}
 
@@ -546,6 +550,66 @@ public class Scan extends Object {
 		}
 
 		return -1;
+	}
+
+	/**
+	 * read colors from ifo (pjx auto generated)
+	 */
+	private int[] setIFOColorTable(String supname)
+	{
+		try {
+
+			File f = new File(supname);
+
+			if (!f.exists())
+			{
+				//Common.setMessage("!> no existing .ifo file : '" + supname + "'");
+				return null;
+			}
+
+			XInputFile xif = new XInputFile(f);
+
+			byte[] data = new byte[64];
+			int[] values = new int[16];
+
+			xif.randomAccessSingleRead(data, 0x10B4); //read 16x 4bytes from pos 0x10B4
+
+			for (int i = 0, j = values.length; i < j; i++)
+				values[i] = YUVtoRGB(CommonParsing.getIntValue(data, i * 4, 4, !CommonParsing.BYTEREORDERING));
+
+		//	Common.setMessage("-> show colors using .ifo file : '" + supname + "'");
+
+			return values;
+
+		} catch (Exception e) {
+
+			Common.setExceptionMessage(e);
+		}
+
+		return null;
+	}
+
+	/**
+	 * convert colors from ifo (pjx auto generated)
+	 */
+	private int YUVtoRGB(int values)
+	{
+		int Y = 0xFF & values>>16;
+		int Cr = 0xFF & values>>8;
+		int Cb = 0xFF & values;
+
+		if (Y == 0)
+			return 0;
+
+		int R = (int)((float)Y +1.402f * (Cr-128));
+		int G = (int)((float)Y -0.34414 * (Cb-128) -0.71414 * (Cr-128));
+		int B = (int)((float)Y +1.722 * (Cb-128));
+		R = R < 0 ? 0 : (R > 0xFF ? 0xFF : R);
+		G = G < 0 ? 0 : (G > 0xFF ? 0xFF : G);
+		B = B < 0 ? 0 : (B > 0xFF ? 0xFF : B);
+		int T = 0xFF;
+
+		return (T<<24 | R<<16 | G<<8 | B);
 	}
 
 	/**

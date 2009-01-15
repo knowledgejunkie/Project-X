@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParser
  *
- * Copyright (c) 2005-2007 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2009 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -22,6 +22,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ */
+
+/*
+ * multicolor subtitling patch by Duncan (Shannock9) UK
+ * 2008-12
  */
 
 package net.sourceforge.dvb.projectx.parser;
@@ -67,6 +72,7 @@ import net.sourceforge.dvb.projectx.subtitle.Subpicture;
 import net.sourceforge.dvb.projectx.subtitle.BMP;
 import net.sourceforge.dvb.projectx.subtitle.Bitmap;
 import net.sourceforge.dvb.projectx.subtitle.Sup2VobSub;
+import net.sourceforge.dvb.projectx.subtitle.ColorAreas;                                         //S9
 
 import net.sourceforge.dvb.projectx.thirdparty.Ifo;
 
@@ -261,7 +267,7 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 
 			ArrayList subpicture_colormodel = Common.getColorModelsList();
 
-			if (subpicture_colormodel.indexOf(SubpictureColorModel) > 2)
+			if (subpicture_colormodel.indexOf(SubpictureColorModel) > 2) // 0,1,2 internal
 				user_table = Common.getUserColourTable(SubpictureColorModel);
 
 			subpicture.reset();
@@ -571,8 +577,12 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 			else
 			{ 
 				if (DVBpicture && ExportType == 0)
-					job_processing.countMediaFilesExportLength(Ifo.createIfo(subfile, subpicture.getUserColorTableArray()));
-
+				{
+				  if (ColorAreas.active)  			       //multicolor DVB to SUP active                                       //S9
+					job_processing.countMediaFilesExportLength(Ifo.createIfo(subfile, ColorAreas.clut_pgc));                    //S9
+				  else
+					job_processing.countMediaFilesExportLength(Ifo.createIfo(subfile, subpicture.getUserColorTableArray()));    //S9
+				}
 				else if (DVBpicture && ExportType == 1)
 					job_processing.countMediaFilesExportLength(new File( BMP.write_ColorTable(FileParent, subpicture.getUserColorTable(), 256)).length());
 

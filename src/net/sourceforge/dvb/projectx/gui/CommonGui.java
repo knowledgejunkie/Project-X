@@ -38,6 +38,7 @@ import net.sourceforge.dvb.projectx.gui.CollectionProperties;
 import net.sourceforge.dvb.projectx.gui.PatchDialog;
 import net.sourceforge.dvb.projectx.gui.CutPanel;
 import net.sourceforge.dvb.projectx.gui.PlayerFrame;
+import net.sourceforge.dvb.projectx.gui.SubpictureFrame;
 
 import net.sourceforge.dvb.projectx.common.Resource;
 
@@ -63,6 +64,8 @@ public class CommonGui extends Object {
 	private static PatchDialog patch_dialog = null;
 
 	private static PlayerFrame player_frame = null;
+
+	private static SubpictureFrame subpicture_frame =  null;
 
 	/**
 	 *
@@ -257,6 +260,17 @@ public class CommonGui extends Object {
 			player_frame = new PlayerFrame();
 
 		return player_frame;
+	}
+
+	/**
+	 *
+	 */
+	public static SubpictureFrame getSubpictureFrame()
+	{
+		if (subpicture_frame == null)
+			subpicture_frame = new SubpictureFrame();
+
+		return subpicture_frame;
 	}
 }
 

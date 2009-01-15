@@ -1,7 +1,7 @@
 /*
  * @(#)Start.java - main start class 
  *
- * Copyright (c) 2005-2007 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2005-2009 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -462,6 +462,32 @@ public class Start extends Object {
 
 			if (getBooleanSwitch("-filter"))
 				Common.getSettings().setProperty(Keys.KEY_ConversionMode[0], "5");
+
+			/**
+			 * any ini key from CLI
+			 */
+			if ((index = getSwitch("-set")) >= 0)
+			{
+				switch_error = false;
+
+				if (index < cli_switches.size())
+				{
+					str = cli_switches.get(index).toString();
+
+					Common.getSettings().setProperty(str.substring(0, str.indexOf("=")), str.substring(str.indexOf("=") + 1));
+
+					cli_switches.remove(index);
+				}
+
+				else
+					switch_error = false;
+
+				if (switch_error)
+				{
+					System.out.println("can't set property ...");
+					error = true;
+				}
+			}
 
 			/**
 			 * split output

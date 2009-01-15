@@ -1,7 +1,7 @@
 /*
  * @(#)CutPanel
  *
- * Copyright (c) 2006-2008 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2006-2009 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -1336,7 +1336,7 @@ public class CutPanel extends JPanel {
 		if (object.length == 0)
 			return;
 
-		String newfile = file + "[" + active_collection + "].Xcl";
+		String newfile = file + "(" + active_collection + ").Xcl";
 
 		chooser.setSelectedFile(new File(newfile));
 		chooser.rescanCurrentDirectory();

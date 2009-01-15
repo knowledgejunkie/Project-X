@@ -387,7 +387,12 @@
 --thumbnails
 --fix: recognition of multi area dvd subpics
 --preview resizable
-!-ac3 a/v sync problem noch offen
+!-ac3 a/v abbruch problem noch offen
+
+0.90.4.00b28:
+--enhanced Sup-Viewer
+--new CLI parameter: [-set <switch/entry as used in inifile>]
+!-sup multicolor of dvb-subtitles (w-i-p)
 
 
 
@@ -395,7 +400,6 @@
 !-dyn PMT ts-pid-wechseln folgen
 !-AAC audio (roh) ohne funktion
 !-genauere scanzuordnung - angefangen, ts192
-!-multicolor je zeile - sup
 
 !!radix verschobene pakete
 !!parserliste/demuxlist vereinen, alle fileobjekte in einem pool

@@ -31,7 +31,6 @@ import net.sourceforge.dvb.projectx.gui.PreSettings;
 import net.sourceforge.dvb.projectx.gui.ProcessWindow;
 import net.sourceforge.dvb.projectx.gui.MainFrame;
 import net.sourceforge.dvb.projectx.gui.CommonGui;
-import net.sourceforge.dvb.projectx.gui.SubpictureFrame;
 import net.sourceforge.dvb.projectx.gui.StartUp;
 
 import net.sourceforge.dvb.projectx.common.GuiInterfaceIF;
@@ -45,8 +44,6 @@ public class GuiInterfaceImpl implements GuiInterfaceIF {
 	private PreSettings presettings;
 
 	private ProcessWindow processwindow;
-
-	private SubpictureFrame subpictureframe;
 
 	private StartUp startup;
 
@@ -347,19 +344,9 @@ public class GuiInterfaceImpl implements GuiInterfaceIF {
 	/**
 	 *
 	 */
-	private void initSubpictureFrame()
-	{
-		if (subpictureframe == null)
-			subpictureframe = new SubpictureFrame();
-	}
-
-	/**
-	 *
-	 */
 	public void setSubpictureTitle(String str)
 	{
-		initSubpictureFrame();
-		subpictureframe.setFrameTitle(str);
+		CommonGui.getSubpictureFrame().setFrameTitle(str);
 	}
 
 	/**
@@ -367,16 +354,14 @@ public class GuiInterfaceImpl implements GuiInterfaceIF {
 	 */
 	public void showSubpicture()
 	{
-		initSubpictureFrame();
-
-		if (subpictureframe.isVisible())
+		if (CommonGui.getSubpictureFrame().isVisible())
 		{
-			subpictureframe.setState(0);
-			subpictureframe.toFront();
+			CommonGui.getSubpictureFrame().setState(0);
+			CommonGui.getSubpictureFrame().toFront();
 		}
 
 		else
-			subpictureframe.show();
+			CommonGui.getSubpictureFrame().show();
 	}
 
 	/**
@@ -384,9 +369,7 @@ public class GuiInterfaceImpl implements GuiInterfaceIF {
 	 */
 	public void hideSubpicture()
 	{
-		initSubpictureFrame();
-
-		subpictureframe.close();
+		CommonGui.getSubpictureFrame().close();
 	}
 
 	/**
@@ -394,8 +377,11 @@ public class GuiInterfaceImpl implements GuiInterfaceIF {
 	 */
 	public boolean isSubpictureVisible()
 	{
-		if (subpictureframe == null || !subpictureframe.isVisible())
+		if (!CommonGui.getSubpictureFrame().isVisible())
 			return false;
+
+	//	if (subpictureframe == null || !subpictureframe.isVisible())
+	//		return false;
 
 		return true;
 	}
@@ -405,9 +391,7 @@ public class GuiInterfaceImpl implements GuiInterfaceIF {
 	 */
 	public void repaintSubpicture()
 	{
-		initSubpictureFrame();
-
-		subpictureframe.repaintSubpicture();
+		CommonGui.getSubpictureFrame().repaintSubpicture();
 	}
 
 	/**

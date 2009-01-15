@@ -583,6 +583,24 @@ public class MainFrame extends JPanel {
 			/**
 			 *
 			 */
+			else if (actName.equals("viewInSupViewer"))
+			{
+				int index = tableView.getSelectedRow();
+
+				if (index < 0 || tableView.getValueAt(index, 0) == null)
+					return;
+
+				JobCollection collection = Common.getCollection();
+
+				XInputFile xInputFile = ((XInputFile) collection.getInputFile(index)).getNewInstance();
+
+				if (xInputFile != null && xInputFile.exists() && xInputFile.getStreamInfo().getStreamType() == CommonParsing.ES_SUP_TYPE)
+					CommonGui.getSubpictureFrame().loadPreview(xInputFile);
+			}
+
+			/**
+			 *
+			 */
 			else if (actName.equals("fixHpAc3"))
 			{
 				int index = tableView.getSelectedRow();
@@ -1128,6 +1146,10 @@ public class MainFrame extends JPanel {
 		JMenuItem menuitem_5 = popup.add(Resource.getString("popup.openhex"));
 		menuitem_5.setActionCommand("viewAsHex");
 		menuitem_5.addActionListener(_MenuListener);
+
+		JMenuItem menuitem_6 = popup.add(Resource.getString("popup.opensup"));
+		menuitem_6.setActionCommand("viewInSupViewer");
+		menuitem_6.addActionListener(_MenuListener);
 
 		JMenuItem menuitem_7 = popup.add(Resource.getString("popup.sendtocl3"));
 		menuitem_7.setActionCommand("sendTo3");
@@ -1723,10 +1745,10 @@ public class MainFrame extends JPanel {
 					if (elements == null)
 						return;
 
-					for (int i = 3; i < 7; i++)
+					for (int i = 3; i < 8; i++)
 						elements[i].getComponent().setEnabled(row >= 0);
 
-					for (int i = 7; i < elements.length; i++)
+					for (int i = 8; i < elements.length; i++)
 						elements[i].getComponent().setEnabled(index >= 0);
 
 					popup.show(tableView, e.getX(), e.getY() - popup.getHeight());
