@@ -392,6 +392,7 @@
 0.90.4.00b28:
 --enhanced Sup-Viewer
 --new CLI parameter: [-set <switch/entry as used in inifile>]
+--to TS: duplicates event info from source (TF5x00) to sink (TF5x00)
 !-sup multicolor of dvb-subtitles (w-i-p)
 
 

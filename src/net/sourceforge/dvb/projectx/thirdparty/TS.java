@@ -48,6 +48,11 @@ import net.sourceforge.dvb.projectx.common.JobProcessing;
 
 public class TS {
 
+	private static byte[] service_name = null;
+	private static byte[] event_name = null;
+	private static byte[] event_text = null;
+
+
 	public TS()
 	{}
 
@@ -115,8 +120,8 @@ public class TS {
 		// TP_INFO 16 bytes starts at 52
 		0,                       //  Satelite Index
 		8, 7, 0,                 //  Polarity and Reserved (Does not matter in playback)
-		0x6b, 0x6c, 0, 1,        //  Frequency  (Does not matter in playback)
-		0x40, 0x1f,              //  Symbol Rate  (Does not matter in playback)
+		0, 0, 0x2F, (byte)0x9B,        //  Frequency  (Does not matter in playback)
+		0x6B, 0x6C,              //  Symbol Rate  (Does not matter in playback)
 		1, 1,                    //  Transport Stream Id (Does not matter in playback)
 		0, 0, 0, 0,              //  Reserved *
 
@@ -618,6 +623,36 @@ public class TS {
 		return new_name;
 	}
 
+	/**
+	 * save event info 
+	 */
+	public static void setEventInfo(byte[] data1, byte[] data2, byte[] data3)
+	{
+		if (data1 == null)
+			service_name = null;
+		else
+		{
+			service_name = new byte[data1.length];
+			System.arraycopy(data1, 0, service_name, 0, data1.length);
+		}
+
+		if (data2 == null)
+			event_name = null;
+		else
+		{
+			event_name = new byte[data2.length];
+			System.arraycopy(data2, 0, event_name, 0, data2.length);
+		}
+
+		if (data3 == null)
+			event_text = null;
+		else
+		{
+			event_text = new byte[data3.length];
+			System.arraycopy(data3, 0, event_text, 0, data3.length);
+		}
+	}
+
 	private static void finishTF4000header(String name, long time[]) throws IOException
 	{
 		long event[] = new long[4];
@@ -626,8 +661,11 @@ public class TS {
 
 		event[0] = System.currentTimeMillis();
 		event[1] = event[0] - millis;
-		event[2] = (event[0] / 86400000L) + 40587;
-		event[3] = (event[1] / 86400000L) + 40587;
+
+		//JD 2440588  1.1.1970  = 0
+		//24*60*60*1000 
+		event[2] = (event[0] / 86400000L) + 2440588 - 2400001; 
+		event[3] = (event[1] / 86400000L) + 2440588 - 2400001;
 
 		Calendar datum = Calendar.getInstance();
 		datum.setTime(new Date(event[0]));
@@ -668,8 +706,11 @@ public class TS {
 
 		event[0] = System.currentTimeMillis();
 		event[1] = event[0] - millis;
-		event[2] = (event[0] / 86400000L) + 40587;
-		event[3] = (event[1] / 86400000L) + 40587;
+
+		//JD 2440588  1.1.1970  = 0
+		//24*60*60*1000 
+		event[2] = (event[0] / 86400000L) + 2440588 - 2400001; 
+		event[3] = (event[1] / 86400000L) + 2440588 - 2400001;
 
 		Calendar datum = Calendar.getInstance();
 		datum.setTime(new Date(event[0]));
@@ -678,6 +719,12 @@ public class TS {
 
 		ts.seek(0x08);
 		ts.writeShort(minutes); 
+
+		if (service_name != null)
+		{
+			ts.seek(0x1C);
+			ts.write(service_name); 
+		}
 
 		ts.seek(0x46);
 		ts.writeShort(minutes);
@@ -688,27 +735,43 @@ public class TS {
 		ts.writeByte((byte)datum.get(Calendar.MINUTE));
 
 		datum.setTime(new Date(event[1]));
-
 		ts.seek(0x4C);
-		ts.writeShort((short)event[3]);
+		ts.writeShort((short)event[3]); // datum
 		ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
 		ts.writeByte((byte)datum.get(Calendar.MINUTE));   
 
-		String eventname = new File(name).getName();
+		if (event_name != null)
+		{
+			ts.seek(0x55);
+			ts.write(event_name); 
+		}
 
-		if (eventname.length() > 128)
-			eventname = eventname.substring(0, 128);
+		else
+		{
+			String eventname = new File(name).getName();
 
-		ts.seek(0x55);
-		ts.writeUTF(eventname);
+			if (eventname.length() > 128)
+				eventname = eventname.substring(0, 128);
 
-		ts.seek(0x56);
-		int val = ts.read();
+			ts.seek(0x55);
+			ts.writeUTF(eventname); //filename
 
-		ts.seek(0x55);
-		ts.writeShort(val<<8);
+			ts.seek(0x56);
+			int val = ts.read();
+
+			ts.seek(0x55);
+			ts.writeShort(val<<8);
+		}
+
+		if (event_text != null)
+		{
+			ts.seek(0xE4);
+			ts.write(event_text); 
+		}
 
 		ts.close();
+
+		setEventInfo(null, null, null); //reset
 	}
 
 	private static byte[] initTF4000header(String name, boolean ac3)

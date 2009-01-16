@@ -53,6 +53,7 @@ import net.sourceforge.dvb.projectx.parser.StreamParserBase;
 
 import net.sourceforge.dvb.projectx.parser.TS_PMTParser;
 
+import net.sourceforge.dvb.projectx.thirdparty.TS;
 
 
 /**
@@ -332,9 +333,10 @@ public class StreamParserTS extends StreamParserBase {
 
 		try {
 
-			/**
-			 * determine start & end byte pos. of each file segment
-			 */
+			// save event data from diff headers
+			getEventInfo((XInputFile) collection.getInputFile(0));
+
+			// determine start & end byte pos. of each file segment
 			for (int i = 0; i < starts.length; i++)
 			{
 				aXInputFile = (XInputFile) collection.getInputFile(i);
@@ -344,15 +346,11 @@ public class StreamParserTS extends StreamParserBase {
 
 			aXInputFile = (XInputFile) collection.getInputFile(job_processing.getFileNumber());
 
-			/**
-			 * set start & end byte pos. of first file segment
-			 */
+			// set start & end byte pos. of first file segment
 			count = starts[job_processing.getFileNumber()];
 			size = count + aXInputFile.length();
 
-			/**
-			 * split skipping first, for next split part
-			 */
+			// split skipping first, for next split part
 			if (job_processing.getSplitSize() > 0)
 			{
 				startPoint = job_processing.getLastHeaderBytePosition();
@@ -366,9 +364,7 @@ public class StreamParserTS extends StreamParserBase {
 			List CutpointList = collection.getCutpointList();
 			List ChapterpointList = collection.getChapterpointList();
 
-			/**
-			 * jump near to first cut-in point to collect more audio
-			 */
+			// jump near to first cut-in point to collect more audio
 			if (CutMode == CommonParsing.CUTMODE_BYTE && CutpointList.size() > 0 && CommonParsing.getCutCounter() == 0)
 				startPoint = Long.parseLong(CutpointList.get(CommonParsing.getCutCounter()).toString()) - ((action == CommonParsing.ACTION_DEMUX) ? OverheadSize : 0);
 
@@ -1606,5 +1602,42 @@ public class StreamParserTS extends StreamParserBase {
 		// edit pid values here, pts reset in demuxers required
 
 		return true;
+	}
+
+
+	/**
+	 *
+	 */
+	private void getEventInfo(XInputFile xif)
+	{
+		if (xif.getStreamInfo().getStreamFullType() != CommonParsing.TS_TYPE_TF5X00)
+		{
+			TS.setEventInfo(null, null, null);
+			return;
+		}
+
+		int length = 0xEB0;
+		byte[] data = new byte[length];
+
+		try {
+
+			xif.randomAccessSingleRead(data, 0);
+
+			byte[] data1 = new byte[24];
+			System.arraycopy(data, 0x1C, data1, 0, 24);
+
+			byte[] data2 = new byte[131];
+			System.arraycopy(data, 0x55, data2, 0, 131);
+
+			byte[] data3 = new byte[1164];
+			System.arraycopy(data, 0xE4, data3, 0, 1164);
+
+			TS.setEventInfo(data1, data2, data3);
+
+			Common.setMessage("-> event info cached");
+
+		} catch (Exception e) {
+			Common.setMessage("!> error fetching event info from TS header");
+		}
 	}
 }
