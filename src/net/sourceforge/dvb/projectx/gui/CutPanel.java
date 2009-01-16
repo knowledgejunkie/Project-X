@@ -807,8 +807,6 @@ public class CutPanel extends JPanel {
 	 */
 	protected JPanel buildSliderPanel()
 	{
-		JPanel panel = new JPanel(new BorderLayout());
-
 		slider = new JSlider(0, (int)(10240000L / divisor), 0);
 		slider.setPreferredSize(new Dimension(860, 30));
 		slider.setMaximumSize(new Dimension(860, 30));
@@ -932,7 +930,18 @@ public class CutPanel extends JPanel {
 			} 
 		}); 
 
-		panel.add(slider);
+
+		JPanel panel = new JPanel(new BorderLayout());
+
+		if (!Common.getSettings().getBooleanProperty(Keys.KEY_Preview_SliderWidth))
+		{
+			panel.add(Box.createRigidArea(new Dimension(145, 20)), BorderLayout.WEST);
+			panel.add(slider, BorderLayout.CENTER);
+			panel.add(Box.createRigidArea(new Dimension(194, 20)), BorderLayout.EAST);
+		}
+		else
+			panel.add(slider, BorderLayout.CENTER);
+
 
 		return panel;
 	}

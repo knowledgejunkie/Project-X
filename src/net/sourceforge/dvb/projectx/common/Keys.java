@@ -1,7 +1,7 @@
 /*
  * @(#)Keys.java - static, fixed keys
  *
- * Copyright (c) 2005-2008 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2009 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -326,6 +326,7 @@ public class Keys extends Object {
 	public final static String[] KEY_Preview_LiveUpdate = { "CollectionPanel.Preview.LiveUpdate", "1" }; //rbutton[16] 
 	public final static String[] KEY_Preview_fullScaled = { "CollectionPanel.Preview.fullScaled", "0" };
 	public final static String[] KEY_Preview_AllGops = { "CollectionPanel.Preview.AllGops", "0" }; //rbutton[6] 
+	public final static String[] KEY_Preview_SliderWidth = { "CollectionPanel.Preview.SliderWidth", "1" };
 	public final static String[] KEY_Preview_YGain = { "CollectionPanel.Preview.YGain", "0" };
 	public final static String[] KEY_OptionHorizontalResolution = { "CollectionPanel.OptionHorizontalResolution", "0" }; //cbox[52]
 	public final static String[] KEY_OptionDAR = { "CollectionPanel.OptionDAR", "0" }; //cbox[47]

@@ -132,6 +132,7 @@ public class CollectionPanel extends JPanel {
 			Keys.KEY_Preview_fastDecode,
 			Keys.KEY_Preview_LiveUpdate,
 			Keys.KEY_Preview_AllGops,
+			Keys.KEY_Preview_SliderWidth,
 			Keys.KEY_Preview_fullScaled
 		};
 
