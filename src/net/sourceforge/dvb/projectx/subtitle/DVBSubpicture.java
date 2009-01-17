@@ -110,7 +110,7 @@ public class DVBSubpicture extends Object {
 		else
 		{
 			user_table = table;
-			user_table_enabled = true;
+			user_table_enabled = !user_table.isEmpty();
 		}
 
 		biglog = log;
