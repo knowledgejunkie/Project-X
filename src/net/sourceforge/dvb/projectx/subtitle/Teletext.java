@@ -333,8 +333,11 @@ public class Teletext extends Object {
 		int primary_set_mapping = language_code < 0 ? 0 : language_code;
 		int primary_national_set_mapping = character_set;
 
-		int secondary_set_mapping = primary_set_mapping;
-		int secondary_national_set_mapping = primary_national_set_mapping;
+	//	int secondary_set_mapping = primary_set_mapping;
+	//	int secondary_national_set_mapping = primary_national_set_mapping;
+
+		int secondary_set_mapping = 0; //latin
+		int secondary_national_set_mapping = 0; //latin
 
 		if (page_modifications.containsKey("primary_set"))
 			secondary_set_mapping = primary_set_mapping = Integer.parseInt(page_modifications.get("primary_set").toString());
@@ -398,9 +401,15 @@ public class Teletext extends Object {
 				continue; 
 			}
 
-			else if (char_value < 27)  //0x10..1A
+			else if (char_value < 24)  //0x10..17
 			{ 
 				ascii = false; 
+				chars[i] = active_set[32]<<8 | active_color; 
+				continue; 
+			}
+
+			else if (char_value < 27)  //0x18..1A
+			{ 
 				chars[i] = active_set[32]<<8 | active_color; 
 				continue; 
 			}
@@ -427,7 +436,10 @@ public class Teletext extends Object {
 					active_color &= 0xF;
 					break;
 
+				//new background same as foreground color
+				//any following is invisible until a diff. foreground is set
 				case 0x1D:
+					ascii = false;
 					active_color |= (0xF & active_color)<<4;
 				}
 
@@ -595,8 +607,11 @@ public class Teletext extends Object {
 		int primary_set_mapping = language_code < 0 ? 0 : language_code;
 		int primary_national_set_mapping = character_set;
 
-		int secondary_set_mapping = primary_set_mapping;
-		int secondary_national_set_mapping = primary_national_set_mapping;
+	//	int secondary_set_mapping = primary_set_mapping;
+	//	int secondary_national_set_mapping = primary_national_set_mapping;
+
+		int secondary_set_mapping = 0; //latin
+		int secondary_national_set_mapping = 0; //latin
 
 		if (page_modifications.containsKey("primary_set"))
 			secondary_set_mapping = primary_set_mapping = Integer.parseInt(page_modifications.get("primary_set").toString());
@@ -633,7 +648,7 @@ public class Teletext extends Object {
 
 			int char_value = 0x7F & bytereverse(packet[c]);
 
-			if (char_value>>>3 == 0)  //0x0..7
+			if (char_value>>>3 == 0)  //0x0..7, ascii foreground color
 			{ 
 				ascii = true; 
 				//line_buffer.append(color == 1 ? colors[char_value] : "");
@@ -664,9 +679,15 @@ public class Teletext extends Object {
 				continue; 
 			}
 
-			else if (char_value < 27)  //0x10..1A
+			else if (char_value < 24)  //0x10..17
 			{ 
 				ascii = false; 
+				line_buffer.append((char)active_set[32]);
+				continue; 
+			}
+
+			else if (char_value < 27)  //0x18..1A
+			{ 
 				line_buffer.append((char)active_set[32]);
 				continue; 
 			}
@@ -689,6 +710,11 @@ public class Teletext extends Object {
 
 					toggle = !toggle;
 				}
+
+				//new background same as foreground color
+				//any following is invisible until a diff. foreground is set
+				if (char_value == 0x1D)
+					ascii = false;
 
 				line_buffer.append((char)active_set[32]);
 				continue; 
@@ -940,8 +966,9 @@ public class Teletext extends Object {
 				position = display_row<<16 | display_column;
 
 				page_modifications.put("" + position, str);
-
-				//Common.setMessage("replaced char " + str + " /m " + mode);
+		/**
+				Common.setMessage("replaced char " + str + " /m " + mode + " /row " + display_row + " /col " + display_column);
+		**/
 			}
 		}
 	}

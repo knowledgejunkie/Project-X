@@ -394,6 +394,7 @@
 --new CLI parameter: [-set <switch/entry as used in inifile>]
 --to TS: duplicates event info from source (TF5x00) to sink (TF5x00)
 --optional: preview slider aligned to preview
+--some fixes in teletext decoding 
 !-sup multicolor of dvb-subtitles (w-i-p)
 
 
