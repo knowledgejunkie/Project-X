@@ -1352,16 +1352,20 @@ public class CutPanel extends JPanel {
 
 		int retval = chooser.showSaveDialog(this);
 
-		if(retval == JFileChooser.APPROVE_OPTION)
+		if (retval == JFileChooser.APPROVE_OPTION)
 		{
 			File theFile = chooser.getSelectedFile();
 
-			if(theFile != null && !theFile.isDirectory())
+			if (theFile != null && !theFile.isDirectory())
 			{
 				newfile = theFile.getAbsolutePath();
-			}
-		}
 
+				if (theFile.exists() && !CommonGui.getUserConfirmation(Resource.getString("msg.overwrite", newfile)))
+					return;
+			}
+			else
+				return;
+		}
 		else 
 			return;
 
@@ -1500,13 +1504,20 @@ public class CutPanel extends JPanel {
 		{
 			File theFile = chooser.getSelectedFile();
 
-			if(theFile != null && !theFile.isDirectory())
+			if (theFile != null && !theFile.isDirectory())
 			{
 				newfile = theFile.getAbsolutePath();
-			}
-		}
 
+				if (theFile.exists() && !CommonGui.getUserConfirmation(Resource.getString("msg.overwrite", newfile)))
+					return;
+			}
+			else
+				return;
+		}
 		else 
+			return;
+
+		if (!CommonGui.getUserConfirmation(Resource.getString("msg.overwrite", newfile)))
 			return;
 
 		try {
