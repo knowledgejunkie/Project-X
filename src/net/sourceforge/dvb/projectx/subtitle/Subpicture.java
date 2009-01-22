@@ -1156,9 +1156,9 @@ public class Subpicture extends Object {
 	/**
 	 *
 	 */
-	public int decode_picture(byte[] packet, int off, boolean decode, Object obj, Object[] previewImage)
+	public int decode_picture(byte[] packet, int off, boolean decode, Object obj, Image previewImage, int previewflags)
 	{
-		return decode_picture(packet, off, decode, obj, 0, false, true, previewImage);
+		return decode_picture(packet, off, decode, obj, 0, false, true, previewImage, previewflags);
 	}
 
 	/**
@@ -1166,13 +1166,13 @@ public class Subpicture extends Object {
 	 */
 	public int decode_picture(byte[] packet, int off, boolean decode, Object obj, long pts, boolean save, boolean visible)
 	{
-		return decode_picture(packet, off, decode, obj, pts, save, visible, null);
+		return decode_picture(packet, off, decode, obj, pts, save, visible, null, 0);
 	}
 
 	/**
 	 *
 	 */
-	public int decode_picture(byte[] packet, int off, boolean decode, Object obj, long pts, boolean save, boolean visible, Object[] previewImage)
+	public int decode_picture(byte[] packet, int off, boolean decode, Object obj, long pts, boolean save, boolean visible, Image previewImage, int previewflags)
 	{
 		read_from_Image = false;
 		global_error = false;
@@ -1417,13 +1417,13 @@ public class Subpicture extends Object {
 			big.fillRect(0, 0, 720, 576); 
 
 			if (aro != 0) //4:3 portion of widescreen preview
-				big.drawImage((Image) previewImage[0], 0, 0, 720, 576, 64, 0, 448, 288, null);
+				big.drawImage(previewImage, 0, 0, 720, 576, 64, 0, 448, 288, null);
 
-			else if (Integer.parseInt(previewImage[1].toString()) > 1) // letterbox of widescreen
-				big.drawImage((Image) previewImage[0], 0, 72, 720, 432, null);
+			else if ((previewflags & 2) != 0) // letterbox of widescreen
+				big.drawImage(previewImage, 0, 72, 720, 432, null);
 
-			else
-				big.drawImage((Image) previewImage[0], 0, 0, 720, 576, null);
+			else   // anamorph widescreen
+				big.drawImage(previewImage, 0, 0, 720, 576, null);
 
 		}
 
@@ -1439,7 +1439,7 @@ public class Subpicture extends Object {
 		big.drawString("x" + x0 + ", y" + y0 + " / " + width + "*" + height
 				+ " , C-" + Common.adaptString(Integer.toHexString(0xFFFF & default_indices).toUpperCase(), 4)
 				+ ", T-" + Common.adaptString(Integer.toHexString(0xFFFF & default_indices>>16).toUpperCase(), 4)
-				, x0 - 1, y0 - 5);
+				, x0 + 1, y0 - 5);
 
 //
 		// subarray - color index for each pixel 0xFFFFFFFF = Contrast/Color 32103210
@@ -1449,7 +1449,7 @@ public class Subpicture extends Object {
 		Arrays.fill(colcon_indices, default_indices);
 
 		// fill with new def's
-		for (int b = 0; b < colcon.size(); b++)
+		for (int b = 0; (previewflags & 8) == 0 && b < colcon.size(); b++)
 		{
 			int[] area_defs = (int[]) colcon.get(b); // one def block
 
@@ -1471,16 +1471,16 @@ public class Subpicture extends Object {
 			while (BPos[0] < start_pos[b + 1]) // stop at pos_marker
 			{
 				if ((Val = Get_Bits(packet, BPos, 4)) > 3) //4..F (0..3 never encodable)
-					x1 = paintPixel(Val, x1, y1, colcon_indices, color_table, x0, y0, width);
+					x1 = paintPixel(Val, x1, y1, colcon_indices, color_table, x0, y0, width, previewflags);
 
 				else if ((Val = Val<<4 | Get_Bits(packet, BPos, 4)) > 0xF) //10..3F
-					x1 = paintPixel(Val, x1, y1, colcon_indices, color_table, x0, y0, width);
+					x1 = paintPixel(Val, x1, y1, colcon_indices, color_table, x0, y0, width, previewflags);
 
 				else if ((Val = Val<<4 | Get_Bits(packet, BPos, 4)) > 0x3F) //40..FF
-					x1 = paintPixel(Val, x1, y1, colcon_indices, color_table, x0, y0, width);
+					x1 = paintPixel(Val, x1, y1, colcon_indices, color_table, x0, y0, width, previewflags);
 
 				else if ((Val = Val<<4 | Get_Bits(packet, BPos, 4)) > 0) //100..3FF
-					x1 = paintPixel(Val, x1, y1, colcon_indices, color_table, x0, y0, width);
+					x1 = paintPixel(Val, x1, y1, colcon_indices, color_table, x0, y0, width, previewflags);
 
 				else  // 0 forced carriage return
 				{
@@ -1502,12 +1502,12 @@ public class Subpicture extends Object {
 		}
 
 		// paint rectangles of extra col-con definitions
-		for (int i = colcon.size() - 1; i >= 0; i--)
+		for (int i = colcon.size() - 1; (previewflags & 4) == 0 && i >= 0; i--)
 		{
 			int[] area_defs = (int[]) colcon.get(i);
 
 			big.setColor(Color.magenta);
-			big.drawRect(area_defs[2], area_defs[0], width - area_defs[2] + x0, area_defs[1] - area_defs[0]);
+			big.drawRect(area_defs[2] - 1, area_defs[0] - 1, width - area_defs[2] + x0 + 1, area_defs[1] - area_defs[0]);
 
 			big.setColor(Color.yellow);
 			big.drawString("area: " + i + " - " + area_defs[0] + ", " + area_defs[1] + ", " + area_defs[2]
@@ -1527,13 +1527,14 @@ public class Subpicture extends Object {
 	/**
 	 * paint preview pixel from .sup
 	 */
-	private int paintPixel(int Val, int x1, int y1, int[] colcon_indices, int[] color_table, int x0, int y0, int width)
+	private int paintPixel(int Val, int x1, int y1, int[] colcon_indices, int[] color_table, int x0, int y0, int width, int previewflags)
 	{
 		int table_index = Val & 3;
 		int line_length = Val>>>2;
 		int array_index;
 		int contrast_index = 0;
 		int color_index = 0; 
+		boolean opaque = (previewflags & 0x10) != 0;
 
 		big.setColor(new Color(0));
 
@@ -1552,8 +1553,9 @@ public class Subpicture extends Object {
 
 			lastcolor = color;
 
-			if (contrast_index > 0) // dont paint full transp. pixel
-				big.drawLine(x1, y1, x1 + 1, y1);
+			if (opaque || contrast_index > 0) // dont paint full transp. pixel
+				big.drawLine(x1, y1, x1, y1);
+			//	big.drawLine(x1, y1, x1 + 1, y1);
 		}
 
 		return x1;

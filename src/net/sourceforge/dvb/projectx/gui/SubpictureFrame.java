@@ -77,7 +77,7 @@ public class SubpictureFrame extends JFrame {
 	private int picture_index = 0;
 	private byte[] picture_data = null;
 	private int[] color_table = null;
-	private int usePreviewBackground = 0;
+	private int PreviewFlags = 0;
 
 	/**
 	 *
@@ -138,11 +138,11 @@ public class SubpictureFrame extends JFrame {
 		CommonGui.localize(fileMenu, "Common.File");
 
 		final JCheckBoxMenuItem background = new JCheckBoxMenuItem("use Preview Picture as Background");
-		background.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.ALT_MASK));
+		background.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.CTRL_MASK));
 		background.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				usePreviewBackground = background.getState() ? usePreviewBackground | 1 : usePreviewBackground & ~1;
+				PreviewFlags = background.getState() ? PreviewFlags | 1 : PreviewFlags & ~1;
 				getPictureData(slider.getValue());
 			}
 		});
@@ -150,16 +150,52 @@ public class SubpictureFrame extends JFrame {
 		fileMenu.add(background);
 
 		final JCheckBoxMenuItem letterbox = new JCheckBoxMenuItem("use Letterbox");
-		letterbox.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.ALT_MASK));
+		letterbox.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK));
 		letterbox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				usePreviewBackground = letterbox.getState() ? usePreviewBackground | 2 : usePreviewBackground & ~2;
+				PreviewFlags = letterbox.getState() ? PreviewFlags | 2 : PreviewFlags & ~2;
 				getPictureData(slider.getValue());
 			}
 		});
 
 		fileMenu.add(letterbox);
+
+		final JCheckBoxMenuItem areabox = new JCheckBoxMenuItem("don't show Multiple Areas Boundaries");
+		areabox.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
+		areabox.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				PreviewFlags = areabox.getState() ? PreviewFlags | 4 : PreviewFlags & ~4;
+				getPictureData(slider.getValue());
+			}
+		});
+
+		fileMenu.add(areabox);
+
+		final JCheckBoxMenuItem applyarea = new JCheckBoxMenuItem("don't apply Multiple Areas Replacements");
+		applyarea.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.CTRL_MASK));
+		applyarea.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				PreviewFlags = applyarea.getState() ? PreviewFlags | 8 : PreviewFlags & ~8;
+				getPictureData(slider.getValue());
+			}
+		});
+
+		fileMenu.add(applyarea);
+
+		final JCheckBoxMenuItem allopaque = new JCheckBoxMenuItem("paint all as Opaque");
+		allopaque.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
+		allopaque.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				PreviewFlags = allopaque.getState() ? PreviewFlags | 0x10 : PreviewFlags & ~0x10;
+				getPictureData(slider.getValue());
+			}
+		});
+
+		fileMenu.add(allopaque);
 
 		fileMenu.addSeparator();
 
@@ -219,7 +255,7 @@ public class SubpictureFrame extends JFrame {
 	 */
 	public void loadPreview(XInputFile xif)
 	{
-		scanIFO(xif.toString() + ".IFO");
+		scanIFO(xif.toString());
 
 		if (scanData(xif))
 			show();
@@ -246,12 +282,19 @@ public class SubpictureFrame extends JFrame {
 	{
 		try {
 
-			File f = new File(ifoname);
+			String nifoname = ifoname + ".IFO";
+
+			File f = new File(nifoname);
 
 			if (!f.exists())
 			{
-				color_table = null;
-				return;
+				f = new File(ifoname.substring(0, ifoname.lastIndexOf(".")) + ".IFO");
+
+				if (!f.exists())
+				{
+					color_table = null;
+					return;
+				}
 			}
 
 			XInputFile xif = new XInputFile(f);
@@ -372,7 +415,7 @@ public class SubpictureFrame extends JFrame {
 		byte[] array = new byte[length];
 		System.arraycopy(picture_data, pos, array, 0, length);
 
-		int duration = Common.getSubpictureClass().decode_picture(array, 10, true, new String[2], (usePreviewBackground & 1) == 1 ? new Object[] { CommonGui.getPicturePanel().getPreviewImage(), new Integer(usePreviewBackground) } : null);
+		int duration = Common.getSubpictureClass().decode_picture(array, 10, true, new String[2], (PreviewFlags & 1) == 1 ? CommonGui.getPicturePanel().getPreviewImage() : null, PreviewFlags);
 
 		values[2] = new Long(duration / 90);
 
