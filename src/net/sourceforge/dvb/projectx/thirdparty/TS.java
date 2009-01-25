@@ -42,6 +42,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+import java.util.ArrayList;
+import net.sourceforge.dvb.projectx.parser.CommonParsing;
+
+
 import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.JobProcessing;
@@ -473,7 +482,7 @@ public class TS {
 		0x47,0,(byte)0xe0,0x20,
 		(byte)0xB7,0x10,0,0,0,0,0,0
 	};
-
+/**
 	private static byte ttx[] = {
 		0x47,0x40,(byte)0x9F,0x10,
 		0,0,1,(byte)0xBD,0,(byte)0xB2,(byte)0x84,(byte)0x80,0x24,
@@ -512,7 +521,118 @@ public class TS {
 
 		return ttx;
 	}
+**/
 
+//////////
+	private static byte[] ttx_stream = null;
+	private static long[] ttx_pts_index = null;
+	private static int ttx_index = 0;
+
+	/**
+	 * read .sub text file and create complete TS TTX stream
+	 * from 0.90.4.00b28
+	 */
+	public static byte[] getTeletextStream(long video_pts)
+	{
+		if (ttx_pts_index == null)
+			return (new byte[0]);
+
+		ByteArrayOutputStream bo = new ByteArrayOutputStream();
+
+		for (int j = ttx_pts_index.length; ttx_index < j; ttx_index++)
+		{
+			if (video_pts < ttx_pts_index[ttx_index])
+				break;
+			
+			bo.write(ttx_stream, ttx_index * 376, 376);
+		}
+
+		return bo.toByteArray();
+	}
+
+	/**
+	 * read .sub text file and create complete TS TTX stream
+	 * from 0.90.4.00b28
+	 */
+	public static void buildTeletextStream(String filename)
+	{
+		filename = filename.substring(0, filename.lastIndexOf(".")) + ".sub";
+		File f = new File(filename);
+		ttx_index = 0;
+
+		if (!f.exists())
+			return;
+
+		try {
+
+			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filename)));
+			ByteArrayOutputStream bo = new ByteArrayOutputStream();
+
+			String line = "", tmp = "";
+			ArrayList rowList = new ArrayList();
+			int pos1 = 0, pos2 = 0;
+			long[] time = { 0, 0 };
+			byte[] pts_value = new byte[5];
+			byte[] pts_value1 = new byte[8];
+			StringTokenizer st;
+			int packet_count = 0;
+			ArrayList indexList = new ArrayList();
+			long delay = 90L * Common.getSettings().getIntProperty("TTXInsertion.Delay", 0);
+
+			Common.setMessage("-> build teletext stream from file: '" + filename + "' / delay: = " + (delay / 90) + " ms" );
+
+			while ((line = br.readLine()) != null)
+			{
+				//if (!line.startsWith("{")) //problems with file signature  reading utf files - omits a line
+				//	continue;
+
+				time[0] = delay + 90L * (1000/25) * Long.parseLong(line.substring(pos1 = (line.indexOf("{") + 1), pos2 = line.indexOf("}")));
+				time[1] = delay + 90L * (1000/25) * Long.parseLong(line.substring(line.indexOf("{", ++pos1) + 1, pos2 = line.indexOf("}", ++pos2)));
+
+				st = new StringTokenizer(line.substring(pos2 + 1), "|");
+
+				rowList.clear();
+
+				while (st.hasMoreTokens())
+					rowList.add(st.nextToken());
+
+				for (int i = 0; i < 2; i++) // every page consists of 376 (2x188) byte
+				{
+					Arrays.fill(pts_value, (byte) 0); // clear old value
+					CommonParsing.setPES_PTSField(pts_value, -9, time[i]);
+
+					bo.write(Common.getTeletextClass().getTTX_TSPacket(rowList, count3, pts_value));
+
+					packet_count++;
+					indexList.add(new Long(time[i]));
+
+					count3 += 2;
+					rowList.clear(); //2nd call for time out (placing an empty page)
+				}
+			}
+
+			br.close();
+/**
+			FileOutputStream fos = new FileOutputStream(filename + ".ttx");
+			fos.write(bo.toByteArray());
+			fos.flush();
+			fos.close();
+**/
+			ttx_stream = bo.toByteArray();
+
+			ttx_pts_index = new long[indexList.size()];
+			for (int i = 0, j = ttx_pts_index.length; i < j; i++)
+				ttx_pts_index[i] = ((Long) indexList.get(i)).longValue();
+
+		} catch (Exception e) {
+			Common.setExceptionMessage(e);
+		}
+	}
+/////////////
+
+	/*
+	 *
+	 */
 	public static byte[] getPMT()
 	{ 
 		pmt[3] = (byte)(0x10 | (0xf & (count1++))); 

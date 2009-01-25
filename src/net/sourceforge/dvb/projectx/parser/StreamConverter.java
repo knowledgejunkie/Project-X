@@ -47,6 +47,8 @@ import net.sourceforge.dvb.projectx.video.Video;
 import net.sourceforge.dvb.projectx.parser.CommonParsing;
 import net.sourceforge.dvb.projectx.parser.StreamDemultiplexer;
 
+import net.sourceforge.dvb.projectx.xinput.XInputFile;
+
 
 /**
  * create streams
@@ -165,8 +167,14 @@ public class StreamConverter extends Object {
 
 		Buffer.reset();
 
-		if (filenumber == 0) 
+		if (filenumber == 0)
+		{
 			IDs.clear();
+
+			//prepare teletext insertion, at first file
+			if (action == CommonParsing.ACTION_TO_TS)
+				TS.buildTeletextStream(((XInputFile) collection.getInputFile(0)).toString());
+		}
 
 		try { 
 
@@ -909,6 +917,8 @@ public class StreamConverter extends Object {
 		try {
 			boolean pcr = false;
 
+			boolean ttx_pts_check = false;  //search for frame pts for ttx insertion
+
 			long pcrbase = 0;
 			long pts = 0;
 
@@ -1116,6 +1126,9 @@ public class StreamConverter extends Object {
 							ContainsVideo = true; 
 						}
 
+						if (picture_type == CommonParsing.FRAME_I_TYPE || picture_type == CommonParsing.FRAME_P_TYPE)
+							ttx_pts_check = true; //work with I+P+B-frames for ttx pts check
+
 						break;
 					}
 				}
@@ -1142,8 +1155,14 @@ public class StreamConverter extends Object {
 			/** 
 			 * add own TTX
 			 */
-			if (pcr && GeneratePMT && GenerateTTX)
-				Buffer.write( TS.getTTX(pes_packet, pes_offset, Common.formatTime_1((pcrbase + PCR_Delta) / 90)) );
+			//if (pcr && GeneratePMT && GenerateTTX)
+			//	Buffer.write( TS.getTTX(pes_packet, pes_offset, Common.formatTime_1((pcrbase + PCR_Delta) / 90)) );
+
+			//TTX sub insertion- from 0.90.4.00b28
+			if (GenerateTTX && ttx_pts_check)
+			{
+				Buffer.write(TS.getTeletextStream(time[1]));
+			}
 
 			/** 
 			 * add Pcr

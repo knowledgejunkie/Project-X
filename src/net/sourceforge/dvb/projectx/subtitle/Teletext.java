@@ -1,7 +1,7 @@
 /*
  * @(#)Teletext.java - constants/decode of teletext System B
  *
- * Copyright (c) 2001-2007 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2001-2009 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -996,5 +996,198 @@ public class Teletext extends Object {
 		{
 			return color;
 		}
+	}
+
+	///////////////////////
+
+	/**
+	 *
+	 */
+	private byte[] TTX_TS_Packet = {
+		0x47, 0x40, (byte)0x9F, 0x10, 	// TS header - PID 0x9F - count 0
+		0x00, 0x00, 0x01, (byte)0xBD, 	// pes id
+		0x00, (byte)0xB2, 				// pes length, fixed - matching 3 rows (0 + 2 variable)
+		(byte)0x84, (byte)0x80, 		// flags
+		0x24, 							// pes extension length (36 bytes)
+		(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF, //psb with PTS
+		(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,
+		(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,
+		(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,
+		(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xFF,
+		0x10,							// TTX identifier
+
+		// 3x header 100
+		//update=0, erase=1, interrupt=0, magazine=1, page_number=00, suppressed_head=0, subpage_number=0000, news=0, inhibit=0, character_set=0, subtitle=0, magazine_serial=1
+		// 022C E7E4 40A8 A8A8 A80B A8A8 A840 - VBI 7 - Header row 0 - mag 1 page 00 
+		0x02, 0x2C, (byte)0xE7, (byte)0xE4, 0x40, (byte)0xA8, (byte)0xA8, 
+		(byte)0xA8, (byte)0xA8, 0x0B, (byte)0xA8, (byte)0xA8, (byte)0xA8, 0x40, //  1-00-00  14 bytes
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,  // 0 - 16  String row 0
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,  // 17- 31  String row 0
+		// 022C E8E4 40A8 A8A8 A80B A8A8 A840 - VBI 8 - Header row 0 - mag 1 page 00 
+		0x02, 0x2C, (byte)0xE8, (byte)0xE4, 0x40, (byte)0xA8, (byte)0xA8, 
+		(byte)0xA8, (byte)0xA8, 0x0B, (byte)0xA8, (byte)0xA8, (byte)0xA8, 0x40, //  1-00-00  14 bytes
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,  // 0 - 16  String row 0
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,  // 17- 31  String row 0
+		// 022C E9E4 40A8 A8A8 A80B A8A8 A840 - VBI 9 - Header row 0 - mag 1 page 00 
+		0x02, 0x2C, (byte)0xE9, (byte)0xE4, 0x40, (byte)0xA8, (byte)0xA8, 
+		(byte)0xA8, (byte)0xA8, 0x0B, (byte)0xA8, (byte)0xA8, (byte)0xA8, 0x40, //  1-00-00  14 bytes
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,  // 0 - 16  String row 0
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4   // 17- 31  String row 0
+	};
+
+	/**
+	 *
+	 */
+	private byte[][][] TTX_Row = {
+		{
+		{
+		// 032C E8E4 4031 - VBI 8 - run in - row 20  
+		0x03, 0x2C, (byte)0xE8, (byte)0xE4, (byte)0x40, (byte)0x31,  //  1-20-50   6 bytes
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, // 0 - 19  String row 22
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4  // 20- 39  String row 22
+		},{
+		// 032C E9E4 E331 - VBI 9 - run in - row 21  
+		0x03, 0x2C, (byte)0xE9, (byte)0xE4, (byte)0xE3, (byte)0x31,  //  1-21-50   6 bytes
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, // 0 - 19  String row 22
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4  // 20- 39  String row 22
+		},{
+		// 032C EAE4 40D9 - VBI 10 - run in - row 22  
+		0x03, 0x2C, (byte)0xEA, (byte)0xE4, (byte)0x40, (byte)0xD9,  //  1-22-50   6 bytes
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, // 0 - 19  String row 22
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4  // 20- 39  String row 22
+		},{
+		// 032C EBE4 E3D9 - VBI 11 - run in - row 23
+		0x03, 0x2C, (byte)0xEB, (byte)0xE4, (byte)0xE3, (byte)0xD9,  //  1-23-50   6 bytes
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, // 0 - 19  String row 23
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4  // 20- 39  String row 23
+		}
+		},{
+		{
+		// 032C E8E4 400B - VBI 8 - run in - row 16  
+		0x03, 0x2C, (byte)0xE8, (byte)0xE4, (byte)0x40, (byte)0x0B,  //  1-16-50   6 bytes
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, // 0 - 19  String row 16
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4  // 20- 39  String row 16
+		},{
+		// 032C E9E4 40E3 - VBI 9 - run in - row 18  
+		0x03, 0x2C, (byte)0xE9, (byte)0xE4, (byte)0x40, (byte)0xE3,  //  1-18-50   6 bytes
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, // 0 - 19  String row 18
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4  // 20- 39  String row 18
+		},{
+		// 032C EAE4 4031 - VBI 10 - run in - row 20  
+		0x03, 0x2C, (byte)0xEA, (byte)0xE4, (byte)0x40, (byte)0x31,  //  1-20-50   6 bytes
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, // 0 - 19  String row 20
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4  // 20- 39  String row 20
+		},{
+		// 032C EBE4 40D9 - VBI 11 - run in - row 22
+		0x03, 0x2C, (byte)0xEB, (byte)0xE4, (byte)0x40, (byte)0xD9,  //  1-22-50   6 bytes
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, // 0 - 19  String row 22
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4  // 20- 39  String row 22
+		}
+		}
+	};
+
+	/**
+	 *
+	 */
+	private byte[] TTX_Heading150Row = {
+		//update=1, erase=1, interrupt=0, magazine=1, page_number=50, suppressed_head=1, subpage_number=0000, news=0, inhibit=0, character_set=0, subtitle=1, magazine_serial=1
+		// 032C E7E4 40A8 A8CE A80B A80B 7A40 - VBI 7 - Header row 0 - mag 1 page 50 
+		0x03, 0x2C, (byte)0xE7, (byte)0xE4, 0x40, (byte)0xA8, (byte)0xA8, (byte)0xCE, (byte)0xA8, 0x0B, (byte)0xA8, 0x0B, 0x7A, 0x40, //  1-00-50  14 bytes
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,  // 0 - 16  String row 0
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4  // 17- 31  String row 0
+	};
+
+	/**
+	 *
+	 */
+	private byte[] TTX_PaddingRow = {
+		// FF 2C FF...
+		(byte)0xFF, 0x2C, 
+		(byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, 
+		(byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, 
+		(byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, 
+		(byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, 
+		(byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, 
+		(byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, 
+		(byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, 
+		(byte)0xFF, (byte)0xFF
+	};
+
+	/**
+	 * 
+	 */
+	public byte[] getTTX_TSPacket(ArrayList rowList, int ts_count, byte[] pts_value)
+	{
+		byte[] ttx1 = new byte[TTX_TS_Packet.length * 2];
+
+		//default page = 100, works also as termination of 150
+		System.arraycopy(TTX_TS_Packet, 0, ttx1, 0, TTX_TS_Packet.length); 
+		System.arraycopy(TTX_TS_Packet, 0, ttx1, TTX_TS_Packet.length, TTX_TS_Packet.length); 
+
+		//ts packet count
+		ttx1[3]    = (byte) (0x10 | 0xF & ts_count);
+		ttx1[0xBF] = (byte) (0x10 | 0xF & (ts_count + 1));
+
+		//pts value
+		System.arraycopy(pts_value, 0, ttx1, 13, 5);
+		System.arraycopy(pts_value, 0, ttx1, 0xC9, 5);
+
+		byte[] row;
+		int[] row_pos = { 0x32, 0x60, 0x8E, 0xEE, 0x11C, 0x14A }; //pos start for 6 rows
+		int doubleheight = 1;
+
+		//replace row 0 with header page 150
+		System.arraycopy(TTX_Heading150Row, 0, ttx1, row_pos[0], TTX_Heading150Row.length);
+
+		//insert 1 string per row
+		for (int i = 0, j = rowList.size(); i < j; i++) 
+		{
+			row = centerString(rowList.get(i).toString().getBytes(), doubleheight);
+
+			for (int k = 0; k < row.length; k++) 
+				row[k] = bytereverse(parity(row[k])); //make them TTX compatible
+
+			System.arraycopy(TTX_Row[doubleheight][TTX_Row[doubleheight].length - j + i], 0, ttx1, row_pos[i + 1], TTX_Row[doubleheight][TTX_Row[doubleheight].length - j + i].length); //insert row
+			System.arraycopy(row, 0, ttx1, row_pos[i + 1] + 6, row.length); // insert string
+		}
+
+		//prevent duplicate vbi line number
+		for (int i = 0, vbi = 0xE7; i < row_pos.length; i++, vbi++)
+			ttx1[row_pos[i] + 2] = (byte) vbi;
+
+		//insert padding
+		for (int i = rowList.size() + 1; i < 4; i++) 
+			System.arraycopy(TTX_PaddingRow, 0, ttx1, row_pos[i + 2], TTX_PaddingRow.length);
+
+		return ttx1;
+	}
+
+	/**
+	 * 
+	 */
+	private byte[] centerString(byte[] row, int doubleheight)
+	{
+		int max_length = 40;
+		byte[] new_row = new byte[max_length];
+		int padd_space = doubleheight + ((new_row.length - row.length) / 2);
+		int row_length = row.length;
+
+		if (row_length > max_length - doubleheight)
+			row_length = max_length - doubleheight;
+
+		Arrays.fill(new_row, (byte) 0x20); //set all spaces
+		System.arraycopy(row, 0, new_row, padd_space, row_length); //copy string
+
+		//string length must not exceed 38,39 chars for boxing
+		if (padd_space > doubleheight && row_length < max_length)
+		{
+			if (doubleheight == 1)
+				new_row[padd_space - 2] = 0x0D; // double height
+
+			new_row[padd_space - 1] = 0x0B; // start box
+			new_row[padd_space + row.length] = 0x0A; // end box
+		}
+
+		return new_row;
 	}
 }

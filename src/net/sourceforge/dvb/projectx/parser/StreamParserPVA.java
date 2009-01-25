@@ -643,7 +643,7 @@ Common.setMessage(">>4 " + streamdemultiplexer.hashCode());
 							if (action == CommonParsing.ACTION_DEMUX) 
 								streamdemultiplexer.initVideo(collection, fparent, MainBufferSize, demuxList.size(), CommonParsing.PVA_PARSER);
 							else 
-								IDtype += " " + Resource.getString("idtype.mapped.to.e0") + streamtypes[3];
+								IDtype += " " + Resource.getString("idtype.mapped.to.e0") + " " + streamtypes[3];
 
 							break; 
 

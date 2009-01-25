@@ -395,6 +395,8 @@
 --to TS: duplicates event info from source (TF5x00) to sink (TF5x00)
 --optional: preview slider aligned to preview
 --some fixes in teletext decoding 
+--save confirmation -save cuts/save chapters
+--ttx - sub insertion - vers. 0.1
 !-sup multicolor of dvb-subtitles (w-i-p)
 
 

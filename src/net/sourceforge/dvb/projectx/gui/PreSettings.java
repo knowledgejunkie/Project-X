@@ -1,7 +1,7 @@
 /*
  * @(#)PreSettings.java
  *
- * Copyright (c) 2005-2007 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2005-2009 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -1442,6 +1442,38 @@ public class PreSettings extends JFrame {
 
 		op0.add(new JLabel(Resource.getString("OptionPanel.StartPath")));
 		op0.add(start_path);
+
+		op0.add(Box.createRigidArea(new Dimension(1, 4)));
+
+		JTextField keyset = new JTextField();
+		keyset.setPreferredSize(new Dimension(250, 25));
+		keyset.setToolTipText("type any key and its value, hit enter");
+		keyset.setEditable(true);
+		keyset.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				String actName = e.getActionCommand();
+				JTextField textfield = (JTextField) e.getSource();
+
+				String str = textfield.getText();
+				int index = str.indexOf("=");
+
+				if (index < 0) //show key and value
+					textfield.setText(str + "=" + Common.getSettings().getProperty(str));
+
+				else if (str.length() <= index + 1) // remove key
+				{
+					Common.getSettings().remove(str.substring(0, index));
+					textfield.setText("");
+				}
+
+				else //set value of key
+					Common.getSettings().setProperty(str.substring(0, index), str.substring(index + 1));
+			}
+		});
+
+		op0.add(new JLabel("settings key/value editor"));
+		op0.add(keyset);
 
 		option.add(op0);
 

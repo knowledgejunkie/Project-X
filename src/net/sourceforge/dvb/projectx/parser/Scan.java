@@ -539,8 +539,6 @@ public class Scan extends Object {
 					System.arraycopy(check, i, packet, 0, 10 + supframe_size);
 
 				//  shows first found subpicture scaled on OSD
-					supname = supname + ".IFO";
-
 					Common.getSubpictureClass().setColorTable(setIFOColorTable(supname));
 					Common.getSubpictureClass().decode_picture(packet, 10, true, new String[2]);
 				}
@@ -559,12 +557,17 @@ public class Scan extends Object {
 	{
 		try {
 
-			File f = new File(supname);
+			String nsupname = supname + ".IFO";
+
+			File f = new File(nsupname);
 
 			if (!f.exists())
 			{
+				f = new File(supname.substring(0, supname.lastIndexOf(".")) + ".IFO");
+
+				if (!f.exists())
+					return null;
 				//Common.setMessage("!> no existing .ifo file : '" + supname + "'");
-				return null;
 			}
 
 			XInputFile xif = new XInputFile(f);
@@ -576,8 +579,6 @@ public class Scan extends Object {
 
 			for (int i = 0, j = values.length; i < j; i++)
 				values[i] = YUVtoRGB(CommonParsing.getIntValue(data, i * 4, 4, !CommonParsing.BYTEREORDERING));
-
-		//	Common.setMessage("-> show colors using .ifo file : '" + supname + "'");
 
 			return values;
 
