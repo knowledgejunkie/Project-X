@@ -36,35 +36,57 @@
  */
 
 /*
+		20090122c	-----------------general bug fix and cleanup----------------
+		20090122a	assign 12 color names to quants (for debug log) dynamically
+		20090122b	compiled with Subpicture/SubpictureFrame updates from matt
+		20090122b	restored gui override for switches - restarting is a PITA
+		20090122b	added 'outline2: p=744 (eg)' to show local bitmap in debug
+		20090122b	new area with same grnd includes prev col (room for outline)
+		20090122b	dbgInShad (0xC0) shades inner border when outlining dark grnd 
+		20090122b	subtitles before cmd7 (or without as 0x100) now white & opaque
+		20090122c	remove option for old 'quants on lattice'; now always from TCT
+		20090122c	correct (re)init for multiple runs with same ColorAreas instance
+		20090122c	added interpretation of different areas[] formats to debug log
+		
+		20090117a	------experimental black outline on transparent (0x80)------
+		20090117a	corrected position of dbgpic in collectAreas to see all pxls
+		20090117a	updated emergency static grad tables to match current dynamic
+		20090117a	updated fixed diagnostic grad used when 'no cmd7' requested
+		20090117a	dynamic quants and grads (from TCT anaylsis) now the default
+		20090117a	outline step #1: all p/e1 to e2; #2: outer edge pixels to p
+		20090117a	rationalised/extended area.bgrnd() flags to include 'outline'
+		20090117a   tested and abandoned option for extra 'outside' (looks worse)
+		20090117a   apply extra 'inside' edge layer of e1 for lite grnd (eg blue)
+
 		20090116d	--------get all tables by analysing (UK) target clut--------
-		20090116d   purged a lot of (more than usually) temporary code and retested
-		20090116c   tested for quant sparse >in TCT< - may fail if sparse >in UCT<
-		20090116b   "S9 40" converts existing code to use >>grads<< derived from TCT
-		20090116b   "S9 40" converts existing code to use >quants< derived from TCT
-		20090116b   quant manager to recognise new/old hues and allocate quant #s
+		20090116b	"S9 40" converts existing code to use >quants< derived from TCT
+		20090116b	"S9 40" converts existing code to use >>grads<< derived from TCT
+		20090116b	quant manager to recognise new/old hues and allocate quant #s
+		20090116c	tested for quant sparse >in TCT< - may fail if sparse >in UCT<
+		20090116d	purged a lot of (more than usually) temporary code and retested
 
 		20090116a	-------prepare to get tables by analysing target clut-------
-		20090116a   eliminate all hardcoded constants for special quants & ranges
-		20090116a   remove dbgRvLum (old 'sort on inverted lum' method for blu/red)
+		20090116a	eliminate all hardcoded constants for special quants & ranges
+		20090116a	remove dbgRvLum (old 'sort on inverted lum' method for blu/red)
 		20090116a	rev video (lite grnd) on any color using double size grad table
 		
 		20090114	-----successfully analyse clstrs etc from imported clut-----
-		20090114    generate hue+lum lists, allocate to clstrs, generate grads
-		20090114    ...including dark/lite fill when < 4 TCT entries available 
+		20090114	generate hue+lum lists, allocate to clstrs, generate grads
+		20090114	...including dark/lite fill when < 4 TCT entries available 
 		
 		20090113	---get DE samples working again after transp grnd changes---
-		20090113    general cleanup of interfaces to other ProjectX modules
-		20090110    corrected conversion of red shades in ARGBtoQLHI()
-		20090110    fewer cases for 'pixel not allowed' now dark grnd ok with any clr
-		20090110    corrected sweep for lite pixels: only white can be be lite
+		20090113	general cleanup of interfaces to other ProjectX modules
+		20090110	corrected conversion of red shades in ARGBtoQLHI()
+		20090110	fewer cases for 'pixel not allowed' now dark grnd ok with any clr
+		20090110	corrected sweep for lite pixels: only white can be be lite
 		
-		20090108	---get UK samples working again after transp grnd changes---
-		20090108c	Rev video by adjust color indexes; any clr can be dark/lite grnd
-		20090108b	Add dbgTransp "S9 80" to force trnsp bg (except reverse video) 
+		20090108c	---get UK samples working again after transp grnd changes---
 		20090108a	Collection with transp grnd corrected; tested with ZDF and UK
 		20090108a	Count textblks & textgaps separately to decide if variable rh
 		20090108a	>>Add bitmap x offset into PX_CTLI column offsets (544x576)<<
 		20090108a	Replace cyan with grey in clut_eepb[blue] (was D980 now DC80) 
+		20090108b	Add dbgTransp "S9 80" to force trnsp bg (except reverse video) 
+		20090108c	Rev video by adjust color indexes; any clr can be dark/lite grnd
 		
 		20090106	---attempt to handle ZDF samples with transp grnd to text---
 		20090106	Scan for textblks <= ZDF doesn't follow geometrical rh cells
@@ -99,14 +121,18 @@ public  class ColorAreas extends Object {                                       
 	public  static void    setSwitches(String s)   { switches=Integer.parseInt(s,16);} // HEX!!  //S9
 
 	public  static boolean dbgSub(int i)  { return i<=(0xF & (switches     ));} //input hex!!    //S9
-	private static boolean dbgSpare0()    { return 0!=(0x1 & (switches>>> 4));} //unassigned     //S9 20090109
-	private static boolean dbgSpare1()    { return 0!=(0x1 & (switches>>> 5));} //unassigned     //S9 20090116
-	private static boolean dbgDynQnt()    { return 0!=(0x1 & (switches>>> 6));} //dynamic quants //S9 20090116
-	private static boolean dbgTrnsp()     { return 0!=(0x1 & (switches>>> 7));} //all 'b' transp //S9 20090105
+
+	private static boolean dbgSpare1()    { return 0!=(0x1 & (switches>>> 4));} //unassigned     //S9 20090122
+	private static boolean dbgSpare2()    { return 0!=(0x1 & (switches>>> 5));} //unassigned     //S9 20090109
+	private static boolean dbgInShad()    { return 0!=(0x1 & (switches>>> 6));} //shdg iff outln //S9 20090122
+	private static boolean dbgTrnsp()     { return 0!=(0x1 & (switches>>> 7));} //transp+outline //S9 20090122
+
 	private static boolean dbgnoCHG()     { return 0!=(0x1 & (switches>>> 8));} //for SupViewer  //S9
 	private static boolean dbgnofix()     { return 0!=(0x1 & (switches>>> 9));} //off->fixup OK  //S9
 	private static boolean dbg1pic()      { return 0!=(0x1 & (switches>>>10));} //on->chk pic#   //S9
 	private static boolean dbg1line()     { return 0!=(0x1 & (switches>>>11));} //on->check L#   //S9
+	                     //db1line() and dbgline() are not being used and could be removed       //S9 20090122               
+	
 	public  static int     dbgpic()        //turning off the control bit forces return of -1     //S9
 		 { return (0!=(0x1 & (switches>>>10))) ? (0xFFF & (switches>>>12)) : -1;} //interlaced!! //S9
 	public  static int     dbgline()       //turning off the control bit forces return of -1     //S9
@@ -118,22 +144,17 @@ public  class ColorAreas extends Object {                                       
 	{                                                       //from DVBSubpicture.setIRD()        //S9 20090113
 		active = false;                                     //reset main switch                  //S9 20090102
 		biglog = log;                                       //tru iff debug log requested by GUI //S9
-		picCount = 0;                                       //reset static call counter          //S9
-		supCount = 0;                                       //reset static sup file byte index   //S9
 
-		switches = switches & 0xFFFFFFF0 | (log?  0:0);     //default for dbgSub                 //S9
-		switches = switches & 0xFFFFFE0F | (log?  0:0)<< 4; //default for dbgSpare0              //S9 20090109
-		switches = switches & 0xFFFFFD0F | (log?  0:0)<< 5; //default for dbgSpare1              //S9 20090116
-		switches = switches & 0xFFFFFBFF | (log?  0:0)<< 6; //default for dbgDynQnt              //S9 20090116
-		switches = switches & 0xFFFFF7FF | (log?  0:0)<< 7; //default for dbgTrnsp               //S9 20090105
-		switches = switches & 0xFFFFFEFF | (log?  0:0)<< 8; //default for dbgnoCHG               //S9
-		switches = switches & 0xFFFFFDFF | (log?  0:0)<< 9; //default for dbgnofix               //S9
-		switches = switches & 0xFFFFFBFF | (log?  0:0)<<10; //default for dbg1pic                //S9
-		switches = switches & 0xFFFFF7FF | (log?  0:0)<<11; //default for dbg1line               //S9
-		switches = switches & 0xFF000FFF | (log?  0:0)<<12; //default for dbgpic/dbgline         //S9
+		switches = (log? 0x00000000: 0x00000000);           //presets when biglog on, or off     //S9 20090117
 
 		//get hidden debug key from ini entry                                                    //dm 20090113
 		String dbg = Common.getSettings().getProperty("Subpicture.S9Debug", "").trim();          //dm 20090113
+
+		//following gets current switches from gui iff there's some debug value in the ini       //S9 20090122
+		//...it's needed because restarting PjX just to change the switches is a PITA...         //S9 20090122
+		//...and leads to unrealistic test conditions like only one run per instantiation        //S9 20090122
+		String dbgX = Common.getSettings().getProperty("NetPanel.WebServerAccess", "").trim();   //S9 20090122
+		if (dbg.length()>0 && dbgX.length()>0) { dbg = dbgX; }   //only if some value in ini     //S9 20090122
 
 		if ((IRD & 1) == 1)                                                 //MC identifier      //dm 20090113
 		{                                                                                        //S9
@@ -143,10 +164,10 @@ public  class ColorAreas extends Object {                                       
 		}                                                                                        //S9
 
 Common.setMessage("Multicolor "+((active)?"ACTIVE":"OFF")+" / switches "+X(8, switches)          //S9
-		+" / hooked >"+dbg);                                                                     //dm 20090113
+		+((dbgX.length()>0)?" >>FROM GUI<<":""));                                                //S9 20090122
 if (active) Common.setMessage("Multicolor:"                                                      //S9 20090109
-		+" shw1Line="+dbgline()+" shw1Pic="+dbgpic()+" noRepairs="+dbgnofix()    //#, #, Boolean //S9
-		+" NoCOLCON="+dbgnoCHG()+" TrnspBgrd="+dbgTrnsp()+" DynQnt="+dbgDynQnt()                 //S9 20090116
+		+" shw1Line="+dbgline()+" shw1Pic="+dbgpic()+" noRepairs="+dbgnofix()   //#, #, Booleans //S9
+		+" NoCOLCON="+dbgnoCHG()+" TrnspBgrd="+dbgTrnsp()+" Shading="+dbgInShad()                //S9 20090116
 		);  
 	}                                                                                            //S9
 
@@ -178,44 +199,23 @@ if (active) Common.setMessage("Multicolor:"                                     
 			clut_pgc[i] = new Integer(Integer.parseInt(table.get("" + i).toString().trim(), 16));//dm 20090113
 		  else                                                                                   //S9i20090114
 			Common.setMessage("Multicolor color table missing entry # "+d(2, i));                //S9i20090114
-		  tables_rdy = 0;                                     //remind analyse() to finish init  //S9i20090114		  
+		  tables_rdy = 0;                                     //rest of init in dynamic context  //S9i20090114		  
 	}                                                                                            //dm 20090113
 
 			//Here we analyse the TCT to find the clusters in color space ('quants').            //S9i20090116
 			//These are recognised, and the quant #s managed, by code in ARGBtoQLHI().           //S9i20090116
 			
-			//Each color area will encompass a gradient between one clstr color and one pure     //S9i20090116
+			//Each color area will encompass one gradient between one clstr color and one pure   //S9i20090116
 			//neutral ('grnd') either black or white.  These grnds have special (low) quant #s.  //S9i20090116
-			//THE GRND IS THE GRADIENT NEUTRAL, NOT ALWAYS THE VISUAL BACKGROUND OF THE AREA     //S9i20090116
+			//THE GRND IS THE GRADIENT NEUTRAL; IT MIGHT NOT BE VISUAL BACKGROUND OF THE AREA    //S9i20090116
 			
 			//The 4 TCT indices which define the gradient to 21pb for the DVD subpic are here    //S9i20090116
 			//called a 'grad'. We now prepare suitable grads, indexed by quant, for both grnds.  //S9i20090116
 
 		/*-----------hue cluster analysis tables, field layouts, and constants-----------*/      //S9i20090114
-//	private static int[] TCT_rawNHL = new int[16];  //clut neutral flag, hue, luminance          //S9i20090114
-//	private static int[] TCT_analys = new int[16];  //clut analysed and SORTED by clstr+lum      //S9i20090114
-	private static int[] TCTQ_grads = new int[32];  //by clstr: TCT indices (both dk & lt grnd)  //S9i20090114
-	private static int[] TCTQ_steps = new int[16];  //by clstr: holds corresponding lum values   //S9i20090114
-
-	
-	//  TCT_rawNHL[i] = (neutral&0x1)<<20 | (hue&0xFF)<<8 | (lum&0xFF);  //neutflag | hue | lum  //S9i20090114
-	//  TCT_analys[i] = tmp | (q&0xF)<<20 | (lum&0xFF)<<8 |   (i&0xFF);  // clstr # | lum | TCTi //S9i20090114
-
-	//to support hue+lum comparisons
-	private static int rawN(int nhl)  { return (nhl>>16)& 0x01; }     //1 = hue is neutral       //S9i20090116
-	private static int rawH(int nhl)  { return (nhl>> 8)& 0xFF; }     //hue from clut entry      //S9i20090116
-	private static int rawL(int nhl)  { return (nhl    )& 0xFF; }     //lum from clut entry      //S9i20090116
-	private static int rawNHL(int neutralflag, int hue, int lum)                                 //S9i20090116
-		                     { return (neutralflag&0x1)<<16 | (hue&0xFF)<< 8 | (lum&0xFF); }     //S9i20090116  
-
-	//clstr analysis for one TCT entry                                                           
-//	private static int anlC(int anl)  { return (anl>>24)& 0x0F; }     //clstr members max 15     //S9i20090116
-//	private static final int ANLC_INCR = 1<<24;                       //to incr member counter   //S9i20090116
-//	private static int anlQ(int anl)  { return (anl>>16)& 0xFF; }     //clstr # (aka quant)      //S9i20090116
-//	private static int anlL(int anl)  { return (anl>> 8)& 0xFF; }     //lum from TCT             //S9i20090116
-//	private static int anlT(int anl)  { return (anl    )& 0xFF; }     //TCT index max 255        //S9i20090116
-//	private static int analys(int count, int quant, int lum, int TCTi)                           //S9i20090116
-//		       { return (count&0xF)<<24 | (quant&0xFF)<<16 | (lum&0xFF)<< 8 | (TCTi&0xFF); }     //S9i20090116
+	private static int[] TCTQ_grads;              //by clstr: TCT indices (both dk & lt grnd)    //S9i20090114
+	private static int[] TCTQ_steps;              //by clstr: holds corresponding lum values     //S9i20090114
+	private static int[] TCTQ_count;              //by clstr: # shades alloc to clstr            //S9i20090116
 
 	//constants for clstr # (also known as quant, from 'quantised hue')
 	/*******************************************************************************************///S9i20090116
@@ -231,19 +231,28 @@ if (active) Common.setMessage("Multicolor:"                                     
 	
 	private void analyseTCT()                                                                    //S9i20090114
 	{                                                                                            //S9i20090114
-		if (tables_rdy!=0) return;                  //we are only supposed to be called once     //S9i20090116 
+		if (tables_rdy!=0) return;                //only exec once per TCT (re)load              //S9i20090116 
+
+		/*------------initialise Quant Manager and our own TCT analysis tables-----------*/      //S9i20090122
+		picCount = 0;                             //reset static call counter                    //S9
+		supCount = 0;                             //reset static sup file byte index             //S9
+		TCTQ_grads = new int[32];                 //by clstr: TCT indices (both dk & lt grnd)    //S9i20090114
+		TCTQ_steps = new int[16];                 //by clstr: holds corresponding lum values     //S9i20090114
+		TCTQ_count = new int[16];                 //by clstr: # shades alloc to clstr            //S9i20090116
+		
+		initialiseQM();                           //he will manage all the clstr #s              //S9i20090122
+		
+		QLHI[] TCT_quants = new QLHI[16];         //local - not retained after init              //S9i20090116
 
 		/*-------------analyse TCT entries by hue & lum and allocate clstr #-------------*/      //S9i20090114
-		QLHI[] TCT_quants = new QLHI[16];                           //not retained after init    //S9i20090116
-		int[]  TCTQ_count = new int[16];                            //# shades alloc to clstr    //S9i20090116
-		for (int i = 0; i < 16; i++)             //ask manager for quants for every TCT entry    //S9i20090116
+		for (int i = 0; i < 16; i++)              //ask manager for quants for every TCT entry   //S9i20090116
 			TCT_quants[i] = ARGBtoQLHI(clut_pgc[i].intValue(),i,1); //...so Q#s are allocated    //S9i20090116
-		Arrays.sort(TCT_quants, QLHI_ORDER);     //sort by clstr # + luminance + TCT index       //S9i20090116
+		Arrays.sort(TCT_quants, QLHI_ORDER);      //sort by clstr # + luminance + TCT index      //S9i20090116
 		
 		/*----------------collect TCT indices into grads for each clustr #---------------*/      //S9i20090114
 		//-------------------also collect lum values (not used as yet)-------------------*/      //S9i20090114
 		int topWhiteNdx = -1;       //TCT_quants index of lite grnd (index of dark is always 0)  //S9i20090116
-		for (int i=15, q=0, t=0; i>=0; i--)      //down analysed cluts collecting for clusters   //S9i20090114
+		for (int i=15, q=0, t=0; i>=0; i--)       //down analysed cluts collecting for clusters  //S9i20090114
 		{                                                                                        //S9i20090114
 if (dbgSub(5)) System.out.println("init collect1"                                                //S9i20090114
 			+" / TCT_quants[i="+d(2,i)+"]="+X(8,TCT_quants[i].N));                               //S9i20090114
@@ -298,8 +307,8 @@ if (dbgSub(4)) System.out.println("init collect2"                               
 				TCTQ_grads[q   ] = TCTQ_grads[q]<<4  |   blackfill &0x000F; //fill 1 black b     //S9i20090114
 				break;                                                                           //S9i20090114
 			  default:                               //more than 3 means table or logic error    //S9i20090114
-Common.setMessage("Multicolor CLUT has "+d(2,i)+" entries same hue as "+d(2,TCTQ_grads[q]&0x0F));//S9i20090114
-
+Common.setMessage("Multicolor CLUT has "+d(2,i)+" entries"                                       //S9i20090122
+					+"(incl # "+d(2,TCTQ_grads[q]&0x0F)+") with same hue");                      //S9i20090122
 			} //end switch                                                                       //S9i20090114
 			if (q == QN)  { whitefill = TCTQ_grads[q]; }  //better version to fill the colors    //S9i20090114
 
@@ -320,20 +329,32 @@ if (dbgSub(3)) System.out.println("init grads /"                                
 
 	/*========================== fixed target PGC_CLUT and mapping tables ==========================*/
 
-			//We will be using a PGC CLUT optimised for national DVB subtitles.  We              //S9
-			//won't be directly using the stream colors but will map them - using                //S9
-			//very simple feature detection >in color space< - onto the loaded palette.          //S9
+			//The ColorAreas module was originally written for UK DVB (Freeview). It's been      //S9 20090122
+			//extended for other regimes, but still places great emphasis on the background      //S9 20090122
+			//color which for Freeview is not transparent but by its color carries meaning.      //S9 20090122
+			
+			//We expect to load a target CLUT (TCT) optimised for your national DVB subtitle     //S9 20090122
+			//colors. We won't directly output the stream colors but will map them - using       //S9
+			//very simple feature detection >in color space< - onto the palette of the TCT.      //S9
 	
 			//To implement multicolor subtitles on DVD we'll divide the subpic into XY areas     //S9
-			//such that each area has one main hue with a few intensities.  We will quantise     //S9
-			//the stream colors to ten hue clusters including neutrals, transparents, and        //S9
-			//dark & light backgrounds.  Historically the idea was to derive optimum cluster     //S9
-			//points *in color space* from the stream itself, but since (for UK DVB) we know     //S9
-			//the answers, there's little motivation and I settled for fixed quantisation.       //S9
+			//such that each area has one main hue with a few intensities. We'll quantise the    //S9
+			//stream hues into clusters (defined by the TCT), including neutrals (white/grey)    //S9 20090122
+			//and light, dark & transparent backgrounds.  Each area encompasses a luminance      //S9 20090122
+			//gradient ('grad') from one cluster ('quant') to one neutral ('grnd').  The grad    //S9 20090122
+			//is encoded by the four CLUT indices that interpret (an area of) the RLE bitmap.    //S9 20090122
+			
+			//So for each hue cluster found within a UCT (from the stream), the number and       //S9 20090122
+			//range of luminances must be mapped to those in the matching TCT cluster. Then      //S9 20090122
+			//within the bitmap, the areas with a single quant and grnd (and hence a single      //S9 20090122
+			//grad) must be located. Finally, for each area the RLE bits ('bp12') for each       //S9 20090122
+			//pixel must set to match the grad, modified by stylistic choices like outlining.    //S9 20090122
 
-			//For each subpic there are three key method calls - all in Subpicture.buildRLE()    //S9
+			//For each subpic there are four key method calls - all in Subpicture.buildRLE()     //S9 20090122
 
-			//1. analyse(bitmap, color_table) - quantise color table and find uni-cluster areas  //S9
+			//0. initialise(IRDmodel, colortable) - quantise LOADED colortable and build grads   //S9 20090122
+
+			//1. analyse(bitmap, colortable) - quantise STREAM colortable, find monochrome areas //S9
 
 			//2. pgc_color = ColorAreas.bp12[a + b] - position in bitmap -> 2bit e2e1pb          //S9
 
@@ -374,68 +395,19 @@ if (dbgSub(3)) System.out.println("init grads /"                                
 			//Depending on context, white can be a hue cluster color (white on black) or a       //S9
 			//lite grnd (white on red or blue), which makes for some interesting logic.          //S9
 			
-/***		---------------------------under review/redesign---------------------------          //S9 20090110
-			//For each XY area we assign three subpic RLE values (11,10,01) to three shades      //S9
-			//of the single quantised hue; the last value (00) being the black/white grnd.       //S9
-			//A transparent visual background is treated as a "dark grnd" with the 'b' pixels    //S9 20090101
-			//(RLE=00) being completely transparent; besides the usual rules for a dark area,    //S9 20090101
-			//pixels of high transparencies (low alfa) can be included indiscriminately.         //S9 20090101
-****		-------------------------------------------------------------------------*/          //S9 20090110
-/**/
-	private final String[] qNames = { "null", "transp", "dark" , "lite"       //specials         //S9 20090116
-			 , "white", "yellow", "green", "cyan", "blue", "magenta", "red"   //color clusters   //S9
-			                                                   };             //special          //S9 20090116
-
-	private final int[] clut_eepb = {                                                            //S9
-
-			//The subpic will be divided into areas each with a single main hue                  //S9
-			// (the main hues are quantised hence the abbreviation "quant")                      //S9
-
-			//These are the clut_pgc indices (for e2e1pb) to use for each main hue               //S9
-
-/***		---------------------------under review/redesign---------------------------          //S9 20090110
-			//The grnd quant (dark or lite) is always assigned to e2e1pb=0.                      //S9
-			//The reason will become clear when we discuss the eepb maps.                        //S9
-			//So the strongest color saturation is always e2e1pb=3 but this                      //S9
-			//may be either lowest or highest luminance within the cluster.                      //S9
-
-			//In toolsets 00=b 01=p 10=e1 11=e2 and we will follow this convention               //S9
-			//so 00/b=ground 01/p=ground dither 10/e1=main dither 11/e2=main fill.               //S9
-			//None of these is transparent since we control alpha using CHG_COLCON.              //S9
-****		-------------------------------------------------------------------------*/          //S9 20090110
-
-			//first part of these temporary tables is for dark ground.  Lite grnd (seen          //S9 20090116
-			//only in UK so far) selected from upper part when commands() builds PX_CTLI         //S9 20090116
-			//override white on blue = 0xDC00     override white on red/mag = 0xDEEF             //S9=20090116
-
-			//main hue   [00]null [01]transp [02]dark  [03]white [04]lite                        //S9 20090116
-			/* e2e1pb */   0xFFFF   ,0x0000   ,0x1111   ,0xDCB1   ,0xDD11                        //S9 20090116
-			//main hue  [05]yellow [06]green [07]cyan  [08]blue [09]magenta [0A]red              //S9 20090116
-			/* e2e1pb */  ,0x4321   ,0x7651   ,0xA981   ,0x0011   ,0xEE11   ,0xEE11              //S9 20090116
-			//main hue  [0B]spare [0C]spare [0D]spare  [0E]spare [0F]spare                       //S9 20090116
-			/* e2e1pb */  ,0xF0F0   ,0xF0F0   ,0xF0F0   ,0xF0F0   ,0xF0F0                        //S9 20090116
-
-			//REVERSE   [10]null [11]transp [12]dark  [13]white [14]lite                         //S9 20090116
-			/* e2e1pb */  ,0xFFFF   ,0x0000   ,0x1111   ,0xDCB1   ,0xDD11                        //S9 20090116
-			//REVERSE   [15]yellow [16]green [17]cyan  [18]blue [19]magenta [1A]red              //S9 20090116
-			/* e2e1pb */  ,0xD432   ,0xD765   ,0xDA98   ,0xDC00   ,0xDEEE   ,0xDEEF              //S9 20090116
-			//REVERSE   [1B]spare [1C]spare [1D]spare  [1E]spare [1F]spare                       //S9 20090116
-			/* e2e1pb */  ,0x0F0F   ,0x0F0F   ,0x0F0F   ,0x0F0F   ,0x0F0F            };          //S9 20090116
 
 	private final int[] clut_maps = {                                                            //S9
 
-			//There are often more or fewer than four shades in the hue cluster.  Here           //S9
+			//There are often more or fewer than four shades in the UCT cluster.  Here           //S9
 			//are the translation maps to e2e1pb on DVD [by # colors to compress from].          //S9
 			//0x1234 means top color to e2, next 2 to e1, next 3 to p, 4 to b, but dark          //S9
 			//or transparent grnd is always outside this count.                                  //S9
 
 /***		---------------------------under review/redesign---------------------------          //S9 20090110
-			//The maps for fewer shades are therefore biased away from b. If we did not          //S9
-			//always put grnd to b, we'd need separate maps for quants with dark & lite          //S9
-			//grnds. So the strongest color is always e2e1pb=3 but this may be either            //S9
-			//lowest or highest luminance within the cluster. That does mean we need to          //S9
-			//reverse the sort by luminance for clusters with lite grnd when preparing           //S9
-			//to allocate shades to e2e1pb using the maps.  This is done in analyse().           //S9
+			//Using a fixed (or precalculated) mapping is only valid against a known             //S9 20090122
+			//population of transmitted UCTs, which was true for UK Freeview.   More             //S9 20090122
+			//generally we must compare the UCT top luminance with the TCT luminances            //S9 20090122
+			//then group UCT luminances according to the 1/2/3 shades avail in the TCT.          //S9 20090122
 ****		-------------------------------------------------------------------------*/          //S9 20090110
 			//
 			//Entry[0] maps all shades to b and is available for special situations              //S9
@@ -490,8 +462,13 @@ if (dbgSub(3)) System.out.println("init grads /"                                
 	{   Area a; int trows=((Area)alist.get(0)).trow();   for (int i=0; i<alist.size(); i++)      //S9
 		{   a = (Area)alist.get(i); System.out.println(why+" "+X(8,a.I)+" "                      //S9
 			  	+d(3,a.trow())+", "+d(4,a.start())+", "+d(1,a.bgrnd())+", "+d(3,a.clstr())+" "   //S9 20080102
-				+s(8,(i==0) ? "header" : (i<=trows) ? "index" : (i<=trows*2) ? "yinfo" :         //S9 20080105
-				(a.clstr()<qNames.length) ? qNames[a.clstr()] : "")+((a==r)?"<---"+s:""));       //S9 20080102
+				+( (i==0) ?       "  header (trows,  bitmapY,  0, estimated rh)" :               //S9 20080122
+				   (i<=trows && a.start()==0) ?   "   index ( empty )" :                         //S9 20080122
+				   (i<=trows) ?   "   index ( trow, 1st area,  0,  last area+1)" :               //S9 20080122
+				   (i<=trows*2) ? "   yinfo ( topY,  bottomY, margin?, marginY)" :               //S9 20080122
+				     (a.clstr()<qNames.length) ? (s(8,qNames[a.clstr()])                         //S9 20080122
+				                         +" ( trow,   xstart,   flags,  clstr#)") : "")          //S9 20080122
+				+((a==r)?"<---"+s:""));                                                          //S9 20080102
 		}                                                                                        //S9
 	}                                                                                            //S9
 
@@ -554,16 +531,32 @@ if (dbgSub(3)) System.out.println("init grads /"                                
 
 	/*============ color analysis subroutines - that (probably) should be in Class QLHI ===========*/
 
-	private static int[] TCT_q_hues = new int[16];  //quant manager - the hues we have seen      //S9q20090116 
-	private static int[] TCT_quants = new int[16];  //quant manager - quants we gave them        //S9q20090116
-	private static int   TCT_q_free = 0;            //quant manager - first free entry           //S9q20090116  
-	private static int   TCT_q_maxQ = Q1 - 1;       //quant manager - highest quant allocated    //S9q20090116  
+	private static int[] QM_q_hues;                 //quant manager - the hues we have seen      //S9q20090116 
+	private static int[] QM_quants;                 //quant manager - quants we gave them        //S9q20090116
+	private static String[] qNames;                 //quant manager - color names for debug log  //S9q20090122
+	private static int   QM_q_free;                 //quant manager - first free entry           //S9q20090116  
+	private static int   QM_q_maxQ;                 //quant manager - highest quant allocated    //S9q20090116  
+	
+	private final  String[] refNames = { "null", "transp", "dark" , "lite", "white"     //fixed  //S9 20090122
+//			 , "yellow", "green", "cyan", "blue", "magenta", "red"               //six points    //S9 20090122
+			 , "orange", "yellow", "chrtrse", "green", "spring", "cyan"          //twelve points //S9 20090122
+			 , "sky", "blue", "indigo", "magenta", "pink", "red"                 //twelve points //S9 20090122
+			 };                                                                                  //S9 20090116
+			 
+	private void initialiseQM()
+	{
+		QM_q_hues = new int[16];                    //quant manager - the hues we have seen      //S9q20090122
+		QM_quants = new int[16];                    //quant manager - quants we gave them        //S9q20090122
+		qNames = new String[16];                    //quant manager - color names for debug log  //S9q20090122
+		QM_q_free = 0;                              //quant manager - first free entry           //S9q20090122 
+		QM_q_maxQ = Q1 - 1;                         //quant manager - highest quant allocated    //S9q20090122
+		        
+		for(int i=0; i<Q1; i++) { qNames[i] = refNames[i]; }        //names for std quants       //S9q20090122
+	}
 	
 	private QLHI ARGBtoQLHI(int ARGB, int index, int flip)   //version for clstrs from TCT       //S9q20090116
 	{                                                        //index included for later sort     //S9q20090114
 	                                                         //flip = 1 from TCT, 0 from stream  //S9q20090114
-
-		if (!dbgDynQnt() && flip==0) return ARGBtoQLHI(ARGB, index);  //old method unless S9 40  //S9q20090116
 
 		int A    = (flip==1)?0xFF : 0xFF & ARGB>>>24;               //TCT calls assumed opaque   //S9q20090116
 		int R = 0xFF & ARGB;                                                                     //S9q
@@ -587,19 +580,22 @@ if (dbgSub(3)) System.out.println("init grads /"                                
 		hue = clr%1000;                                                                          //S9q20090110
 		
 		//---------------------------this is the "quant manager"---------------------------
-if (dbgSub(5) && TCT_q_free==0) {String s = "qmgr1 dump";String t = "qmgr1  hue";                //S9q20090116
-			     for (int i=0;i<16;i++) { s=s+"  q["+d(2,i)+"]="+X(2,TCT_quants[i]); t=t+"  h["  //S9q20090116
-		         +d(2,i)+"]="+X(2,TCT_q_hues[i]);} System.out.println(s);System.out.println(t);} //S9q20090116
+		if(QM_q_free==0)                                            //QM list empty<-1st call    //S9q20090122
+		{                                                                                        //S9q20090122
+if (dbgSub(5)) {String s = "qmgr1 dump";String t = "qmgr1  hue";                                 //S9q20090116
+			    for (int i=0;i<16;i++) { s=s+"  q["+d(2,i)+"]="+X(2,QM_quants[i]); t=t+"  h["    //S9q20090116
+		        +d(2,i)+"]="+X(2,QM_q_hues[i]);} System.out.println(s);System.out.println(t);}   //S9q20090116
+		}                                                                                        //S9q20090122
 
 		int qh = (A==0)?QT: (lum<0x28)?QD: (sat<2)?QN: 0;           //all special cases > zero   //S9q20090116
 out:    while (qh==0)                                               //look up for normal colors  //S9q20090116
 		{                                                                                        //S9q20090116
 			int low = 0x1FFFF;                                      //lowest difference so far   //S9q20090116
 			int ndx = 0;                                            //index of best hit so far   //S9q20090116
-			for (int i=0, dif=0; i<TCT_q_free; i++)                 //cf all prev clstr allocs   //S9q20090116
+			for (int i=0, dif=0; i<QM_q_free; i++)                  //cf all prev clstr allocs   //S9q20090116
 			{                                                                                    //S9q20090116
-				dif = hue - TCT_q_hues[i];                                                       //S9q20090116
-				if (dif == 0)  { qh = TCT_quants[i]; break out; }   //efficient exit for freq    //S9q20090116
+				dif = hue - QM_q_hues[i];                                                        //S9q20090116
+				if (dif == 0)  { qh = QM_quants[i]; break out; }    //efficient exit for match   //S9q20090116
 				if (dif < 0)                      { dif = -dif; }   //just the proximity         //S9q20090116
 				if (dif > 120)                 { dif = 240-dif; }   //closer 'round the circle'  //S9q20090116
 				if (dif < low)            { low = dif; ndx = i; }   //index of closest so far    //S9q20090116
@@ -609,17 +605,29 @@ if (dbgSub(5)) System.out.println("quant search"+" / hue="+X(2,hue)+" / i="+d(2,
 			} //end hue search      =======>> NOTE only here if no exact hit <<=======           //S9q20090116
 			if (flip == 1)                                          //TCT caller -> update table //S9q20090116
 			{                     //if hit within 1/12 of circle copy quant else issue new quant //S9q20090116
-				qh = (low < 0x14) ? TCT_quants[ndx] : ++TCT_q_maxQ; //                           //S9q20090116
+				qh = (low < 0x14) ? QM_quants[ndx] : ++QM_q_maxQ;   //                           //S9q20090116
 				if (low != 0)                                       //not exact hit -> new hue   //S9q20090116
-					{ TCT_q_hues[TCT_q_free] = hue; TCT_quants[TCT_q_free++] = qh; }             //S9q20090116
+					{ QM_q_hues[QM_q_free] = hue; QM_quants[QM_q_free++] = qh; }                 //S9q20090116
 			}                                                                                    //S9q20090116
 			else		          //if hit within 1/12 of circle copy quant else qh = 0 (error)  //S9q20090116
-				qh = (low < 0x14) ? TCT_quants[ndx] : QX;          //QX==0 so next break vital   //S9q20090116
+				qh = (low < 0x14) ? QM_quants[ndx] : QX;            //QX==0 so next break vital  //S9q20090116
 			break;                                                                               //S9q20090116
 		} //end  out:while qh==0                                                                 //S9q20090116
-if (dbgSub(5) ) {String s = "quant dump";String t = "   for hue";                                //S9q20090116
-			     for (int i=0;i<16;i++) { s=s+"  q["+d(2,i)+"]="+X(2,TCT_quants[i]); t=t+"  h["  //S9q20090116
-		         +d(2,i)+"]="+X(2,TCT_q_hues[i]);} System.out.println(s);System.out.println(t);} //S9q20090116
+		int ih = 0;                                 //to name the nearest lattice point on debug //S9q20090122
+		if (flip == 1)                                             //TCT caller -> update qnames //S9q20090122
+		{                                 //six points gives the 'old fixed quants' from the hue //S9q20090122
+//			qNames[qh] = refNames[(ih=(qh<Q1)?qh:((hue+20)/40 + 5)% 6+Q1)];     //six points     //S9q20090122
+			qNames[qh] = refNames[(ih=(qh<Q1)?qh:((hue+10)/20 +11)%12+Q1)];     //twelve points  //S9q20090122
+			
+if (dbgSub(3)) System.out.println("quant init/ q# "+X(2,qh)                                      //S9q20090122
+				+" will be "+s(8,refNames[ih])+" (refNames[ih="+d(2,ih)+"])"                     //S9q20090122
+				+" for TCT[i="+d(2,index)+"]="+X(8,ARGB)                                         //S9q20090122
+				+" with hue="+X(2,hue)+" and lum="+X(2,lum));                                    //S9q20090122
+		}                                                                                        //S9q20090122
+
+if (dbgSub(5) ) {String s = "qmgr  dump";String t = "   for hue";                                //S9q20090116
+			     for (int i=0;i<16;i++) { s=s+"  q["+d(2,i)+"]="+X(2,QM_quants[i]); t=t+"  h["   //S9q20090116
+		         +d(2,i)+"]="+X(2,QM_q_hues[i]);} System.out.println(s);System.out.println(t);}  //S9q20090116
 		//----------------------------end of the "quant manager"---------------------------
 
 		QLHI myQHLI = new QLHI(qh, lum, hue, index);         //hue in misc field only for debug  //S9q20090116
@@ -630,57 +638,6 @@ if (dbgSub(4)) System.out.println("quant return"+d(3,index)+"/ARGB "+X(8,ARGB)
 		return myQHLI;                                                                           //S9q20090116
 	}                                                                                            //S9q20090116
 
-	private QLHI ARGBtoQLHI(int ARGB, int index)     // older version - hardcoded color quants   //S9q
-	{                                                                                            //S9q
-		//convert local "RGB" to Hue & Lum - note "ARGB" is a misnomer, actually the Red         //S9q
-		//component is being stored as LSB but it doesn't matter as it's local to this app       //S9q
-
-		//then construct a "quantised hue" clustering the actual hues into eight groups          //S9q
-
-		//the original UCT index is incorporated so we can sort back to that sequence later      //S9q
-		
-		int A = 0xFF & ARGB>>>24;                                                                //S9q
-		int B = 0xFF & ARGB>>>16;                                                                //S9q
-		int G = 0xFF & ARGB>>>8;                                                                 //S9q
-		int R = 0xFF & ARGB;                                                                     //S9q
-
-		int Max = (R>G)?R:G; Max = (Max>B)?Max:B;                                                //S9q
-		int Min = (R<G)?R:G; Min = (Min<B)?Min:B;                                                //S9q
-
-		int Lum = (Max + Min)/2;                                                                 //S9q
-
-		int Clr, Hue;                                                                            //S9q20090110
-		float Dif = (Max - Min);                                                                 //S9q
-		// max HSL is 240 so pure colors are r0, y40, g80, c120, b160, m200, r240                //S9q
-		if (Dif < 2)  { Clr = 3160; } else                 //neutrals traditionally set to 160   //S9q
-		if (Max == R) { Clr = (int)((float)(G-B)*40f/Dif + 240) % 240;  } else //closest to red  //S9q
-		if (Max == G) { Clr = (int)((float)(B-R)*40f/Dif) +  80 + 1000; } else //closest to green//S9q
-					  { Clr = (int)((float)(R-G)*40f/Dif) + 160 + 2000; }      //closest to blue //S9q
-		// the extra 1000/2002/3000 is to show which path taken - modulo away after debug print  //S9q
-		Hue = Clr%1000;                                                                          //S9q20090110
-	
-		int ih = (Hue+20)/40; 
-		int qh =  (ih + 5)% 6;                             //quantise hue to 6 colors            //S9q
-//		qh = (A==0)?QT: (Lum<0x28)?QD: (Dif<2)?QN: (Q1+4)-qh;   //cheap trick to test more grads //S9q20090101 =+=
-		qh = (A==0)?QT: (Lum<0x28)?QD: (Dif<2)?QN:  Q1+qh; //add quants for neutrals & trnsprnts //S9q20090101 =+=
-														    
-if (dbgSub(5))                                                                                   //S9q20090105
-		  System.out.println("ARGBtoQLHI:/index "+d(3,index)+"/ARGB "+X(8,ARGB)                  //S9q
-		  +"/R "+d(4,R)+"/G "+d(4,G)+"/B "+d(4,B)+"/Max "+d(4,Max)+"/Min "+d(4,Min)              //S9q20090110
-		  +"/Dif "+d(4,(int)Dif)+"/Lum "+d(4,Lum)+"/Clr "+d(4,Clr)+"/Hue "+d(3,Hue)              //S9q20090110
-		  +"/ih "+d(3,ih)+"/qh "+X(1,qh));                                                       //S9q20090110
-
-		//the return value is optimised for Shannock9's "hue cluster" approach, but the        	 //S9q
-		//raw Hue is also returned in case someone else wants to try something different       	 //S9q
-
-		//0 thru 3 and 10 are special values: 0=null, 1=transp, 2=dark , 3=neutrals, 10=lite     //S9q
-		//4 thru 9 are six equispaced hues: 4=yellow; 5=green, 6=cyan, 7=blue, 8=magenta, 9=red, //S9q
-		//(lite and dark are set by caller later, we just avoid returning those values)          //S9q
-
-		//  return qh << 24 | Lum << 16 | Hue << 8 | index;                                      //S9q
-		return new QLHI(qh, Lum, Hue, index);         //hue in misc field only for debug         //S9q
-	}                                                                                            //S9q
-	
 	/*===================== bitmap analysis subroutines - called from analyse() ====================*/
 
 	private void findTextRows(Bitmap bitmap)          //find the arrangement of text rows        //S9t20090102
@@ -811,7 +768,7 @@ if (dbgSub(4)) System.out.println("yinfo/pic "+d(5,picCount)+"/h "+d(3,h)       
 				+"/celBtm["+d(1,t)+"]="+d(3,rh*t+rh));                                           //S9t20090102
 		}   //end for each textrow                                                               //S9t20090102
 
-if (dbgSub(2)) dumpAreas("trow top + next + margin row");                                        //S9t20090102
+if (dbgSub(2)) dumpAreas("areas1");                                                              //S9t20090122
 	}                                                                                            //S9t
 	
 
@@ -962,17 +919,17 @@ if (dbgSub(3)) System.out.println("singleton  "+"/pic "+d(5,picCount)           
 						}   //endif copy from row above                                          //S9a
 					}   //endif singleton clstr                                                  //S9a
 
+if (dbgpic()==picCount)  System.out.println("dbgpic     "+"/pic "+d(5,picCount)                  //S9a20090105
+				+"/t "+d(2,t)+"/x "+d(3,j)+"/y "+d(3,(i-a)/w)+"/colgrnd "+d(1,colgrnd[j])        //S9a20090105
+				+"/colclstr "+d(2,colclstr[j])+"/pq-2 "+d(2,t3)+"/pq-1 "+d(2,t2)                 //S9a
+  	 			+"/Q "+X(8,myQLHI.N)+" pixel "+X(8,t1));                                         //S9a20090106
+
 					//------------on new quant, delay any action for one pixel------------       //S9a
 					//first with new quant is potential noise..only vertical runs > 2 credible   //S9a
 					t4 = t3; t3 = t2;                      //update stack of recent history      //S9a
 					if (t3 != t4)                          //pixel quant differs from one above  //S9a
 						if (i < b-w)                       //not last line->no further action    //S9a
 							continue;                      //..note history already stacked      //S9a                                     //S9a
-
-if (dbgpic()==picCount)  System.out.println("dbgpic     "+"/pic "+d(5,picCount)                  //S9a20090105
-				+"/t "+d(2,t)+"/x "+d(3,j)+"/y "+d(3,(i-a)/w)+"/colgrnd "+d(1,colgrnd[j])        //S9a20090105
-				+"/colclstr "+d(2,colclstr[j])+"/pq-2 "+d(2,t3)+"/pq-1 "+d(2,t2)                 //S9a
-  	 			+"/Q "+X(8,myQLHI.N)+" pixel "+X(8,t1));                                         //S9a20090106
 
 					//------------if pixel now acceptable add it to the column------------       //S9a
 					if (colclstr[j] == t2)       continue; //col clstr already matches pixel     //S9a
@@ -1064,22 +1021,96 @@ if (dbgpic()==picCount || dbgSub(4))  System.out.println("smear from right "    
 			//                                                                                   //S9a20090116
 			//Tentative solution: when lite pxl enters nondark column set bp12 to 7.   Then      //S9a20090116
 			//(here) for any lite area, search and fix the bp12s (need to know # shades in UCT)  //S9a20090116
+			
 								
 			/*--------use col grnd & quant to set area info (-> select grad in commands)-------*///S9a
 			/*-------any remaining undefined grnd (would be a logic err) set to rev video------*///S9a
 			for (int q=-1, g=-1, j=0;  j < w; j++)         //create list of areas for PX_CTLI    //S9a
 				if (colclstr[j]!=q || colgrnd[j]!=g)       //clustr/grnd different->new area     //S9a20090105
-					alist.add(new Area(t,j,(q = colclstr[j]),                                    //S9a20090105
-					//4th param=0 makes 'b' pixels transp so avoid this for reverse video        //S9a20090108
-					//4th param=1 makes 'b' pixels dark; param = 2 selects grad for rev video    //S9a20090108
-					( ((g = colgrnd[j])>=2)?2:  (colgrnd[j]<=0 || dbgTrnsp())?0:  1 )   ));      //S9a20090108
+					alist.add(new Area(t,((colgrnd[j]==g && j>0)? j-1 : j),(q = colclstr[j]),    //S9a20090122
+					//2nd param: same grnd->take prev col into this area (room for outline)      //S9a20090122
+					//4th param=grnd flags: 2**0->lite; 2**1->transp+outline; ok to set both     //S9a20090117
+					(  (((g = colgrnd[j])>=2)?1:0) | ((dbgTrnsp()|colgrnd[j]<=0)?2:0)  )   ));   //S9a20090117
 					
 			aindx[t+1].tlimit(alist.size());               //update alist index at end of row    //S9a
 		}   //end for each textrow                                                               //S9a
 
-if (dbgSub(2)) dumpAreas("areas");                                                               //S9a
-	}                                                                                            //S9a20090105
+if (dbgSub(2)) dumpAreas("areas2");                                                              //S9t20090122
 
+if (dbgTrnsp()) allOutline(bitmap);                 //if transparent requested do outlining      //S9a20090117
+
+	}                                                                                            //S9a20090105
+	
+	private void allOutline(Bitmap bitmap)          //apply a one pxl 'p' outer border, also...  //S9b20090117
+	{                                               //...an inner 'e1' border if grnd is lite    //S9b20090117
+		Area[] areas = (Area[])(alist.toArray(new Area[alist.size()]));   //cast entire list     //S9a20090117
+		int textrows  = areas[0].trow();            //how many rows of text                      //S9a20090117
+		int bitmapY   = bitmap.getY();              //top line of 1st row                        //S9a20090117
+		int bitmapX   = bitmap.getX();              //left edge on screen                        //S9a20090117
+		int bitmapW   = bitmap.getWidth();          //as multiplier for y                        //S9a20090117
+		for (int t = 0; t < textrows; t++)          //for each text row in subpic                //S9a20090117
+		{                                                                                        //S9a20090117
+			int topY = areas[t+1+textrows].trow();  //y for trow top line                        //S9a20090117
+			int btmY = areas[t+1+textrows].start(); //y trow bottom line                         //S9a20090117
+			int bgnrow = areas[t+1].tfirst();       //index of first area this row               //S9a20090117
+			int nxtrow = areas[t+1].tlimit();       //index of last area to process              //S9a20090117
+			for (int p=bgnrow; p<nxtrow; p++)       //for each color area along row              //S9a20090117
+			{                                                                                    //S9a20090117
+				int bgrnd = areas[p].bgrnd();                                                    //S9a20090117
+				if (bgrnd < 2)  { continue; }                      //no outlining for this area  //S9a20090117
+				int areaMaxX = (p+1<nxtrow)?areas[p+1].start(): bitmapW;      //x limit of area  //S9a20090117
+				areaOutline(areas[p].start(), areaMaxX, topY, btmY, bitmapW, bgrnd|1);             //S9a20090117
+			}  //end areas in row                                                                //S9a20090117
+		}  //end rows in subpic                                                                  //S9a20090117
+	}                                                                                            //S9a20090105
+	
+	//this is only a separate method because the indentation got too ugly                        //S9b20090117
+	private void areaOutline(int xL, int xR, int yT, int yB, int bW, int aG) //apply outline     //S9b20090117
+	{                                                                                            //S9b20090117
+		int n  = 0; int e  = 0; int p  = 0;                                                      //S9b20090117
+		int p1 = 0; int p2 = 0; int p3 = 0;                //activity counters                   //S9b20090117
+		
+		//pass one - change all 'p' and 'e1' pixels in the indicated area to 'e2'
+		for (int h=xL+1, i=xR-1; h<i; h++)                 //ignore 1 pixel at left & right edge //S9b20090122
+			for (int j=(yT+1)*bW+h, k=(yB-1)*bW+h; j<k; j+=bW)    //ignore 1 pxl at top & bottom //S9b20090122
+				if ((e = bp12[j])!=0)                             //[j] is not background pixel  //S9b20090122
+				{                                                                                //S9b20090122
+					bp12[j]=3; p1++;                       //all non-b to e2 (max brightness)    //S9b20090122
+			
+if (dbgpic()==picCount||dbgSub(7)) System.out.println("outline2: x="+d(4,h)+" y="+d(4,(j-h)/bW)  //S9b20090122
+				+" bp12[j="+d(5,j)+"] "+X(1,e)+"->"+X(1,bp12[j])+((e!=bp12[j])?"*":" "));        //S9b20090122
+				}                                                                                //S9b20090122
+			
+		//pass two - change all 'b' within one pixel of an 'e2' to be 'p' (fix outside of edge)  //S9b20090117
+		//         - and if grnd lite also change those 'e2' to be 'p' (also fix inside of edge) //S9b20090117
+		for (int h=xL+1, i=xR-1; h<i; h++)                 //ignore 1 pixel at left & right edge //S9b20090122
+			for (int j=(yT+1)*bW+h, k=(yB-1)*bW+h; j<k; j+=bW)    //ignore 1 pxl at top & bottom //S9b20090122
+				if ((e = bp12[j]) == 3)                           //[j] is a text pixel (e2)     //S9b20090117
+				{                                                                                //S9b20090117
+				    p = 0; //this may re-update one pxl from several angles; that is deliberate  //S9b20090117
+				    if (bp12[n=j-bW-1] < 2) { bp12[n]=1; p|=0x400; }   //row above, one left     //S9b20090117
+				    if (bp12[n=j-bW  ] < 2) { bp12[n]=1; p|=0x040; }   //row above, exactly      //S9b20090117
+				    if (bp12[n=j-bW+1] < 2) { bp12[n]=1; p|=0x004; }   //row above, one right    //S9b20090117
+				    if (bp12[n=j   -1] < 2) { bp12[n]=1; p|=0x200; }   //same row,  one left     //S9b20090117
+				    // (bp12[n=j     ] < 2) { bp12[n]=1; p|=0x020; }   //do not shoot own foot.  //S9b20090117
+				    if (bp12[n=j   +1] < 2) { bp12[n]=1; p|=0x002; }   //same row,  one right    //S9b20090117
+				    if (bp12[n=j+bW-1] < 2) { bp12[n]=1; p|=0x100; }   //row below, one left     //S9b20090117
+				    if (bp12[n=j+bW  ] < 2) { bp12[n]=1; p|=0x010; }   //row below, exactly      //S9b20090117
+				    if (bp12[n=j+bW+1] < 2) { bp12[n]=1; p|=0x001; }   //row below, one right    //S9b20090117
+				    //we re-do all possible updates to detect (in p) if we're at inside edge     //S9b20090117
+					//if so and 'inner outline' flag is on then also update self to 'e1'         //S9b20090117
+				 	if (p>0)                { p2++;}              //collect pass two stats       //S9b20090122
+				 	if (p>0 && (aG&1)>0)    { bp12[j]=2; p3++;}   //p>0 <- we're at inside edge  //S9b20090117
+				     
+if (dbgpic()==picCount||dbgSub(7)) System.out.println("outline2: x="+d(4,h)+" y="+d(4,(j-h)/bW)  //S9b20090122
+				+" bp12[j="+d(5,j)+"] "+X(1,e)+"->"+X(1,bp12[j])+((e!=bp12[j])?"*":" ")          //S9b20090122
+				+" p="+X(3,p));                                                                  //S9b20090122
+				}                                                                                //S9b20090117
+				
+if (dbgSub(3)) System.out.println("outline3: "+" xL="+d(3,xL)+" xR="+d(3,xR)                     //S9b20090117
+			+" yT="+d(3,yT)+" yB="+d(3,yB)+" p1="+d(5,p1)+" p2="+d(5,p2)+" p3="+d(5,p3));        //S9b20090122
+	}                                                                                            //S9b20090117
+				
 	/*============== Bitmap of 2bit e2e1pb (cleared and built afresh for each subpic) ==============*/
 
 	public  int[] bp12;                             //public so Subpicture.buildRLE can use it   //S9
@@ -1090,12 +1121,12 @@ if (dbgSub(2)) dumpAreas("areas");                                              
 
 	public  void analyse(Bitmap bitmap, ArrayList user_color_table)                              //S9
 	{                                               //called at start of Subpicture.buildRLE()   //S9
-	                                                //quantises color table & allocates e2e1pb   //S9
+	                                                //quantises USER clr table & allocs e2e1pb   //S9
 		                                            //creates list of XY areas for CH_COLCON     //S9
 		picCount++;                                 //will update pixels to clear noise bursts!! //S9
-		if (!active) return;                        //main switch for multicolor DVB to DVD      //S9
+		if (!active) return;                        //must call initialise() correctly first     //S9
 		
-		if (tables_rdy==0) analyseTCT();            //deconstruct target clut (TCT) from user    //S9i20090116 
+		if (tables_rdy==0) analyseTCT();            //new TCT - finish init in dynamic context   //S9i20090116 
 
 if (dbgSub(1)) System.out.println("Analysing pic "+d(5,picCount)                                 //S9 20090105
 		  +" from PTS:"+Common.formatTime_1(bitmap.getInTime() / 90)                             //S9 20090105
@@ -1236,12 +1267,12 @@ if (dbgSub(4)) dumpquants("QHLI by UCTidx ",user_color_table);                  
 		b.write(0); b.write(0);                                 //link to be fixed               //S9=
 
 		b.write(3);                                 //command - static colors                    //S9=
-		b.write((byte)((dbgnoCHG())?0x74:0x76));                //force color index e2e1         //S9=
-		b.write((byte)((dbgnoCHG())?0x31:0x51));                //force color index p b          //S9=
+		b.write((byte)((dbgTrnsp())?0xDD:0xDC));                //force color index e2e1         //S9=20090117
+		b.write((byte)((dbgTrnsp())?0x11:0xB1));                //force color index p b          //S9=20090117
 
 		b.write(4);                                 //command - static alpha                     //S9=
-		b.write((byte)((dbgnoCHG())?0xFF:0x00));                //force alpha index e2e1         //S9=
-		b.write((byte)((dbgnoCHG())?0xF8:0x00));                //force alpha index p b          //S9=
+		b.write((byte)((dbgTrnsp())?0xFF:0xFF));                //force alpha index e2e1         //S9=
+		b.write((byte)((dbgTrnsp())?0xF0:0xFF));                //force alpha index p b          //S9=
 
 		b.write(5);                                 //command - screen position                  //S9=
 		int minX = bitmap.getX(); int maxX = bitmap.getMaxX() - 1;                               //S9=
@@ -1304,18 +1335,27 @@ if (dbgSub(2)) System.out.println("LN_CTLI  "                                   
 
 			for (int p=bgnrow; p<nxtrow; p++)       //for each color area along row emit PX_CTLI //S9=
 			{                                                                                    //S9=
-				int firstCol = areas[p].start() + bitmapX;   //from left of screen, not bitmap!  //S9=20090106
-				int cluster  = areas[p].clstr();                                                 //S9=
-				int neutral  = areas[p].bgrnd();                                                 //S9=
+				int firstCol = areas[p].start() + bitmapX;    //from left of screen, not bitmap! //S9=20090106
+				int bgflags  = areas[p].bgrnd();         //2**0->lite grnd; 2**1->trnsp+outline  //S9=20090117
+				int cluster  = areas[p].clstr() + (bgflags&1)*16;   //extra offset if lite grnd  //S9=20090117
+//				cluster = (cluster+2-Q1)%(QM_q_free-Q1)+Q1;   //cheap trick to test more grads   //S9=20090117 =+=
 
-//				cluster = (cluster+2-Q1)%(TCT_q_free-Q1)+Q1; //cheap trick to test more grads    //S9q20090117 =+=
-				int color_e2e1bp = 0;                                                            //S9=20090116
-				if (dbgDynQnt())                                                                 //S9=20090116
-					color_e2e1bp = TCTQ_grads[cluster + ((neutral==2)?16:0)]; //2=lite grnd      //S9=20090116
-				else                                                                             //S9=20090116
-					color_e2e1bp = clut_eepb[cluster + ((neutral==2)?16:0)];  //2=lite grnd      //S9=20090116
-				int alpha_e2e1bp = (areas[p].bgrnd() > 0) ? 0xFFFF : 0xFFF0;  //0 -> trnsp bgd   //S9=20090108
+				int color_e2e1bp = color_e2e1bp = TCTQ_grads[cluster];  //default dynamic grads  //S9=20090117
+//				if (dbgFxdQnt())   color_e2e1bp = clut_eepb[cluster];   //switch to static grads //S9=20090117
+				int alpha_e2e1bp = 0xFFFF;                              //start with all opaque  //S9=20090117
 				
+				if ((bgflags&2)==2)    //trnsp bkgrd plus text outline of bg color (on 'p' pxls) //S9=20090117
+				{                      //copy 'b' index to 'p' in grad (bp12[] already updated)  //S9=20090117
+					color_e2e1bp = color_e2e1bp & 0xFF0F | color_e2e1bp<<4  & 0x00F0;            //S9=20090117
+					alpha_e2e1bp = 0xFFF0;           //trnsp the non-outline bkgrd (on 'b' pxls) //S9=20090117
+					if ((bgflags&1)==1)              //lite grnd: use 'p'  color for 'e1' pixels //S9=20090122
+						color_e2e1bp = color_e2e1bp & 0xF0FF | color_e2e1bp<<4  & 0x0F00;        //S9=20090122
+					else                             //dark grnd: use 'e2' color for 'e1' pixels //S9=20090122                                            //S9=20090122
+					if (!dbgInShad())                //...retain the shading for evaluation      //S9=20090122
+						color_e2e1bp = color_e2e1bp & 0xF0FF | color_e2e1bp>>>4 & 0x0F00;        //S9=20090122
+				}				
+//				color_e2e1bp = color_e2e1bp & 0xF000 | 0x0EF1;        //UK diagnostic outline    //S9=20090116
+//				color_e2e1bp = 0xDEF1;                                //test - all areas as red  //S9=20090116
 				
 			// PX_CTLI redefines color & alpha from a given column onward within the LN_CTLI     //S9=
 			// PX_CTLI = ss ss cc cc aa aa /s=start col, c=color index e2e1pb, a=alpha e2e1pb    //S9=
