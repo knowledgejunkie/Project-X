@@ -1594,7 +1594,7 @@ public class StreamParserTS extends StreamParserBase {
 		if (pmt_parser == null || pid != pmt_parser.getPID())
 			return false;
 
-		int ret = pmt_parser.parsePMT(streambuffer.getData().toByteArray());
+	//	int ret = pmt_parser.parsePMT(streambuffer.getData().toByteArray());
 
 //Common.setMessage("AA " + ret);
 		//TSPidList
