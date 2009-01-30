@@ -75,7 +75,7 @@ public class StreamParserTS extends StreamParserBase {
 	private boolean HandanAdaption;
 	private boolean JepssenAdaption;
 	private boolean KoscomAdaption;
-	private boolean ArionAdaption;
+//	private boolean ArionAdaption;
 
 	private boolean Debug;
 
@@ -133,7 +133,7 @@ public class StreamParserTS extends StreamParserBase {
 		HandanAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_FinepassAdaption);
 		JepssenAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_JepssenAdaption);
 		KoscomAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_KoscomAdaption);
-		ArionAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_ArionAdaption);
+		//ArionAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_ArionAdaption);
 
 
 		boolean ts_isIncomplete = false;
@@ -513,7 +513,7 @@ public class StreamParserTS extends StreamParserBase {
 					/**
 					 * Arion-etc .AVR workaround, skip initial special data chunk
 					 */
-					skipLeadingArionDataChunk(ts_packet);
+					//skipLeadingArionDataChunk(ts_packet);
 
 					if (skipJepssenDataChunk(ts_packet))
 					{}
@@ -1428,18 +1428,18 @@ public class StreamParserTS extends StreamParserBase {
 	 *  http://web.aanet.com.au/cameron/PVR-info/AVF-format.html
 	 * Files always seem to be cut at cluster and TS packet boundaries.
 	 */
+/**
 	private boolean skipLeadingArionDataChunk(byte[] ts_packet)
 	{
 		boolean b = false;
-			/* chunk size might be specified a short way into the header block, but
-			 * has never been known to change so we are not sure
-			 */
+			// chunk size might be specified a short way into the header block, but
+			// has never been known to change so we are not sure
 		int chunk_size = 0x8000;
 
 		if (!ArionAdaption)
 			return b;
 
-			/* header magic code is text "ARAV" */
+			// header magic code is text "ARAV"
 		if (ts_packet[0] != 0x41 || ts_packet[1] != 0x52 || ts_packet[2] != 0x41 || ts_packet[3] != 0x56)
 			return b;
 
@@ -1456,7 +1456,7 @@ public class StreamParserTS extends StreamParserBase {
 
 		return b;
 	}
-
+**/
 	/**
 	 * humax .vid workaround, skip special data chunk
 	 */
@@ -1610,7 +1610,16 @@ public class StreamParserTS extends StreamParserBase {
 	 */
 	private void getEventInfo(XInputFile xif)
 	{
-		if (xif.getStreamInfo().getStreamFullType() != CommonParsing.TS_TYPE_TF5X00)
+		int fulltype = xif.getStreamInfo().getStreamFullType();
+		int	offset = 0;
+
+		if (fulltype == CommonParsing.TS_TYPE_TF5X00)
+			offset = 4;
+
+		else if (fulltype == CommonParsing.TS_TYPE_TF5X00C)
+			offset = 0;
+
+		else
 		{
 			TS.setEventInfo(null, null, null);
 			return;
@@ -1621,23 +1630,25 @@ public class StreamParserTS extends StreamParserBase {
 
 		try {
 
+			Common.setMessage("-> fetching event info ");
+
 			xif.randomAccessSingleRead(data, 0);
 
 			byte[] data1 = new byte[24];
 			System.arraycopy(data, 0x1C, data1, 0, 24);
 
 			byte[] data2 = new byte[131];
-			System.arraycopy(data, 0x55, data2, 0, 131);
+			System.arraycopy(data, offset + 0x51, data2, 0, 131);
 
 			byte[] data3 = new byte[1164];
-			System.arraycopy(data, 0xE4, data3, 0, 1164);
+			System.arraycopy(data, offset + 0xE0, data3, 0, 1164);
 
 			TS.setEventInfo(data1, data2, data3);
 
-			Common.setMessage("-> event info cached");
+			Common.setMessage("-> event info cached from TF5X00 header " + (offset == 0 ? "DVB-C" : "DVB-S/T"));
 
 		} catch (Exception e) {
-			Common.setMessage("!> error fetching event info from TS header");
+			Common.setMessage("!> error fetching event info from TF header");
 		}
 	}
 }

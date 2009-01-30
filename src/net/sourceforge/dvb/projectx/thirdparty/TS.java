@@ -1,7 +1,7 @@
 /*
  * @(#)TS.java - constants to create TS packets
  *
- * Copyright (c) 2002-2008 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2002-2009 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -157,6 +157,56 @@ public class TS {
 
 	};
 
+	//introduced by 'jkit' 23012009
+	private static byte[] TF5200header = {
+		// HEADER 14 bytes, start at 0
+		0x54, 0x46, 0x72, 0x63,  // Id "TFrc" *
+		0x50, 0,                 // Version  *
+		0, 0,                    // Reserved *
+		0, 0,                    // Duration in Minutes
+		0, 0xa,                  // Service number in channel list (Does not matter in playback)
+		0, 0,                    // Service type 0:TV 1:Radio
+
+		// SERVICE_INFO 38 bytes starts at 14
+		0, 0, 1, 0x30,           //  Reserved and Tuner (Does not matter in playback) (Tuner 1+2 flagged)
+		1, 2,                    //  Service ID of TS stream 
+		1, 0,                    //  PID number of PMT TS packet
+		0, (byte)0xe0,           //  PID number of PCR TS packet
+		0, (byte)0xe0,           //  PID number of Video TS packet  
+		0, (byte)0xc0,           //  PID number of Audio TS packet, MPA as std
+
+		0x50, 0x72, 0x69, 0x76, 0x61, 0x74, 0x65, 0x20, 0x52, 0x65, 0x63, 0x6F, 0x72, 0x64, 0x69, 0x6E, 0x67, 0, 0, 0, 0, 0, 0, 0, // Service Name
+
+		// TP_INFO 12 bytes starts at 52
+		0, 6, 0x41, (byte)0x90, // Frequency (e.g. 410000 KHz)
+		0x1A, (byte)0xF4,       // Symbol_Rate (e.g. 6900 kS/s)
+		1, 1,                // Transport_Stream_Id (e.g. 0x044D) 
+		0, 1,                         // Network_Id
+		2,                            // Modulation 0=16QAM, 1=32QAM, 2=64QAM, 3=128QAM, 4=256QAM
+		0,                            // Reserved1
+
+		// EVT_INFO 160 bytes starts at 64
+		(byte)0x80, 0x02,       //  Reserved *
+		0, 0,                   //  Duration in Minutes
+		0, 0x3c, 4, 4,          //  Event Id
+		84, 69,                 //  Modified Julian date start time
+		83,                     //  Hour of start time
+		84,                     //  Minute os start time
+		0, 0,                   //  Modified Julian date end time
+		0,                      //  Hour of end time
+		0,                      //  Minute os end time
+		4,                      //  Reserved
+		0,                      //  Length of name in Event text
+		0,                      //  Parental rate
+
+		// the rest is 0 so it's not defined explicitly
+
+		// Event text
+
+		// EXT_EVT_INFO 
+		// Extended Event text
+
+	};
 
 	/*
 	 * header code for Arion TS file (.AVR file)
@@ -662,7 +712,10 @@ public class TS {
 		return pcr;
 	}
 
-
+	/**
+	 * init additional header
+	 * copy pmt entries
+	 */
 	public static byte[] init( JobProcessing job_processing, String name, boolean ac3, boolean _myTTX, int mode)
 	{ 
 		count1 = count2 = count3 = 0;
@@ -679,32 +732,60 @@ public class TS {
 		switch (mode)
 		{
 		case 1:
-			return initTF4000header(name, ac3);
+			return initTFHeader(TF4000header, 564, name, ac3, mode);
 
 		case 2:
-			return initTF5000header(name, ac3, 1692); //fmly 1316
+			return initTFHeader(TF5000header, 1692, name, ac3, mode); //fmly 1316
 
 		case 3:
-			return initTF5000header(name, ac3, 3760);
+			return initTFHeader(TF5000header, 3760, name, ac3, mode);
 
 		case 4:
+			return initTFHeader(TF5200header, 3760, name, ac3, mode);
+
+		case 5:
 			return initArionHeader(name, ac3, ArionAVR_HEADERSIZE , job_processing);
 		}
 
 		return (new byte[0]);
 	}
 
+	/**
+	 * init topfield header
+	 * set main audio
+	 */
+	private static byte[] initTFHeader(byte[] header, int headerlength, String name, boolean ac3, int mode)
+	{
+		byte newheader[] = new byte[headerlength];
+		System.arraycopy(header, 0, newheader, 0, header.length);
+/**
+		byte file_name[] = new File(name).getName().getBytes();
+		header[75] = (byte)(file_name.length - 3);
+		System.arraycopy(file_name, 0, newheader, 76, file_name.length - 3);
+**/
+	//	primary_audio_pid = !ac3 ? 0xC0 : 0x80;
 
+		newheader[26] = 0;
+		newheader[27] = !ac3 ? (byte)0xC0 : (byte)0x80; //MPA // set 1. AC3 PID as main TFaudio
+
+		return newheader;
+	}
+
+	/**
+	 * sets PID values
+	 */
 	private static void updateHeader(int pos, int val)
 	{
 		//only last 8 bits used
 		TF4000header[pos] = (byte) val;
 		TF5000header[pos] = (byte) val;
+		TF5200header[pos] = (byte) val;
 	}
 
 	public static String updateAdditionalHeader(String old_name, long time[], int mode, JobProcessing job_processing) throws IOException
 	{
 		String new_name = "";
+		String[] new_ext = { "", ".raw", ".rec", ".rec", ".rec", ""};
 
 		switch (mode)
 		{
@@ -712,29 +793,20 @@ public class TS {
 			return old_name;
 
 		case 1:
-			new_name = old_name.substring(0, old_name.length() - 3) + ".raw";
-
-			if (new File(new_name).exists()) 
-				new File(new_name).delete();
-
-			Common.renameTo(old_name, new_name); //DM13042004 081.7 int01 changed
-
-			finishTF4000header(new_name, time);
-			break;
-
 		case 2:
 		case 3:
-			new_name = old_name.substring(0, old_name.length() - 3) + ".rec";
+		case 4:
+			new_name = old_name.substring(0, old_name.length() - 3) + new_ext[mode];
 
 			if (new File(new_name).exists()) 
 				new File(new_name).delete();
 
 			Common.renameTo(old_name, new_name);
 
-			finishTF5000header(new_name, time);
+			finishTFHeader(new_name, time, mode);
 			break;
 
-		case 4:
+		case 5:
 			new_name = finishArionheaders(old_name, time, job_processing);
 
 			break;
@@ -773,7 +845,10 @@ public class TS {
 		}
 	}
 
-	private static void finishTF4000header(String name, long time[]) throws IOException
+	/**
+	 * completes Topfield header
+	 */
+	private static void finishTFHeader(String name, long time[], int mode)
 	{
 		long event[] = new long[4];
 		long millis = (time[1] - time[0]) / 90L;
@@ -790,156 +865,131 @@ public class TS {
 		Calendar datum = Calendar.getInstance();
 		datum.setTime(new Date(event[0]));
 
-		RandomAccessFile ts = new RandomAccessFile(name, "rw");
+		switch (mode)
+		{
+		case 1:
+			finishTF4000header(name, time, minutes, event, datum);
+			break;
+		case 2:
+		case 3:
+			finishTF5X00header(name, time, minutes, event, datum, 4);
+			break;
+		case 4:
+			finishTF5X00header(name, time, minutes, event, datum, 0);
+		}
 
-		ts.seek(0);
-		ts.writeShort((short)event[2]);
-		ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
-		ts.writeByte((byte)datum.get(Calendar.MINUTE));
-		ts.writeShort((short)event[2]);
-		ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
-		ts.writeByte((byte)datum.get(Calendar.MINUTE));
-		ts.writeShort(minutes);
-
-		ts.seek(0x44);
-		ts.writeShort((short)event[2]);
-		ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
-		ts.writeByte((byte)datum.get(Calendar.MINUTE));
-		ts.writeShort(minutes);
-
-		datum.setTime(new Date(event[1]));
-
-		ts.seek(0x40);
-		ts.writeShort((short)event[3]);
-		ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
-		ts.writeByte((byte)datum.get(Calendar.MINUTE));
-
-		ts.close();
 	}
 
-	//introduced by 'catapult' 09082004
-	private static void finishTF5000header(String name, long time[]) throws IOException
+	/**
+	 * completes Topfield 4000 header
+	 */
+	private static void finishTF4000header(String name, long time[], short minutes, long[] event, Calendar datum)
 	{
-		long event[] = new long[4];
-		long millis = (time[1] - time[0]) / 90L;
-		short minutes = (short)(0xFFFF & (Math.round(millis / 60000f)));
+		try {
 
-		event[0] = System.currentTimeMillis();
-		event[1] = event[0] - millis;
+			RandomAccessFile ts = new RandomAccessFile(name, "rw");
 
-		//JD 2440588  1.1.1970  = 0
-		//24*60*60*1000 
-		event[2] = (event[0] / 86400000L) + 2440588 - 2400001; 
-		event[3] = (event[1] / 86400000L) + 2440588 - 2400001;
+			ts.seek(0);
+			ts.writeShort((short)event[2]);
+			ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
+			ts.writeByte((byte)datum.get(Calendar.MINUTE));
+			ts.writeShort((short)event[2]);
+			ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
+			ts.writeByte((byte)datum.get(Calendar.MINUTE));
+			ts.writeShort(minutes);
 
-		Calendar datum = Calendar.getInstance();
-		datum.setTime(new Date(event[0]));
+			ts.seek(0x44);
+			ts.writeShort((short)event[2]);
+			ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
+			ts.writeByte((byte)datum.get(Calendar.MINUTE));
+			ts.writeShort(minutes);
 
-		RandomAccessFile ts = new RandomAccessFile(name, "rw");
+			datum.setTime(new Date(event[1]));
 
-		ts.seek(0x08);
-		ts.writeShort(minutes); 
+			ts.seek(0x40);
+			ts.writeShort((short)event[3]);
+			ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
+			ts.writeByte((byte)datum.get(Calendar.MINUTE));
 
-		if (service_name != null)
-		{
-			ts.seek(0x1C);
-			ts.write(service_name); 
+			ts.close();
+
+		} catch (Exception e) {
+
+			Common.setExceptionMessage(e);
 		}
+	}
 
-		ts.seek(0x46);
-		ts.writeShort(minutes);
+	/**
+	 * completes Topfield 5X00 header
+	 */
+	//introduced by 'catapult' 09082004
+	//dvb-c mod's jkit 23012009
+	private static void finishTF5X00header(String name, long time[], short minutes, long[] event, Calendar datum, int event_info_offset)
+	{
+		try {
+			RandomAccessFile ts = new RandomAccessFile(name, "rw");
 
-		ts.seek(0x50);
-		ts.writeShort((short)event[2]);
-		ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
-		ts.writeByte((byte)datum.get(Calendar.MINUTE));
+			ts.seek(0x08);
+			ts.writeShort(minutes); 
 
-		datum.setTime(new Date(event[1]));
-		ts.seek(0x4C);
-		ts.writeShort((short)event[3]); // datum
-		ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
-		ts.writeByte((byte)datum.get(Calendar.MINUTE));   
+			if (service_name != null)
+			{
+				ts.seek(0x1C);
+				ts.write(service_name); 
+			}
 
-		if (event_name != null)
-		{
-			ts.seek(0x55);
-			ts.write(event_name); 
+			ts.seek(0x42 + event_info_offset);
+			ts.writeShort(minutes);
+
+			ts.seek(0x4C + event_info_offset);
+			ts.writeShort((short)event[2]);
+			ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
+			ts.writeByte((byte)datum.get(Calendar.MINUTE));
+
+			datum.setTime(new Date(event[1]));
+			ts.seek(0x48 + event_info_offset);
+			ts.writeShort((short)event[3]); // datum
+			ts.writeByte((byte)datum.get(Calendar.HOUR_OF_DAY));
+			ts.writeByte((byte)datum.get(Calendar.MINUTE));   
+
+			if (event_name != null)
+			{
+				ts.seek(0x51 + event_info_offset);
+				ts.write(event_name); 
+			}
+
+			else
+			{
+				String eventname = new File(name).getName();
+
+				if (eventname.length() > 128)
+					eventname = eventname.substring(0, 128);
+
+				ts.seek(0x51 + event_info_offset);
+				ts.writeUTF(eventname); //filename
+
+				ts.seek(0x52 + event_info_offset);
+				int val = ts.read();
+
+				ts.seek(0x51 + event_info_offset);
+				ts.writeShort(val<<8);
+			}
+
+			if (event_text != null)
+			{
+				ts.seek(0xE0 + event_info_offset);
+				ts.write(event_text); 
+			}
+
+			ts.close();
+
+		} catch (Exception e) {
+
+			Common.setExceptionMessage(e);
 		}
-
-		else
-		{
-			String eventname = new File(name).getName();
-
-			if (eventname.length() > 128)
-				eventname = eventname.substring(0, 128);
-
-			ts.seek(0x55);
-			ts.writeUTF(eventname); //filename
-
-			ts.seek(0x56);
-			int val = ts.read();
-
-			ts.seek(0x55);
-			ts.writeShort(val<<8);
-		}
-
-		if (event_text != null)
-		{
-			ts.seek(0xE4);
-			ts.write(event_text); 
-		}
-
-		ts.close();
 
 		setEventInfo(null, null, null); //reset
 	}
-
-	private static byte[] initTF4000header(String name, boolean ac3)
-	{
-		byte header[] = new byte[564]; //TF4000
-		System.arraycopy(TF4000header, 0, header, 0, TF4000header.length);
-
-		byte file_name[] = new File(name).getName().getBytes();
-		header[75] = (byte)(file_name.length - 3);
-		System.arraycopy(file_name, 0, header, 76, file_name.length - 3);
-
-		if (ac3)
-		{
-			header[26] = 0; 
-			header[27] = (byte)0x80;  // set 1. AC3 PID as main TFaudio
-		}
-		else
-		{
-			header[26] = 0;
-			header[27] = (byte)0xC0; 
-		}
-
-		return header;
-	}
-
-	private static byte[] initTF5000header(String name, boolean ac3, int headerlength)
-	{
-		byte header[] = new byte[headerlength];
-		System.arraycopy(TF5000header, 0, header, 0, TF5000header.length);
-
-		byte file_name[] = new File(name).getName().getBytes();
-		header[75] = (byte)(file_name.length - 3);
-		System.arraycopy(file_name, 0, header, 76, file_name.length - 3);
-
-		if (ac3)
-		{
-			header[26] = 0; 
-			header[27] = (byte)0x80;  // set 1. AC3 PID as main TFaudio
-		}
-		else
-		{
-			header[26] = 0;
-			header[27] = (byte)0xC0; //MPA
-		}
-
-		return header;
-	}
-
 
 	private static byte[] initArionHeader(String name, boolean ac3, int headerlength, JobProcessing job_processing)
 	{
@@ -1005,6 +1055,13 @@ public class TS {
 				System.arraycopy(ArionAVF_Header , 0, avf_header, 0, ArionAVF_Header.length);
 				System.arraycopy(arionAVRPathname_onPVR.toString().getBytes() , 0,
 								avf_header, 0x326, arionAVRPathname_onPVR.length());
+
+				avf_header[0x1B] = 0x02;
+				avf_header[0x1C] = (byte) 0x80;
+				avf_header[0x1D] = !ac3 ? (byte)0xC0 : (byte)0x80; //MPA // set 1. AC3 PID as main audio
+				avf_header[0x1E] = 0x00;
+				avf_header[0x1F] = ac3 ? (byte)0xC0 : (byte)0x80; //MPA // set 1. AC3 PID as main audio
+
 				// now do the time/date for EPG and recording info.
 				// since we have no meaningful information we will just use current time
 				// for both sets of data.

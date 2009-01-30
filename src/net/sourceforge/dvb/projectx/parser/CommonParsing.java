@@ -1,7 +1,7 @@
 /*
  * @(#)CommonParsing
  *
- * Copyright (c) 2005-2008 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2009 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -87,9 +87,10 @@ public class CommonParsing extends Object {
 	public final static int ES_TYPE   = 1;	//	"ElementaryStream"
 
 	public final static int TS_TYPE_TF5X00    = TS_TYPE | 1<<8;	//	"DVB/MPEG2 TS  TF5X00"
-	public final static int TS_TYPE_TF4000    = TS_TYPE | 2<<8;	//	"DVB/MPEG2 TS  TF4000"
-	public final static int TS_TYPE_HANDAN    = TS_TYPE | 3<<8;	//	"DVB/MPEG2 TS  HANDAN"
-	public final static int TS_TYPE_192BYTE   = TS_TYPE | 4<<8;	//	"DVB/MPEG2 TS  192b"
+	public final static int TS_TYPE_TF5X00C   = TS_TYPE | 2<<8;	//	"DVB/MPEG2 TS  TF5X00C"
+	public final static int TS_TYPE_TF4000    = TS_TYPE | 3<<8;	//	"DVB/MPEG2 TS  TF4000"
+	public final static int TS_TYPE_HANDAN    = TS_TYPE | 4<<8;	//	"DVB/MPEG2 TS  HANDAN"
+	public final static int TS_TYPE_192BYTE   = TS_TYPE | 5<<8;	//	"DVB/MPEG2 TS  192b"
 
 
 	//	"ElementaryStream"

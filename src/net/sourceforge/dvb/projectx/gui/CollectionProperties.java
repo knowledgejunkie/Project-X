@@ -415,7 +415,7 @@ public class CollectionProperties extends JFrame {
 			Keys.KEY_TS_FinepassAdaption,
 			Keys.KEY_TS_JepssenAdaption,
 			Keys.KEY_TS_KoscomAdaption,
-			Keys.KEY_TS_ArionAdaption,
+			//Keys.KEY_TS_ArionAdaption,
 			Keys.KEY_TS_generatePmt,
 			Keys.KEY_TS_generateTtx,
 			Keys.KEY_TS_setMainAudioAc3

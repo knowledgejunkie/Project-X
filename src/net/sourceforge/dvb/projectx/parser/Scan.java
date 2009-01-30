@@ -654,8 +654,87 @@ public class Scan extends Object {
 	 */
 	private int scanTSSubtype(byte[] check, int buffersize)
 	{
+		//TFrc
 		if (check[0] == 0x54 && check[1] == 0x46 && check[2] == 0x72 && check[3] == 0x63 && check[4] == 0x50 && check[5] == 0)
-			return CommonParsing.TS_TYPE_TF5X00;
+		{
+			/**  jkit 23012009
+			 * find header type (DVB-s,-t,-c), to know the
+			 * start of the event info structure
+			 *  
+			 * validate three typical values in the transponder info
+			 * for each type and take the best matching
+			 */
+			int isDVBsVal = 0;
+			int isDVBtVal = 0;
+			int isDVBcVal = 0;
+			int offset = 0x34;
+
+			// test as dvb-s transponder info
+			byte Polarity = check[offset + 1];
+			long Frequency =  (check[offset + 4] << 24) | (check[offset + 5] << 16)
+							| (check[offset + 6] <<  8) |  check[offset + 7];
+			int Symbol_Rate = (check[offset + 8] <<  8) |  check[offset + 9];
+			if ((Polarity & 0x6F) == 0) 
+				isDVBsVal++;
+			else 
+				isDVBsVal--;
+			if ((Symbol_Rate >  2000) && (Symbol_Rate < 30000))  
+				isDVBsVal++;
+			else 
+				isDVBsVal--;
+			if ((Symbol_Rate  > 10000) && (Symbol_Rate  < 13000))
+				isDVBsVal++;
+			else 
+				isDVBsVal--;
+
+			// test as dvb-t transponder info
+			byte Bandwidth = check[offset + 2];
+			Frequency = (check[offset + 4] << 24) | (check[offset + 5] << 16)
+					  | (check[offset + 6] <<  8) |  check[offset + 7];
+			byte LP_HP_Stream = check[offset + 10];
+			if ((Bandwidth >= 6) && (Bandwidth <= 8))
+				isDVBtVal++;
+			if (((Frequency  >= 174000) && (Frequency  <= 230000))
+			 ||	((Frequency  >= 470000) && (Frequency  <= 862000)))
+				isDVBtVal++;
+			if ((LP_HP_Stream & 0xFE) == 0)
+				isDVBtVal++;
+
+			// test as dvb-c transponder info
+			Frequency =   (check[offset + 0] << 24) | (check[offset + 1] << 16)
+						| (check[offset + 2] <<  8) |  check[offset + 3];
+			Symbol_Rate = (check[offset + 4] <<  8) |  check[offset + 5];
+			byte Modulation = check[offset + 10];
+			if ((Frequency  >= 47000) && (Frequency  <= 862000))
+				isDVBcVal++;
+			if ((Symbol_Rate >  2000) && (Symbol_Rate < 30000)) 
+				isDVBcVal++;
+			if (Modulation <= 4) 
+				isDVBcVal++;
+
+			if ((isDVBsVal >= isDVBcVal) && (isDVBsVal >= isDVBtVal)) 
+			{
+				// event_info_offset = 0x44; // default
+				//Common.setMessage("-> topfield header has DVB-s format");
+				return CommonParsing.TS_TYPE_TF5X00;
+			}
+			else if (isDVBtVal > isDVBcVal)
+			{
+				//event_info_offset = 0x44; // default
+				//Common.setMessage("-> topfield header has DVB-t format");
+				return CommonParsing.TS_TYPE_TF5X00;
+			}
+			else
+			{
+				/**
+				 * the transponder info structure of the TF5200 is shorter,
+				 * so the following data starts at 0x40
+				 */
+				//event_info_offset = 0x40;
+				//Common.setMessage("-> topfield header has DVB-c format");
+				return CommonParsing.TS_TYPE_TF5X00C;
+			}
+		}
 
 		else if (check[0] != 0x47 && check[188] != 0x47 && check[376] != 0x47 && check[564] == 0x47 && check[752] == 0x47 && check[940] == 0x47)
 			return CommonParsing.TS_TYPE_TF4000;

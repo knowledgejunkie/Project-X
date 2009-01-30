@@ -370,7 +370,8 @@ public class Keys extends Object {
 			Resource.getString("SpecialPanel.TS.HeaderMode1"), 
 			Resource.getString("SpecialPanel.TS.HeaderMode2"), 
 			Resource.getString("SpecialPanel.TS.HeaderMode3"),
-			Resource.getString("SpecialPanel.TS.HeaderMode4") 
+			Resource.getString("SpecialPanel.TS.HeaderMode4"), 
+			Resource.getString("SpecialPanel.TS.HeaderMode5")
 		};
 		this.ITEMS_TsHeaderMode = ITEMS_TsHeaderMode;
 
