@@ -604,6 +604,8 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 
 		if (ShowSubpictureWindow)
 			Common.getGuiInterface().hideSubpicture();
+
+		ColorAreas.active = false;                                     //S9
 	}
 
 
