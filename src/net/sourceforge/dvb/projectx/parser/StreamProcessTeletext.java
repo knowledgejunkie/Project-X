@@ -420,6 +420,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 
 				boolean missing_syncword = false;
 				boolean vps = false;
+				boolean wss = false;
 				boolean page_match = false;
 				boolean lastpage_match = false;
 
@@ -441,6 +442,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 				String provider = "";
 				String program_title = "";
 				String vps_str = "";
+				String wss_str = "";
 
 				readloop:
 				while ( count < size )
@@ -516,6 +518,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 					count += 46;
 
 					vps = false;
+					wss = false;
 					valid = false;
 					data_unit_id = 0xFF & packet[0];
 
@@ -529,6 +532,11 @@ public class StreamProcessTeletext extends StreamProcessBase {
 					case 0xC3: // VPS
 						valid = true; 
 						vps = true; 
+						break; 
+
+					case 0xC4: // WSS
+						valid = true; 
+						wss = true; 
 						break; 
 
 					case 0xFF: // hidden 
@@ -559,27 +567,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 
 					vbi = ((0x20 & packet[2]) != 0 ? 0 : 313) + (0x1F & packet[2]);
 
-					if (!vps)
-					{
-						tmp_int_value = (teletext.hamming_8_4(packet[4]))<<4 | teletext.hamming_8_4(packet[5]);
-
-						if (tmp_int_value < 0) // decode error
-						{
-							row = -1;
-							magazine = -1;
-						}
-
-						else
-						{
-						//	row = 0xFF & teletext.bytereverse((byte)((0xF & teletext.hamming_8_4(packet[4]))<<4 | (0xF & teletext.hamming_8_4(packet[5]))));
-
-							row = 0xFF & teletext.bytereverse((byte) tmp_int_value);
-							magazine = (7 & row) == 0 ? 8 : (7 & row);
-							row >>>= 3;
-						}
-					}
-
-					else
+					if (vps)
 					{
 						if ((0x3F & packet[2]) != 0x30)
 							continue readloop;
@@ -600,6 +588,56 @@ public class StreamProcessTeletext extends StreamProcessBase {
 						}
 
 						continue readloop;
+					}
+
+					else if (wss)
+					{
+						if ((0x3F & packet[2]) != 0x37)
+							continue readloop;
+
+						if (!Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg5)) //interactive checkbox
+							continue readloop;
+
+						/**
+						 * show wss status of VBI 23 in GUI
+						 */
+						String str = VBI.decodeWSS(packet, 2);
+
+						if (str != null && !str.equals(wss_str))
+						{
+							wss_str = str;
+
+							if (wss_str.length() == 0)
+								Common.setMessage("-> WSS Status - no change @ PTS " + Common.formatTime_1(source_pts / 90));
+
+							else
+							{
+								Common.setMessage("-> WSS Status - changed @ PTS " + Common.formatTime_1(source_pts / 90));
+								Common.setMessage(wss_str);
+							}
+						}
+
+						continue readloop;
+					}
+
+					else
+					{
+						tmp_int_value = (teletext.hamming_8_4(packet[4]))<<4 | teletext.hamming_8_4(packet[5]);
+
+						if (tmp_int_value < 0) // decode error
+						{
+							row = -1;
+							magazine = -1;
+						}
+
+						else
+						{
+						//	row = 0xFF & teletext.bytereverse((byte)((0xF & teletext.hamming_8_4(packet[4]))<<4 | (0xF & teletext.hamming_8_4(packet[5]))));
+
+							row = 0xFF & teletext.bytereverse((byte) tmp_int_value);
+							magazine = (7 & row) == 0 ? 8 : (7 & row);
+							row >>>= 3;
+						}
 					}
 
 

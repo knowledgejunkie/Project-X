@@ -219,7 +219,7 @@ public final class VBI extends Object {
 	/**
 	 * 
 	 */
-	private static String decodeWSS(byte[] packet, int offs)
+	public static String decodeWSS(byte[] packet, int offs)
 	{
 		if (!Common.getSettings().getBooleanProperty(Keys.KEY_MessagePanel_Msg5))
 			return null;
