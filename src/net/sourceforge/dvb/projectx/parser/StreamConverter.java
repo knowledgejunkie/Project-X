@@ -34,6 +34,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.PushbackInputStream;
 
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Common;
@@ -71,6 +72,7 @@ public class StreamConverter extends Object {
 	private boolean GeneratePMT = false;
 	private boolean PcrCounter = false;
 	private boolean CreateVdrIndex = false;
+	private boolean MuxPES = false;
 
 	private byte[] PackHeader = { 0, 0, 1, (byte)0xBA, 0x44, 0, 4, 0, 4, 1, 0, (byte)0xEA, 0x63, (byte)0xF8 };  // 8000kbps
 	private byte[] LeadingPackHeader = { 0, 0, 1, (byte)0xBA, 0x44, 0, 4, 0, 4, 1, 0, (byte)0xEA, 0x63, (byte)0xF8 };  // 8000kbps
@@ -114,6 +116,11 @@ public class StreamConverter extends Object {
 	private IDDBufferedOutputStream OutputStream;
 	private ByteArrayOutputStream Buffer;
 
+//
+	private ArrayList remuxList = new ArrayList();
+
+
+//
 	public StreamConverter()
 	{
 		PaddingStreamPositions = new ArrayList();
@@ -174,6 +181,15 @@ public class StreamConverter extends Object {
 			//prepare teletext insertion, at first file
 			if (action == CommonParsing.ACTION_TO_TS)
 				TS.buildTeletextStream(((XInputFile) collection.getInputFile(0)).toString());
+
+
+			//prepare muxing of secondary pes at toVDR
+			remuxList.clear();
+
+			MuxPES = Common.getSettings().getBooleanProperty("HiddenKey.VDRExport.MuxPES", false);
+
+			if (action == CommonParsing.ACTION_TO_VDR)
+				scanSecondaryStreams(collection);
 		}
 
 		try { 
@@ -450,7 +466,7 @@ public class StreamConverter extends Object {
 
 			int pes_extensionlength = CommonParsing.getPES_ExtensionLengthField(pes_packet, pes_offset);
 
-			CommonParsing.clearBit33ofPTS(pes_packet, pes_offset);
+			boolean containsPTS = CommonParsing.clearBit33ofPTS(pes_packet, pes_offset);
 			CommonParsing.clearBit33ofDTS(pes_packet, pes_offset);
 
 			switch (es_streamtype)
@@ -497,6 +513,10 @@ public class StreamConverter extends Object {
 					return;
 
 				CommonParsing.setPES_IdField(pes_packet, pes_offset, newID);
+
+				//pes remux
+				if (containsPTS)
+					remuxPES(job_processing, CommonParsing.getPTSfromBytes(pes_packet, pes_headerlength + pes_offset));
 
 				break;
 
@@ -974,9 +994,14 @@ public class StreamConverter extends Object {
 					return;
 
 				break;
-
-			case CommonParsing.LPCM_AUDIO:
+//
 			case CommonParsing.SUBPICTURE:
+				if (!ExportNonVideo || !Common.getSettings().getBooleanProperty("HiddenKey.TSExport.Subpicture", false))
+					return;
+
+				break;
+//
+			case CommonParsing.LPCM_AUDIO:
 			default:
 				return;
 			}
@@ -1029,9 +1054,10 @@ public class StreamConverter extends Object {
 				if (newID2 < 0xE0) //MPA
 					newID2 |= 0x100;
 
-				if (!qinfo)
+				if (!qinfo) // align syncwords
 				{
-					if (es_streamtype != CommonParsing.TELETEXT)
+			//		if (es_streamtype != CommonParsing.TELETEXT)
+					if (es_streamtype != CommonParsing.TELETEXT && es_streamtype != CommonParsing.SUBPICTURE)
 					{
 						if (!CommonParsing.alignSyncword(pes_packet, pes_offset, es_streamtype))
 							return;
@@ -1408,5 +1434,175 @@ public class StreamConverter extends Object {
 			Common.setExceptionMessage(e);
 		}
 	} 
+
+////
+	/**
+	 * scan secondary streams for timestamps
+	 */
+	private void scanSecondaryStreams(JobCollection collection)
+	{ 
+		if (!MuxPES)
+			return;
+
+		try {
+
+			XInputFile xif;
+
+			for (int i = collection.getPrimaryInputFileSegments(), j = collection.getInputFilesCount(); i < j; i++)
+			{
+				xif = (XInputFile) collection.getInputFile(i);
+
+				//use PS1 type only ATM (ttx+sub)
+				if (xif.getStreamInfo().getStreamType() != CommonParsing.PES_PS1_TYPE)
+					continue;
+
+				int packet_count = 0;
+				long[] time = { 0, 0 };
+				long pts_value = 0;
+				ArrayList indexList = new ArrayList();
+				byte[] pes_packet = new byte[0x10010];
+
+				int pes_payloadlength;
+				int pes_packetlength;
+				int pes_extensionlength;
+				int pes_headerlength = 9;
+				int pes_packetoffset = 6;
+				int returncode = 0;
+				int pesID = 0;
+
+				long base = 0;
+				long count = 0;
+				long size = xif.length();
+
+				PushbackInputStream in = new PushbackInputStream(xif.getInputStream(base), pes_packet.length);
+
+				Common.setMessage("-> scanning for remux: " + xif.getName());
+				Common.updateProgressBar(" scanning for remux: " + xif.getName(), count, size);
+
+				loop:
+				while (count < size)
+				{
+					Common.updateProgressBar(count, size);
+
+					while (Common.waitingMainProcess())
+					{}
+
+					in.read(pes_packet, 0, pes_packetoffset);
+
+					pesID = CommonParsing.getPES_IdField(pes_packet, 0);
+
+					if ((returncode = CommonParsing.validateStartcode(pes_packet, 0)) < 0)
+					{
+						returncode = returncode < 0 ? -returncode : 4;
+
+						in.read(pes_packet, pes_packetoffset, pes_packet.length - pes_packetoffset);
+
+						int k = returncode;
+
+						for (; k < pes_packet.length - 3; )
+						{
+							returncode = CommonParsing.validateStartcode(pes_packet, k);
+
+							if (returncode < 0)
+							{
+								k += -returncode;
+								continue;
+							}
+
+							else
+							{
+								in.unread(pes_packet, k, pes_packet.length - k);
+								count += k;
+								continue loop;
+							}
+						}
+
+						in.unread(pes_packet, k, pes_packet.length - k);
+						count += k;
+						continue loop;
+					}
+
+					if (pesID != CommonParsing.PRIVATE_STREAM_1_CODE)
+						continue loop;
+
+					pes_payloadlength = CommonParsing.getPES_LengthField(pes_packet, 0);
+
+					in.read(pes_packet, pes_packetoffset, pes_payloadlength);
+
+					pes_packetlength = pes_packetoffset + pes_payloadlength;
+					pes_extensionlength = CommonParsing.getPES_ExtensionLengthField(pes_packet, 0);
+
+					if (CommonParsing.clearBit33ofPTS(pes_packet, 0))
+						pts_value = CommonParsing.getPTSfromBytes(pes_packet, pes_headerlength);
+
+//Common.setMessage("A cnt " + count + " / ID " + pesID + " / payl " + pes_payloadlength + " / pckl " + pes_packetlength + " / extl " + pes_extensionlength + " / pts " + pts_value);
+
+					packet_count++;
+					indexList.add(new long[] { pts_value, count, pes_packetlength });
+
+					count += pes_packetlength;
+				}
+
+				in.close();
+
+	//			Common.setMessage("B " + packet_count + " / " + indexList.size());
+
+				remuxList.add(new Object[] { indexList , xif.toString(), new int[1] } );
+			}
+
+		} catch (Exception e) { 
+
+			Common.setExceptionMessage(e);
+		}
+	} 
+
+	/**
+	 * fill in secondary streams in pes
+	 */
+	private void remuxPES(JobProcessing job_processing, long video_pts)
+	{ 
+		if (!MuxPES)
+			return;
+
+		Object[] obj;
+		String fn;
+		ArrayList indexList;
+		byte[] pes_packet;
+		long[] pes_values;
+		int[] pes_index = new int[1];
+
+		for (int i = 0, j = remuxList.size(); i < j; i++)
+		{
+			obj = (Object[]) remuxList.get(i);
+			indexList = (ArrayList) obj[0];
+			fn = obj[1].toString();
+			pes_index = (int[]) obj[2];
+
+			try {
+				RandomAccessFile pes = new RandomAccessFile(fn, "r");
+
+				for (int k = indexList.size(); pes_index[0] < k; pes_index[0]++)
+				{
+					pes_values = (long[]) indexList.get(pes_index[0]);
+
+					if (video_pts < pes_values[0])
+						break;
+
+					pes_packet = new byte[(int) pes_values[2]];
+					pes.seek(pes_values[1]);
+					pes.read(pes_packet);
+
+					writePacket(job_processing, pes_packet);
+				}
+
+				pes.close();
+
+			} catch (Exception e) {
+
+				Common.setExceptionMessage(e);
+			}
+		}
+	}
+
 }
 

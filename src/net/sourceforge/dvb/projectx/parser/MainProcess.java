@@ -856,6 +856,15 @@ public class MainProcess extends Thread {
 			job_processing.setSplitLoopActive(false);
 		}
 
+		// remux secondary files to main-pes / test!
+		if (action == CommonParsing.ACTION_TO_VDR && collection.getSecondaryInputFileSegments() > 0 && Common.getSettings().getBooleanProperty("HiddenKey.VDRExport.MuxPES", false))
+		{
+			Common.setMessage("!> remux action cancelling overidden..");
+			inputfiles_size = collection.getPrimaryInputFileSegments();
+
+			job_processing.setSplitLoopActive(true);
+		}
+
 		/**
 		 * loop for split output segments
 		 */
@@ -933,7 +942,6 @@ public class MainProcess extends Thread {
 		{
 			Common.setMessage("-> direct file copy (from selection set)");
 			directCopy(collection, job_processing, xInputFile);
-		//	directCopy(collection, job_processing, xInputFile, i > 0 ? true : false);
 			break;
 		}
 

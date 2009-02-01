@@ -1156,8 +1156,8 @@ public class Teletext extends Object {
 			ttx1[row_pos[i] + 2] = (byte) vbi;
 
 		//insert padding
-		for (int i = rowList.size() + 1; i < 4; i++) 
-			System.arraycopy(TTX_PaddingRow, 0, ttx1, row_pos[i + 2], TTX_PaddingRow.length);
+	//	for (int i = rowList.size() + 1; i < 4; i++) 
+	//		System.arraycopy(TTX_PaddingRow, 0, ttx1, row_pos[i + 2], TTX_PaddingRow.length);
 
 		return ttx1;
 	}
@@ -1169,24 +1169,36 @@ public class Teletext extends Object {
 	{
 		int max_length = 40;
 		byte[] new_row = new byte[max_length];
-		int padd_space = doubleheight + ((new_row.length - row.length) / 2);
 		int row_length = row.length;
 
-		if (row_length > max_length - doubleheight)
+		if (row_length > max_length - doubleheight)  
 			row_length = max_length - doubleheight;
 
+		int leadg_space = doubleheight + ((new_row.length - row_length) / 2);
+		int trail_space = max_length - row_length - leadg_space;
+
 		Arrays.fill(new_row, (byte) 0x20); //set all spaces
-		System.arraycopy(row, 0, new_row, padd_space, row_length); //copy string
+
+		if (doubleheight == 1)
+			new_row[0] = 0x0D; // double height
 
 		//string length must not exceed 38,39 chars for boxing
-		if (padd_space > doubleheight && row_length < max_length)
+		while (leadg_space - doubleheight < 2)
 		{
-			if (doubleheight == 1)
-				new_row[padd_space - 2] = 0x0D; // double height
+			leadg_space++;
+			trail_space--;
 
-			new_row[padd_space - 1] = 0x0B; // start box
-			new_row[padd_space + row.length] = 0x0A; // end box
+			if (leadg_space + row_length > 40)
+				row_length--;
 		}
+
+		System.arraycopy(row, 0, new_row, leadg_space, row_length); //copy string
+
+		new_row[leadg_space - 2] = 0x0B; // start box
+		new_row[leadg_space - 1] = 0x0B; // start box rpt
+
+		for (int i = leadg_space + row_length, j = 0; i < max_length && j < 2; i++, j++)
+			new_row[leadg_space + row_length] = 0x0A; // end box
 
 		return new_row;
 	}
