@@ -36,6 +36,11 @@
  */
 
 /*
+		20090202a	------disable incorrect swap of Red & Blue from stream------
+		20090202a	dbgOldClr (0x20) does the RB swap for regression testing 
+		20090202a	dbgSolid (0x80) SET for solid background (transp now default)
+		20090202a	eliminate all hardcoded constants for column grnds & ranges
+		
 		20090122c	-----------------general bug fix and cleanup----------------
 		20090122a	assign 12 color names to quants (for debug log) dynamically
 		20090122b	compiled with Subpicture/SubpictureFrame updates from matt
@@ -123,9 +128,9 @@ public  class ColorAreas extends Object {                                       
 	public  static boolean dbgSub(int i)  { return i<=(0xF & (switches     ));} //input hex!!    //S9
 
 	private static boolean dbgSpare1()    { return 0!=(0x1 & (switches>>> 4));} //unassigned     //S9 20090122
-	private static boolean dbgSpare2()    { return 0!=(0x1 & (switches>>> 5));} //unassigned     //S9 20090109
+	private static boolean dbgOldClr()    { return 0!=(0x1 & (switches>>> 5));} //red/blu qDef   //S9 20090202
 	private static boolean dbgInShad()    { return 0!=(0x1 & (switches>>> 6));} //shdg iff outln //S9 20090122
-	private static boolean dbgTrnsp()     { return 0!=(0x1 & (switches>>> 7));} //transp+outline //S9 20090122
+	private static boolean dbgSolid()     { return 0!=(0x1 & (switches>>> 7));} //transp+outline //S9 20090122
 
 	private static boolean dbgnoCHG()     { return 0!=(0x1 & (switches>>> 8));} //for SupViewer  //S9
 	private static boolean dbgnofix()     { return 0!=(0x1 & (switches>>> 9));} //off->fixup OK  //S9
@@ -167,7 +172,8 @@ Common.setMessage("Multicolor "+((active)?"ACTIVE":"OFF")+" / switches "+X(8, sw
 		+((dbgX.length()>0)?" >>FROM GUI<<":""));                                                //S9 20090122
 if (active) Common.setMessage("Multicolor:"                                                      //S9 20090109
 		+" shw1Line="+dbgline()+" shw1Pic="+dbgpic()+" noRepairs="+dbgnofix()   //#, #, Booleans //S9
-		+" NoCOLCON="+dbgnoCHG()+" TrnspBgrd="+dbgTrnsp()+" Shading="+dbgInShad()                //S9 20090116
+		+" NoCOLCON="+dbgnoCHG()+" SolidBgrd="+dbgSolid()+" Shading="+dbgInShad()                //S9 20090202
+		+" OldClrs="+dbgOldClr()                                                                 //S9 20090202
 		);  
 	}                                                                                            //S9
 
@@ -251,7 +257,7 @@ if (active) Common.setMessage("Multicolor:"                                     
 		
 		/*----------------collect TCT indices into grads for each clustr #---------------*/      //S9i20090114
 		//-------------------also collect lum values (not used as yet)-------------------*/      //S9i20090114
-		int topWhiteNdx = -1;       //TCT_quants index of lite grnd (index of dark is always 0)  //S9i20090116
+		int topWhiteNdx = -1;        //TCT_quants index of lite grnd (index dark grnd always 0)  //S9i20090116
 		for (int i=15, q=0, t=0; i>=0; i--)       //down analysed cluts collecting for clusters  //S9i20090114
 		{                                                                                        //S9i20090114
 if (dbgSub(5)) System.out.println("init collect1"                                                //S9i20090114
@@ -554,16 +560,16 @@ if (dbgSub(3)) System.out.println("init grads /"                                
 		for(int i=0; i<Q1; i++) { qNames[i] = refNames[i]; }        //names for std quants       //S9q20090122
 	}
 	
-	private QLHI ARGBtoQLHI(int ARGB, int index, int flip)   //version for clstrs from TCT       //S9q20090116
+	private QLHI ARGBtoQLHI(int ARGB, int index, int qDef)   //version for clstrs from TCT       //S9q20090202
 	{                                                        //index included for later sort     //S9q20090114
-	                                                         //flip = 1 from TCT, 0 from stream  //S9q20090114
+	                                                         //qDef = 1 from TCT, 0 from stream  //S9q20090202
 
-		int A    = (flip==1)?0xFF : 0xFF & ARGB>>>24;               //TCT calls assumed opaque   //S9q20090116
-		int R = 0xFF & ARGB;                                                                     //S9q
+		int A    = (qDef==1)?0xFF : 0xFF & ARGB>>>24;               //TCT calls assumed opaque   //S9q20090202
+		int R = 0xFF & ARGB>>>16;                                                                //S9q20090202
 		int G = 0xFF & ARGB>>>8;                                                                 //S9q
-		int B = 0xFF & ARGB>>>16;          //pixels from YCbCr stream delivered with red in LSB  //S9q20090114
-		if (flip == 1)                     //cluts are imported as RGB so ARGB right way round   //S9q20090114
-			{ R = 0xFF & ARGB>>>16; B = 0xFF & ARGB; }                                           //S9q20090114
+		int B = 0xFF & ARGB;                                                                     //S9q20090202
+		if (qDef == 0 && dbgOldClr())                 //stream blue <-> red to match VLC 0.8.5   //S9q20090202
+			{ R = 0xFF & ARGB; B = 0xFF & ARGB>>>16; }                                           //S9q20090114
 
 		int max = (R>G)?R:G; max = (max>B)?max:B;                                                //S9q20090114
 		int min = (R<G)?R:G; min = (min<B)?min:B;                                                //S9q20090114
@@ -603,7 +609,7 @@ if (dbgSub(5)) System.out.println("quant search"+" / hue="+X(2,hue)+" / i="+d(2,
 				+" / ndx="+X(3,ndx)+" / dif="+X(6,dif)+" / low="+X(6,low) );                     //S9q20090116
 
 			} //end hue search      =======>> NOTE only here if no exact hit <<=======           //S9q20090116
-			if (flip == 1)                                          //TCT caller -> update table //S9q20090116
+			if (qDef == 1)                                          //TCT caller -> update table //S9q20090202
 			{                     //if hit within 1/12 of circle copy quant else issue new quant //S9q20090116
 				qh = (low < 0x14) ? QM_quants[ndx] : ++QM_q_maxQ;   //                           //S9q20090116
 				if (low != 0)                                       //not exact hit -> new hue   //S9q20090116
@@ -614,7 +620,7 @@ if (dbgSub(5)) System.out.println("quant search"+" / hue="+X(2,hue)+" / i="+d(2,
 			break;                                                                               //S9q20090116
 		} //end  out:while qh==0                                                                 //S9q20090116
 		int ih = 0;                                 //to name the nearest lattice point on debug //S9q20090122
-		if (flip == 1)                                             //TCT caller -> update qnames //S9q20090122
+		if (qDef == 1)                                             //TCT caller -> update qnames //S9q20090202
 		{                                 //six points gives the 'old fixed quants' from the hue //S9q20090122
 //			qNames[qh] = refNames[(ih=(qh<Q1)?qh:((hue+20)/40 + 5)% 6+Q1)];     //six points     //S9q20090122
 			qNames[qh] = refNames[(ih=(qh<Q1)?qh:((hue+10)/20 +11)%12+Q1)];     //twelve points  //S9q20090122
@@ -633,7 +639,7 @@ if (dbgSub(5) ) {String s = "qmgr  dump";String t = "   for hue";               
 		QLHI myQHLI = new QLHI(qh, lum, hue, index);         //hue in misc field only for debug  //S9q20090116
 
 if (dbgSub(4)) System.out.println("quant return"+d(3,index)+"/ARGB "+X(8,ARGB)
-		    +"/QLHI "+X(8,myQHLI.N)+"/flip "+d(1,flip));                                         //S9q20090116
+		    +"/QLHI "+X(8,myQHLI.N)+"/qDef "+d(1,qDef));                                         //S9q20090202
 
 		return myQHLI;                                                                           //S9q20090116
 	}                                                                                            //S9q20090116
@@ -788,6 +794,17 @@ if (dbgSub(2)) dumpAreas("areas1");                                             
 
 		int[] colclstr;                                //col state: null->transp/{wild->color}   //S9a
 		int[] colgrnd;                                 //grnd: (dark)transp / dark(opaque) /lite //S9a20090104
+		
+		//constants for column grnd (opposite end of grad from column quant)
+		/***************************************************************************************///S9i20090202
+		/*     ANY G-CONSTANTS MAY BE USED FOR RANGE CHECKS WHICH ASSUME CORRECT ORDERING      *///S9i20090202
+		/*                    (the values can be changed but not the sequence)                 *///S9i20090202
+		/***************************************************************************************///S9i20090202
+		final int GT = 0;                         //transparent   (col grnd can be trnsp; areas) //S9i20090202 =+!
+		final int GD = 1;                         //dark          (....are dark with trnsp grnd) //S9i20090202 =+!
+		final int GL = 2;                         //lite          (col with known non-dark grnd) //S9i20090202 =+!
+		final int GU = 3;                         //undecided     (not yet seen any grnd pixels) //S9i20090202 =+!
+		
 
 		bp12 = new int[w * h];                         //speed up - build bp12 on same pass      //S9a
 		int defPixel; int defBP12;                     //default pxl & result - used for repairs //S9a20090105
@@ -813,7 +830,7 @@ if (dbgSub(2)) dumpAreas("areas1");                                             
 			{                                                                                    //S9a
 			/*------establish column visual background (rev video keeps state "undecided")-----*///S9a
 			/*--------background also used as default for repairs to horizontal glitches-------*///S9a
-				if (aindx[t+1+textrows].yfxd() == 1)       //row(s) with just one grnd detected  //S9a20090106
+				if (aindx[t+1+textrows].yfxd() == 1)       //a row with just one grnd was found  //S9a20090106
 					defPixel = pixels[j+m];                //col ground from designated margin   //S9a20090103
 				else                                       //no margin found - use "best of 3"   //S9a20090106
 				{                                                                                //S9a20090106
@@ -832,9 +849,10 @@ Common.setMessage("background no consensus for pic "+d(5,picCount)+" at PTS: "  
 				}                                                                                //S9a20090106
 				myQLHI = quants[user_color_table.indexOf("" + defPixel)];     //QLHI for default //S9a
 				t5 = myQLHI.quant();                       //hue cluster # ("color") for default //S9a
-				//there are no transparent columns, only dark quant ones with transparent grnd   //S9a20090104
-				colclstr[j] = (t5<=QT) ? QD : t5;          //clstr for this col (trnsp->dark)    //S9a20090116 =!=
-				colgrnd[j] = (t5<=QT)?0:(t5==QD)?1:(t5==QL)?2: 3;  //grnd=3 means grnd undecided //S9a20090116 =!=
+				
+				//THERE ARE NO TRANSPARENT COLUMNS, only dark quant ones with transparent grnd   //S9a20090104
+				colclstr[j] = (t5<=QT) ? QD : t5;          //clstr for this col (trnsp as dark)  //S9a20090116 =!=
+				colgrnd[j] = (t5<=QT)?GT: (t5==QD)?GD: (t5==QL)?GL: GU;//GU means grnd undecided //S9a20090202 =!!
 				defBP12 = myQLHI.bp12();                   //save col default result for repairs //S9a
 				//col clstr can be dark or lite (either to be resolved by any definitive pixel)  //S9a
 				//col grnd can be color (to be resolved to dark or lite by any definitive pixel) //S9a20090109
@@ -856,16 +874,16 @@ if (dbgpic()==picCount || dbgSub(4))  System.out.println("background " +"/pic "+
 					bp12[j+i] = myQLHI.bp12();             //assigned 2bit e2e1pb for pixel      //S9a
 
 					//------------------try to resolve undecided col grnd-----------------       //S9a20090109
-					if (colgrnd[j] > 2)                    //only a grnd pixel can tell us       //S9a20090109
-						colgrnd[j] = (t2<=QT)?0: (t2==QD)?1: (t2==QL)?2: 3;  //3=still undecided //S9a20090116 =!=
+					if (colgrnd[j] == GU)                  //only a grnd pixel can tell us       //S9a20090109 =!!
+						colgrnd[j] = (t2<=QT)?GT: (t2==QD)?GD: (t2==QL)?GL: GU;                  //S9a20090202 =!!
 
 					//----------interpret lite pixels as white or grnd of column----------       //S9a
 					//pixel lite and column has dark grnd -> treat pixel as specifically white   //S9a20090116 =!=
-					if (t2==QL && colgrnd[j] < 2 ) { t2 = QN; }  //bp12 same either way          //S9a20090116 =!=
+					if (t2==QL && colgrnd[j] < GL) { t2 = QN; }  //bp12 same either way          //S9a20090202 =!!
 
 
 					//-------------correct pixels that mismatch column opacity------------       //S9a
-					if (colgrnd[j] != 0 && t2 == QT)       //opaque grnd & completely transp pxl //S9a20090116 =!=
+					if (colgrnd[j] != GT && t2 == QT)      //opaque grnd & completely transp pxl //S9a20090202 =!!
 					{                                      //...fix this ahead of singleton test //S9a
 if (dbgSub(4)) System.out.println("alpha err  "+"/pic "+d(5,picCount)                            //S9a20090105
 				+"/t "+d(2,t)+"/x "+d(3,j)+"/y "+d(3,(i-a)/w)+"/colgrnd "+d(1,colgrnd[j])        //S9a20090105
@@ -893,8 +911,8 @@ if (dbgSub(4)) System.out.println("alpha err  "+"/pic "+d(5,picCount)           
 					//------------correct any singleton pixels using line above-----------       //S9a
 					if (t2!=t3 && t3!=t4               //singleton >>quant<< NB not single pixel //S9a
 					 && i>=a+w                         //..&& line above avail && not grnd pixel //S9a
-					 && (colgrnd[j]>1 || t3!=QD)       //not (col grnd dark/transp & pixel dark) //S9a20090116 =!=
-					 && (colgrnd[j]>0 || t3!=QT) )     //not (col grnd transp only & pxl transp) //S9a20090116 =!=
+					 && (colgrnd[j]>GD && t3!=QD)      //not (col grnd dark/transp & pixel dark) //S9a20090202 =!!
+					 && (colgrnd[j]>GT && t3!=QT) )    //not (col grnd transp only & pxl transp) //S9a20090202 =!!
 					{                                      //....assume noise and repair it      //S9a
 						//-----------------------------------------------------------------------//S9a
 						//Following code is to repair transmission errors/noise appearing as a   //S9a
@@ -911,11 +929,11 @@ if (dbgSub(3)) System.out.println("singleton  "+"/pic "+d(5,picCount)           
 				+" /pixel "+X(8,pixels[j+i-w])+" <- "+X(8,pixels[j+i-2*w])                       //S9a
 				+"/fixit="+((dbgnofix()?"no":"yes")));                                           //S9a
 
-						if (!dbgnofix())                   //in case someone wants to keep noise //S9a
+						if (!dbgnofix())                     //in case user wants to keep noise  //S9a
 						{                                                                        //S9a
 							pixels[j+i-w] = pixels[j+i-2*w]; //copy from line above              //S9a
 							bp12[j+i-w]   = bp12[j+i-2*w];   //...and the result                 //S9a
-							t3 = t4;                       //rewrite the history of singleton    //S9a
+							t3 = t4;                         //rewrite the history of singleton  //S9a
 						}   //endif copy from row above                                          //S9a
 					}   //endif singleton clstr                                                  //S9a
 
@@ -926,29 +944,20 @@ if (dbgpic()==picCount)  System.out.println("dbgpic     "+"/pic "+d(5,picCount) 
 
 					//------------on new quant, delay any action for one pixel------------       //S9a
 					//first with new quant is potential noise..only vertical runs > 2 credible   //S9a
-					t4 = t3; t3 = t2;                      //update stack of recent history      //S9a
-					if (t3 != t4)                          //pixel quant differs from one above  //S9a
-						if (i < b-w)                       //not last line->no further action    //S9a
-							continue;                      //..note history already stacked      //S9a                                     //S9a
+					t4 = t3; t3 = t2;                        //update stack of recent history    //S9a
+					if (t3 != t4)                            //pixel quant diff from one above   //S9a
+						if (i < b-w)                         //not last line->no further action  //S9a
+							continue;                        //..note history already stacked    //S9a                                     //S9a
 
 					//------------if pixel now acceptable add it to the column------------       //S9a
-					if (colclstr[j] == t2)       continue; //col clstr already matches pixel     //S9a
-					if (colgrnd[j]==2 && t2==QL) continue; //col has lite grnd and pixel lite    //S9a20090116 =!=
-					if (colgrnd[j]<=1 && t2==QD) continue; //col grnd dark or transp & pxl dark  //S9a20090116 =!=
-					if (colgrnd[j]==0 && t2==QT) continue; //col grnd transp only & pixel transp //S9a20090116 =!=
+					if (colclstr[j] == t2)        continue;  //col clstr already matches pixel   //S9a
+					if (colgrnd[j]==GL && t2==QL) continue;  //col has lite grnd and pixel lite  //S9a20090202 =!!
+					if (colgrnd[j]<=GD && t2==QD) continue;  //col grnd dark/transp & pxl dark   //S9a20090202 =!!
+					if (colgrnd[j]==GT && t2==QT) continue;  //col grnd transp only & pxl transp //S9a20090202 =!!
 					
-					if ((colclstr[j]==2 || colclstr[j]==QL)//col only has grnd pixels so far...  //S9a20090116 =!=
-					                    && t2 >= QN)       //...and pixel has nongrnd color      //S9a20090116 =!=
-						{ colclstr[j] = t2; continue; }    //grnd column gets specific color     //S9a
-
-//	should no longer be an error now we can have red/dark and blue/dark columns                  //S9a20090110
-//					if (colclstr[j]== 2 && i==b-w && t2>=7)//dark col & last pxl with lite grnd  //S9a
-//					{                                      //...(std error on some UK channels)  //S9a
-//						pixels[j+i] = defPixel;            //replace with "best of 3" for col    //S9a
-//						bp12[j+i] = defBP12;               //...and fix up results               //S9a
-//						t3 = colclstr[j];                  //rewrite the stacked history         //S9a
-//						continue;                          //...don't bother to log it           //S9a
-//					}                                                                            //S9a
+					if ((colclstr[j]==QD || colclstr[j]==QL) //col only has grnd pixels and...   //S9a20090202 =!=
+					                    && t2 >= QN)         //...this pixel has nongrnd color   //S9a20090116 =!=
+						{ colclstr[j] = t2; continue; }      //column now gets specific color    //S9a
 					
 					//--------pixel doesn't fit hue cluster or grnd for this column-------       //S9a
 if (dbgSub(3)) System.out.println("alien pixel"+"/pic "+d(5,picCount)                            //S9a20090105
@@ -956,12 +965,12 @@ if (dbgSub(3)) System.out.println("alien pixel"+"/pic "+d(5,picCount)           
 				+"/colclstr "+d(2,colclstr[j])+"/t2,t3,t4 "+X(1,t2)+"  "+X(1,t3)+"* "+X(1,t4)    //S9a
 				+" /pixel "+X(8,pixels[j+i  ])+" <- "+X(8,defPixel)                              //S9a
 				+"/fixit="+((dbgnofix()?"no":"yes")));                                           //S9a
-					e += 1;                                //count alien pixels for main log     //S9a
-					if (!dbgnofix())                       //fixups not inhibited                //S9a
+					e += 1;                                  //count alien pixels for main log   //S9a
+					if (!dbgnofix())                         //fixups not inhibited              //S9a
 					{                                                                            //S9a
-						pixels[j+i] = defPixel;            //replace with "best of 3" for col    //S9a
-						bp12[j+i] = defBP12;               //...and fix up results               //S9a
-						t3 = colclstr[j];                  //rewrite the stacked history         //S9a
+						pixels[j+i] = defPixel;              //replace with "best of 3" for col  //S9a
+						bp12[j+i] = defBP12;                 //...and fix up results             //S9a
+						t3 = colclstr[j];                    //rewrite the stacked history       //S9a
 						continue;                                                                //S9a
 					}                                                                            //S9a
 				}   //end for each pixel in column                                               //S9a
@@ -978,7 +987,7 @@ Common.setMessage(e+" alien pixels "+(dbgnofix()?"not ":"")+"masked in pic "+d(5
 			{                                                                                    //S9a20090106
 				t1 = colgrnd[j]; t2 = colclstr[j]; t3 = g; t4 = q;          //for debug          //S9a20090109
 				
-				if (colgrnd[j]==3 && colclstr[j]==q) 
+				if (colgrnd[j]==GU && colclstr[j]==q)                                            //S9a20090202 ==!
 					colgrnd[j] = g;         //same clstr, grnd undecided -> fix undecided grnd   //S9a20090109
 				else 
 					g = colgrnd[j];                          //update running grnd for next col  //S9a20090109
@@ -997,7 +1006,7 @@ if (dbgpic()==picCount || dbgSub(4))  System.out.println("smear from left  "    
 			{                                                                                    //S9a20090106
 				t1 = colgrnd[j]; t2 = colclstr[j]; t3 = g; t4 = q;          //for debug          //S9a20090109
 				
-				if (colgrnd[j]==3 && colclstr[j]==q) 
+				if (colgrnd[j]==GU && colclstr[j]==q)                                            //S9a20090202 ==! 
 					colgrnd[j] = g;         //same clstr, grnd undecided -> fix undecided grnd   //S9a20090109
 				else 
 					g = colgrnd[j];                          //update running grnd for next col  //S9a20090109
@@ -1030,14 +1039,14 @@ if (dbgpic()==picCount || dbgSub(4))  System.out.println("smear from right "    
 					alist.add(new Area(t,((colgrnd[j]==g && j>0)? j-1 : j),(q = colclstr[j]),    //S9a20090122
 					//2nd param: same grnd->take prev col into this area (room for outline)      //S9a20090122
 					//4th param=grnd flags: 2**0->lite; 2**1->transp+outline; ok to set both     //S9a20090117
-					(  (((g = colgrnd[j])>=2)?1:0) | ((dbgTrnsp()|colgrnd[j]<=0)?2:0)  )   ));   //S9a20090117
+					( (((g = colgrnd[j])>=GL)?1:0) | ((dbgSolid()&&colgrnd[j]!=GT)?0:2) )   ));  //S9a20090202 =!!
 					
 			aindx[t+1].tlimit(alist.size());               //update alist index at end of row    //S9a
 		}   //end for each textrow                                                               //S9a
 
 if (dbgSub(2)) dumpAreas("areas2");                                                              //S9t20090122
 
-if (dbgTrnsp()) allOutline(bitmap);                 //if transparent requested do outlining      //S9a20090117
+if (!dbgSolid()) allOutline(bitmap);                //if transparent requested do outlining      //S9a20090117
 
 	}                                                                                            //S9a20090105
 	
@@ -1057,9 +1066,9 @@ if (dbgTrnsp()) allOutline(bitmap);                 //if transparent requested d
 			for (int p=bgnrow; p<nxtrow; p++)       //for each color area along row              //S9a20090117
 			{                                                                                    //S9a20090117
 				int bgrnd = areas[p].bgrnd();                                                    //S9a20090117
-				if (bgrnd < 2)  { continue; }                      //no outlining for this area  //S9a20090117
+				if ((bgrnd&2) == 0)  { continue; }                 //not transp so no outlining  //S9a20090202
 				int areaMaxX = (p+1<nxtrow)?areas[p+1].start(): bitmapW;      //x limit of area  //S9a20090117
-				areaOutline(areas[p].start(), areaMaxX, topY, btmY, bitmapW, bgrnd|1);             //S9a20090117
+				areaOutline(areas[p].start(), areaMaxX, topY, btmY, bitmapW, bgrnd|1);           //S9a20090117
 			}  //end areas in row                                                                //S9a20090117
 		}  //end rows in subpic                                                                  //S9a20090117
 	}                                                                                            //S9a20090105
@@ -1081,8 +1090,8 @@ if (dbgpic()==picCount||dbgSub(7)) System.out.println("outline2: x="+d(4,h)+" y=
 				+" bp12[j="+d(5,j)+"] "+X(1,e)+"->"+X(1,bp12[j])+((e!=bp12[j])?"*":" "));        //S9b20090122
 				}                                                                                //S9b20090122
 			
-		//pass two - change all 'b' within one pixel of an 'e2' to be 'p' (fix outside of edge)  //S9b20090117
-		//         - and if grnd lite also change those 'e2' to be 'p' (also fix inside of edge) //S9b20090117
+		//pass two - change all 'b' within one pixel of an 'e2' to 'p' (to fix outside of edge)  //S9b20090117
+		//         - and if grnd lite also change those 'e2' to 'e1'  (also fix inside of edge)  //S9b20090117
 		for (int h=xL+1, i=xR-1; h<i; h++)                 //ignore 1 pixel at left & right edge //S9b20090122
 			for (int j=(yT+1)*bW+h, k=(yB-1)*bW+h; j<k; j+=bW)    //ignore 1 pxl at top & bottom //S9b20090122
 				if ((e = bp12[j]) == 3)                           //[j] is a text pixel (e2)     //S9b20090117
@@ -1267,12 +1276,12 @@ if (dbgSub(4)) dumpquants("QHLI by UCTidx ",user_color_table);                  
 		b.write(0); b.write(0);                                 //link to be fixed               //S9=
 
 		b.write(3);                                 //command - static colors                    //S9=
-		b.write((byte)((dbgTrnsp())?0xDD:0xDC));                //force color index e2e1         //S9=20090117
-		b.write((byte)((dbgTrnsp())?0x11:0xB1));                //force color index p b          //S9=20090117
+		b.write((byte)((dbgSolid())?0xDC:0xDD));                //force color index e2e1         //S9=20090202
+		b.write((byte)((dbgSolid())?0xB1:0x11));                //force color index p b          //S9=20090202
 
 		b.write(4);                                 //command - static alpha                     //S9=
-		b.write((byte)((dbgTrnsp())?0xFF:0xFF));                //force alpha index e2e1         //S9=
-		b.write((byte)((dbgTrnsp())?0xF0:0xFF));                //force alpha index p b          //S9=
+		b.write((byte)((dbgSolid())?0xFF:0xFF));                //force alpha index e2e1         //S9=20090202
+		b.write((byte)((dbgSolid())?0xFF:0xF0));                //force alpha index p b          //S9=20090202
 
 		b.write(5);                                 //command - screen position                  //S9=
 		int minX = bitmap.getX(); int maxX = bitmap.getMaxX() - 1;                               //S9=
@@ -1346,14 +1355,15 @@ if (dbgSub(2)) System.out.println("LN_CTLI  "                                   
 				
 				if ((bgflags&2)==2)    //trnsp bkgrd plus text outline of bg color (on 'p' pxls) //S9=20090117
 				{                      //copy 'b' index to 'p' in grad (bp12[] already updated)  //S9=20090117
-					color_e2e1bp = color_e2e1bp & 0xFF0F | color_e2e1bp<<4  & 0x00F0;            //S9=20090117
-					alpha_e2e1bp = 0xFFF0;           //trnsp the non-outline bkgrd (on 'b' pxls) //S9=20090117
 					if ((bgflags&1)==1)              //lite grnd: use 'p'  color for 'e1' pixels //S9=20090122
 						color_e2e1bp = color_e2e1bp & 0xF0FF | color_e2e1bp<<4  & 0x0F00;        //S9=20090122
 					else                             //dark grnd: use 'e2' color for 'e1' pixels //S9=20090122                                            //S9=20090122
 					if (!dbgInShad())                //...retain the shading for evaluation      //S9=20090122
 						color_e2e1bp = color_e2e1bp & 0xF0FF | color_e2e1bp>>>4 & 0x0F00;        //S9=20090122
-				}				
+					//finished using 'p' index so replace it with 'b'index as promised           //S9=20090202
+					color_e2e1bp = color_e2e1bp & 0xFF0F | color_e2e1bp<<4  & 0x00F0;            //S9=20090202
+					alpha_e2e1bp = 0xFFF0;           //trnsp the non-outline bkgrd (on 'b' pxls) //S9=20090202
+				}                      //copy 'b' index to 'p' in grad (bp12[] already updated)  //S9=20090117
 //				color_e2e1bp = color_e2e1bp & 0xF000 | 0x0EF1;        //UK diagnostic outline    //S9=20090116
 //				color_e2e1bp = 0xDEF1;                                //test - all areas as red  //S9=20090116
 				
