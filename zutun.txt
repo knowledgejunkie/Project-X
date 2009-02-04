@@ -397,7 +397,7 @@
 --some fixes in teletext decoding 
 --save confirmation -save cuts/save chapters
 --ttx - sub insertion - vers. 0.1
-!-sup multicolor of dvb-subtitles (w-i-p)
+--sup multicolor of dvb-subtitles 
 
 
 

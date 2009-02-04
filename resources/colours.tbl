@@ -1,12 +1,70 @@
-//project X optional file
+//project X optional file, read-only
 //user colour table definition for DVB subpictures, creating a .sup file, as a replacement of the internal remapping
 
 //required entries of a table:
 //table=list name
 //model=final colour link depth of this table in bits (2, 4, 8) (means max. 4, 16, 256 paletized colours, best value depends on broadcasters std. table)
+//model + 1 activates multicolor sup mode, such sup files may not be compatible to some old DVD players or software
 //0..x=ARGB (alpha,red,green,blue as 32bit uimsbf, 8bit each)  (undefined colour links are fully transparent)
 
 //you can add as many tables you wish
+
+table=UkFreeview(mc)
+model=5
+0=000E0EFD
+1=00111111
+2=008E8E0F
+3=00CCCC0E
+4=00FDFD0E
+5=000F8E0F
+6=000ECC0E
+7=000EFD0E
+8=000F8E8E
+9=000ECCCC
+10=000EFDFD
+11=008E8E8E
+12=00CCCCCC
+13=00FFFFFF
+14=00FF8C8C
+15=00FF1010
+
+table=ZDFvision(mc)
+model=5
+0=00000081
+1=00000000
+2=00DC0000
+3=0000DC00
+4=00DCDC00
+5=007F7FDC
+6=00DC7FDC
+7=0000DCDC
+8=00DCDCDC
+9=007F7F7F
+10=007F0000
+11=00007F00
+12=0000007F
+13=007F3F7F
+14=007F7F00
+15=00007F7F
+
+table=VLC-DE(mc)
+model=5	         
+0=00000081   //    blue   with hue=A0 and lum=40
+1=00000000   //    dark   with hue=A0 and lum=00
+2=00DC0000   //     red   with hue=00 and lum=6E
+3=0093E682   //   green*  with hue=50 and lum=B4
+4=00EBEB7B   //  yellow*  with hue=28 and lum=B3
+5=008C8CEB   //    blue*  with hue=A0 and lum=BB
+6=00EB8FEB   // magenta*  with hue=C7 and lum=BD
+7=0063EBEB   //    cyan*  with hue=78 and lum=A7
+8=00EBEBEB   //   white*  with hue=A0 and lum=EB
+9=007F0000   //     red   with hue=00 and lum=3F
+10=00007F00  //   green   with hue=50 and lum=3F
+11=007F7F00  //  yellow   with hue=28 and lum=3F
+12=0000007F  //    blue   with hue=A0 and lum=3F
+13=007F3F7F  // magenta   with hue=C8 and lum=5F
+14=00007F7F  //    cyan   with hue=78 and lum=3F
+15=007F7F7F  //   white   with hue=A0 and lum=7F
 
 table=SVT
 model=4

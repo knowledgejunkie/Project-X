@@ -1,5 +1,5 @@
 /*
- * @(#)SUBPICTURE.java - creates SUP file to use as DVD subtitles
+ * @(#)ColorAreas.java - multiple colors subtitles
  *
  * Copyright (c) 2008, 2009 by Duncan Fenton (Shannock9), All Rights Reserved.
  *
@@ -36,10 +36,12 @@
  */
 
 /*
-		20090202a	------disable incorrect swap of Red & Blue from stream------
+		20090202b	------disable incorrect swap of Red & Blue from stream------
 		20090202a	dbgOldClr (0x20) does the RB swap for regression testing 
 		20090202a	dbgSolid (0x80) SET for solid background (transp now default)
 		20090202a	eliminate all hardcoded constants for column grnds & ranges
+		20090202b	allow comments (//) as line terminator in colours.tbl 
+		20090202b	add VLC-DE(mc) from analysis of screen scrape VLC playing ZDF 
 		
 		20090122c	-----------------general bug fix and cleanup----------------
 		20090122a	assign 12 color names to quants (for debug log) dynamically
@@ -95,7 +97,7 @@
 		
 		20090106	---attempt to handle ZDF samples with transp grnd to text---
 		20090106	Scan for textblks <= ZDF doesn't follow geometrical rh cells
-		20060106	1st try for 'smearing' of transp grnd columns to reduce # areas
+		20090106	1st try for 'smearing' of transp grnd columns to reduce # areas
 
 
 */
@@ -202,7 +204,10 @@ if (active) Common.setMessage("Multicolor:"                                     
 	{                                                         //rest from 1st call to analyse    //S9i20090114
 		for (int i = 0; i < 16; i++)                                                             //dm 20090113
 		  if (table.containsKey("" + i))                                                         //dm 20090113
-			clut_pgc[i] = new Integer(Integer.parseInt(table.get("" + i).toString().trim(), 16));//dm 20090113
+		  {                                                                                      //S9 20090203
+			String s = table.get("" + i).toString();  int j = s.indexOf('/');                    //S9 20090203
+			clut_pgc[i] = new Integer(Integer.parseInt(s.substring(1,j).trim(), 16));            //S9 20090203
+		  }                                                                                      //S9 20090203
 		  else                                                                                   //S9i20090114
 			Common.setMessage("Multicolor color table missing entry # "+d(2, i));                //S9i20090114
 		  tables_rdy = 0;                                     //rest of init in dynamic context  //S9i20090114		  
