@@ -1569,7 +1569,7 @@ public class StreamConverter extends Object {
 		ArrayList indexList;
 		byte[] pes_packet;
 		long[] pes_values;
-		int[] pes_index = new int[1];
+		int[] pes_index;
 
 		for (int i = 0, j = remuxList.size(); i < j; i++)
 		{
@@ -1587,6 +1587,9 @@ public class StreamConverter extends Object {
 
 					if (video_pts < pes_values[0])
 						break;
+
+					if (video_pts > pes_values[0] + 43200)
+						continue;
 
 					pes_packet = new byte[(int) pes_values[2]];
 					pes.seek(pes_values[1]);

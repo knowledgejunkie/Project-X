@@ -399,6 +399,9 @@
 --ttx - sub insertion - vers. 0.1
 --sup multicolor of dvb-subtitles 
 
+0.90.4.00b29:
+--ttx - sub insertion - vers. 0.2
+
 
 
 !-pid in dateinamen - problem split - via FILE-ID

@@ -605,6 +605,12 @@ public class TS {
 		{
 			if (video_pts < ttx_pts_index[ttx_index])
 				break;
+
+			//pts_delta, ttx_pts shall match video_pts at 40ms (3600ticks) boundary
+			video_pts -= ((video_pts - ttx_pts_index[ttx_index]) / 3600L) * 3600L;
+
+			CommonParsing.setPES_PTSField(ttx_stream, 4 + ttx_index * 376, video_pts);
+			CommonParsing.setPES_PTSField(ttx_stream, 4 + 188 + ttx_index * 376, video_pts);
 			
 			bo.write(ttx_stream, ttx_index * 376, 376);
 		}
@@ -641,7 +647,9 @@ public class TS {
 			ArrayList indexList = new ArrayList();
 			long delay = 90L * Common.getSettings().getIntProperty("TTXInsertion.Delay", 0);
 
-			Common.setMessage("-> build teletext stream from file: '" + filename + "' / delay: = " + (delay / 90) + " ms" );
+			Common.setMessage("-> build teletext stream from file: '" + filename + "' / delay = " + (delay / 90) + " ms" );
+
+			Common.getTeletextClass().setMappingTable();
 
 			while ((line = br.readLine()) != null)
 			{

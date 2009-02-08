@@ -35,6 +35,14 @@ import net.sourceforge.dvb.projectx.common.Keys;
 
 public class Teletext extends Object {
 
+	//DM30072004 081.7 int07 add
+	private Hashtable page_modifications = new Hashtable();
+	private boolean use = false;
+	private int display_row = 0;
+	private int display_column = 0;
+	private short[] active_set;
+	private short[] active_national_set;
+
 	public Teletext()
 	{}
 
@@ -195,6 +203,11 @@ public class Teletext extends Object {
 		return n;
 	}
 
+	public byte bytereverse(int n)
+	{
+		return bytereverse((byte) n);
+	}
+
 	/**************
 	 * set parity *
 	 **************/
@@ -314,6 +327,13 @@ public class Teletext extends Object {
 		}
 	}
 
+	/**
+	 * hamming encode 8/4
+	 */
+	private byte[] hamming_8_4_values = {
+		(byte) 0xA8, 0x0B, 0x26, (byte) 0x85, (byte) 0x92, 0x31, 0x1C, (byte) 0xBF, 0x40,
+		(byte) 0xE3, (byte) 0xCE, 0x6D, 0x7A, (byte) 0xD9, (byte) 0xF4, 0x57
+	};
 
 	/**
 	 * make suppic from teletext *
@@ -853,14 +873,6 @@ public class Teletext extends Object {
 	}
 
 	//DM30072004 081.7 int07 add
-	private Hashtable page_modifications = new Hashtable();
-	private boolean use = false;
-	private int display_row = 0, display_column = 0;
-	private short active_set[];
-	private short active_national_set[];
-
-
-	//DM30072004 081.7 int07 add
 	public void clearEnhancements()
 	{
 		page_modifications.clear();
@@ -1139,10 +1151,20 @@ public class Teletext extends Object {
 		//replace row 0 with header page 150
 		System.arraycopy(TTX_Heading150Row, 0, ttx1, row_pos[0], TTX_Heading150Row.length);
 
+		//character_set mapping
+		int control_bits = ((Integer) mapping_table.get("subset")).intValue()<<1;
+		//magazine serial
+		control_bits |= 1;
+
+		ttx1[row_pos[0] + 13] = hamming_8_4_values[(0xFF & bytereverse(control_bits))>>4];
+
 		//insert 1 string per row
 		for (int i = 0, j = rowList.size(); i < j; i++) 
 		{
-			row = centerString(rowList.get(i).toString().getBytes(), doubleheight);
+			row = setCharacterMapping(rowList.get(i).toString());
+			row = centerString(row, doubleheight);
+
+			//row = centerString(rowList.get(i).toString().getBytes(), doubleheight);
 
 			for (int k = 0; k < row.length; k++) 
 				row[k] = bytereverse(parity(row[k])); //make them TTX compatible
@@ -1160,6 +1182,29 @@ public class Teletext extends Object {
 	//		System.arraycopy(TTX_PaddingRow, 0, ttx1, row_pos[i + 2], TTX_PaddingRow.length);
 
 		return ttx1;
+	}
+
+	/**
+	 * 
+	 */
+	private byte[] setCharacterMapping(String str)
+	{
+		char[] ch = str.toCharArray();
+		byte[] row = new byte[ch.length];
+		String tmp;
+
+		for (int i = 0, j = ch.length; i < j; i++)
+		{
+			tmp = String.valueOf((short) ch[i]);
+
+			if (mapping_table.containsKey(tmp))
+				row[i] = ((Integer) mapping_table.get(tmp)).byteValue();
+
+			else
+				row[i] = (byte) ch[i];
+		}
+
+		return row;
 	}
 
 	/**
@@ -1201,5 +1246,36 @@ public class Teletext extends Object {
 			new_row[leadg_space + row_length] = 0x0A; // end box
 
 		return new_row;
+	}
+
+	//
+	private Hashtable mapping_table = new Hashtable();
+
+	/**
+	 * 
+	 */
+	public void setMappingTable()
+	{
+		mapping_table.clear();
+
+		//mapping requires x/28 or M/29 rows - cant be handled automatically
+		int mapping = Common.getSettings().getIntProperty(Keys.KEY_TtxLanguagePair) - 1;
+		mapping = mapping < 0 ? 0 : mapping;
+
+		int subset = mapping == 0 ? 4 : 0; //DE
+
+		mapping_table.put("mapping", new Integer(mapping));
+		mapping_table.put("subset", new Integer(subset));
+
+		active_set = CharSet.getActive_G0_Set(mapping, subset, 0);
+		active_national_set = CharSet.getActiveNationalSubset(mapping, subset, 0);
+
+		for (int i = 0x20, j = active_set.length - 1; i < j; i++) //0x20 to 0x7E (0x7F is full sign)
+			mapping_table.put(String.valueOf(active_set[i]), new Integer(i));
+
+		int[] map = { 0x23, 0x24, 0x40, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F, 0x60, 0x7B, 0x7C, 0x7D, 0x7E };
+
+		for (int i = 0, j = active_national_set.length; subset >= 0 && i < j; i++)
+			mapping_table.put(String.valueOf(active_national_set[i]), new Integer(map[i]));
 	}
 }
