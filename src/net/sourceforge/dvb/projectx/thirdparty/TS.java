@@ -639,13 +639,13 @@ public class TS {
 			String line = "", tmp = "";
 			ArrayList rowList = new ArrayList();
 			int pos1 = 0, pos2 = 0;
-			long[] time = { 0, 0 };
+			long[] time = { 0, 0, 0 };
 			byte[] pts_value = new byte[5];
 			byte[] pts_value1 = new byte[8];
 			StringTokenizer st;
-			int packet_count = 0;
 			ArrayList indexList = new ArrayList();
 			long delay = 90L * Common.getSettings().getIntProperty("TTXInsertion.Delay", 0);
+			long[] framenumber = { 0, 0, 0 };
 
 			Common.setMessage("-> build teletext stream from file: '" + filename + "' / delay = " + (delay / 90) + " ms" );
 
@@ -656,8 +656,11 @@ public class TS {
 				//if (!line.startsWith("{")) //problems with file signature  reading utf files - omits a line
 				//	continue;
 
-				time[0] = delay + 90L * (1000/25) * Long.parseLong(line.substring(pos1 = (line.indexOf("{") + 1), pos2 = line.indexOf("}")));
-				time[1] = delay + 90L * (1000/25) * Long.parseLong(line.substring(line.indexOf("{", ++pos1) + 1, pos2 = line.indexOf("}", ++pos2)));
+				framenumber[0] = Long.parseLong(line.substring(pos1 = (line.indexOf("{") + 1), pos2 = line.indexOf("}")));
+				framenumber[1] = Long.parseLong(line.substring(line.indexOf("{", ++pos1) + 1, pos2 = line.indexOf("}", ++pos2)));
+
+				time[0] = delay + 90L * (1000/25) * framenumber[0];
+				time[1] = delay + 90L * (1000/25) * framenumber[1];
 
 				st = new StringTokenizer(line.substring(pos2 + 1), "|");
 
@@ -666,14 +669,30 @@ public class TS {
 				while (st.hasMoreTokens())
 					rowList.add(st.nextToken());
 
-				for (int i = 0; i < 2; i++) // every page consists of 376 (2x188) byte
+				// every page consists of 376 (2x188) byte
+				for (int i = 0; i < 2; i++, framenumber[2]++)
 				{
+/**
+					// insert padding packets for every frame
+					for (; framenumber[2] < framenumber[i]; framenumber[2]++)
+					{
+						Arrays.fill(pts_value, (byte) 0); // clear old value
+
+						time[2] = delay + 90L * (1000/25) * framenumber[2];
+						CommonParsing.setPES_PTSField(pts_value, -9, time[2]);
+
+						bo.write(Common.getTeletextClass().getTTXPadding_TSPacket(count3, pts_value));
+
+						indexList.add(new Long(time[2]));
+
+						count3 += 2;
+					}
+**/
 					Arrays.fill(pts_value, (byte) 0); // clear old value
 					CommonParsing.setPES_PTSField(pts_value, -9, time[i]);
 
 					bo.write(Common.getTeletextClass().getTTX_TSPacket(rowList, count3, pts_value));
 
-					packet_count++;
 					indexList.add(new Long(time[i]));
 
 					count3 += 2;

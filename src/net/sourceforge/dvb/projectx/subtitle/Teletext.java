@@ -1128,6 +1128,34 @@ public class Teletext extends Object {
 	/**
 	 * 
 	 */
+	public byte[] getTTXPadding_TSPacket(int ts_count, byte[] pts_value)
+	{
+		byte[] ttx1 = new byte[TTX_TS_Packet.length * 2];
+
+		//default page = 100, use as is
+		System.arraycopy(TTX_TS_Packet, 0, ttx1, 0, TTX_TS_Packet.length); 
+		System.arraycopy(TTX_TS_Packet, 0, ttx1, TTX_TS_Packet.length, TTX_TS_Packet.length); 
+
+		//ts packet count
+		ttx1[3]    = (byte) (0x10 | 0xF & ts_count);
+		ttx1[0xBF] = (byte) (0x10 | 0xF & (ts_count + 1));
+
+		//pts value
+		System.arraycopy(pts_value, 0, ttx1, 13, 5);
+		System.arraycopy(pts_value, 0, ttx1, 0xC9, 5);
+
+		int[] row_pos = { 0x32, 0x60, 0x8E, 0xEE, 0x11C, 0x14A }; //pos start for 6 rows
+
+		//insert padding
+		for (int i = 1; i < 6; i++) 
+			System.arraycopy(TTX_PaddingRow, 0, ttx1, row_pos[i], TTX_PaddingRow.length);
+
+		return ttx1;
+	}
+
+	/**
+	 * 
+	 */
 	public byte[] getTTX_TSPacket(ArrayList rowList, int ts_count, byte[] pts_value)
 	{
 		byte[] ttx1 = new byte[TTX_TS_Packet.length * 2];

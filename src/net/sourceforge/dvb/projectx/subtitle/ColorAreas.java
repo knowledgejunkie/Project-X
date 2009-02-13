@@ -203,14 +203,20 @@ if (active) Common.setMessage("Multicolor:"                                     
 	private static void setClut(Hashtable table)              //basic static init from setIRD    //dm 20090113
 	{                                                         //rest from 1st call to analyse    //S9i20090114
 		for (int i = 0; i < 16; i++)                                                             //dm 20090113
-		  if (table.containsKey("" + i))                                                         //dm 20090113
-		  {                                                                                      //S9 20090203
-			String s = table.get("" + i).toString();  int j = s.indexOf('/');                    //S9 20090203
-			clut_pgc[i] = new Integer(Integer.parseInt(s.substring(1,j).trim(), 16));            //S9 20090203
-		  }                                                                                      //S9 20090203
-		  else                                                                                   //S9i20090114
-			Common.setMessage("Multicolor color table missing entry # "+d(2, i));                //S9i20090114
-		  tables_rdy = 0;                                     //rest of init in dynamic context  //S9i20090114		  
+			if (table.containsKey("" + i))                                                         //dm 20090113
+			{                                                                                      //S9 20090203
+				String s = table.get("" + i).toString();                                 //S9 20090203
+				int j = s.indexOf('/');                                                  //S9 20090203
+
+				if (j < 0)
+					clut_pgc[i] = new Integer(Integer.parseInt(s.trim(), 16));            //S9 20090203
+				else
+					clut_pgc[i] = new Integer(Integer.parseInt(s.substring(0, j).trim(), 16));            //S9 20090203
+			}                                                                                      //S9 20090203
+			else                                                                                   //S9i20090114
+				Common.setMessage("Multicolor color table missing entry # "+d(2, i));                //S9i20090114
+
+			tables_rdy = 0;                                     //rest of init in dynamic context  //S9i20090114		  
 	}                                                                                            //dm 20090113
 
 			//Here we analyse the TCT to find the clusters in color space ('quants').            //S9i20090116

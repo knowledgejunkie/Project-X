@@ -29,25 +29,6 @@ model=5
 15=00FF1010
 
 table=ZDFvision(mc)
-model=5
-0=00000081
-1=00000000
-2=00DC0000
-3=0000DC00
-4=00DCDC00
-5=007F7FDC
-6=00DC7FDC
-7=0000DCDC
-8=00DCDCDC
-9=007F7F7F
-10=007F0000
-11=00007F00
-12=0000007F
-13=007F3F7F
-14=007F7F00
-15=00007F7F
-
-table=VLC-DE(mc)
 model=5	         
 0=00000081   //    blue   with hue=A0 and lum=40
 1=00000000   //    dark   with hue=A0 and lum=00
@@ -62,9 +43,12 @@ model=5
 10=00007F00  //   green   with hue=50 and lum=3F
 11=007F7F00  //  yellow   with hue=28 and lum=3F
 12=0000007F  //    blue   with hue=A0 and lum=3F
-13=007F3F7F  // magenta   with hue=C8 and lum=5F
+13=00CFCFCF  //   white   
 14=00007F7F  //    cyan   with hue=78 and lum=3F
-15=007F7F7F  //   white   with hue=A0 and lum=7F
+15=007F3F7F  // magenta   with hue=C8 and lum=5F
+//13=007F3F7F  // magenta   with hue=C8 and lum=5F
+//14=00007F7F  //    cyan   with hue=78 and lum=3F
+//15=007F7F7F  //   white   with hue=A0 and lum=7F
 
 table=SVT
 model=4
