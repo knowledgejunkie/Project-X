@@ -82,8 +82,6 @@ import java.util.TimeZone;
 import java.net.URL;
 
 import net.sourceforge.dvb.projectx.audio.AudioFormat;
-import net.sourceforge.dvb.projectx.audio.MpaConverter;
-import net.sourceforge.dvb.projectx.audio.MpaDecoder;
 
 import net.sourceforge.dvb.projectx.subtitle.BMP;
 import net.sourceforge.dvb.projectx.subtitle.Bitmap;
@@ -129,9 +127,6 @@ import net.sourceforge.dvb.projectx.xinput.StreamInfo;
  * main thread
  */
 public class MainProcess extends Thread {
-
-	private MpaConverter MPAConverter;
-	private MpaDecoder MPADecoder;
 
 	private int ERRORCODE = 0;
 	private int MainBufferSize = 8192000;
