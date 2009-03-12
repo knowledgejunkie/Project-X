@@ -401,13 +401,17 @@
 
 0.90.4.00b29:
 --ttx - sub insertion - vers. 0.2
+--MPAD überarbeiten, decode: arrays.fill statt new init ca. 20% schneller
+--dragndrop - eyetv update, thx2cookie
+
 
 
 
 !-pid in dateinamen - problem split - via FILE-ID
 !-dyn PMT ts-pid-wechseln folgen
 !-AAC audio (roh) ohne funktion
-!-genauere scanzuordnung - angefangen, ts192
+!-genauere scanzuordnung - angefangen, ts192, topfields
+!!MPAD überarbeiten, nicht mehr statisch
 
 !!radix verschobene pakete
 !!parserliste/demuxlist vereinen, alle fileobjekte in einem pool
@@ -428,7 +432,6 @@
 !!id3tag infos anzeigen
 !!hav sektoren prüfen, nur melden
 !!profile hd,mpg reseted,vob, etc ermöglichen?
-!!MPAD überarbeiten, nicht mehr statisch; decode: arrays.fill statt new init ca. 20% schneller
 !!info .00 sek, :00 frame, ;00 dropframes (semikoloon)
 !-h264 ? zzt nur info
 !!finepass wrapper,humax wrapper,vcd-svcd-image wrapper etc evtl. übergeordnet?

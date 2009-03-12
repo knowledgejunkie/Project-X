@@ -1,7 +1,7 @@
 /*
  * @(#)MainFrame.java - holds main gui
  *
- * Copyright (c) 2001-2008 by dvb.matt, All rights reserved.
+ * Copyright (c) 2001-2009 by dvb.matt, All rights reserved.
  *
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -162,6 +162,8 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.ClipboardOwner;
 
+import java.io.FilenameFilter;
+//import org.apache.oro.io.RegexFilenameFilter;
 
 /**
  *
@@ -242,6 +244,8 @@ public class MainFrame extends JPanel {
 
 					Object obj = df.length == 0 ? new Object() : tr.getTransferData(df[0]);
 
+					String eyetvCollectionName = null;
+		
 					if (obj instanceof java.util.List)
 					{
 						list = (java.util.List) obj;
@@ -269,8 +273,35 @@ public class MainFrame extends JPanel {
 							//File f = new File(URLDecoder.decode(url.getFile()));
 							File f = new File(X_URLDecoder.decode(url.getFile(), "UTF-8"));
 
-							if (f.exists())
+							if (f.isDirectory() && f.getName().endsWith(".eyetv"))
+							{
+								// handle EyeTV recording directory
+								// output filename will be the directory name
+								// filename is to be found inside the directory as ".mpg"
+								String name = f.getName();
+								name = name.substring(0, name.lastIndexOf(".eyetv"));
+								File[] theMPGFile = new File[1];
+								
+								
+								theMPGFile = f.listFiles(new FilenameFilter() {
+									public boolean accept(File f, String s) {
+										return s.toUpperCase().endsWith(".MPG");
+									}
+								});
+								
+								if(theMPGFile.length != 0)
+								{
+									list.add( new XInputFile(theMPGFile[0].getAbsoluteFile()));
+									eyetvCollectionName = name + ".mpg";
+								}
+							}
+
+							else if (f.exists())
+							{
 								list.add(new XInputFile(f));
+
+								eyetvCollectionName = null;
+							}
 
 							else
 								Common.setOSDErrorMessage("dropped File Object(s) not accessible.. : " + url.toString());
@@ -316,6 +347,9 @@ public class MainFrame extends JPanel {
 							JobCollection collection = Common.addCollection();
 							collection.addInputFile(val[i]);
 
+							if(eyetvCollectionName != null)
+								collection.setOutputName(eyetvCollectionName);
+
 							updateCollectionTable(collection.getCollectionAsTable());
 						}
 					}
@@ -330,6 +364,9 @@ public class MainFrame extends JPanel {
 
 							JobCollection collection = Common.getCollection(comboBox_0.getSelectedIndex());
 							collection.addInputFile(val);
+
+							if(eyetvCollectionName != null)
+								collection.setOutputName(eyetvCollectionName);
 
 							updateCollectionTable(collection.getCollectionAsTable());
 						}
@@ -455,7 +492,29 @@ public class MainFrame extends JPanel {
 							if (theFiles[i].isFile())
 								collection.addInputFile( new XInputFile(theFiles[i].getAbsoluteFile()));
 
-							else
+							else if (theFiles[i].isDirectory() && theFiles[i].getName().endsWith(".eyetv"))
+							{
+								// handle EyeTV recording directory
+								// output filename will be the directory name
+								// filename is to be found inside the directory as ".mpg"
+								String name = theFiles[i].getName();
+								name = name.substring(0, name.lastIndexOf(".eyetv"));
+								File[] theMPGFile = new File[1];
+								
+								
+								theMPGFile = theFiles[i].listFiles(new FilenameFilter() {
+									public boolean accept(File f, String s) {
+										return s.toUpperCase().endsWith(".MPG");
+									}
+								});
+								if(theMPGFile.length != 0)
+								{
+									collection.addInputFile( new XInputFile(theMPGFile[0].getAbsoluteFile()));
+									collection.setOutputName(name + ".mpg");
+								}
+							}
+
+ 							else
 								Common.setOSDErrorMessage("File Object not accessible.. : " + theFiles[i].toString());
 						}
 
