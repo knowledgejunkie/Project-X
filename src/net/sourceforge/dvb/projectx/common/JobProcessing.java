@@ -58,6 +58,8 @@ public class JobProcessing extends Object {
 	private List CellTimesList;
 //
 	private Hashtable StreamObjects;
+
+	private Object[] AudioStreamInfo;
 //
 	private int[] stream_number;
 	private int[] clv;
@@ -995,4 +997,38 @@ public class JobProcessing extends Object {
 		return StreamObjects;
 	}
 
+	/**
+	 * 
+	 */
+	public void setAudioStreamInfo(Object[] obj)
+	{
+		AudioStreamInfo = obj;
+	}
+
+	/**
+	 * 
+	 */
+	public String getAudioStreamLanguage(int pid)
+	{
+		String str = "";
+		String str1 = "";
+
+		for (int i = 0, j = 0, k = 0; i < AudioStreamInfo.length; i++)
+		{
+			str1 = AudioStreamInfo[i].toString();
+
+			if (str1.indexOf(Common.adaptString(Integer.toHexString(pid).toUpperCase(), 4)) < 0)
+				continue;
+
+			j = str1.indexOf("{");
+			k = str1.indexOf("}");
+
+			if (j > 0 && k > j)
+				str = "_" + str1.substring(j + 1, k);
+
+			break;
+		}
+
+		return str;
+	}
 }

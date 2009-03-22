@@ -823,6 +823,7 @@ public class PreSettings extends JFrame {
 			Keys.KEY_ExternPanel_renameVideo,
 			Keys.KEY_ExternPanel_appendExtension,
 			Keys.KEY_ExternPanel_appendPidToFileName,
+			Keys.KEY_ExternPanel_appendLangToFileName,
 			Keys.KEY_ExternPanel_createM2sIndex,
             Keys.KEY_ExternPanel_createInfoIndex,
 			Keys.KEY_ExternPanel_createD2vIndex,
@@ -832,7 +833,7 @@ public class PreSettings extends JFrame {
 
 		JCheckBox[] box = new JCheckBox[objects.length];
 
-		for (int i = 0, j = 11; i < objects.length; i++)
+		for (int i = 0, j = 12; i < objects.length; i++)
 		{
 			box[i] = new JCheckBox(Resource.getString(objects[i][0]));
 			box[i].setPreferredSize(new Dimension(270, 20));
@@ -847,7 +848,7 @@ public class PreSettings extends JFrame {
 		}
 
 		// left grid
-		for (int i = 0; i < 8; i++)
+		for (int i = 0; i < 9; i++)
 			video2Panel.add(box[i]);
 
 		video2.add(video2Panel);
@@ -862,20 +863,20 @@ public class PreSettings extends JFrame {
 		video3Panel.add(new JLabel(Resource.getString("ExternPanel.createM2sIndex")));
 
 		// right grid
-		video3Panel.add(box[8]);
+		video3Panel.add(box[9]);
 
 		video3Panel.add(Box.createRigidArea(new Dimension(1, 10)));
 
         video3Panel.add(new JLabel(Resource.getString("ExternPanel.createInfoLabel")));
 
-        video3Panel.add(box[9]);
+        video3Panel.add(box[10]);
 
         video3Panel.add(Box.createRigidArea(new Dimension(1, 10)));
 
 		video3Panel.add(new JLabel(Resource.getString("ExternPanel.createD2vIndex")));
 
 		// right grid
-		for (int i = 10; i < objects.length; i++)
+		for (int i = 11; i < objects.length; i++)
 			video3Panel.add(box[i]);
 
 		JTextField d2v_splitsize = new JTextField(Common.getSettings().getProperty(Keys.KEY_ExternPanel_ProjectFileSplitSize));

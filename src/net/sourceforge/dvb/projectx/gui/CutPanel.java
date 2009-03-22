@@ -513,7 +513,8 @@ public class CutPanel extends JPanel {
 				clockThread.setPriority(Thread.NORM_PRIORITY);
 
 				value = _value;
-				skip = getLoadSize()>>>5;
+				//skip = getLoadSize()>>>5;
+				skip = getLoadSize()>>>6;
 
 				getCutPoints();
 
@@ -1003,7 +1004,7 @@ public class CutPanel extends JPanel {
 		panel_3.setLayout(new BoxLayout(panel_3, BoxLayout.X_AXIS));
 
 		estimatedSizeField = new JTextField("");
-		estimatedSizeField.setToolTipText(Resource.getString("CollectionPanel.NumberOfPoints.Tip"));
+		//estimatedSizeField.setToolTipText(Resource.getString("CollectionPanel.NumberOfPoints.Tip"));
 		estimatedSizeField.setBackground(new java.awt.Color(230, 230, 230));
 		estimatedSizeField.setEditable(false);
 		estimatedSizeField.setPreferredSize(new Dimension(150, 24));

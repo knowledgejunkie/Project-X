@@ -48,6 +48,7 @@ import java.util.Arrays;
 
 import net.sourceforge.dvb.projectx.common.Resource;
 import net.sourceforge.dvb.projectx.common.Common;
+import net.sourceforge.dvb.projectx.common.Keys;
 
 import net.sourceforge.dvb.projectx.subtitle.ColorAreas;                                         //S9
 
@@ -350,6 +351,11 @@ public class DVBSubpicture extends Object {
 	//		new_time_out = page.getTimeOut() / 10;
 		if (page.getTimeOut() > 0 && pts == -1) // -1 means take proposed play time
 			new_time_out = page.getTimeOut() / 10;
+
+//
+		if (page.getTimeOut() > 0 && Common.getCollection().getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_rebuildPTS)) // -1 means take proposed play time
+			new_time_out = page.getTimeOut() / 10;
+//
 
 //Common.setMessage("!> debug Info : px " + page.getX() + " / py " + page.getY() + " / pw " + page.getWidth() + " / ph " + page.getHeight() + " (VN): " + page.getVersionNumber());
 

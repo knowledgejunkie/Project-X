@@ -351,6 +351,7 @@ public class MainFrame extends JPanel {
 								collection.setOutputName(eyetvCollectionName);
 
 							updateCollectionTable(collection.getCollectionAsTable());
+							updateOutputField(collection);
 						}
 					}
 
@@ -369,6 +370,7 @@ public class MainFrame extends JPanel {
 								collection.setOutputName(eyetvCollectionName);
 
 							updateCollectionTable(collection.getCollectionAsTable());
+							updateOutputField(collection);
 						}
 					}
 
@@ -520,6 +522,7 @@ public class MainFrame extends JPanel {
 
 						updateCollectionTable(collection.getCollectionAsTable());
 						updateCollectionPanel(Common.getActiveCollection());
+						updateOutputField(collection);
 					}
 
 					return;

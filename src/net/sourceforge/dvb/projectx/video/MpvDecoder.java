@@ -104,6 +104,7 @@ public class MpvDecoder extends Object {
 	private boolean ERROR3 = false;
 	private boolean ERROR4 = false;
 	private boolean ERROR5 = false;
+	private boolean ERROR6 = false;
 	private boolean viewGOP = true;
 
 	private String info_4 = "";
@@ -3184,7 +3185,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 	 */
 	public int getErrors()
 	{
-		return (0 | (ERROR1 ? 1 : 0) | (ERROR2 ? 2 : 0) | (ERROR3 ? 4 : 0) | (ERROR4 ? 8 : 0) | (ERROR5 ? 16 : 0));
+		return (0 | (ERROR1 ? 1 : 0) | (ERROR2 ? 2 : 0) | (ERROR3 ? 4 : 0) | (ERROR4 ? 8 : 0) | (ERROR5 ? 0x10 : 0) | (ERROR6 ? 0x20 : 0));
 	}
 
 	/**
@@ -3308,6 +3309,7 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 		ERROR3 = false;
 		ERROR4 = false;
 		ERROR5 = false;
+		ERROR6 = false;
 		Arrays.fill(LastPosVal, -1);
 
 		buf = array;
@@ -3358,9 +3360,10 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 
 		} catch (Error ee) { 
 			ERROR1 = true;
+			ERROR6 = ee.toString().indexOf("OutOfMemory") > 0;
 		}
 
-		if (ERROR1)
+		if (ERROR1 && !ERROR6)
 			if (checkH264(buf, buf.length))
 				ERROR4 = true;
 
@@ -3395,7 +3398,10 @@ public void macroblock_modes(int pmacroblock_type[], int pmotion_type[],
 			//seq_param
 			profile = getBits(check, BitPosition, 8); //profile = 0xFF & check[5 + i];
 			getBits(check, BitPosition, 3); //constraint 0,1,2
-			getBits(check, BitPosition, 5); //5 zero_bits
+			forb_zero = getBits(check, BitPosition, 5); //5 zero_bits
+
+			if (forb_zero != 0)
+				continue;
 
 			level_idc = getBits(check, BitPosition, 8); //0xFF & check[7 + i];
 			flag = getCodeNum(check, BitPosition); // seq_parameter_set_id 0 ue(v)

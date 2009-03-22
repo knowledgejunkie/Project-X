@@ -252,8 +252,8 @@ public class StreamParserTS extends StreamParserBase {
 
 			if (pids.length > 0)
 			{
-				Common.setMessage(Resource.getString("parseTS.sid") + Integer.toHexString(pids[0]).toUpperCase());
-				Common.setMessage(Resource.getString("parseTS.pmt.refers", Integer.toHexString(pids[1]).toUpperCase()));
+				Common.setMessage(Resource.getString("parseTS.sid") + Common.adaptString(Integer.toHexString(pids[0]).toUpperCase(), 4));
+				Common.setMessage(Resource.getString("parseTS.pmt.refers", Common.adaptString(Integer.toHexString(pids[1]).toUpperCase(), 4)));
 
 				ts_pmt_pid = pids[1];
 				pmt_parser = new TS_PMTParser(pids[0], pids[1]);
@@ -278,6 +278,8 @@ public class StreamParserTS extends StreamParserBase {
 					TSPidlist.add(streambuffer = new StreamBuffer());
 					streambuffer.setPID(pids[i]);
 				}
+
+				job_processing.setAudioStreamInfo(streamInfo.getAudioStreams());
 			}
 
 			else 
@@ -633,7 +635,7 @@ public class StreamParserTS extends StreamParserBase {
 					if (ts_hasErrors || ts_adaptionfieldlength > 183 || (ts_adaptionfieldlength > 180 && ts_startunit))
 					{
 						if (Message_1)
-							Common.setMessage(Resource.getString("parseTS.bit.error", Integer.toHexString(ts_pid).toUpperCase(), String.valueOf(packet), String.valueOf(count - TS_PacketLength)) + " (" + ts_adaptionfieldlength + " / " + ts_startunit + ")");
+							Common.setMessage(Resource.getString("parseTS.bit.error", Common.adaptString(Integer.toHexString(ts_pid).toUpperCase(), 4), String.valueOf(packet), String.valueOf(count - TS_PacketLength)) + " (" + ts_adaptionfieldlength + " / " + ts_startunit + ")");
 
 						//if (!ts_hasErrors) // discard bad packets
 							continue loop;
@@ -701,7 +703,7 @@ public class StreamParserTS extends StreamParserBase {
 							if (!streambuffer.getScram())
 							{
 								streambuffer.setScram(true);
-								Common.setMessage(Resource.getString("parseTS.scrambled", Integer.toHexString(ts_pid).toUpperCase(), String.valueOf(packet), String.valueOf(count - TS_PacketLength)));
+								Common.setMessage(Resource.getString("parseTS.scrambled", Common.adaptString(Integer.toHexString(ts_pid).toUpperCase(), 4), String.valueOf(packet), String.valueOf(count - TS_PacketLength)));
 							}
 							continue loop;
 						}
@@ -711,7 +713,7 @@ public class StreamParserTS extends StreamParserBase {
 							if (streambuffer.getScram())
 							{
 								streambuffer.setScram(false);
-								Common.setMessage(Resource.getString("parseTS.clear", Integer.toHexString(ts_pid).toUpperCase(), String.valueOf(packet), String.valueOf(count - TS_PacketLength)));
+								Common.setMessage(Resource.getString("parseTS.clear", Common.adaptString(Integer.toHexString(ts_pid).toUpperCase(), 4), String.valueOf(packet), String.valueOf(count - TS_PacketLength)));
 							}
 						}
 					}
@@ -726,7 +728,7 @@ public class StreamParserTS extends StreamParserBase {
 						{
 							if (streambuffer.isStarted() && ts_counter != streambuffer.getCounter())
 							{
-								Common.setMessage(Resource.getString("parseTS.outof.sequence", Integer.toHexString(ts_pid).toUpperCase(), String.valueOf(packet), String.valueOf(count - TS_PacketLength), String.valueOf(ts_counter), String.valueOf(streambuffer.getCounter())) + " (~" + Common.formatTime_1( (long)((CommonParsing.getVideoFramerate() / 90.0f) * job_processing.getExportedVideoFrameNumber())) + ")");
+								Common.setMessage(Resource.getString("parseTS.outof.sequence", Common.adaptString(Integer.toHexString(ts_pid).toUpperCase(), 4), String.valueOf(packet), String.valueOf(count - TS_PacketLength), String.valueOf(ts_counter), String.valueOf(streambuffer.getCounter())) + " (~" + Common.formatTime_1( (long)((CommonParsing.getVideoFramerate() / 90.0f) * job_processing.getExportedVideoFrameNumber())) + ")");
 								streambuffer.setCounter(ts_counter);
 							}
 
@@ -907,7 +909,7 @@ public class StreamParserTS extends StreamParserBase {
 								break;
 
 							case 0x1BF:
-								Common.setMessage(Resource.getString("parseTS.priv.stream2.ignored", Integer.toHexString(ts_pid).toUpperCase()));
+								Common.setMessage(Resource.getString("parseTS.priv.stream2.ignored", Common.adaptString(Integer.toHexString(ts_pid).toUpperCase(), 4)));
 								//break;
 
 								streambuffer.setneeded(false); // skip foll. packs
@@ -920,7 +922,7 @@ public class StreamParserTS extends StreamParserBase {
 							{
 								type = "(PMT) (" + (count - TS_PacketLength) + " #" + packet + ") ";  // pos + packno
 
-								Common.setMessage("ok> PID 0x" + Integer.toHexString(ts_pid).toUpperCase() + " " + type);
+								Common.setMessage("ok> PID 0x" + Common.adaptString(Integer.toHexString(ts_pid).toUpperCase(), 4) + " " + type);
 
 								usedPIDs.add("0x" + Integer.toHexString(ts_pid));
 							}
@@ -930,7 +932,7 @@ public class StreamParserTS extends StreamParserBase {
 							{
 								type += " (" + (count - TS_PacketLength) + " #" + packet + ") ";  // pos + packno
 
-								Common.setMessage(Resource.getString("parseTS.pid.has.pes", Integer.toHexString(ts_pid).toUpperCase(), Integer.toHexString(0xFF & payload_pesID).toUpperCase(), type));
+								Common.setMessage(Resource.getString("parseTS.pid.has.pes", Common.adaptString(Integer.toHexString(ts_pid).toUpperCase(), 4), Integer.toHexString(0xFF & payload_pesID).toUpperCase(), type));
 
 								usedPIDs.add("0x" + Integer.toHexString(ts_pid));
 							}
@@ -1046,7 +1048,7 @@ public class StreamParserTS extends StreamParserBase {
 									type += " (0x" + Long.toHexString(count - TS_PacketLength).toUpperCase() + " #" + packet + ") ";  // pos + packno
 
 									if (!streambuffer.getScram()) 
-										Common.setMessage(Resource.getString("parseTS.scrambled.notignored", Integer.toHexString(ts_pid).toUpperCase(), type));
+										Common.setMessage(Resource.getString("parseTS.scrambled.notignored", Common.adaptString(Integer.toHexString(ts_pid).toUpperCase(), 4), type));
 
 									streambuffer.setScram(true);
 									streambuffer.setStarted(false);
@@ -1057,7 +1059,7 @@ public class StreamParserTS extends StreamParserBase {
 								}
 
 								type += " (" + (count - TS_PacketLength) + " #" + packet + ") ";  // pos + packno
-								Common.setMessage("!> PID 0x" + Integer.toHexString(ts_pid).toUpperCase() + " " + type + Resource.getString("parseTS.ignored"));
+								Common.setMessage("!> PID 0x" + Common.adaptString(Integer.toHexString(ts_pid).toUpperCase(), 4) + " " + type + Resource.getString("parseTS.ignored"));
 
 								if (!BlindSearch || type.indexOf("pay") == -1)
 									streambuffer.setneeded(false);
@@ -1095,11 +1097,11 @@ public class StreamParserTS extends StreamParserBase {
 							if (pes_packet.length < 6)
 							{
 								if (streamdemultiplexer.getPackCount() != -1) 
-									Common.setMessage(Resource.getString("parseTS.lackof.pes", Integer.toHexString(ts_pid).toUpperCase()));
+									Common.setMessage(Resource.getString("parseTS.lackof.pes", Common.adaptString(Integer.toHexString(ts_pid).toUpperCase(), 4)));
 							}
 
 							else if (CommonParsing.validateStartcode(pes_packet, 0) < 0)
-								Common.setMessage("!> PID 0x" + Integer.toHexString(ts_pid).toUpperCase() + " - invalid start_code of buffered packet..");
+								Common.setMessage("!> PID 0x" + Common.adaptString(Integer.toHexString(ts_pid).toUpperCase(), 4) + " - invalid start_code of buffered packet..");
 
 							else
 							{

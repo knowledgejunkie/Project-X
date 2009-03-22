@@ -1602,7 +1602,10 @@ public class Scan extends Object {
 			//seq_param
 			profile = getBits(check, BitPosition, 8); //profile = 0xFF & check[5 + i];
 			getBits(check, BitPosition, 3); //constraint 0,1,2
-			getBits(check, BitPosition, 5); //5 zero_bits
+			forb_zero = getBits(check, BitPosition, 5); //5 zero_bits
+
+			if (forb_zero != 0)
+				continue;
 
 			level_idc = getBits(check, BitPosition, 8); //0xFF & check[7 + i];
 			flag = getCodeNum(check, BitPosition); // seq_parameter_set_id 0 ue(v)
@@ -1777,7 +1780,7 @@ public class Scan extends Object {
 				int sid = (0xFF & pmt[4])<<8 | (0xFF & pmt[5]);
 				pidlist.add("" + sid);
 				pidlist.add("" + pmtpid);
-				addInfo = " (SID 0x" + Integer.toHexString(sid).toUpperCase() + ", PMT 0x" + Integer.toHexString(pmtpid).toUpperCase() + ")";
+				addInfo = " (SID 0x" + Common.adaptString(Integer.toHexString(sid).toUpperCase(), 4) + ", PMT 0x" + Common.adaptString(Integer.toHexString(pmtpid).toUpperCase(), 4) + ")";
 			}
 
 			int pmt_len = (0xF&pmt[2])<<8 | (0xFF&pmt[3]);
@@ -1918,12 +1921,13 @@ public class Scan extends Object {
 					break;
 
 				case 0xA:  //ISO 639 language descriptor
-					str += "(";
+					str += "{";
 
 					for (int a=off+2; a<off+5; a++)
-						str += (char)(0xFF & check[a]);
+						if ((0xFF & check[a]) > 0)
+							str += (char)(0xFF & check[a]);
 
-					str += ")";
+					str += "}";
 					off++;
 					off += (0xFF & check[off]);
 					break;
@@ -1995,7 +1999,7 @@ public class Scan extends Object {
 				}
 			}
 
-			String out = "PID: 0x" + Integer.toHexString(pid).toUpperCase();
+			String out = "PID: 0x" + Common.adaptString(Integer.toHexString(pid).toUpperCase(), 4);
 
 			switch (type)
 			{

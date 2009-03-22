@@ -402,16 +402,17 @@
 0.90.4.00b29:
 --ttx - sub insertion - vers. 0.2
 --MPAD überarbeiten, decode: arrays.fill statt new init ca. 20% schneller
---dragndrop - eyetv update, thx2cookie
+--dragndrop - eyetv update1+2, thx2cookie
+--sprachangabe aus PMT an dateinamen anhängen (-settings-extern)
+--preview -outofmemory anzeige
 
-
-
+!-ac3 a/v abbruch problem noch offen
 
 !-pid in dateinamen - problem split - via FILE-ID
 !-dyn PMT ts-pid-wechseln folgen
 !-AAC audio (roh) ohne funktion
 !-genauere scanzuordnung - angefangen, ts192, topfields
-!!MPAD überarbeiten, nicht mehr statisch
+!-MPAD überarbeiten, nicht mehr statisch
 
 !!radix verschobene pakete
 !!parserliste/demuxlist vereinen, alle fileobjekte in einem pool

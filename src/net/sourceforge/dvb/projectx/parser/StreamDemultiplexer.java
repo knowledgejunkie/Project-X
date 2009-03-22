@@ -81,6 +81,7 @@ public class StreamDemultiplexer extends Object {
 	private boolean CreateCellTimes;
     private boolean CreateInfoIndex;
     private boolean AppendPidToFileName;
+    private boolean AppendLangToFileName;
 
 	private long AddOffset = 0;
 	private long target_position = 0;
@@ -362,6 +363,7 @@ public class StreamDemultiplexer extends Object {
 		CreateCellTimes = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createCellTimes);
         CreateInfoIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createInfoIndex);
         AppendPidToFileName = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_appendPidToFileName);
+        AppendLangToFileName = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_appendLangToFileName);
 	}
 
 	/**
@@ -588,10 +590,8 @@ public class StreamDemultiplexer extends Object {
 
 		try {
 
-			/**
-			 * re-build PTS
-			 */
-			if (es_streamtype == CommonParsing.TELETEXT && RebuildPTS)
+			// re-build PTS
+			if (RebuildPTS && es_streamtype == CommonParsing.TELETEXT)
 			{
 				if (job_processing.getBorrowedPts() != lastPTS)
 				{
@@ -602,6 +602,22 @@ public class StreamDemultiplexer extends Object {
 
 					if (Debug)
 						System.out.println(" stolen ttx PTS: " + lastPTS + " /ao " + AddOffset + " /tp " + target_position);
+				}
+			}
+
+			//test subpicture
+			else if (RebuildPTS && es_streamtype == CommonParsing.SUBPICTURE)
+			{
+				if (job_processing.getBorrowedPts() != lastPTS)
+				{
+					lastPTS = job_processing.getBorrowedPts();
+					pts = lastPTS; //to rewrite into sp file
+
+					pts_log.writeLong(lastPTS);
+					pts_log.writeLong(target_position);
+
+					if (Debug)
+						System.out.println(" stolen subpic PTS: " + lastPTS + " /ao " + AddOffset + " /tp " + target_position);
 				}
 			}
 
@@ -781,8 +797,14 @@ public class StreamDemultiplexer extends Object {
 				parameters[0] = "";
 			}
 
-			else if (AppendPidToFileName)
-				parameters[3] = parentname + formatIDString(getPID(), getID(), subID());
+			else
+			{
+				if (AppendPidToFileName)
+					parameters[3] = parentname + formatIDString(getPID(), getID(), subID());
+
+				if (AppendLangToFileName)
+					parameters[3] += job_processing.getAudioStreamLanguage(getPID());
+			}
 
 		} catch (IOException e) { 
 
