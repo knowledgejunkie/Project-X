@@ -640,7 +640,7 @@ Common.setMessage("tmpfiles " + tempfiles.size());
 		if (action <= CommonParsing.ACTION_DEMUX)
 			return;
 
-		String[] ext = { "", ".vdr", ".m2p", ".pva", ".ts" };
+		String[] ext = { "", ".vdr", ".mpg", ".pva", ".ts" };
 
 		switch (action)
 		{

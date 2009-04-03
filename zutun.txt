@@ -403,7 +403,7 @@
 --ttx - sub insertion - vers. 0.2
 --MPAD überarbeiten, decode: arrays.fill statt new init ca. 20% schneller
 --dragndrop - eyetv update1+2, thx2cookie
---sprachangabe aus PMT an dateinamen anhängen (-settings-extern)
+--sprachkennung aus PMT an dateinamen anhängen (-settings-extern)
 --preview -outofmemory anzeige
 
 !-ac3 a/v abbruch problem noch offen

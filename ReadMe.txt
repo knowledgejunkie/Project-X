@@ -1,7 +1,7 @@
 /==============================================================================/
 
  ProjectX - a free Java based demux utility
- Copyright (C) 2001-2005 dvb.matt, All Rights Reserved
+ Copyright (C) 2001-2009 dvb.matt, All Rights Reserved
 
  By the authors, ProjectX is intended for educational purposes only, 
  as a non-commercial test project.
@@ -57,7 +57,7 @@
 
  For a compilation, you need a Java SDK, which is available for various platforms.
 
- All classes should work at least with Sun's JDK/J2RE 1.2.2 and higher.
+ All classes should work at least with Sun's JDK/J2RE 1.2.2 (from year 2000) and higher.
  Note: under special circumstances, some graphic drivers/locales cause 
        big troubles with some versions of JRE's on different OS's.
 
@@ -85,10 +85,10 @@
              - lib/commons-net-1.3.0.jar  (compiled with JDK 1.2.2) *)
              - lib/jakarta-oro-2.0.8.jar  (compiled with JDK 1.2.2) *)
        [iii] the following libraries are optional from the V 0.82.0 :
-             - lib/idct*.dll  (win32 optimized lib's for a faster preview)
+             - lib/idct*.dll  (win32 / os/2 optimized lib's for a faster preview)
              copy one of them to the systems folder or where the compiled .jar is located
        [iv]  dependent on the used JDK, you'll encounter some 'warnings' about 'using a deprecated API'
-             that's not critical, as long as an actual JDK still supports these methods
+             that's not critical, as long as an actual JDK still supports these older methods
 
        *)
        further informations and newer versions (mostly compiled with JDK 1.4.2) you'll find at:
@@ -97,7 +97,7 @@
 
 
    (C) additional received resource files (e.g. other language files) can be added 
-       to the .jar file, later, 
+       to the root directory inside the .jar file, later, 
        or you put them into the same folder where the compiled .jar is executed.
 
 
@@ -108,6 +108,9 @@
        if you can't start the non-gui version without a X server, try to call pjx with the 'headless' option
        java -Djava.awt.headless=true -jar ProjectX.jar [options] <file>
        
+   (E) if you encounter frequently "OutOfMemory" Errors, define more RAM for the Java instance:
+       java -Xms128m -Xmx128m -jar ProjectX.jar [options] <files>
+       that reserves 128MB, instead of 64MB as default value.
 
    the compiling process doesn't take more than about 30 seconds.
 
