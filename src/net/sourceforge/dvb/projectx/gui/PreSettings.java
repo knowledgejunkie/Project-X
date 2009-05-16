@@ -249,6 +249,7 @@ public class PreSettings extends JFrame {
 		idPanel3.setBorder( BorderFactory.createTitledBorder(Resource.getString("SpecialPanel.Title1")) );
 
 		String[][] objects = {
+			Keys.KEY_VOB_resetPts,
 			Keys.KEY_PVA_FileOverlap,
 			Keys.KEY_PVA_Audio,
 			Keys.KEY_TS_ignoreScrambled,
@@ -317,7 +318,6 @@ public class PreSettings extends JFrame {
 		idPanel2.add(spec5);
 
 		String[][] objects_2 = {
-			Keys.KEY_VOB_resetPts,
 			Keys.KEY_Input_getEnclosedPackets,
 			Keys.KEY_Input_concatenateForeignRecords,
 			Keys.KEY_Input_useReadOverhead,
@@ -325,7 +325,8 @@ public class PreSettings extends JFrame {
 			Keys.KEY_Audio_limitPts,
 			Keys.KEY_Audio_allowFormatChanges,
 			Keys.KEY_Video_ignoreErrors,
-			Keys.KEY_Video_trimPts
+			Keys.KEY_Video_trimPts,
+			Keys.KEY_Video_cutPts
 		};
 
 		for (int i = 0; i < objects_2.length; i++)
@@ -338,7 +339,7 @@ public class PreSettings extends JFrame {
 			box.setSelected(Common.getSettings().getBooleanProperty(objects_2[i]));
 			box.addActionListener(_CheckBoxListener);
 
-			if (i == 4 || i == 7)
+			if (i == 3 || i == 6)
 				idPanel2.add(Box.createRigidArea(new Dimension(1, 2)));
 
 			idPanel2.add(box);
@@ -1111,9 +1112,10 @@ public class PreSettings extends JFrame {
 		panel_0.setBorder( BorderFactory.createTitledBorder(Resource.getString("SubtitlePanel.Title.Teletext")) );
 
 		String[][] objects = {
-			Keys.KEY_SubtitlePanel_decodeMegaradio,
+			//Keys.KEY_SubtitlePanel_decodeMegaradio,
 			Keys.KEY_SubtitlePanel_decodeHiddenRows,
 			Keys.KEY_SubtitlePanel_rebuildPTS,
+			Keys.KEY_SubtitlePanel_rebuildPictPTS,
 			Keys.KEY_SubtitlePanel_keepOriginalTimecode,
 			Keys.KEY_SubtitlePanel_TtxExportBoxedOnly,
 			Keys.KEY_SubtitlePanel_exportTextAsUnicode,

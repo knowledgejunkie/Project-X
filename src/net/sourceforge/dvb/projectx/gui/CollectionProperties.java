@@ -1,7 +1,7 @@
 /*
  * @(#)ColelctionProperties.java
  *
- * Copyright (c) 2006-2007 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2006-2009 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -406,6 +406,7 @@ public class CollectionProperties extends JFrame {
 		idPanel3.setBorder( BorderFactory.createTitledBorder(Resource.getString("SpecialPanel.Title1")) );
 
 		String[][] objects = {
+			Keys.KEY_VOB_resetPts,
 			Keys.KEY_PVA_FileOverlap,
 			Keys.KEY_PVA_Audio,
 			Keys.KEY_TS_ignoreScrambled,
@@ -474,7 +475,6 @@ public class CollectionProperties extends JFrame {
 		idPanel2.add(spec5);
 
 		String[][] objects_2 = {
-			Keys.KEY_VOB_resetPts,
 			Keys.KEY_Input_getEnclosedPackets,
 			Keys.KEY_Input_concatenateForeignRecords,
 			Keys.KEY_Input_useReadOverhead,
@@ -482,7 +482,8 @@ public class CollectionProperties extends JFrame {
 			Keys.KEY_Audio_limitPts,
 			Keys.KEY_Audio_allowFormatChanges,
 			Keys.KEY_Video_ignoreErrors,
-			Keys.KEY_Video_trimPts
+			Keys.KEY_Video_trimPts,
+			Keys.KEY_Video_cutPts
 		};
 
 		for (int i = 0; i < objects_2.length; i++)
@@ -495,7 +496,7 @@ public class CollectionProperties extends JFrame {
 			box.setSelected(getBooleanProperty(objects_2[i]));
 			box.addActionListener(_CheckBoxListener);
 
-			if (i == 4 || i == 7)
+			if (i == 3 || i == 6)
 				idPanel2.add(Box.createRigidArea(new Dimension(1, 2)));
 
 			idPanel2.add(box);
@@ -1180,9 +1181,10 @@ public class CollectionProperties extends JFrame {
 		panel_0.setBorder( BorderFactory.createTitledBorder(Resource.getString("SubtitlePanel.Title.Teletext")) );
 
 		String[][] objects = {
-			Keys.KEY_SubtitlePanel_decodeMegaradio,
+			//Keys.KEY_SubtitlePanel_decodeMegaradio,
 			Keys.KEY_SubtitlePanel_decodeHiddenRows,
 			Keys.KEY_SubtitlePanel_rebuildPTS,
+			Keys.KEY_SubtitlePanel_rebuildPictPTS,
 			Keys.KEY_SubtitlePanel_keepOriginalTimecode,
 			Keys.KEY_SubtitlePanel_TtxExportBoxedOnly,
 			Keys.KEY_SubtitlePanel_exportTextAsUnicode,

@@ -406,6 +406,13 @@
 --sprachkennung aus PMT an dateinamen anhängen (-settings-extern)
 --preview -outofmemory anzeige
 
+0.90.4.00b30:
+--ac3 bsid patch
+--dvb st pts switch separated
+--special panel: optional reduced A/V sync check
+
+
+
 !-ac3 a/v abbruch problem noch offen
 
 !-pid in dateinamen - problem split - via FILE-ID

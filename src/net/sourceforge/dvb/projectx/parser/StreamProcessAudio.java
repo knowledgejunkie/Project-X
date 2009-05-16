@@ -675,7 +675,8 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 								if ( (0xFE & ac3data[4]) != (0xFE & frame[4]) || ( (7 & ac3data[5]) != (7 & frame[5]) ) || (0xE0&ac3data[6])!=(0xE0&frame[6]) ) 
 									continue;
-
+//
+								ac3data = audio.editFrame(ac3data, 4);
 								silentFrameBuffer.write(ac3data);
 
 								break;
@@ -955,6 +956,8 @@ public class StreamProcessAudio extends StreamProcessBase {
 									continue;
 
 								silentFrameBuffer.reset();
+//
+								ac3data = audio.editFrame(ac3data, 4);
 								silentFrameBuffer.write(ac3data);
 								break;
 							}
@@ -1078,6 +1081,8 @@ public class StreamProcessAudio extends StreamProcessBase {
 								continue;
 
 							silentFrameBuffer.reset();
+//
+							ac3data = audio.editFrame(ac3data, 4);
 							silentFrameBuffer.write(ac3data);
 
 							break;
@@ -2350,6 +2355,8 @@ public class StreamProcessAudio extends StreamProcessBase {
 			array = new byte[ac3data.length];
 
 			System.arraycopy(ac3data, 0, array, 0, array.length);
+//
+			ac3data = audio.editFrame(ac3data, 4);
 
 			break;
 		}

@@ -1,7 +1,7 @@
 /*
  * @(#)StreamDemultiplexer
  *
- * Copyright (c) 2005-2008 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2009 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -67,6 +67,7 @@ public class StreamDemultiplexer extends Object {
 	private boolean Debug;
 	private boolean DecodeVBI;
 	private boolean RebuildPTS;
+	private boolean RebuildPictPTS;
 	private boolean Streamtype_MpgVideo;
 	private boolean Streamtype_MpgAudio;
 	private boolean Streamtype_Ac3Audio;
@@ -355,6 +356,7 @@ public class StreamDemultiplexer extends Object {
 		Debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
 		DecodeVBI = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_Vbi);
 		RebuildPTS = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_rebuildPTS);
+		RebuildPictPTS = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_rebuildPictPTS);
 		AddSequenceEndcode = collection.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_addEndcode);
 		RenameVideo = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_renameVideo);
 		CreateD2vIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createD2vIndex);
@@ -590,7 +592,7 @@ public class StreamDemultiplexer extends Object {
 
 		try {
 
-			// re-build PTS
+			// recreate PTS
 			if (RebuildPTS && es_streamtype == CommonParsing.TELETEXT)
 			{
 				if (job_processing.getBorrowedPts() != lastPTS)
@@ -605,8 +607,8 @@ public class StreamDemultiplexer extends Object {
 				}
 			}
 
-			//test subpicture
-			else if (RebuildPTS && es_streamtype == CommonParsing.SUBPICTURE)
+			//recreate subpicture
+			else if (RebuildPictPTS && es_streamtype == CommonParsing.SUBPICTURE)
 			{
 				if (job_processing.getBorrowedPts() != lastPTS)
 				{

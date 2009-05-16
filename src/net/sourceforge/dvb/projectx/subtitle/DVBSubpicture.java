@@ -353,7 +353,7 @@ public class DVBSubpicture extends Object {
 			new_time_out = page.getTimeOut() / 10;
 
 //
-		if (page.getTimeOut() > 0 && Common.getCollection().getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_rebuildPTS)) // -1 means take proposed play time
+		if (page.getTimeOut() > 0 && Common.getCollection().getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_rebuildPictPTS)) // -1 means take proposed play time
 			new_time_out = page.getTimeOut() / 10;
 //
 

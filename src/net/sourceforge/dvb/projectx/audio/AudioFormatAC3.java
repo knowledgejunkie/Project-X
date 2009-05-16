@@ -1,7 +1,7 @@
 /*
  * @(#)AudioFormatAC3.java - parse Audioheaders, ac3
  *
- * Copyright (c) 2003-2008 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2003-2009 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -44,6 +44,8 @@ public class AudioFormatAC3 extends AudioFormat {
 		initCRCTable();
 	}
 
+	private int bsid = 0;
+
 	private int CRC16_POLY = 0x18005; //((1 << 0) | (1 << 2) | (1 << 15) | (1 << 16));
 
 	private int[] crc_table = new int[256];
@@ -83,7 +85,7 @@ public class AudioFormatAC3 extends AudioFormat {
 		setID(0);
 		setEmphasis(0);
 		setPrivateBit(0);
-		setProtectionBit(0 ^ 1);
+	//	setProtectionBit(0 ^ 1);
 		setSamplingFrequency(getAC3SamplingFrequency(frame, pos));
 
 		if (getSamplingFrequency() < 1) 
@@ -94,6 +96,7 @@ public class AudioFormatAC3 extends AudioFormat {
 		if (getBitrate() < 1) 
 			return -3;
 	
+		setProtectionBit((0x1F & frame[pos + 5]>>3));       //bsid
 		setLayer(getAC3Bsmod(frame, pos));       //bsmod
 		setPaddingBit(1 & frame[pos + 4]);
 		setMode(getAC3Mode(frame, pos));
@@ -148,7 +151,7 @@ public class AudioFormatAC3 extends AudioFormat {
 		setNextID(0);
 		setNextEmphasis(0);
 		setNextPrivateBit(0);
-		setNextProtectionBit(0 ^ 1);
+	//	setNextProtectionBit(0 ^ 1);
 
 		setNextSamplingFrequency(getAC3SamplingFrequency(frame, pos));
 
@@ -160,6 +163,7 @@ public class AudioFormatAC3 extends AudioFormat {
 		if (getNextBitrate() < 1) 
 			return -3;
 	
+		setNextProtectionBit((0x1F & frame[pos + 5]>>3));       //bsid
 		setNextLayer(getAC3Bsmod(frame, pos));       //bsmod
 		setNextPaddingBit(1 & frame[pos + 4]);
 		setNextMode(getAC3Mode(frame, pos));
@@ -274,6 +278,9 @@ public class AudioFormatAC3 extends AudioFormat {
 		else if (getLastEmphasis() != getEmphasis())
 			return 0x80;
 
+		else if (getLastProtectionBit() != getProtectionBit())
+			return 0x100;
+
 		else 
 			return 0;
 	}
@@ -291,6 +298,7 @@ public class AudioFormatAC3 extends AudioFormat {
 			ac3_channels[getLastMode()] + 
 			lfe[0][1 & getLastModeExtension()] + 
 			")" + 
+			", bsid " + getLastProtectionBit() +
 			", dn -" + getLastOriginal() + "dB" +
 			dsurmod[getLastModeExtension()>>>1] + 
 			cmixlev[getLastEmphasis()] + 
@@ -318,6 +326,10 @@ public class AudioFormatAC3 extends AudioFormat {
 
 		case 3:
 			frame = setSilence(frame);
+			break;
+
+		case 4:
+			frame = setBsid(frame);
 			break;
 		}
 
@@ -388,6 +400,28 @@ public class AudioFormatAC3 extends AudioFormat {
 
 		clearCRC(newframe, newframe.length);
 		computeCRC(newframe, ac3_size_table[3 & newframe[4]>>>6][0x1F & newframe[4]>>>1]);
+
+		return newframe;
+	}
+
+	/**
+	 * set bsid
+	 */
+	private byte[] setBsid(byte[] frame)
+	{
+		byte[] newframe = new byte[frame.length];
+
+		System.arraycopy(frame, 0, newframe, 0, frame.length);
+
+		if (getLastProtectionBit() == (0x1F & newframe[5]>>3))
+			return newframe;
+		
+		newframe[5] = (byte)(getLastProtectionBit()<<3 | (7 & newframe[5]));
+
+		clearCRC(newframe, newframe.length);
+		computeCRC(newframe, ac3_size_table[3 & newframe[4]>>>6][0x1F & newframe[4]>>>1]);
+
+	//	net.sourceforge.dvb.projectx.common.Common.setMessage("bsid " + (0x1F & frame[5]>>3) + " /n " + (0x1F & newframe[5]>>3));
 
 		return newframe;
 	}

@@ -173,6 +173,7 @@ public class Keys extends Object {
 	public final static String[] KEY_Audio_allowFormatChanges = { "SpecialPanel.Audio.allowFormatChanges", "0" };
 	public final static String[] KEY_Video_ignoreErrors = { "SpecialPanel.Video.ignoreErrors", "0" }; //cbox[39]
 	public final static String[] KEY_Video_trimPts = { "SpecialPanel.Video.trimPts", "0" }; //cbox[73]
+	public final static String[] KEY_Video_cutPts = { "SpecialPanel.Video.cutPts", "0" }; 
 	public final static String[] KEY_Conversion_startWithVideo = { "SpecialPanel.Conversion.startWithVideo", "1" }; //cbox[23] -streamconv !!
 	public final static String[] KEY_Conversion_addPcrToStream = { "SpecialPanel.Conversion.addPcrToStream", "1" }; //cbox[36] -streamconv !!
 	public final static String[] KEY_Conversion_PcrCounter = { "SpecialPanel.Conversion.PcrCounter", "0" }; //cbox[46] -streamconv !!
@@ -252,6 +253,7 @@ public class Keys extends Object {
 	public final static String[] KEY_SubtitlePanel_decodeMegaradio = { "SubtitlePanel.decodeMegaradio", "0" }; //cbox[17] 
 	public final static String[] KEY_SubtitlePanel_decodeHiddenRows = { "SubtitlePanel.decodeHiddenRows", "0" }; //cbox[22] 
 	public final static String[] KEY_SubtitlePanel_rebuildPTS = { "SubtitlePanel.rebuildPTS", "0" }; //cbox[62] !!
+	public final static String[] KEY_SubtitlePanel_rebuildPictPTS = { "SubtitlePanel.rebuildPictPTS", "0" };
 	public final static String[] KEY_SubtitlePanel_keepOriginalTimecode = { "SubtitlePanel.keepOriginalTimecode", "0" }; //cbox[67] 
 	public final static String[] KEY_SubtitlePanel_exportTextAsUnicode = { "SubtitlePanel.exportTextAsUnicode", "0" };
 	public final static String[] KEY_SubtitlePanel_exportTextAsUTF8 = { "SubtitlePanel.exportTextAsUTF8", "0" };

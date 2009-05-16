@@ -2,7 +2,7 @@
 /*
  * @(#)StreamProcessBase
  *
- * Copyright (c) 2005-2008 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2009 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -116,6 +116,9 @@ public class StreamProcessBase extends Object {
 		byte[] data = new byte[(int)xInputFile.length() - 16];
 		int pos = 0;
 
+		int j = 0;
+		boolean reducedPts = Common.getCollection().getSettings().getBooleanProperty(Keys.KEY_Video_cutPts);
+
 		try {
 			InputStream pts_file = xInputFile.getInputStream();
 
@@ -124,17 +127,26 @@ public class StreamProcessBase extends Object {
 
 			for (int i = 0; i < vlogsize; i += 2 )
 			{
-				vptsval[0][i] = CommonParsing.getValue(data, pos, 8, !CommonParsing.BYTEREORDERING);
+				vptsval[0][j] = CommonParsing.getValue(data, pos, 8, !CommonParsing.BYTEREORDERING);
 				pos += 8;
-				vptsval[0][i + 1] = CommonParsing.getValue(data, pos, 8, !CommonParsing.BYTEREORDERING);
+				vptsval[0][j + 1] = CommonParsing.getValue(data, pos, 8, !CommonParsing.BYTEREORDERING);
 				pos += 8;
-				vptsval[1][i] = CommonParsing.getValue(data, pos, 8, !CommonParsing.BYTEREORDERING);
+				vptsval[1][j] = CommonParsing.getValue(data, pos, 8, !CommonParsing.BYTEREORDERING);
 				pos += 8;
-				vptsval[1][i + 1] = CommonParsing.getValue(data, pos, 8, !CommonParsing.BYTEREORDERING);
+				vptsval[1][j + 1] = CommonParsing.getValue(data, pos, 8, !CommonParsing.BYTEREORDERING);
 				pos += 8;
 
 				if (debug) 
-					System.out.println("#s " + i + " _" + vptsval[0][i] + " #e " + (i + 1) + " _" + vptsval[0][i + 1] + " /#s " + i + " _" + vptsval[1][i] + " #e " + (i + 1) + " _" + vptsval[1][i + 1]);
+					System.out.println("#s " + i + " _ " + j + " _ " + vptsval[0][j] + " #e " + (j + 1) + " _" + vptsval[0][j + 1] + " /#s " + i + " _" + vptsval[1][j] + " #e " + (j + 1) + " _" + vptsval[1][j + 1]);
+
+				// ignore equal time boundary
+				if (reducedPts && j > 0 && Math.abs(vptsval[0][j] - vptsval[0][j - 1]) < 3 && Math.abs(vptsval[1][j] - vptsval[1][j - 1]) < 3)
+				{
+					vptsval[0][j - 1] = vptsval[0][j + 1];
+					vptsval[1][j - 1] = vptsval[1][j + 1];
+				}
+				else
+					j += 2;
 			}
 
 			pts_file.close();
@@ -144,6 +156,22 @@ public class StreamProcessBase extends Object {
 			Common.setExceptionMessage(e);
 
 			return null;
+		}
+
+		if (j > 0 && j < vlogsize)
+		{
+			long[][] vptsval2 = new long[2][j];
+
+			for (int i = 0; i < j; i++)
+			{
+				vptsval2[0][i] = vptsval[0][i];
+				vptsval2[1][i] = vptsval[1][i];
+			}
+			
+			Common.setMessage("-> " + Resource.getString("video.msg.pts.start_end", Common.formatTime_1(vptsval2[0][0] / 90)) + " " + Common.formatTime_1(vptsval2[0][vptsval2[0].length - 1] / 90));
+			Common.setMessage("-> check sync at cut gaps only");
+
+			return vptsval2;
 		}
 
 		Common.setMessage("-> " + Resource.getString("video.msg.pts.start_end", Common.formatTime_1(vptsval[0][0] / 90)) + " " + Common.formatTime_1(vptsval[0][vptsval[0].length - 1] / 90));
@@ -367,6 +395,7 @@ public class StreamProcessBase extends Object {
 		{
 			sync_value_1 = (double)(timeline - vptsval[w + 1]);
 			sync_value_2 = (double)(timecount - vtime[w + 1]);
+//Common.setMessage("End1 " + src + " / " + awrite + " / " + v + " / " + timeline + " / " + vptsval[v] + " / " + timecount + " / " + vtime[v]);
 
 			if (debug) 
 				System.out.println("A " + src + " / " + awrite + "/" + v + "/" + w + "/  " + writtenframes + " #nve " + vtime[w + 1] + " /nae " + timecount + " #nvp " + vptsval[w + 1] + " /nap " + timeline + " /sy " + sync_value_2 + "/" + sync_value_1 + "/" + (sync_value_2 - sync_value_1));
@@ -377,6 +406,7 @@ public class StreamProcessBase extends Object {
 			{
 				awrite = false;
 				w += 2;
+//Common.setMessage("GE1 " + src + " / " + awrite + " / " + w);
 			}
 
 			// GOP ende übereinstimmung <= halbe framelänge, mit PTS Diff Auswertung
@@ -385,6 +415,7 @@ public class StreamProcessBase extends Object {
 			{
 				awrite = false;
 				w += 2;
+//Common.setMessage("GE2 " + src + " / " + awrite + " / " + w);
 			}
 
 			if (debug) 
@@ -398,6 +429,7 @@ public class StreamProcessBase extends Object {
 
 			sync_value_3 = (double)(timeline - vptsval[v]); // PTS Unterschied, frame start zu  gop start
 			sync_value_4 = (double)(timecount - vtime[v]); // timecode Unterschied, frame start zu  gop start
+//Common.setMessage("Star1 " + src + " / " + awrite + " / " + v + " / " + timeline + " / " + vptsval[v] + " / " + timecount + " / " + vtime[v]);
 
 			if (debug) 
 				System.out.println("C " + awrite + "/" + v + "/" + w + "/  " + writtenframes + " #cve " + vtime[v] + " /cae " + timecount + " #cvp " + vptsval[v] + " /cap " + timeline + " /sy " + sync_value_4 + "/" + sync_value_3 + "/" + (sync_value_4 - sync_value_3));
@@ -409,6 +441,8 @@ public class StreamProcessBase extends Object {
 				awrite = true; 
 				show = true;
 				v += 2;
+//Common.setMessage("GS1 " + src + " / " + awrite + " / " + v);
+
 			}
 
 			// schreibpause, GOP start übereinstimmung <= halbe framelänge, mit Timecode Diff + PTS Auswertung
@@ -418,15 +452,22 @@ public class StreamProcessBase extends Object {
 				awrite = true; 
 				show = true;
 				v += 2;
+//Common.setMessage("GS3 " + src + " / " + awrite + " / " + v);
 			}
 
 			if (debug)
 				System.out.println("D " + src + " / " + awrite + "/" + v + "/" + w);
 
+//if (v < vtime.length)
+//Common.setMessage("A1 " + src + " / " + awrite + " / " + v + " / " + timecount + " / " + (timecount + (frametimelength / 2.0)) + " / " + vtime[v]);
+//else
+//Common.setMessage("A2 " + src + " / " + awrite + " / " + v + " / " + timecount + " / " + (timecount + (frametimelength / 2.0)));
+/**/
 			// schreibmodus an, halbe framelänge + pts start ist größer als nächster gop start
 			// schreibpause
 			if (v < vptsval.length && awrite && (timecount + (frametimelength / 2.0)) > vtime[v] ) 
 				awrite = false;
+/**/
 	
 			if (debug) 
 				System.out.println("E " + src + " / " + awrite + "/" + v + "/" + w);

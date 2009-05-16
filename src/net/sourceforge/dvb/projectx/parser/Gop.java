@@ -930,9 +930,7 @@ public class Gop extends Object {
 			int newTref[] = new int[Pics.length];
 			Arrays.fill(newTref, -1);
 
-			/**
-			 * error, no Frames found
-			 */
+			// error, no Frames found
 			if (Pics.length == 0)
 			{
 				Common.setMessage(Resource.getString("video.msg.error.frame.not", String.valueOf(clv[6] - 1)));
@@ -940,9 +938,7 @@ public class Gop extends Object {
 				ErrorCode |= 2;
 			}
 
-			/**
-			 * error, no leading I-Frame
-			 */
+			// error, no leading I-Frame
 			if (Pics.length > 0 && (Pics[0] & 0xF) != 1)
 				Common.setMessage(Resource.getString("video.msg.error.frame.not.i", String.valueOf(clv[6] - 1)));
 
@@ -951,6 +947,7 @@ public class Gop extends Object {
 				int Tref = Pics[i]>>>4;
 
 				if (Tref < 0 || Tref > Pics.length - 1 || newTref[Tref] != -1)
+//test			if (Tref < 0 || newTref[Tref] != -1)
 				{
 					error = true;
 					ErrorCode |= 4;
