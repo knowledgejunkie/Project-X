@@ -342,7 +342,10 @@ public class Teletext extends Object {
 	{
 		//  return int char<<8 | 0xF0 & active_color backgrnd | 0xF & active_color foregrnd
 
-		boolean ascii = true, toggle = false;
+		boolean ascii = true;
+		boolean mosaic = false;
+		boolean toggle = false;
+
 		int chars[] = new int[len];
 		int active_color = 7;  // init with white ascii color per line + black background
 		int parity_error = 0;
@@ -394,9 +397,12 @@ public class Teletext extends Object {
 
 			int char_value = 0x7F & bytereverse(packet[c]);
 
+			//0x80..FF are outside
+
 			if (char_value>>>3 == 0) //0x0..7
 			{ 
-				ascii=true; 
+				ascii = true; 
+				mosaic = false;
 				chars[i] = (active_set[32]<<8 | active_color); 
 				active_color = (0xF0 & active_color) | char_value; 
 				continue; 
@@ -415,15 +421,10 @@ public class Teletext extends Object {
 				continue; 
 			}
 
-			else if (char_value>>>7 == 1)  //0x80..FF
-			{ 
-				chars[i] = active_set[32]<<8 | active_color; 
-				continue; 
-			}
-
 			else if (char_value < 24)  //0x10..17
 			{ 
 				ascii = false; 
+				mosaic = true;
 				chars[i] = active_set[32]<<8 | active_color; 
 				continue; 
 			}
@@ -452,15 +453,19 @@ public class Teletext extends Object {
 					toggle = !toggle;
 					break;
 
-				case 0x1C:
+				case 0x1C: // set black background
 					active_color &= 0xF;
+
+					if (!ascii && !mosaic) // switch ascii on
+						ascii = true;
+
 					break;
 
 				//new background same as foreground color
 				//any following is invisible until a diff. foreground is set
 				case 0x1D:
 					ascii = false;
-					active_color |= (0xF & active_color)<<4;
+					active_color = active_color & 0xF | (0xF & active_color)<<4; //HHM
 				}
 
 				chars[i] = active_set[32]<<8 | active_color; 
@@ -609,10 +614,12 @@ public class Teletext extends Object {
 
 	/**
 	 * make strings from teletext
+	 * color 1 = save color strings for ssa
 	 */
 	public String buildString(byte[] packet, int offset, int len, int row, int character_set, int color, boolean checkParity, boolean boxed_mode)
 	{
 		boolean ascii = true;
+		boolean mosaic = false;
 		boolean toggle = false;
 
 		StringBuffer line_buffer = new StringBuffer();
@@ -668,9 +675,13 @@ public class Teletext extends Object {
 
 			int char_value = 0x7F & bytereverse(packet[c]);
 
-			if (char_value>>>3 == 0)  //0x0..7, ascii foreground color
+			//0x80..FF are outside
+
+			if (char_value>>>3 == 0)  //0x0..7, set ascii foreground color
 			{ 
 				ascii = true; 
+				mosaic = false;
+
 				//line_buffer.append(color == 1 ? colors[char_value] : "");
 
 				if (color == 1)
@@ -680,7 +691,7 @@ public class Teletext extends Object {
 				continue; 
 			}
 
-			else if (char_value>>>4 == 0)   //0x8..F
+			else if (char_value>>>4 == 0)   //0x8..F, flash/steady/box/size
 			{ 
 				if (char_value == 0xB) //start box
 					boxed_area[0] = i;
@@ -693,26 +704,22 @@ public class Teletext extends Object {
 				continue; 
 			}
 
-			else if (char_value>>>7 == 1)  //0x80..FF
-			{ 
-				line_buffer.append((char)active_set[32]);
-				continue; 
-			}
 
-			else if (char_value < 24)  //0x10..17
+			else if (char_value < 24)  //0x10..17, mosaic color codes
 			{ 
 				ascii = false; 
+				mosaic = true;
 				line_buffer.append((char)active_set[32]);
 				continue; 
 			}
 
-			else if (char_value < 27)  //0x18..1A
+			else if (char_value < 27)  //0x18..1A, mosaic modes
 			{ 
 				line_buffer.append((char)active_set[32]);
 				continue; 
 			}
 
-			else if (char_value < 32) //0x1B..1F
+			else if (char_value < 32) //0x1B..1F, background + mosaic modes
 			{  
 				if (char_value == 0x1B) //ESC
 				{
@@ -731,8 +738,17 @@ public class Teletext extends Object {
 					toggle = !toggle;
 				}
 
+				//new background is black
+				//check whether it is not in mosaic mode
+				//check whether foreground is black too, is ignored - assumed to be readably string
+				if (char_value == 0x1C)
+				{
+					if (!ascii && !mosaic) // switch ascii on
+						ascii = true;
+				}
+
 				//new background same as foreground color
-				//any following is invisible until a diff. foreground is set
+				//any following is invisible until a diff. foreground is set, hide the char's, keep mosaic mode
 				if (char_value == 0x1D)
 					ascii = false;
 

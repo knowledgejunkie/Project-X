@@ -395,7 +395,6 @@ public class StreamProcessBase extends Object {
 		{
 			sync_value_1 = (double)(timeline - vptsval[w + 1]);
 			sync_value_2 = (double)(timecount - vtime[w + 1]);
-//Common.setMessage("End1 " + src + " / " + awrite + " / " + v + " / " + timeline + " / " + vptsval[v] + " / " + timecount + " / " + vtime[v]);
 
 			if (debug) 
 				System.out.println("A " + src + " / " + awrite + "/" + v + "/" + w + "/  " + writtenframes + " #nve " + vtime[w + 1] + " /nae " + timecount + " #nvp " + vptsval[w + 1] + " /nap " + timeline + " /sy " + sync_value_2 + "/" + sync_value_1 + "/" + (sync_value_2 - sync_value_1));
@@ -406,7 +405,6 @@ public class StreamProcessBase extends Object {
 			{
 				awrite = false;
 				w += 2;
-//Common.setMessage("GE1 " + src + " / " + awrite + " / " + w);
 			}
 
 			// GOP ende übereinstimmung <= halbe framelänge, mit PTS Diff Auswertung
@@ -415,7 +413,6 @@ public class StreamProcessBase extends Object {
 			{
 				awrite = false;
 				w += 2;
-//Common.setMessage("GE2 " + src + " / " + awrite + " / " + w);
 			}
 
 			if (debug) 
@@ -427,47 +424,48 @@ public class StreamProcessBase extends Object {
 		{
 			boolean show = false;
 
-			sync_value_3 = (double)(timeline - vptsval[v]); // PTS Unterschied, frame start zu  gop start
-			sync_value_4 = (double)(timecount - vtime[v]); // timecode Unterschied, frame start zu  gop start
-//Common.setMessage("Star1 " + src + " / " + awrite + " / " + v + " / " + timeline + " / " + vptsval[v] + " / " + timecount + " / " + vtime[v]);
-
-			if (debug) 
-				System.out.println("C " + awrite + "/" + v + "/" + w + "/  " + writtenframes + " #cve " + vtime[v] + " /cae " + timecount + " #cvp " + vptsval[v] + " /cap " + timeline + " /sy " + sync_value_4 + "/" + sync_value_3 + "/" + (sync_value_4 - sync_value_3));
-
-			// schreibpause, GOP start übereinstimmung <= halbe framelänge, mit PTS Diff Auswertung
-			// schreibpause aufheben, nächsten gop start zur berechnung vormerken
-			if (!awrite && Math.abs(sync_value_3) <= (frametimelength / 2.0))
+			for (; !awrite && v < vptsval.length; v += 2)
 			{
-				awrite = true; 
-				show = true;
-				v += 2;
-//Common.setMessage("GS1 " + src + " / " + awrite + " / " + v);
+				sync_value_3 = (double)(timeline - vptsval[v]); // PTS Unterschied, frame start zu  gop start
+				sync_value_4 = (double)(timecount - vtime[v]); // timecode Unterschied, frame start zu  gop start
+  
+				if (debug) 
+					System.out.println("C " + awrite + "/" + v + "/" + w + "/  " + writtenframes + " #cve " + vtime[v] + " /cae " + timecount + " #cvp " + vptsval[v] + " /cap " + timeline + " /sy " + sync_value_4 + "/" + sync_value_3 + "/" + (sync_value_4 - sync_value_3));
+  
+				// schreibpause, GOP start übereinstimmung <= halbe framelänge, mit PTS Diff Auswertung
+				// schreibpause aufheben, nächsten gop start zur berechnung vormerken
+				if (!awrite && Math.abs(sync_value_3) <= (frametimelength / 2.0))
+				{
+					awrite = true; 
+					show = true;
+					w = v;
+					v += 2;
+					break;
+				}
+  
+				// schreibpause, GOP start übereinstimmung <= halbe framelänge, mit Timecode Diff + PTS Auswertung
+				// schreibpause aufheben, nächsten gop start zur berechnung vormerken
+				else if (!awrite && Math.abs(Math.abs(sync_value_4) - Math.abs(sync_value_3)) <= (frametimelength / 2.0))
+				{
+					awrite = true; 
+					show = true;
+					w = v; // eine Variable wuerde eigentlich auch reichen
+					v += 2;
+					break;
+				}
 
+				if (sync_value_3 < 0) 
+					break;
 			}
-
-			// schreibpause, GOP start übereinstimmung <= halbe framelänge, mit Timecode Diff + PTS Auswertung
-			// schreibpause aufheben, nächsten gop start zur berechnung vormerken
-			else if (!awrite && Math.abs(Math.abs(sync_value_4) - Math.abs(sync_value_3)) <= (frametimelength / 2.0))
-			{
-				awrite = true; 
-				show = true;
-				v += 2;
-//Common.setMessage("GS3 " + src + " / " + awrite + " / " + v);
-			}
-
+  
 			if (debug)
 				System.out.println("D " + src + " / " + awrite + "/" + v + "/" + w);
-
-//if (v < vtime.length)
-//Common.setMessage("A1 " + src + " / " + awrite + " / " + v + " / " + timecount + " / " + (timecount + (frametimelength / 2.0)) + " / " + vtime[v]);
-//else
-//Common.setMessage("A2 " + src + " / " + awrite + " / " + v + " / " + timecount + " / " + (timecount + (frametimelength / 2.0)));
-/**/
+  				
+  				
 			// schreibmodus an, halbe framelänge + pts start ist größer als nächster gop start
 			// schreibpause
 			if (v < vptsval.length && awrite && (timecount + (frametimelength / 2.0)) > vtime[v] ) 
 				awrite = false;
-/**/
 	
 			if (debug) 
 				System.out.println("E " + src + " / " + awrite + "/" + v + "/" + w);

@@ -1,7 +1,7 @@
 /*
  * @(#)Gop
  *
- * Copyright (c) 2005-2007 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2009 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -321,6 +321,9 @@ public class Gop extends Object {
 
 		double[] fps_tabl2 = { 0, 3753.7537, 3750, 3600, 3003.003, 3000, 1800, 1501.5015, 1500, 0,0,0,0,0,0,0};
 
+		int pulldownfields = 0;
+		int repeat_first_field = 0;
+
 		int tref = 0;
 		int maxtref = 0;
 		int frame = -1;
@@ -358,6 +361,8 @@ public class Gop extends Object {
 		long TC = 0;
 		long lastpts = job_processing.getEndPtsOfGop() == -10000 ? -20000 : job_processing.getEndPtsOfGop();
 		long startpts = lastpts;
+		long tmppts = lastpts;
+
 		long cutposition = 0;
 
 		String frT[] = { "0","I","P","B","D","5","6","7" };
@@ -709,22 +714,35 @@ public class Gop extends Object {
 					} 
  
 					if (tref > maxtref) 
+					{
 						maxtref = tref;
+						tmppts = vpts[0][vpts[0].length - 1]; //pulldown
+					}
 
 					if (Debug) 
 						System.out.println(frame + "/ " + maxtref + "/ " + tref + "/ " + s + " * " + frT[frametype] + "/ " + gop.length);
 
-					if (!start && s >= vpts[1][0])
+					if (tref == 0)  //pulldown
 					{
-						startpts = vpts[0][0] - (long)(CommonParsing.getVideoFramerate() * tref); 
-						start = true;
-					}
+						/* frame is increased below, use +1 to get the right array index. */
+						startpts = vpts[0][frame + 1];
+ 					}
+					/* The correct number for pulldownfields can only be determined after the
+					 * frames after maxtref are read. Set lastpts after the last frame (after
+					 * this loop), but use the pts from the maxtref frame (tmppts).
+					 */
 
-					else if (!last && s >= vpts[1][vpts[1].length - 1])
-					{
-						lastpts = vpts[0][vpts[0].length-1] - (long)(CommonParsing.getVideoFramerate() * tref); 
-						last = true;
-					}
+				//	if (!start && s >= vpts[1][0])
+				//	{
+				//		startpts = vpts[0][0] - (long)(CommonParsing.getVideoFramerate() * tref); 
+				//		start = true;
+				//	}
+
+				//	else if (!last && s >= vpts[1][vpts[1].length - 1])
+				//	{
+				//		lastpts = vpts[0][vpts[0].length-1] - (long)(CommonParsing.getVideoFramerate() * tref); 
+				//		last = true;
+				//	}
 
 					/**
 					 *  determine cuts 
@@ -839,6 +857,11 @@ public class Gop extends Object {
 						if (gop[i + 3] != (byte)0xb5 || (0xF0 & gop[i + 4]) != 0x80) 
 							continue;
 
+						//pulldown
+						repeat_first_field = (0x02 & gop[i + 7]);
+						if (repeat_first_field != 0)
+							pulldownfields += 1;
+	
 						progressive = (0x80 & gop[i + 8]);
 
 						if (PatchToProgressive) 
@@ -875,6 +898,11 @@ public class Gop extends Object {
 					is_I_Frame = false;
 				}
 			} // end of gop search
+
+			/* Set last_pts after all frames in the GOP are read. */
+			//pulldown
+			lastpts = tmppts - (long)(CommonParsing.getVideoFramerate() * (tref + pulldownfields/2 ));
+
 
 		/**
 			for (int dl = 0; dl < dropList.size(); dl++)
@@ -1028,7 +1056,8 @@ public class Gop extends Object {
 			/** 
 			 * return last orig pts for plain mpv
 			 */
-			job_processing.setLastSimplifiedPts(startpts + (long)(trefcheck * CommonParsing.getVideoFramerate()) + (long)((maxtref - trefcheck + 1) * CommonParsing.getVideoFramerate()));
+		//	job_processing.setLastSimplifiedPts(startpts + (long)(trefcheck * CommonParsing.getVideoFramerate()) + (long)((maxtref - trefcheck + 1) * CommonParsing.getVideoFramerate()));
+			job_processing.setLastSimplifiedPts(startpts + (long)(trefcheck * CommonParsing.getVideoFramerate()) + (long)((maxtref + pulldownfields/2 - trefcheck + 1 ) * CommonParsing.getVideoFramerate()));
 
 
 // test - edit fehlerhafte gop
@@ -1061,9 +1090,11 @@ public class Gop extends Object {
 				/**
 				 * read out gop timecode as long ,TC 081.5++ 
 				 */
-				job_processing.countLastGopTimecode((long)(CommonParsing.getVideoFramerate() * (maxtref + 1)));
-				job_processing.setLastGopPts(startpts + (long)(CommonParsing.getVideoFramerate() * (maxtref + 1)));
-
+			//	job_processing.countLastGopTimecode((long)(CommonParsing.getVideoFramerate() * (maxtref + 1)));
+			//	job_processing.setLastGopPts(startpts + (long)(CommonParsing.getVideoFramerate() * (maxtref + 1)));
+				job_processing.countLastGopTimecode((long)(CommonParsing.getVideoFramerate() * (maxtref + pulldownfields/2 + 1)));
+				job_processing.setLastGopPts(startpts + (long)(CommonParsing.getVideoFramerate() * (maxtref + pulldownfields/2 + 1)));
+ 
 				/**
 				 * how to cut 
 				 */
@@ -1117,8 +1148,9 @@ public class Gop extends Object {
 					/**
 					 * videoframe-pts-counter 
 					 */
-					job_processing.setEndPtsOfGop(startpts + (long)((maxtref - trefcheck + 1) * CommonParsing.getVideoFramerate()));
-
+				//	job_processing.setEndPtsOfGop(startpts + (long)((maxtref - trefcheck + 1) * CommonParsing.getVideoFramerate()));
+					job_processing.setEndPtsOfGop(startpts + (long)((maxtref + pulldownfields/2 - trefcheck + 1) * CommonParsing.getVideoFramerate()));
+ 
 					/**
 					 * write V-PTS Log for audio/data sync
 					 */
@@ -1129,7 +1161,8 @@ public class Gop extends Object {
 					 * write V-Time Log for audio/data sync
 					 */
 					log.writeLong(videotimes);
-					log.writeLong(job_processing.countVideoExportTime((long)((maxtref - trefcheck + 1) * CommonParsing.getVideoFramerate())));
+				//	log.writeLong(job_processing.countVideoExportTime((long)((maxtref - trefcheck + 1) * CommonParsing.getVideoFramerate())));
+					log.writeLong(job_processing.countVideoExportTime((long)((maxtref + pulldownfields/2 - trefcheck + 1) * CommonParsing.getVideoFramerate())));
 
 					/**
 					 * value for gop bitrate per second  

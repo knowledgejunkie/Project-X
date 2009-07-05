@@ -399,6 +399,7 @@ public class Start extends Object {
 		int index = -1;
 
 		try {
+
 			/**
 			 * get switches
 			 */
@@ -464,9 +465,9 @@ public class Start extends Object {
 				Common.getSettings().setProperty(Keys.KEY_ConversionMode[0], "5");
 
 			/**
-			 * any ini key from CLI
+			 * any ini key from CLI, must be a loop
 			 */
-			if ((index = getSwitch("-set")) >= 0)
+			while ((index = getSwitch("-set")) >= 0)
 			{
 				switch_error = false;
 

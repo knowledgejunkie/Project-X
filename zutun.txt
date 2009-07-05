@@ -411,9 +411,15 @@
 --dvb st pts switch separated
 --special panel: optional reduced A/V sync check
 
+0.90.4.00b31:
+--ac3,mpa a/v abbruch problem, patch by HHM
+--teletext zeichensteuerung, patch by HHM
+--fix, mehrere -set keys von cli lesen
+--fix, falsches pts file bei video-es
+--pulldown patch by vq (separate field encoding not yet supported)
 
 
-!-ac3 a/v abbruch problem noch offen
+
 
 !-pid in dateinamen - problem split - via FILE-ID
 !-dyn PMT ts-pid-wechseln folgen

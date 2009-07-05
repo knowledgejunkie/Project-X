@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParser
  *
- * Copyright (c) 2005-2006 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2009 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -154,6 +154,8 @@ public class StreamParserESVideo extends StreamParserBase {
                 vstream.InitInfo(fparent);
 
 			DataOutputStream vlog = new DataOutputStream( new FileOutputStream(fparent + ".s1.pts") ); 
+			vlog.write(CommonParsing.PTSVideoHeader);
+
 			ByteArrayOutputStream es_packetbuffer = new ByteArrayOutputStream();
 
 			job_processing.setElementaryVideoStream(true);
