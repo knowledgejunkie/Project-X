@@ -1,7 +1,7 @@
 /*
  * @(#)SCAN.java - pre-scanning to check supported files
  *
- * Copyright (c) 2002-2008 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2002-2009 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -330,12 +330,14 @@ public class Scan extends Object {
 			aXif.randomAccessSingleRead(check, position);
 
 			int returncode = -1;
-			int[] mapping = { -1, -1, 5, 4, 4, 3, 2, 6, 6, 10, 9, 8, 8, 7, 7, 0, 0, 1 };
+		//	int[] mapping = { -1, -1, 5, 4, 4, 3, 2, 6, 6, 10, 9, 8, 8, 7, 7, 0, 0, 1 }; //1+16
+			int[] mapping = { -1, -1, 5, 4, 4, 3, 2, 6, 6, 10, 9, 8, 8, 7, 7, 0, 0, 11 }; //1+16
 			int streamtype = mapping[assigned_streamtype + 1];
 
 			scanloop:
 			for (int index = streamtype; returncode < CommonParsing.Unsupported; index++)
 			{
+
 				returncode = scanPjxOwn(aXif, check, bs0);
 
 				if (returncode != -1)
@@ -350,8 +352,8 @@ public class Scan extends Object {
 					returncode = scanRiffAudio(check, bs0, more, size);
 					break;
 
-				case 1:
-					returncode = scanSubpicture(check, bs0, more, aXif.toString());
+				case 1: //empty
+			//		returncode = scanSubpicture(check, bs0, more, aXif.toString());
 					break;
 
 				case 2:
@@ -388,6 +390,10 @@ public class Scan extends Object {
 
 				case 10:
 					returncode = scanMpgVideo(check, bs3, more);
+					break;
+
+				case 11:
+					returncode = scanSubpicture(check, bs0, more, aXif.toString());
 					break;
 
 				default:
@@ -1062,7 +1068,10 @@ public class Scan extends Object {
 
 			if (!Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_allowSpaces) && Audio.parseNextHeader(check, i + Audio.getSize()) < 0) 
 				continue audiocheck;
-
+//
+			if (!Common.getSettings().getBooleanProperty(Keys.KEY_AudioPanel_allowSpaces) && Audio.parseNextHeader(check, i + Audio.getSize() + Audio.getNextSize()) < 0) 
+				continue audiocheck;
+//
 			if (more)
 			{
 				audio_streams.add(Audio.saveAndDisplayHeader());

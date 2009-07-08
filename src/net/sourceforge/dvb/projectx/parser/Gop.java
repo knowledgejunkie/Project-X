@@ -725,7 +725,10 @@ public class Gop extends Object {
 					if (tref == 0)  //pulldown
 					{
 						/* frame is increased below, use +1 to get the right array index. */
-						startpts = vpts[0][frame + 1];
+						if (frame + 1 < vpts[0].length)
+							startpts = vpts[0][frame + 1];
+						else
+							startpts = vpts[0][0];
  					}
 					/* The correct number for pulldownfields can only be determined after the
 					 * frames after maxtref are read. Set lastpts after the last frame (after

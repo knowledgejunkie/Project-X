@@ -417,7 +417,7 @@
 --fix, mehrere -set keys von cli lesen
 --fix, falsches pts file bei video-es
 --pulldown patch by vq (separate field encoding not yet supported)
-
+--fix: div. scanerkennung
 
 
 
