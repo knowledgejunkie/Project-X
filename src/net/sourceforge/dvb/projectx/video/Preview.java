@@ -1,7 +1,7 @@
 /*
  * @(#)Preview.java - prepare files for previewing
  *
- * Copyright (c) 2004-2008 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2004-2009 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -86,7 +86,7 @@ public class Preview extends Object {
 	/**
 	 *
 	 */
-	public long silentload(long startposition, int size, List previewList, boolean direction, boolean all_gops, boolean fast_decode, int y_gain, Object[] _predefined_Pids, int _active_collection) throws IOException
+	public long silentload(long startposition, int size, List previewList, boolean direction, boolean all_gops, boolean fast_decode, int y_gain, Object[] _predefined_Pids, int _active_collection)
 	{
 		return load(startposition, size, previewList, direction, all_gops, fast_decode, y_gain, _predefined_Pids, _active_collection, true);
 	}
@@ -94,7 +94,7 @@ public class Preview extends Object {
 	/**
 	 *
 	 */
-	public long load(long startposition, int size, List previewList, boolean direction, boolean all_gops, boolean fast_decode, int y_gain, Object[] _predefined_Pids, int _active_collection) throws IOException
+	public long load(long startposition, int size, List previewList, boolean direction, boolean all_gops, boolean fast_decode, int y_gain, Object[] _predefined_Pids, int _active_collection)
 	{
 		return load(startposition, size, previewList, direction, all_gops, fast_decode, y_gain, _predefined_Pids, _active_collection, false);
 	}
@@ -102,7 +102,7 @@ public class Preview extends Object {
 	/**
 	 *
 	 */
-	public long load(long startposition, int size, List previewList, boolean direction, boolean all_gops, boolean fast_decode, int y_gain, Object[] _predefined_Pids, int _active_collection, boolean silent) throws IOException
+	public long load(long startposition, int size, List previewList, boolean direction, boolean all_gops, boolean fast_decode, int y_gain, Object[] _predefined_Pids, int _active_collection, boolean silent)
 	{
 		predefined_Pids = _predefined_Pids;
 		active_collection = _active_collection;
@@ -113,77 +113,82 @@ public class Preview extends Object {
 		int subfiletype = 0;
 		int read_offset = 0;
 
-		for (int i = 0; i < previewList.size(); i++)
-		{
-			preview_object = (PreviewObject) previewList.get(i);
-			filetype = preview_object.getType();
+		try {
 
-			if (startposition < preview_object.getEnd())
+			for (int i = 0; i < previewList.size(); i++)
 			{
-				XInputFile lXInputFile = (XInputFile) preview_object.getFile();
-				lXInputFile.randomAccessOpen("r");
-				lXInputFile.randomAccessSeek(startposition - preview_object.getStart());
-				lXInputFile.randomAccessRead(preview_data, read_offset, size);
-				lXInputFile.randomAccessClose();
+				preview_object = (PreviewObject) previewList.get(i);
+				filetype = preview_object.getType();
 
-				if (preview_object.getEnd() - startposition < size && i < previewList.size() - 1)
+				if (startposition < preview_object.getEnd())
 				{
-					i++;
+					XInputFile lXInputFile = (XInputFile) preview_object.getFile();
+					lXInputFile.randomAccessOpen("r");
+					lXInputFile.randomAccessSeek(startposition - preview_object.getStart());
+					lXInputFile.randomAccessRead(preview_data, read_offset, size);
+					lXInputFile.randomAccessClose();
 
-					int diff = (int)(preview_object.getEnd() - startposition);
-					byte data2[] = new byte[size];
+					if (preview_object.getEnd() - startposition < size && i < previewList.size() - 1)
+					{
+						i++;
 
-					preview_object = (PreviewObject) previewList.get(i);
+						int diff = (int)(preview_object.getEnd() - startposition);
+						byte data2[] = new byte[size];
 
-					lXInputFile = (XInputFile) preview_object.getFile();
-					lXInputFile.randomAccessSingleRead(data2, 0);
+						preview_object = (PreviewObject) previewList.get(i);
 
-					System.arraycopy(data2, 0, preview_data, diff, size - diff);
-					data2 = null;
+						lXInputFile = (XInputFile) preview_object.getFile();
+						lXInputFile.randomAccessSingleRead(data2, 0);
+
+						System.arraycopy(data2, 0, preview_data, diff, size - diff);
+						data2 = null;
+					}
+
+					subfiletype = lXInputFile.getStreamInfo().getStreamSubType();
+
+					break;
 				}
+			}	
 
-				subfiletype = lXInputFile.getStreamInfo().getStreamSubType();
+			preview_data = search(preview_data, startposition, filetype, subfiletype);
 
-				break;
-			}
-		}
+			long newposition = Common.getMpvDecoderClass().decodeArray(preview_data, direction, all_gops, fast_decode, y_gain, silent);
 
-		preview_data = search(preview_data, startposition, filetype, subfiletype);
-
-		long newposition = Common.getMpvDecoderClass().decodeArray(preview_data, direction, all_gops, fast_decode, y_gain, silent);
-
-		for (int i = positionList.size() - 1; i >= 0; i--)
-		{
-			position = (int[]) positionList.get(i);
-			if (position[1] <= newposition)
+			for (int i = positionList.size() - 1; i >= 0; i--)
 			{
-				startposition += position[0];
-				i = 0;
+				position = (int[]) positionList.get(i);
+				if (position[1] <= newposition)
+				{
+					startposition += position[0];
+					i = 0;
+				}
 			}
-		}
 
-		if (positionList.size() == 0) 
-			startposition += newposition;
+			if (positionList.size() == 0) 
+				startposition += newposition;
 
-		for (int i = 0; !silent && i < previewList.size(); i++)
-		{
-			preview_object = (PreviewObject)previewList.get(i);
-
-			if (startposition < preview_object.getEnd())
+			for (int i = 0; !silent && i < previewList.size(); i++)
 			{
-				processed_file = "" + i + "/" + (previewList.size() - 1) + " - " + preview_object.getFile().getName();
-				break;
+				preview_object = (PreviewObject)previewList.get(i);
+
+				if (startposition < preview_object.getEnd())
+				{
+					processed_file = "" + i + "/" + (previewList.size() - 1) + " - " + preview_object.getFile().getName();
+					break;
+				}
 			}
-		}
 
-		preview_data = null;
-		//System.gc();
+			preview_data = null;
 
-		if (!silent)
-		{
-			Common.getMpvDecoderClass().setProcessedPosition(startposition, previewList);
-			Common.getMpvDecoderClass().setPidAndFileInfo(getProcessedPID() + "   Part: " + getProcessedFile());
-			Common.getGuiInterface().repaintPicturePanel();
+			if (!silent)
+			{
+				Common.getMpvDecoderClass().setProcessedPosition(startposition, previewList);
+				Common.getMpvDecoderClass().setPidAndFileInfo(getProcessedPID() + "   Part: " + getProcessedFile());
+				Common.getGuiInterface().repaintPicturePanel();
+			}
+
+		} catch (Exception e) {
+			Common.setExceptionMessage(e);
 		}
 
 		return startposition;
@@ -278,7 +283,9 @@ public class Preview extends Object {
 		int offset = 0;
 		int ID = -1;
 
-		for (int a = 0, PID, dl = data.length - 9; a < dl; a++)
+		int a = 0;
+
+		for (int PID, dl = data.length - 9; a < dl; a++)
 		{
 			//humax chunk
 			if (data[a] == 0x7F && data[a + 1] == 0x41 && data[a + 2] == 4 && data[a + 3] == (byte)0xFD)
@@ -320,12 +327,14 @@ public class Preview extends Object {
 			}
 
 			//ts:
-			if (a < data.length - 188 && data[a] == 0x47)
+		//	if (a < data.length - 188 && data[a] == 0x47)
+			if (a < data.length && data[a] == 0x47)
 			{
 				int chunk_offset = 0;
 
 				//handan chunk
-				if (data[a + 188] != 0x47 && data[a + 188] != 0x7F)
+			//	if (data[a + 188] != 0x47 && data[a + 188] != 0x7F)
+				if (a < data.length - 188 && data[a + 188] != 0x47 && data[a + 188] != 0x7F)
 				{
 					int i = a + 188;
 					int j;
@@ -423,6 +432,11 @@ public class Preview extends Object {
 			}
 
 		}
+
+		//save last marked packet
+		if (save && mark < data.length && a <= data.length)
+			array.write(data, mark, a - mark);
+
 
 		processed_PID = ID;
 

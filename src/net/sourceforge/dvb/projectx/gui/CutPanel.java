@@ -1746,7 +1746,7 @@ public class CutPanel extends JPanel {
 	 */
 	public long preview(long position)
 	{
-		boolean direction = false;
+		boolean backward = false;
 
 		try {
 
@@ -1766,17 +1766,23 @@ public class CutPanel extends JPanel {
 
 			if (position / divisor >= (long)slider.getMaximum())   // last
 			{
+				if (lastPosition - position < 33)
+					position = lastPosition - 1;
+
 				position = position > loadSize ? position - loadSize : 0;
-				direction = true;
+				backward = true;
 			}
 
 			else if (position > 0 && position < lastPosition && ((lastPosition / divisor) - (position / divisor)) < 3L )
 			{
+				if (lastPosition - position < 33)
+					position = lastPosition;
+
 				position = position > loadSize ? position - loadSize : 0;
-				direction = true;
+				backward = true;
 			}
 
-			position = Preview.load(position, ((direction && position == 0) ? (int)lastPosition : loadSize), previewList, direction, Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops), Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode), Common.getSettings().getIntProperty(Keys.KEY_Preview_YGain), collection.getPIDs(), active_collection);
+			position = Preview.load(position, ((backward && position == 0) ? (int)lastPosition : loadSize), previewList, backward, Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops), Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode), Common.getSettings().getIntProperty(Keys.KEY_Preview_YGain), collection.getPIDs(), active_collection);
 
 			String str = Preview.getProcessedFile();
 
@@ -1794,7 +1800,7 @@ public class CutPanel extends JPanel {
 			setPositionField(lastPosition);
 			slider.requestFocus();
 
-		} catch (IOException e6) {
+		} catch (Exception e6) {
 
 			Common.setExceptionMessage(e6);
 		}
@@ -1837,22 +1843,15 @@ public class CutPanel extends JPanel {
 	 */
 	private long previewMatrix(long position, int matrix_index)
 	{
-		try {
+		if (Common.getSettings().getIntProperty(Keys.KEY_CutMode) != CommonParsing.CUTMODE_BYTE || previewList.isEmpty())
+			return position;
 
-			if (Common.getSettings().getIntProperty(Keys.KEY_CutMode) != CommonParsing.CUTMODE_BYTE || previewList.isEmpty())
-				return position;
+		action = false;
 
-			action = false;
+		position = Preview.silentload(position, getLoadSize(), previewList, false, Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops), Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode), Common.getSettings().getIntProperty(Keys.KEY_Preview_YGain), collection.getPIDs(), active_collection);
 
-			position = Preview.silentload(position, getLoadSize(), previewList, false, Common.getSettings().getBooleanProperty(Keys.KEY_Preview_AllGops), Common.getSettings().getBooleanProperty(Keys.KEY_Preview_fastDecode), Common.getSettings().getIntProperty(Keys.KEY_Preview_YGain), collection.getPIDs(), active_collection);
-
-			CommonGui.getPicturePanel().setMatrixPreviewPixel(matrix_index);
-			CommonGui.getPicturePanel().repaint();
-
-		} catch (IOException e6) {
-
-			Common.setExceptionMessage(e6);
-		}
+		CommonGui.getPicturePanel().setMatrixPreviewPixel(matrix_index);
+		CommonGui.getPicturePanel().repaint();
 
 		action = true;
 
