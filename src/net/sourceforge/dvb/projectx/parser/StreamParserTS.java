@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParserTS.java
  *
- * Copyright (c) 2005-2008 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2009 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -75,7 +75,6 @@ public class StreamParserTS extends StreamParserBase {
 	private boolean HandanAdaption;
 	private boolean JepssenAdaption;
 	private boolean KoscomAdaption;
-//	private boolean ArionAdaption;
 
 	private boolean Debug;
 
@@ -133,7 +132,6 @@ public class StreamParserTS extends StreamParserBase {
 		HandanAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_FinepassAdaption);
 		JepssenAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_JepssenAdaption);
 		KoscomAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_KoscomAdaption);
-		//ArionAdaption = collection.getSettings().getBooleanProperty(Keys.KEY_TS_ArionAdaption);
 
 
 		boolean ts_isIncomplete = false;
@@ -511,11 +509,6 @@ public class StreamParserTS extends StreamParserBase {
 					 * handan+finepass .hav workaround, chunks fileposition index (hdd sectors) unused, because a file can be hard-cut anywhere
 					 */
 					skipLeadingHandanDataChunk(ts_packet);
-
-					/**
-					 * Arion-etc .AVR workaround, skip initial special data chunk
-					 */
-					//skipLeadingArionDataChunk(ts_packet);
 
 					if (skipJepssenDataChunk(ts_packet))
 					{}
@@ -1202,7 +1195,11 @@ public class StreamParserTS extends StreamParserBase {
 					inputstream.close();
 					//System.gc();
 
-					long startoffset = checkNextJepssenKoscomSegment(collection, job_processing.getFileNumber(), bytes_read);
+					//comag
+					long startoffset = checkNextComagSegment(collection, job_processing.getFileNumber());
+
+					if (startoffset == 0)
+						startoffset = checkNextJepssenKoscomSegment(collection, job_processing.getFileNumber(), bytes_read);
 
 					XInputFile nextXInputFile = (XInputFile) collection.getInputFile(job_processing.countFileNumber(+1));
 					TSType192 = nextXInputFile.getStreamInfo().getStreamSubType() == CommonParsing.TS_TYPE_192BYTE >>> 8;
@@ -1426,40 +1423,6 @@ public class StreamParserTS extends StreamParserBase {
 	}
 
 	/**
-	 * Arion .AVR header skip. Each file has fixed size header, containing nothing much useful.
-	 *  http://web.aanet.com.au/cameron/PVR-info/AVF-format.html
-	 * Files always seem to be cut at cluster and TS packet boundaries.
-	 */
-/**
-	private boolean skipLeadingArionDataChunk(byte[] ts_packet)
-	{
-		boolean b = false;
-			// chunk size might be specified a short way into the header block, but
-			// has never been known to change so we are not sure
-		int chunk_size = 0x8000;
-
-		if (!ArionAdaption)
-			return b;
-
-			// header magic code is text "ARAV"
-		if (ts_packet[0] != 0x41 || ts_packet[1] != 0x52 || ts_packet[2] != 0x41 || ts_packet[3] != 0x56)
-			return b;
-
-		try {
-			inputstream.skip(chunk_size - TS_BufferSize);
-			inputstream.read(ts_packet, 0, TS_BufferSize);
-			count += chunk_size;
-
-			return !b;
-
-		} catch (IOException e) {
-			Common.setExceptionMessage(e);
-		}
-
-		return b;
-	}
-**/
-	/**
 	 * humax .vid workaround, skip special data chunk
 	 */
 	private boolean skipHumaxDataChunk(byte[] ts_packet)
@@ -1586,6 +1549,49 @@ public class StreamParserTS extends StreamParserBase {
 		}
 
 		return 0;
+	}
+
+	/**
+	 *
+	 */
+	private long checkNextComagSegment(JobCollection collection, int filenumber)
+	{
+		XInputFile cXInputFile = (XInputFile) collection.getInputFile(filenumber);
+
+		if (cXInputFile.getStreamInfo().getStreamSubType() != CommonParsing.TS_TYPE_COMAG >>> 8)
+			return 0;
+
+		int segment_length = 0xBC00;
+		byte[] lastsegment = new byte[segment_length];
+		byte[] nextsegment = new byte[segment_length];
+		long startoffset = 0x10000L;
+
+		if (filenumber < collection.getPrimaryInputFileSegments() - 1)
+		{
+			try {
+
+				cXInputFile.randomAccessSingleRead(lastsegment, cXInputFile.length() - segment_length);
+
+				XInputFile nXInputFile = (XInputFile) collection.getInputFile(filenumber + 1);
+
+				if (nXInputFile.getStreamInfo().getStreamSubType() != CommonParsing.TS_TYPE_COMAG >>> 8)
+					return 0;
+
+				nXInputFile.randomAccessSingleRead(nextsegment, startoffset);
+
+				for (int i = 0; i < segment_length; i++)
+					if (nextsegment[i] != lastsegment[i])
+						return (startoffset + i);
+
+				return (startoffset + segment_length);
+
+			} catch (IOException e) {
+
+				Common.setExceptionMessage(e);
+			}
+		}
+
+		return startoffset;
 	}
 
 	/**

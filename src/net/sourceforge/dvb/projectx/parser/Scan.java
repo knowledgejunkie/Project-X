@@ -660,7 +660,7 @@ public class Scan extends Object {
 	 */
 	private int scanTSSubtype(byte[] check, int buffersize)
 	{
-		//TFrc
+		//TFrc TF5x00
 		if (check[0] == 0x54 && check[1] == 0x46 && check[2] == 0x72 && check[3] == 0x63 && check[4] == 0x50 && check[5] == 0)
 		{
 			/**  jkit 23012009
@@ -742,9 +742,11 @@ public class Scan extends Object {
 			}
 		}
 
+		//TF4000
 		else if (check[0] != 0x47 && check[188] != 0x47 && check[376] != 0x47 && check[564] == 0x47 && check[752] == 0x47 && check[940] == 0x47)
 			return CommonParsing.TS_TYPE_TF4000;
 
+		//Handan/Hojin
 		for (int i = 0, j = buffersize - 10; i < j; i++)
 		{
 			if (check[i] != 0x5B || check[i + 1] != 0x48 || check[i + 2] != 0x4F || check[i + 3] != 0x4A || check[i + 4] != 0x49 || check[i + 5] != 0x4E || check[i + 6] != 0x20 || check[i + 7] != 0x41)
@@ -752,6 +754,11 @@ public class Scan extends Object {
 
 			return CommonParsing.TS_TYPE_HANDAN;
 		}
+
+		//comag
+		if (check[0] == 0 && check[1] == 0 && check[2] == 1 && check[3] == (byte)0xBA && check[14] == 0 && check[15] == 0 && check[16] == 1 && check[17] == (byte)0xBF)
+			return CommonParsing.TS_TYPE_COMAG;
+
 
 		return CommonParsing.TS_TYPE;
 	}

@@ -91,6 +91,7 @@ public class CommonParsing extends Object {
 	public final static int TS_TYPE_TF4000    = TS_TYPE | 3<<8;	//	"DVB/MPEG2 TS  TF4000"
 	public final static int TS_TYPE_HANDAN    = TS_TYPE | 4<<8;	//	"DVB/MPEG2 TS  HANDAN"
 	public final static int TS_TYPE_192BYTE   = TS_TYPE | 5<<8;	//	"DVB/MPEG2 TS  192b"
+	public final static int TS_TYPE_COMAG     = TS_TYPE | 6<<8;	//	"DVB/MPEG2 TS  COMAG"
 
 
 	//	"ElementaryStream"
