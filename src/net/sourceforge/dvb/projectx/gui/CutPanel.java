@@ -1766,16 +1766,13 @@ public class CutPanel extends JPanel {
 
 			if (position / divisor >= (long)slider.getMaximum())   // last
 			{
-				if (lastPosition - position < 33)
-					position = lastPosition - 1;
-
 				position = position > loadSize ? position - loadSize : 0;
 				backward = true;
 			}
 
 			else if (position > 0 && position < lastPosition && ((lastPosition / divisor) - (position / divisor)) < 3L )
 			{
-				if (lastPosition - position < 33)
+				if (lastPosition - position < 50)
 					position = lastPosition;
 
 				position = position > loadSize ? position - loadSize : 0;
