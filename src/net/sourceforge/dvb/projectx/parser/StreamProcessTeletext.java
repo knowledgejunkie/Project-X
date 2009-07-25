@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParser
  *
- * Copyright (c) 2005-2007 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2009 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.StringTokenizer;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -145,30 +146,77 @@ public class StreamProcessTeletext extends StreamProcessBase {
 		if (SubtitleExportFormat.equalsIgnoreCase(Keys.ITEMS_SubtitleExportFormat[7].toString()) || SubtitleExportFormat.equalsIgnoreCase(Keys.ITEMS_SubtitleExportFormat[6].toString())) // SUP + SON, set variables
 			SUP_Offset = subpicture.set(SubtitleFont, Format_SUP_Values, KeepColourTable);
 
-		String[] userdefined_pages = {
-			collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_TtxPage1),
-			collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_TtxPage2),
-			collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_TtxPage3),
-			collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_TtxPage4),
-			collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_TtxPage5),
-			collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_TtxPage6),
-			collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_TtxPage7),
-			collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_TtxPage8)
-		};
+		ArrayList userdefined_pages = new ArrayList();
 
-		for (int pn = 0; pn < userdefined_pages.length; pn++)
+		userdefined_pages.add(collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_TtxPage1));
+		userdefined_pages.add(collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_TtxPage2));
+		userdefined_pages.add(collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_TtxPage3));
+		userdefined_pages.add(collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_TtxPage4));
+		userdefined_pages.add(collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_TtxPage5));
+		userdefined_pages.add(collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_TtxPage6));
+		userdefined_pages.add(collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_TtxPage7));
+		userdefined_pages.add(collection.getSettings().getProperty(Keys.KEY_SubtitlePanel_TtxPage8));
+
+		String page_list = "";
+
+		// read "777,888-890,150" etc
+		// read all pages and expand sparated pages 888,889,890 etc, if exists
+		for (int i = 0, ix = 0; i < userdefined_pages.size(); i++)
+		{
+			page_list = userdefined_pages.get(i).toString();
+
+			ix = page_list.indexOf(",");
+
+			if (ix > 0)  // separated values
+			{
+				StringTokenizer st = new StringTokenizer(page_list, ",");
+
+				userdefined_pages.remove(i);
+
+				while (st.hasMoreTokens())
+					userdefined_pages.add(i, st.nextToken());
+			}
+		}
+
+		// read all pages and expand 888-890 etc, if exists
+		for (int i = 0, ix = 0, firstvalue = 0, lastvalue = 0; i < userdefined_pages.size(); i++)
+		{
+			page_list = userdefined_pages.get(i).toString();
+
+			ix = page_list.indexOf("-");
+
+			if (ix > 0)  // values are in Hex
+			{
+				try {
+
+					firstvalue = Integer.parseInt(page_list.substring(0, ix), 16);
+					lastvalue  = Integer.parseInt(page_list.substring(ix + 1), 16);
+
+					userdefined_pages.remove(i);
+
+					for (int j = lastvalue; j >= firstvalue; j--)
+						userdefined_pages.add(i, Integer.toHexString(j).toUpperCase());
+
+				} catch (Exception e) {
+					Common.setExceptionMessage(e);
+				}
+			}
+		}
+
+
+		for (int pn = 0; pn < userdefined_pages.size(); pn++)
 		{
 			String page = "0";
 
 			if (!DecodeMegaradio)
 			{
-				page = userdefined_pages[pn];
+				page = userdefined_pages.get(pn).toString();
 
 				if (page.equalsIgnoreCase("null")) 
 					continue;
 			}
 			else
-				pn = userdefined_pages.length;
+				pn = userdefined_pages.size();
 
 			String fchild = xInputFile.getName();
 			String fparent = collection.getOutputNameParent(fchild);
