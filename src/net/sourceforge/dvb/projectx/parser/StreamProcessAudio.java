@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParserAudio
  *
- * Copyright (c) 2005-2008 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2009 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -325,6 +325,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 		AudioType = -1;
 
 		int x = 0; 
+		int smpte_offs = 0; 
 
 		int[] video_timeIndex = new int[4];
 
@@ -576,18 +577,20 @@ public class StreamProcessAudio extends StreamProcessBase {
 					 * read following frame header, not if it is the last frame 
 					 * check following frameheader for valid , if not starting with next byte 
 					 */
+					smpte_offs = 0;
+
 					if (getFramePosition() < FileLength - 10)
 					{
-						int d = 0;
+						//int d = 0;
 
 						if (!AllowSpaces)
 						{
 							readInputStream(push24, 0, 24);
 
 							miniloop:
-							for (; d < (is_DTS ? 15 : 17); d++)
+							for (; smpte_offs < (is_DTS ? 15 : 17); smpte_offs++)
 							{ //smpte
-								ERRORCODE = audio.parseNextHeader(push24, d);
+								ERRORCODE = audio.parseNextHeader(push24, smpte_offs);
 
 								if (ERRORCODE > 0) 
 									break miniloop; 
@@ -608,15 +611,20 @@ public class StreamProcessAudio extends StreamProcessBase {
 						{
 							AudioType = is_DTS ? DTS_AUDIOSTREAM : AC3_AUDIOSTREAM;
 
-							skipInputStream(d);
+							// read for unread option when CRC fails
+							readInputStream(push24, 0, smpte_offs); 
 
-							countFramePosition(d);
+							countFramePosition(smpte_offs);
 						}
 					}
 
 					if (ValidateCRC && (ERRORCODE = audio.validateCRC(frame, 2, audio.getSize())) != 0 )
 					{
 						Common.setMessage(Resource.getString("audio.msg.crc.error", "" + ERRORCODE) + " " + getCurrentFramePosition());
+
+						//dont apply smpte pre-read when an error occurs
+						if (smpte_offs > 0)
+							unreadInputStream(push24, 0, smpte_offs);
 
 						unreadInputStream(frame, 2, frame.length - 2);
 
