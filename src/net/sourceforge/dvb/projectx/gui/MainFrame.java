@@ -2681,6 +2681,7 @@ public class MainFrame extends JPanel {
 
 		final Color idle_color = new Color(230, 230, 230);
 		final Color running_color = new Color(245, 215, 215);
+		final Color settings_color = new Color(245, 245, 215);
 
 		/**
 		 *  info field
@@ -2861,7 +2862,15 @@ public class MainFrame extends JPanel {
 				text = str;
 
 				textarea.setText(text);
-				textarea.setBackground(collection != null && collection.isActive() ? running_color : idle_color);
+
+				if (collection != null && collection.isActive())
+					textarea.setBackground(running_color);
+
+				else if (collection != null && collection.hasSettings())
+					textarea.setBackground(settings_color);
+
+				else
+					textarea.setBackground(idle_color);
 			}
 
 			public void stop()

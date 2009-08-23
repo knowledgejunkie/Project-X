@@ -1012,9 +1012,10 @@ public class CutPanel extends JPanel {
 		estimatedSizeField.setMinimumSize(new Dimension(150, 24));
 		panel_3.add(estimatedSizeField);
 
-		JButton play = new JButton(CommonGui.loadIcon("rightarrowstep2x.gif"));
-		play.setPreferredSize(new Dimension(54, 24));
-		play.setMaximumSize(new Dimension(54, 24));
+		JButton play = new JButton(CommonGui.loadIcon("slidestart.gif"));
+		play.setToolTipText("start SlideShow");
+		play.setPreferredSize(new Dimension(27, 24));
+		play.setMaximumSize(new Dimension(27, 24));
 		play.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -1030,6 +1031,19 @@ public class CutPanel extends JPanel {
 		});
 
 		panel_3.add(play);
+
+		JButton stop = new JButton(CommonGui.loadIcon("slidestop.gif"));
+		stop.setToolTipText("stop SlideShow");
+		stop.setPreferredSize(new Dimension(27, 24));
+		stop.setMaximumSize(new Dimension(27, 24));
+		stop.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				slideshow = false;
+			}
+		});
+
+		panel_3.add(stop);
 
 		/**
 		 *
