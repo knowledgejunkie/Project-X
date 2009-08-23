@@ -1599,17 +1599,17 @@ public class StreamParserTS extends StreamParserBase {
 	 */
 	private boolean checkDynamicPMT(int pid)
 	{
-		if (pmt_parser == null || pid != pmt_parser.getPID())
+		//if (pmt_parser == null || pid != pmt_parser.getPID())
 			return false;
 
-	//	int ret = pmt_parser.parsePMT(streambuffer.getData().toByteArray());
+		//int ret = pmt_parser.parsePMT(streambuffer.getData().toByteArray());
 
-//Common.setMessage("AA " + ret);
+		//Common.setMessage("AA " + ret);
 		//TSPidList
 		
 		// edit pid values here, pts reset in demuxers required
 
-		return true;
+		//return true;
 	}
 
 
