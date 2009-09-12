@@ -54,6 +54,7 @@ import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.JSlider;
+import javax.swing.JLabel;
 import javax.swing.JCheckBoxMenuItem;
 
 import net.sourceforge.dvb.projectx.gui.CommonGui;
@@ -79,6 +80,9 @@ public class SubpictureFrame extends JFrame {
 	private int[] color_table = null;
 	private int PreviewFlags = 0;
 
+	private int horizontal_offset = 0;
+	private int vertical_offset = 0;
+
 	/**
 	 *
 	 */
@@ -96,13 +100,15 @@ public class SubpictureFrame extends JFrame {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BorderLayout());
 
+		panel.add(buildSizePanel(), BorderLayout.NORTH);
 		panel.add(picture = new Picture(), BorderLayout.CENTER);
 		panel.add(buildSliderPanel(), BorderLayout.SOUTH);
 
 		getContentPane().add("Center", panel);
 
 		setTitle(title);
-		setBounds(200, 0, 726, 726);
+		//setBounds(200, 0, 726, 726);
+		setBounds(200, 0, 726, 750);
 		setResizable(false);
 
 		UIManager.addPropertyChangeListener(new UISwitchListener(getRootPane()));
@@ -212,6 +218,51 @@ public class SubpictureFrame extends JFrame {
 		fileMenu.add(close);
 
 		return fileMenu;
+	}
+
+	/**
+	 *
+	 */
+	protected JPanel buildSizePanel()
+	{
+		JPanel panel = new JPanel();
+		//panel.setLayout(new BoxLayout());
+
+		final JSlider slider_h = new JSlider();
+		slider_h.setMajorTickSpacing(32);
+		slider_h.setSnapToTicks(true);
+		slider_h.setMaximum(1920);
+		slider_h.setValue(0);
+
+		slider_h.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e)
+			{
+				horizontal_offset = slider_h.getValue();
+				repaintSubpicture();
+			}
+		});
+
+		panel.add(new JLabel("Preview X Offset: "));
+		panel.add(slider_h);
+
+		final JSlider slider_v = new JSlider();
+		slider_v.setMajorTickSpacing(16);
+		slider_v.setSnapToTicks(true);
+		slider_v.setMaximum(1088);
+		slider_v.setValue(0);
+
+		slider_v.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e)
+			{
+				vertical_offset = slider_v.getValue();
+				repaintSubpicture();
+			}
+		});
+
+		panel.add(new JLabel("Preview Y Offset: "));
+		panel.add(slider_v);
+
+		return panel;
 	}
 
 	/**
@@ -415,6 +466,10 @@ public class SubpictureFrame extends JFrame {
 		byte[] array = new byte[length];
 		System.arraycopy(picture_data, pos, array, 0, length);
 
+		PreviewFlags &= 0xFF; //remove subpic preview resolution
+		PreviewFlags |= (0xFFF & picture.getWidth()) << 20; //add horizontal resolution
+		PreviewFlags |= (0xFFF & picture.getHeight()) << 8; //add vertical resolution
+
 		int duration = Common.getSubpictureClass().decode_picture(array, 10, true, new String[2], (PreviewFlags & 1) == 1 ? CommonGui.getPicturePanel().getPreviewImage() : null, PreviewFlags);
 
 		values[2] = new Long(duration / 90);
@@ -436,6 +491,10 @@ public class SubpictureFrame extends JFrame {
 	public class Picture extends JPanel {
 
 		private Font font;
+		private int w = 720;
+		private int h = 576;
+		private Image image;
+
 
 		/**
 		 *
@@ -445,9 +504,11 @@ public class SubpictureFrame extends JFrame {
 			font = new Font("Tahoma", Font.PLAIN, 14);
 
 			setBackground(Color.gray);
-			setPreferredSize(new Dimension(720, 704));
-			setMinimumSize(new Dimension(720, 704));
-			setMaximumSize(new Dimension(720, 704));
+			setPreferredSize(new Dimension(w, 704));
+			setMinimumSize(new Dimension(w, 704));
+			setMaximumSize(new Dimension(w, 704));
+
+			image = Common.getSubpictureClass().getImage();  // link to image, original size
 		}
 
 		/**
@@ -466,10 +527,9 @@ public class SubpictureFrame extends JFrame {
 		 */
 		private void paintPicture(Graphics g)
 		{
-			Image image = Common.getSubpictureClass().getImage();
-
 			if (image != null)
-				g.drawImage(image, 0, 0, this); //unscaled, orig size
+				g.drawImage(image, -horizontal_offset, -vertical_offset, this); //move to fit into preview
+			//	g.drawImage(image, 0, 0, this);  // original
 		}
 
 		/**
@@ -478,11 +538,11 @@ public class SubpictureFrame extends JFrame {
 		private void paintInfoBackground(Graphics g)
 		{
 			g.setColor(Color.black);
-			g.fillRect(0, 576, 720, 140);
+			g.fillRect(0, h, w, 140);
 
 			//divide
 			g.setColor(Color.white);
-			g.fillRect(0, 576, 720, 2);
+			g.fillRect(0, h, w, 2);
 		}
 
 		/**

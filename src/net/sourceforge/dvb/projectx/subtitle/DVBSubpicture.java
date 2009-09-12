@@ -55,7 +55,13 @@ import net.sourceforge.dvb.projectx.subtitle.ColorAreas;                        
 public class DVBSubpicture extends Object {
 
 	private byte data[];
-	private int BytePosition, BitPosition;
+
+	private int width = 1920; //720;
+	private int height = 1088; //576;
+
+	private int BytePosition;
+	private int BitPosition;
+
 	private Graphics2D big;
 	private BufferedImage bimg;
 	private Epoch epoch;
@@ -64,14 +70,16 @@ public class DVBSubpicture extends Object {
 	private CLUT clut;
 	private OBJECT object;
 	private Hashtable epoches = new Hashtable();
+
 	private int table_CLUT_8bit[];
 	private int IRD;
 	private int epoch_id = 0;
 	private boolean biglog;
-	private int pixel_data[], preview_pixel_data[];
+	private int[] pixel_data;
+	private int[] preview_pixel_data;
 	private long pts;
-	private int width = 720, height = 576;
-	private int from_index, to_index;
+	private int from_index;
+	private int to_index;
 	private boolean picture_saved;
 	private boolean save;
 	private boolean preview_visible = false;
@@ -359,7 +367,7 @@ public class DVBSubpicture extends Object {
 
 //Common.setMessage("!> debug Info : px " + page.getX() + " / py " + page.getY() + " / pw " + page.getWidth() + " / ph " + page.getHeight() + " (VN): " + page.getVersionNumber());
 
-		if (page.getWidth() <= 0 || page.getHeight() <= 0 || page.getWidth() > 720 || page.getHeight() > 576)
+		if (page.getWidth() <= 0 || page.getHeight() <= 0 || page.getWidth() > width || page.getHeight() > height)
 		{
 			Common.setMessage("!> Page ignored (VN): " + page.getVersionNumber() + "; (size error) " + page.getWidth() + " * " + page.getHeight());
 			return;
@@ -1276,7 +1284,10 @@ public class DVBSubpicture extends Object {
 		private long time_in = 0;
 		private int time_out = 0;
 		private int state;
-		private int minX = 720, minY = 576, maxX = 0, maxY = 0;
+		private int minX = width;
+		private int minY = height;
+		private int maxX = 0;
+		private int maxY = 0;
 		private int pixel[];
 		private boolean write = false;
 
@@ -1340,7 +1351,7 @@ public class DVBSubpicture extends Object {
 
 		private int[] initPixel()
 		{
-			return (pixel = new int[720 * 576]);
+			return (pixel = new int[width * height]);
 		}
 
 		private int[] getPixel()
@@ -1360,8 +1371,8 @@ public class DVBSubpicture extends Object {
 
 		private void clearArea()
 		{
-			minX = 720;
-			minY = 576;
+			minX = width;
+			minY = height;
 			maxX = maxY = 0;
 		}
 
@@ -1417,8 +1428,8 @@ public class DVBSubpicture extends Object {
 		private boolean fill_flag;
 		private boolean active = false;
 		private boolean changed = false;
-		private int width;
-		private int height;
+		private int r_width;
+		private int r_height;
 		private int x;
 		private int y;
 		private int level_of_compatibility;
@@ -1474,7 +1485,7 @@ public class DVBSubpicture extends Object {
 
 		private int[] initPixel()
 		{
-			return (pixel = new int[width * height]);
+			return (pixel = new int[r_width * r_height]);
 		}
 
 		private int[] getPixel()
@@ -1505,22 +1516,22 @@ public class DVBSubpicture extends Object {
 
 		private void setWidth(int val)  //max 720, if h_address =1
 		{
-			width = val;
+			r_width = val;
 		}
 
 		private int getWidth()
 		{
-			return width;
+			return r_width;
 		}
 
 		private void setHeight(int val) //max 576, if v_address =1
 		{
-			height = val;
+			r_height = val;
 		}
 
 		private int getHeight()
 		{
-			return height;
+			return r_height;
 		}
 
 		private void setLevelOfCompatibility(int val) //1,2,3 = 2,4,8bit supported colors by IRD, X can use all :)

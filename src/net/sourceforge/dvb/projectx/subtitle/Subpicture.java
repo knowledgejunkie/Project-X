@@ -64,8 +64,8 @@ import net.sourceforge.dvb.projectx.parser.CommonParsing;
 
 public class Subpicture extends Object {
 
-	private int w = 720;
-	private int h = 576;
+	private int w = 1920; //720;
+	private int h = 1088; //576;
 	private int x = 20;
 	private int nibble = 0;
 	private int val = 0;
@@ -264,10 +264,9 @@ public class Subpicture extends Object {
 	/**
 	 * 
 	 */
-	public Image getScaledImage(int w, int h)
+	public Image getScaledImage(int scaled_w, int scaled_h)
 	{
-	//	return bimg.getScaledInstance(384, 288, Image.SCALE_FAST);
-		return bimg.getScaledInstance(w, h, Image.SCALE_FAST);
+		return bimg.getScaledInstance(scaled_w, scaled_h, Image.SCALE_FAST);
 	}
 
 	/**
@@ -276,7 +275,7 @@ public class Subpicture extends Object {
 	public void paintPicture(byte[] array, int _width, int _height, int _scansize, int _x, int _y)
 	{
 		big.setColor(Color.gray);
-		big.fillRect(0, 0, 720, 576); 
+		big.fillRect(0, 0, w, h); 
 	//	bimg.setRGB(_x, _y, _width, _height, array, 0, _scansize);
           
 		repaint();
@@ -946,14 +945,14 @@ public class Subpicture extends Object {
 	private int paintVideoSize(Object obj)
 	{
 		String[] str = (String[]) obj;
-		int video_horizontal = 720;
-		int video_vertical = 576;
+		int video_horizontal = w;
+		int video_vertical = h;
 
 		// H
-		video_horizontal = str[0] == null ? 720 : Integer.parseInt(str[0]);
+		video_horizontal = str[0] == null ? video_horizontal : Integer.parseInt(str[0]);
 
 		// V
-		video_vertical = str[1] == null ? 576 : Integer.parseInt(str[1]);
+		video_vertical = str[1] == null ? video_vertical : Integer.parseInt(str[1]);
 
 		//deep red background to verify picture rectangle with given video resolution
 		big.setColor(new Color(0xFF550000));
@@ -1408,22 +1407,28 @@ public class Subpicture extends Object {
 
 		paintVideoSize(obj);
 
-		//paint picture a background, fixed size
+		//paint picture at background, fixed size
 		if (previewImage != null)
 		{
 			int aro = Common.getMpvDecoderClass().getMpg2AspectRatioOffset();
 
 			big.setColor(new Color(0xFF505050));
-			big.fillRect(0, 0, 720, 576); 
+			big.fillRect(0, 0, w, h); 
+
+			int pic_preview_width = 0xFFF & previewflags >> 20;
+			int pic_preview_height = 0xFFF & previewflags >> 8;
 
 			if (aro != 0) //4:3 portion of widescreen preview
-				big.drawImage(previewImage, 0, 0, 720, 576, 64, 0, 448, 288, null);
+				big.drawImage(previewImage, 0, 0, pic_preview_width, pic_preview_height, 64, 0, 448, 288, null);
 
 			else if ((previewflags & 2) != 0) // letterbox of widescreen
-				big.drawImage(previewImage, 0, 72, 720, 432, null);
+			{
+				int blackborder = (pic_preview_height - ((pic_preview_height * 3) / 4)) / 2;
+				big.drawImage(previewImage, 0, blackborder, pic_preview_width, (pic_preview_height * 3) / 4, null);
+			}
 
 			else   // anamorph widescreen
-				big.drawImage(previewImage, 0, 0, 720, 576, null);
+				big.drawImage(previewImage, 0, 0, pic_preview_width, pic_preview_height, null);
 
 		}
 

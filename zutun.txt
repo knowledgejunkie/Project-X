@@ -425,6 +425,8 @@
 
 0.90.4.00b32:
 --pulldown patch #2 by vq (separate field encoding not yet supported)
+--1st try HD sub decoding/conversion
+
 
 
 

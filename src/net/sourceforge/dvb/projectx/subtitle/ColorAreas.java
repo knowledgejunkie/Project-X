@@ -445,15 +445,24 @@ if (dbgSub(3)) System.out.println("init grads /"                                
 	private class Area {                                                                         //S9
 		public int I;                                                                            //S9
 
-		public int trow()   { return (I & 0x0FF00000) >>>20; }           // text row max  255    //S9 20080102
-		public int start()  { return (I & 0x000FFC00) >>>10; }           // 1st x    max 1023    //S9 20080102
+		//public int trow()   { return (I & 0x0FF00000) >>>20; }           // text row max  255    //S9 20080102
+		//public int start()  { return (I & 0x000FFC00) >>>10; }           // 1st x    max 1023    //S9 20080102
+		//public int bgrnd()  { return (I & 0x00000300) >>> 8; }           // 'b'alfa  max    3    //S9 20080102
+		//public int clstr()  { return (I & 0x000000FF)      ; }           // clstr #  max  255    //S9 20080102
+		//public int trow(int t)  { I = I & 0xF00FFFFF | (t & 0xFF) <<20; return trow();  }        //S9 20080102
+		//public int start(int s) { I = I & 0xFFF003FF | (s & 0x7FF)<<10; return start(); }        //S9 20080102
+		//public int bgrnd(int b) { I = I & 0xFFFFFCFF | (b & 0x3)  << 8; return bgrnd(); }        //S9 20080102
+		//public int clstr(int c) { I = I & 0xFFFFFF00 | (c & 0xFF)     ; return clstr(); }        //S9 20080102
+//new for HD
+		public int trow()   { return (I & 0x1FE00000) >>>21; }           // text row max  255    //S9 20080102
+		public int start()  { return (I & 0x001FFC00) >>>10; }           // 1st x    max 1023    //S9 20080102
 		public int bgrnd()  { return (I & 0x00000300) >>> 8; }           // 'b'alfa  max    3    //S9 20080102
 		public int clstr()  { return (I & 0x000000FF)      ; }           // clstr #  max  255    //S9 20080102
-		public int trow(int t)  { I = I & 0xF00FFFFF | (t & 0xFF) <<20; return trow();  }        //S9 20080102
-		public int start(int s) { I = I & 0xFFF003FF | (s & 0x7FF)<<10; return start(); }        //S9 20080102
+		public int trow(int t)  { I = I & 0xE01FFFFF | (t & 0xFF) <<21; return trow();  }        //S9 20080102
+		public int start(int s) { I = I & 0xFFE003FF | (s & 0x7FF)<<10; return start(); }        //S9 20080102
 		public int bgrnd(int b) { I = I & 0xFFFFFCFF | (b & 0x3)  << 8; return bgrnd(); }        //S9 20080102
 		public int clstr(int c) { I = I & 0xFFFFFF00 | (c & 0xFF)     ; return clstr(); }        //S9 20080102
-		
+//	
 		public int tfirst() { return start(); }     //index - alist[tfirst] starts trow entries  //S9 20080106    
 		public int tlimit() { return clstr(); }     //index - alist[tlimit] limits trow entries  //S9 20080106    
 		public int tfirst(int s)  { return start(s); }  //index - set start of trow entries      //S9 20080106    
@@ -679,10 +688,19 @@ if (dbgSub(4)) System.out.println("quant return"+d(3,index)+"/ARGB "+X(8,ARGB)
 		//so exact divisibility by eight is a test for presence of four rows (etc.)              //S9t20090102
 		//multiple solutions < 210 for mod 4, 6, and 8 are  at 96,144,160,180,192,200            //S9t20090102
 		//test sequence chosen to prefer 3 rows then 4 then 2, always provided rh >=32           //S9t20090102
-		if (h>= 91 && (h/6)*6==h) textrows = 3; else   //only give 3 if rh >=32 (etc.)           //S9t20090102
-		if (h>=121 && (h/8)*8==h) textrows = 4; else   //smallest rows ever seen were 32         //S9t20090102
-		if (h>= 61 && (h/4)*4==h) textrows = 2; else   //...this code fails for rh<=30,          //S9t20090102
+	//	if (h>= 91 && (h/6)*6==h) textrows = 3; else   //only give 3 if rh >=32 (etc.)           //S9t20090102
+	//	if (h>=121 && (h/8)*8==h) textrows = 4; else   //smallest rows ever seen were 32         //S9t20090102
+	//	if (h>= 61 && (h/4)*4==h) textrows = 2; else   //...this code fails for rh<=30,          //S9t20090102
+	//		                         textrows = 1;     //...and note 144->3x48 not 4x36          //S9t20090102
+// new for HD
+		boolean hd = w > 720;   // check bmp width (not valid for small subs in HD), row height in HD is about 48 px
+
+		if (h>= (hd ? 139 : 91)  && (h/6)*6==h) textrows = 3; else   //only give 3 if rh >=32 (etc.)           //S9t20090102
+		if (h>= (hd ? 185 : 121) && (h/8)*8==h) textrows = 4; else   //smallest rows ever seen were 32         //S9t20090102
+		if (h>= (hd ? 93 : 61)   && (h/4)*4==h) textrows = 2; else   //...this code fails for rh<=30,          //S9t20090102
 			                         textrows = 1;     //...and note 144->3x48 not 4x36          //S9t20090102
+//
+
 		int rh = h/textrows;                           //geometric height of a text row          //S9t20090102
 
 		/*----------look for text by counting edges along lines---------*/                       //S9t20090102
