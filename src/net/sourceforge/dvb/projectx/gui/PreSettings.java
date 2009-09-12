@@ -1414,7 +1414,8 @@ public class PreSettings extends JFrame {
 
 		String[][] objects = {
 			Keys.KEY_dumpDroppedGop,
-			Keys.KEY_additionalInputBuffer
+			Keys.KEY_additionalInputBuffer,
+			Keys.KEY_SubtitlePanel_enableHDSub
 		};
 
 		JCheckBox[] box = new JCheckBox[objects.length];
@@ -1513,6 +1514,12 @@ public class PreSettings extends JFrame {
 			op2.add(label);
 			op2.add(combobox);
 		}
+
+		op2.add(Box.createRigidArea(new Dimension(1, 6)));
+
+		op2.add(box[2]);
+		op2.add(new JLabel("takes more JavaVM memory!"));
+		op2.add(new JLabel("requires a restart of ProjectX"));
 
 		option.add(op2);
 

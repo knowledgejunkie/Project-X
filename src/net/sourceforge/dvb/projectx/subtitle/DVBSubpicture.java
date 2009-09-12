@@ -56,8 +56,8 @@ public class DVBSubpicture extends Object {
 
 	private byte data[];
 
-	private int width = 1920; //720;
-	private int height = 1088; //576;
+	private int width = Common.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_enableHDSub) ? 1920 : 720;
+	private int height = Common.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_enableHDSub) ? 1088 : 576;
 
 	private int BytePosition;
 	private int BitPosition;

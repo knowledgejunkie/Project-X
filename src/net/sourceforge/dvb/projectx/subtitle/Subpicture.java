@@ -64,8 +64,8 @@ import net.sourceforge.dvb.projectx.parser.CommonParsing;
 
 public class Subpicture extends Object {
 
-	private int w = 1920; //720;
-	private int h = 1088; //576;
+	private int w = Common.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_enableHDSub) ? 1920 : 720;
+	private int h = Common.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_enableHDSub) ? 1088 : 576;
 	private int x = 20;
 	private int nibble = 0;
 	private int val = 0;

@@ -493,8 +493,6 @@ public class SubpictureFrame extends JFrame {
 		private Font font;
 		private int w = 720;
 		private int h = 576;
-		private Image image;
-
 
 		/**
 		 *
@@ -507,8 +505,6 @@ public class SubpictureFrame extends JFrame {
 			setPreferredSize(new Dimension(w, 704));
 			setMinimumSize(new Dimension(w, 704));
 			setMaximumSize(new Dimension(w, 704));
-
-			image = Common.getSubpictureClass().getImage();  // link to image, original size
 		}
 
 		/**
@@ -527,6 +523,8 @@ public class SubpictureFrame extends JFrame {
 		 */
 		private void paintPicture(Graphics g)
 		{
+			Image image = Common.getSubpictureClass().getImage();  // link to image, original size
+
 			if (image != null)
 				g.drawImage(image, -horizontal_offset, -vertical_offset, this); //move to fit into preview
 			//	g.drawImage(image, 0, 0, this);  // original

@@ -283,6 +283,8 @@ public class Keys extends Object {
 	public final static String[] KEY_SubtitlePanel_TtxExportBoxedOnly = { "SubtitlePanel.TtxExportBoxedOnly", "0" };
 	public final static String[] KEY_SubtitlePanel_useTextAlignment = { "SubtitlePanel.useTextAlignment", "0" };
 
+	public final static String[] KEY_SubtitlePanel_enableHDSub = { "SubtitlePanel.enableHDSub", "0" };
+
 	public static Object[] ITEMS_TtxLanguagePair = { 
 		"auto", "basic latin", "polish", "turkish", "cro,slo,rum", "est,lit,rus",
 		"res.",	"greek,latin", 	"res.", "arabic,latin", "res.", "hebrew,arabic"
