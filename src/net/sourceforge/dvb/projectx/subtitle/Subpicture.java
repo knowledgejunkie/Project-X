@@ -26,7 +26,7 @@
 
 /*
  * thanx to Samuel Hocevar for his very helpful annotations of DVD subtitle RLE stuff
- * http://www.via.ecp.fr/~sam/doc/dvd/
+ * http://sam.zoy.org/writings/dvd/subtitles/
  */
 /*
  * multicolor subtitling patch (UK Freeview) by Duncan (Shannock9) UK
@@ -1485,11 +1485,14 @@ public class Subpicture extends Object {
 				else if ((Val = Val<<4 | Get_Bits(packet, BPos, 4)) > 0x3F) //40..FF
 					x1 = paintPixel(Val, x1, y1, colcon_indices, color_table, x0, y0, width, previewflags);
 
-				else if ((Val = Val<<4 | Get_Bits(packet, BPos, 4)) > 0) //100..3FF
+				else if ((Val = Val<<4 | Get_Bits(packet, BPos, 4)) > 0xF) //100..3FF
 					x1 = paintPixel(Val, x1, y1, colcon_indices, color_table, x0, y0, width, previewflags);
 
 				else  // 0 forced carriage return
 				{
+					if ((Val & 0xF) != 0)
+						x1 = paintPixel(Val, x1, y1, colcon_indices, color_table, x0, y0, width, previewflags);
+
 					x1 = x0;
 					y1 += 2;
 					align_Bits(BPos);
