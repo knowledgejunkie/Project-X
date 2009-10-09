@@ -1485,13 +1485,16 @@ public class Subpicture extends Object {
 				else if ((Val = Val<<4 | Get_Bits(packet, BPos, 4)) > 0x3F) //40..FF
 					x1 = paintPixel(Val, x1, y1, colcon_indices, color_table, x0, y0, width, previewflags);
 
-				else if ((Val = Val<<4 | Get_Bits(packet, BPos, 4)) > 0xF) //100..3FF
+				else if ((Val = Val<<4 | Get_Bits(packet, BPos, 4)) > 3) //100..3FF
 					x1 = paintPixel(Val, x1, y1, colcon_indices, color_table, x0, y0, width, previewflags);
 
 				else  // 0 forced carriage return
 				{
-					if ((Val & 0xF) != 0)
+					if ((Val & 3) != 0)
+					{
+						Val |= (width - x1)<<2;
 						x1 = paintPixel(Val, x1, y1, colcon_indices, color_table, x0, y0, width, previewflags);
+					}
 
 					x1 = x0;
 					y1 += 2;
