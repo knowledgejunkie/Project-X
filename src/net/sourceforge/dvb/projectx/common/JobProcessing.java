@@ -1013,6 +1013,9 @@ public class JobProcessing extends Object {
 		String str = "";
 		String str1 = "";
 
+		if (AudioStreamInfo == null)
+			return str;
+
 		for (int i = 0, j = 0, k = 0; i < AudioStreamInfo.length; i++)
 		{
 			str1 = AudioStreamInfo[i].toString();
