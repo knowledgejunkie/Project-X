@@ -584,8 +584,9 @@ public class Subpicture extends Object {
 						// std: adds l-bit to active color
 					}
 
-					l -= 1; // ??? when last pixel is length = 1 then it will be 0 and missing ?
-					
+					// when last pixel is length = 1 then it will be 0 and missing ?
+					// see CR 
+					//l -= 1; 
 
 					while ( l > 255 )  // never used ?!
 					{ 
@@ -595,7 +596,9 @@ public class Subpicture extends Object {
 
 					updateRLE(l, color_index);   // write last RLE nibbles, line end
 					alignRLE();
-					out.write(newline);  // new line CR, byte aligned
+
+					if (b < bitmap.getWidth()) //fix, add CR only when less pixel have been painted 
+						out.write(newline);  // new line CR, byte aligned
 				}
 
 				alignRLE();
@@ -1502,14 +1505,13 @@ public class Subpicture extends Object {
 					continue;
 				}
 
-			/**
-				if (x1 >= position[1]) // line end, carriage return
+				// line end, carriage return
+				if (x1 > position[1])
 				{
-					x1=position[0];
-					y1+=2;
+					x1 = position[0];
+					y1 += 2;
 					align_Bits(BPos);
 				}
-			**/
 			}
 		}
 
@@ -1553,6 +1555,11 @@ public class Subpicture extends Object {
 		for (int j = x1 + line_length, color, lastcolor = 0; x1 < j; x1++)
 		{
 			array_index = (y1 - y0) * width + x1 - x0;
+
+			//error condition
+			if (array_index >= colcon_indices.length)
+				break;
+
 			contrast_index = 0xF & colcon_indices[array_index]>>(16 + table_index * 4);
 			color_index = 0xF & colcon_indices[array_index]>>(table_index * 4); 
 
