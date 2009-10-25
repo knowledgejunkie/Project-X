@@ -584,7 +584,7 @@ public class Subpicture extends Object {
 						// std: adds l-bit to active color
 					}
 
-					//l -= 1; // ??? when last pixel is length = 1 then it will be 0 and missing ?
+					l -= 1; // ??? when last pixel is length = 1 then it will be 0 and missing ?
 					
 
 					while ( l > 255 )  // never used ?!
