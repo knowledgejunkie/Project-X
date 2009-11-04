@@ -1243,7 +1243,11 @@ if (dbgSub(4)) dumpquants("QHLI by quant+lum+alfa ");                           
 		    if (t5 != t4)                           //first shade of new cluster                 //S9
 		    {                                                                                    //S9
 				t3 = qCounts[t5];                   //count of shades in this cluster            //S9
-				t3 = clut_maps[t3];                 //BP12 map for that # of shades              //S9
+
+			//	t3 = clut_maps[t3];                 //BP12 map for that # of shades              //S9
+				//prevents exception caused by signs without shades, due to errorsfrom paintng
+				t3 = t3 >= clut_maps.length ? clut_maps[clut_maps.length-1] : clut_maps[t3];                 //BP12 map for that # of shades              //S9
+
 				t2 = -1;                            //prepare the BP12 generator Igor!           //S9
 			    t4 = t5;                            //same map till next cluster                 //S9
 			}                                                                                    //S9
