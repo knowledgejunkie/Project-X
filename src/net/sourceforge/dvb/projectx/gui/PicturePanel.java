@@ -770,7 +770,7 @@ public class PicturePanel extends JPanel {
 			g.setColor(Color.white);
 			g.fill3DRect(150, 120, 200, 20, true);
 			g.setColor(Color.red);
-			g.drawString("error while decoding frame", 160, 133);
+			g.drawString("picture decoding not possible", 160, 133);
 		}
 
 		if ((ErrorFlag & 4) != 0) {

@@ -551,6 +551,37 @@ public class CommonParsing extends Object {
 		return -3;
 	}
 
+
+	/**
+	 * check startcode
+	 * return int of skip'able data (negative)
+	 */
+	public static int validateMp4Startcode(byte[] pes_packet, int offset)
+	{
+		if (pes_packet[3 + offset] == 1)
+		{
+			if (pes_packet[2 + offset] == 0)
+				if (pes_packet[1 + offset] == 0)
+					if (pes_packet[offset] == 0)
+						return 0;
+		}
+
+		else if (pes_packet[3 + offset] == 0)
+		{
+			if (pes_packet[2 + offset] == 0)
+			{
+				if (pes_packet[1 + offset] == 0)
+					return -1;
+				else
+					return -2;
+			}
+			else
+				return -3;
+		}
+
+		return -4;
+	}
+
 	/**
 	 * skip leading bytes before first valid startcodes and return fixed array
 	 */
@@ -892,7 +923,7 @@ public class CommonParsing extends Object {
 	public static void setVideoHeader(JobProcessing job_processing, String videofile, String logfile, int[] clv, int[] MPGVideotype)
 	{
 		long time = 0;
-		String videotype[] = { "(m1v)", "(m2v)" };
+		String videotype[] = { "(m1v)", "(m2v)", "(h264)" };
 
 		String frames_used[] = { 
 			Resource.getString("video.msg.io.non"), 
@@ -913,6 +944,12 @@ public class CommonParsing extends Object {
 				Common.setMessage(Resource.getString("video.error.pts.same", "" + clv[8]));
 
 			job_processing.getSummaryInfo().add(Resource.getString("video.summary", videotype[MPGVideotype[0]], "" + job_processing.getExportedVideoFrameNumber(), "" + vt) + "'" + videofile + "'");
+		}
+
+		if (MPGVideotype[0] > 1) // h264 without modif.
+		{
+			Common.setMessage(Resource.getString("msg.newfile") + " " + videofile);
+			return;
 		}
 
 		try {

@@ -147,6 +147,7 @@ public class Keys extends Object {
 	public final static String[] KEY_holdStreamInfoOnOSD = { "OptionPanel.holdStreamInfoOnOSD", "0" };
 	public final static String[] KEY_OptionPanelIndex = { "OptionPanel.PanelIndex", "0" };
 	public final static String[] KEY_additionalInputBuffer = { "OptionPanel.additionalInputBuffer", "0" }; //test
+	public final static String[] KEY_enableHDDemux = { "OptionPanel.enableHDDemux", "0" };
 
 	/**
 	 * SpecialPanel

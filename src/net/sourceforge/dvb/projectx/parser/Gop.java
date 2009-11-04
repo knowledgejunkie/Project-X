@@ -335,6 +335,9 @@ public class Gop extends Object {
 
 		String ct = Common.formatTime_1((long)(job_processing.getExportedVideoFrameNumber() * (double)(CommonParsing.getVideoFramerate() / 90.0f)));
 		String nv = "";
+
+		String[] MPGVideoType_Str = { "MPEG-1", "MPEG-2", "MPEG-4/H.264" };
+
 		String[] aspratio = {"res.","1.000 (1:1)","0.6735 (4:3)","0.7031 (16:9)","0.7615 (2.21:1)","0.8055","0.8437","0.9375","0.9815","1.0255","1.0695","1.1250","1.1575","1.2015","res." };
 		String[] fps_tabl1 = {"forbidden fps","23.976fps","24fps","25fps","29.97fps","30fps","50fps","59.94fps","60fps","n.def.","n.def.","n.def.","n.def.","n.def.","n.def.","n.def."};
 
@@ -499,7 +502,7 @@ public class Gop extends Object {
 
 				if (job_processing.isNewVideoStream() || job_processing.getExportedVideoFrameNumber() == 0)
 				{
-					nv = Resource.getString("video.msg.basics", "" + vbasics[0] + "*" + vbasics[1] + " @ " + vbasics[2] + " @ " + vbasics[3] + " @ " + ( ((255&gop[s+8])<<10 | (255&gop[s+9])<<2 | (192 & gop[s+10])>>>6)*400  )) + " " + ( (31&gop[s+10])<<5 | (248&gop[s+11])>>>3 );
+					nv = Resource.getString("video.msg.basics") + " " + vbasics[0] + "*" + vbasics[1] + " @ " + vbasics[2] + " @ " + vbasics[3] + " @ " + ( ((255&gop[s+8])<<10 | (255&gop[s+9])<<2 | (192 & gop[s+10])>>>6)*400  ) + " bps - vbv " + ( (31&gop[s+10])<<5 | (248&gop[s+11])>>>3 );
 
 					infos.add(nv);
 
@@ -520,7 +523,7 @@ public class Gop extends Object {
 
 				if (!Arrays.equals(VBASIC, vbasics))
 				{
-					String str = Resource.getString("video.msg.basics", vbasics[0] + "*" + vbasics[1] + " @ " + vbasics[2] + " @ " + vbasics[3] + " @ " + ( ((255&gop[s+8])<<10 | (255&gop[s+9])<<2 | (192 & gop[s+10])>>>6)*400  )) + " " + ( (31&gop[s+10])<<5 | (248&gop[s+11])>>>3 );
+					String str = Resource.getString("video.msg.basics") + " " + vbasics[0] + "*" + vbasics[1] + " @ " + vbasics[2] + " @ " + vbasics[3] + " @ " + ( ((255&gop[s+8])<<10 | (255&gop[s+9])<<2 | (192 & gop[s+10])>>>6)*400  ) + " bps - vbv " + ( (31&gop[s+10])<<5 | (248&gop[s+11])>>>3 );
 
 					Common.setMessage("-> " + Resource.getString("video.msg.newformat", "" + clv[6]) + " (" + ct + ")");
 					Common.setMessage(str);
@@ -1449,4 +1452,570 @@ public class Gop extends Object {
 		}
 	}
 
+
+	/**
+	 * gop h264 testing
+	 */
+	public void h264test(JobProcessing job_processing, IDDBufferedOutputStream video_sequence, byte[] gop, byte[] pts, DataOutputStream log, String dumpname, int[] MPGVideotype, List CutpointList, List ChapterpointList)
+	{
+		MPGVideotype[0] = 2; //h264
+
+		String[] MPGVideoType_Str = { "MPEG-1", "MPEG-2", "MPEG-4/H.264" };
+		ByteArrayOutputStream frametypebuffer = new ByteArrayOutputStream();
+
+		boolean doExport = false;
+		int[] clv = job_processing.getStatusVariables();
+		int ErrorCode = 0;
+		long lastpts = job_processing.getEndPtsOfGop() == -10000 ? -20000 : job_processing.getEndPtsOfGop();
+		long startpts = lastpts;
+		long videotimes = job_processing.getVideoExportTime();
+		int lastframes = job_processing.getExportedVideoFrameNumber();
+		long cutposition = 0;
+		boolean format_changed = false;
+
+		List newcut = new ArrayList(); // unused
+		List infos = new ArrayList();
+
+
+		long[][] vpts = new long[2][pts.length / 16];
+
+		for (int i = 0; i < (pts.length / 16); i++)
+		{
+			for (int j = 0; j < 8; j++)
+			{
+				vpts[0][i] |= (0xFFL & pts[(i * 16) + j])<<((7 - j) * 8);
+				vpts[1][i] |= (0xFFL & pts[(i * 16) + 8 + j])<<((7 - j) * 8);
+			}
+		}
+
+		if (Debug)
+		{
+			System.out.println("\ngop" + clv[6] + "/tc_o53 " + job_processing.getLastGopTimecode() + "/lp_o54 " + job_processing.getLastGopPts() + "/lp_o8 " + job_processing.getEndPtsOfGop() + "/lp_o40 " + job_processing.getLastSimplifiedPts());
+
+			for (int i = 0; i < vpts[0].length; i++)
+				System.out.println("p" + i + " " + vpts[0][i] + "/ " + vpts[1][i]);
+		}
+
+		// no analysis ATM !, must be error-free
+
+		// sort pts - 
+		long[] pts_list = new long[vpts[0].length];
+		for (int i = 0; i < pts_list.length; i++)
+			pts_list[i] = vpts[0][i];
+
+		Arrays.sort(pts_list);
+		startpts = pts_list[0];
+		lastpts = pts_list[pts_list.length - 1] + (pts_list[pts_list.length - 1] - pts_list[pts_list.length - 2]);
+
+		int frames = 0;
+		int primary_pic_type = 0;
+
+		boolean accessunit = false;
+
+		String[] VBASIC = job_processing.getStatusStrings();
+		String[] vbasics = new String[5];
+
+
+		try {
+
+			// gop read
+			goploop:
+			for (int s = 0, returncode, unit_type, unit_ref; s < gop.length - 10; s++ )
+			{
+				if ((returncode = CommonParsing.validateMp4Startcode(gop, s)) < 0)
+				{
+					s += (-returncode) - 1;
+
+					continue goploop;
+				}
+
+				if ((unit_type = gop[s + 4]) < 0) // is forb_zero set ?
+					continue goploop;
+				else
+					unit_type &= 0x1F;
+
+				unit_ref  = 3 & gop[s + 4]>>5;
+
+				if (Debug)
+					System.out.println("U " + s + " / " + (7 & gop[s+5]>>5) + " /ref " + unit_ref + " /typ " + unit_type);
+
+				switch (unit_type)
+				{
+				case 1: //nonIDR
+				case 5: //IDR
+					if (accessunit)
+					{
+						frames++;
+						frametypebuffer.write((byte)(0x80 | (primary_pic_type + 1)));
+						accessunit = false;
+					}
+					break;
+
+				case 2: //slice p A
+				case 3: //slice p B
+				case 4: //slice p C
+					break;
+
+				case 6: //SEI
+					break;
+
+				case 7: //sequ set
+					readH264SequenceParameterSet(gop, s, vbasics);
+
+					frametypebuffer.write((byte)0x88);
+					CommonParsing.setVideoFramerate(90000.0 / Double.parseDouble((vbasics[2].substring(0, vbasics[2].indexOf(" ", 2))).trim()));  // framerateconstant
+
+					if (job_processing.isNewVideoStream() || job_processing.getExportedVideoFrameNumber() == 0)
+					{
+						infos.add(Resource.getString("video.msg.basics") + " " + MPGVideoType_Str[MPGVideotype[0]] + " " + vbasics[4] + ", " + vbasics[0] + "*" + vbasics[1] + ", " + vbasics[2] + " @ " + vbasics[3]);
+
+						// no frames written 'til now
+						if (job_processing.getExportedVideoFrameNumber() > 0)
+							format_changed = true;
+
+						System.arraycopy(vbasics, 0, VBASIC, 0, VBASIC.length);
+					}
+
+					if (!Arrays.equals(VBASIC, vbasics))
+					{
+						String str = Resource.getString("video.msg.basics") + " MPEG-4/H.264, " + vbasics[4] + ", " + vbasics[0] + "*" + vbasics[1] + ", " + vbasics[2] + " @ " + vbasics[3];
+
+						Common.setMessage("-> " + Resource.getString("video.msg.newformat", "" + clv[6]));
+						Common.setMessage(str);
+
+						format_changed = true;
+
+						System.arraycopy(vbasics, 0, VBASIC, 0, VBASIC.length);
+					}
+
+					break;
+
+				case 8: //pict set
+					break;
+
+				case 9: //access  
+					accessunit = true;
+					primary_pic_type = (7 & gop[s + 5]>>5); //XXX0-0000  0 to 7 prim pic type p.73
+					break;
+
+				case 10: //seq end
+				case 11: //stream end
+				case 12: //fill
+					break;
+				}
+
+			}
+
+			// how to cut 
+			switch (CutMode)
+			{
+			case CommonParsing.CUTMODE_BYTE:
+				cutposition = job_processing.getCutByteposition();
+				break;
+
+			case CommonParsing.CUTMODE_GOP:
+				cutposition = clv[6];
+				break;
+
+			case CommonParsing.CUTMODE_FRAME:
+				cutposition = job_processing.getSourceVideoFrameNumber();
+				break;
+
+			case CommonParsing.CUTMODE_PTS:
+				cutposition = startpts + 1000; //exclude jitter
+				break;
+
+			case CommonParsing.CUTMODE_TIME:
+				cutposition = startpts - job_processing.get1stVideoPTS(); 
+			}
+
+			// cut using bytepos, frame#, gop#, timecode or pts
+			if (!CommonParsing.makecut(job_processing, dumpname, startpts, cutposition, newcut, lastframes, CutpointList, clv[6] - 1, job_processing.getCellTimes()))
+				job_processing.setExportedVideoFrameNumber(lastframes);
+
+			// DAR request for auto cut  
+			else if (OptionDAR && ExportDAR != clv[7]) 
+				job_processing.setExportedVideoFrameNumber(lastframes);
+
+			// H Resolution request for auto cut  
+			else if (OptionHorizontalResolution && !ExportHorizontalResolution.equals(VBASIC[0]))
+				job_processing.setExportedVideoFrameNumber(lastframes);
+
+			//else if (!doWrite)
+			//{}
+
+			else
+			{
+				// print cached messages
+				for (int i = 0; i < infos.size(); i++)
+				{
+					Common.setMessage(infos.get(i).toString());
+					job_processing.setNewVideoStream(false);
+				}
+
+				// if write is enabled, write gop
+				if (WriteVideo)
+				{ 
+					// value for gop bitrate per second  
+					double svbr = CommonParsing.getVideoFramerate() * frames;
+
+					if (svbr <= 0) 
+						svbr = CommonParsing.getVideoFramerate() * 10;
+
+					int vbr =  (int)( ( (90000L * (gop.length * 8)) / svbr ) / 400);
+
+					frametypebuffer.flush();
+					Common.getGuiInterface().updateBitrateMonitor(vbr, frametypebuffer.toByteArray(), Common.formatTime_1((job_processing.getVideoExportTimeSummary() + job_processing.getVideoExportTime()) / 90).substring(0, 8));
+
+					video_sequence.write(gop);
+					clv[6]++; //GOP count
+					clv[3]++; //unchanged GOP count
+
+					job_processing.countExportedVideoFrameNumber(frames);
+
+					job_processing.setEndPtsOfGop(lastpts);
+
+					// write V-PTS Log for audio/data sync
+					log.writeLong(startpts);
+					log.writeLong(job_processing.getEndPtsOfGop());
+
+					// write V-Time Log for audio/data sync
+					log.writeLong(videotimes);
+					job_processing.countVideoExportTime(lastpts-startpts);
+					log.writeLong(job_processing.getVideoExportTime());
+
+					job_processing.countMediaFilesExportLength(gop.length);
+
+					job_processing.countAllMediaFilesExportLength(gop.length);
+
+					doExport = true; // no cut ATM
+
+					Common.getGuiInterface().showExportStatus(doExport ? Resource.getString("audio.status.write") : Resource.getString("audio.status.pause"));
+				}
+			}
+
+			infos.clear();
+
+
+		} catch (IOException e) {
+
+			Common.setExceptionMessage(e);
+		}
+	}
+
+	/**
+	 * H264 SequenceParameterSet
+	 */
+	private boolean readH264SequenceParameterSet(byte[] array, int offset, String[] vbasics)
+	{ 
+		byte[] check = new byte[100];
+
+		int[] BitPosition = { 0 };
+		BitPosition[0] = (4 + offset)<<3;
+
+		int zero = getBits(array, BitPosition, 1); //forb_zero = 0x80 & check[4 + i];
+		int nal_ref = getBits(array, BitPosition, 2); //nal_ref  = (0xE0 & check[4 + i])>>>5;
+		int nal_unit = getBits(array, BitPosition, 5); //nal_unit = 0x1F & check[4 + i];
+
+		if (zero != 0 || nal_unit != 7)
+			return false;
+
+		//emulation prevention
+		for (int m = 5 + offset, rbsp = 0; rbsp < 100 - 3; m++)
+		{
+			if (array[m] == 0 && array[m + 1] == 0 && array[m + 2] == 3)
+			{
+				rbsp += 2; //2 bytes value 0
+				m += 2; //emulation_prevention_three_byte /* equal to 0x03 */
+			}
+			else
+				check[rbsp++] = array[m];
+		}
+
+		//reset for check
+		BitPosition[0] = 0;
+
+		//seq_param
+		int profile_idc = getBits(check, BitPosition, 8); //profile = 0xFF & check[5 + i];
+		getBits(check, BitPosition, 4); //constraint 0,1,2,3
+		zero = getBits(check, BitPosition, 4); //4 res_zero_bits
+
+		if (zero != 0)
+			return false;
+
+		int level_idc = getBits(check, BitPosition, 8); //0xFF & check[7 + i];
+		int flag = getCodeNum(check, BitPosition); // seq_parameter_set_id 0 ue(v)
+
+		if (profile_idc == 100 || profile_idc == 110 || profile_idc == 122 || profile_idc == 44 || profile_idc == 244)
+		{
+			int chroma_format_idc = getCodeNum(check, BitPosition); //chroma_format_idc 0 ue(v)
+
+			if (chroma_format_idc == 3)
+				getBits(check, BitPosition, 1); //separate_colour_plane_flag 0 u(1)
+
+			getCodeNum(check, BitPosition); //bit_depth_luma_minus8 0 ue(v)
+			getCodeNum(check, BitPosition); //bit_depth_chroma_minus8 0 ue(v)
+
+			getBits(check, BitPosition, 1); //qpprime_y_zero_transform_bypass_flag 0 u(1)
+			flag = getBits(check, BitPosition, 1); //seq_scaling_matrix_present_flag 0 u(1)
+
+			if (flag == 1)
+			{
+				for (int i = 0; i < ((chroma_format_idc != 3) ? 8 : 12); i++)
+				{
+					//seq_scaling_list_present_flag[ i ] 0 u(1)
+
+					if (getBits(check, BitPosition, 1) == 1)
+						if (i < 6)
+							scaling_list(check, BitPosition, null, 16, null); //scaling_list( ScalingList4x4[ i ], 16,
+							//UseDefaultScalingMatrix4x4Flag[ i ])
+						else
+							scaling_list(check, BitPosition, null, 64, null); //scaling_list( ScalingList8x8[ i – 6 ], 64,
+							//UseDefaultScalingMatrix8x8Flag[ i – 6 ] )
+				}
+			}
+		}
+
+		flag = getCodeNum(check, BitPosition); // log2_max_frame_num_minus4 0 ue(v)
+		flag = getCodeNum(check, BitPosition); // pic_order_cnt_type 0 ue(v)
+
+		if (flag == 0)
+			getCodeNum(check, BitPosition); // log2_max_pic_order_cnt_lsb_minus4 0 ue(v)
+
+		else if (flag == 1)
+		{
+			getBits(check, BitPosition, 1); //delta_pic_order_always_zero_flag 0 u(1)
+			getSignedCodeNum(check, BitPosition); //offset_for_non_ref_pic 0 se(v)
+			getSignedCodeNum(check, BitPosition); //offset_for_top_to_bottom_field 0 se(v)
+			flag = getCodeNum(check, BitPosition); // num_ref_frames_in_pic_order_cnt_cycle 0 ue(v)
+
+			for (int k = 0; k < flag; k++)
+				getSignedCodeNum(check, BitPosition); //offset_for_ref_frame[ i ] 0 se(v)
+		}
+
+		getCodeNum(check, BitPosition); //num_ref_frames 0 ue(v)
+		getBits(check, BitPosition, 1); //gaps_in_frame_num_value_allowed_flag 0 u(1)
+		int hori = 16 * (1 + getCodeNum(check, BitPosition)); //pic_width_in_mbs_minus1 0 ue(v)
+		int vert = 16 * (1 + getCodeNum(check, BitPosition)); //pic_height_in_map_units_minus1 0 ue(v)
+		flag = getBits(check, BitPosition, 1); //frame_mbs_only_flag 0 u(1)
+
+		vbasics[0] = String.valueOf(hori);
+		vbasics[1] = String.valueOf(flag == 0 ? vert<<1 : vert);
+
+		if (profile_idc == 66)
+			vbasics[4] = "Base@";
+		else if (profile_idc == 77)
+			vbasics[4] = "Main@";
+		else if (profile_idc == 88)
+			vbasics[4] = "Ext@";
+		else if (profile_idc == 100)
+			vbasics[4] = "High@";
+		else if (profile_idc == 110)
+			vbasics[4] = "High10@";
+		else if (profile_idc == 122)
+			vbasics[4] = "High422";
+		else if (profile_idc == 144)
+			vbasics[4] = "High444@";
+		else if (profile_idc == 44)
+			vbasics[4] = "High444a@";
+		else if (profile_idc == 244)
+			vbasics[4] = "High444b@";
+		//else if (profile_idc == 166)
+		//	vbasics[2] = "High@";
+		//else if (profile_idc == 188)
+		//	vbasics[2] = "High@";
+		else
+			vbasics[4] = String.valueOf(profile_idc) + "@";
+
+		vbasics[4] += String.valueOf(level_idc / 10.0);
+
+		if (flag == 0)  //if( !frame_mbs_only_flag )
+			getBits(check, BitPosition, 1); //mb_adaptive_frame_field_flag 0 u(1)
+
+		getBits(check, BitPosition, 1); //direct_8x8_inference_flag 0 u(1)
+		flag = getBits(check, BitPosition, 1); //frame_cropping_flag 0 u(1)
+
+		if (flag == 1) //if( frame_cropping_flag ) {
+		{
+			getCodeNum(check, BitPosition); //frame_crop_left_offset 0 ue(v)
+			getCodeNum(check, BitPosition); //frame_crop_right_offset 0 ue(v)
+			getCodeNum(check, BitPosition); //frame_crop_top_offset 0 ue(v)
+			getCodeNum(check, BitPosition); //frame_crop_bottom_offset 0 ue(v)
+		}
+
+		flag = getBits(check, BitPosition, 1); //vui_parameters_present_flag 0 u(1)
+
+		if (flag == 1) //if( vui_parameters_present_flag )
+			vui_parameters(check, BitPosition, vbasics); //vui_parameters( ) 0
+
+		//rbsp_trailing_bits( ) 0
+
+		return true;
+	}
+
+	// h264 parse signed code num
+	private int getSignedCodeNum(byte[] array, int[] BitPosition)
+	{
+		int codeNum = getCodeNum(array, BitPosition);
+
+		codeNum = (codeNum & 1) == 0 ? codeNum>>>1 : -(codeNum>>>1);
+
+		return codeNum;
+	}
+
+	// h264 parse unsigned code num
+	private int getCodeNum(byte[] array, int[] BitPosition)
+	{
+		int leadingZeroBits = -1;
+		int codeNum;
+
+		for (int b = 0; b == 0; leadingZeroBits++)
+			b = getBits(array, BitPosition, 1);
+
+		codeNum = (1<<leadingZeroBits) - 1 + getBits(array, BitPosition, leadingZeroBits);
+
+		return codeNum;
+	}
+
+	// 7.3.2.1.1 Scaling list syntax
+	private void scaling_list(byte[] check, int[] BitPosition, int[] scalingList, int sizeOfScalingList, boolean[] useDefaultScalingMatrixFlag)
+	{
+		int lastScale = 8;
+		int nextScale = 8;
+
+		for (int j = 0; j < sizeOfScalingList; j++)
+		{
+			if (nextScale != 0)
+			{
+				int delta_scale = getSignedCodeNum(check, BitPosition); //delta_scale 0 | 1 se(v)
+				nextScale = (lastScale + delta_scale + 256) % 256;
+				//useDefaultScalingMatrixFlag = ( j == 0 && nextScale == 0 );
+			}
+
+			//scalingList[ j ] = ( nextScale = = 0 ) ? lastScale : nextScale
+			lastScale = (nextScale == 0) ? lastScale : nextScale; //lastScale = scalingList[ j ]
+		}
+	}
+
+	// E1.1 VUI parameters syntax
+	private void vui_parameters(byte[] check, int[] BitPosition, String[] vbasics)
+	{
+		String[] aspect_ratio_string_h264 = {
+			"Unspec.", "1:1", "12:11", "10:11", "16:11", "40:33", "24:11", "20:11",
+			"32:11", "80:33", "18:11", "15:11",	"64:33", "160:99", "4:3", "3:2", "2:1"
+		};
+		double[] aspect_ratio_double_h264 = {
+			1.0, 1.0, 1.0909, 0.90909, 1.45454, 1.21212, 2.18181, 1.81818,
+			2.90909, 2.42424, 1.63636, 1.36364, 1.93939, 1.61616, 1.33333, 1.5, 2
+		};
+
+		int flag = getBits(check, BitPosition, 1); //aspect_ratio_info_present_flag 0 u(1)
+
+		if (flag == 1) //if( aspect_ratio_info_present_flag ) {
+		{
+			int aspect_ratio_idc = getBits(check, BitPosition, 8); //aspect_ratio_idc 0 u(8)
+
+			if (aspect_ratio_idc == 255) //if( aspect_ratio_idc = = Extended_SAR ) {
+			{
+				int sar_w = getBits(check, BitPosition, 16); //sar_width 0 u(16)
+				int sar_h = getBits(check, BitPosition, 16); //sar_height 0 u(16)
+				vbasics[3] = "SAR: " + sar_w + ":" + sar_h;
+				vbasics[3] += " >> " + String.valueOf((int)(Double.parseDouble(vbasics[0]) * sar_w / sar_h)) + "*" + vbasics[1];
+			}
+			else
+			{
+				vbasics[3] = "SAR: " + (aspect_ratio_idc < 17 ? aspect_ratio_string_h264[aspect_ratio_idc] : "res.");
+				vbasics[3] += " >> " + (aspect_ratio_idc < 17 ? String.valueOf((int)(Double.parseDouble(vbasics[0]) * aspect_ratio_double_h264[aspect_ratio_idc])) : "res.") + "*" + vbasics[1];
+			}
+		}
+
+		flag = getBits(check, BitPosition, 1); //overscan_info_present_flag 0 u(1)
+
+		if (flag == 1) //if( overscan_info_present_flag )
+			getBits(check, BitPosition, 1); //overscan_appropriate_flag 0 u(1)
+
+		flag = getBits(check, BitPosition, 1); //video_signal_type_present_flag 0 u(1)
+
+		if (flag == 1) //if( video_signal_type_present_flag ) {
+		{
+			getBits(check, BitPosition, 3); //video_format 0 u(3)
+			getBits(check, BitPosition, 1); //video_full_range_flag 0 u(1)
+
+			flag = getBits(check, BitPosition, 1); //colour_description_present_flag 0 u(1)
+
+			if (flag == 1) //if( colour_description_present_flag ) {
+			{
+				getBits(check, BitPosition, 8); //colour_primaries 0 u(8)
+				getBits(check, BitPosition, 8); //transfer_characteristics 0 u(8)
+				getBits(check, BitPosition, 8); //matrix_coefficients 0 u(8)
+			}
+		}
+
+		flag = getBits(check, BitPosition, 1); //chroma_loc_info_present_flag 0 u(1)
+
+		if (flag == 1) //if( chroma_loc_info_present_flag ) {
+		{
+			getCodeNum(check, BitPosition); //chroma_sample_loc_type_top_field 0 ue(v)
+			getCodeNum(check, BitPosition); //chroma_sample_loc_type_bottom_field 0 ue(v)
+		}
+
+		flag = getBits(check, BitPosition, 1); //timing_info_present_flag 0 u(1)
+
+		if (flag == 1) //if( timing_info_present_flag ) {
+		{
+			int num_units_ticks = getBits(check, BitPosition, 24)<<8 | getBits(check, BitPosition, 8); //num_units_in_tick 0 u(32)
+			int time_scale = getBits(check, BitPosition, 24)<<8 | getBits(check, BitPosition, 8); //time_scale 0 u(32)
+			int fixed_framerate = getBits(check, BitPosition, 1); //fixed_frame_rate_flag 0 u(1)
+
+			vbasics[2] = ((1000 * time_scale / (2 * num_units_ticks)) / 1000.0) + " fps (" + (fixed_framerate == 1 ? "f)" : "v)");
+		}
+
+		//getBits(check, BitPosition, 1); //nal_hrd_parameters_present_flag 0 u(1)
+		//if( nal_hrd_parameters_present_flag )
+		//hrd_parameters( )
+		//vcl_hrd_parameters_present_flag 0 u(1)
+		//if( vcl_hrd_parameters_present_flag )
+		//hrd_parameters( )
+		//if( nal_hrd_parameters_present_flag | | vcl_hrd_parameters_present_flag )
+		//low_delay_hrd_flag 0 u(1)
+		//pic_struct_present_flag 0 u(1)
+		//bitstream_restriction_flag 0 u(1)
+		//if( bitstream_restriction_flag ) {
+		//motion_vectors_over_pic_boundaries_flag 0 u(1)
+		//max_bytes_per_pic_denom 0 ue(v)
+		//max_bits_per_mb_denom 0 ue(v)
+		//log2_max_mv_length_horizontal 0 ue(v)
+		//log2_max_mv_length_vertical 0 ue(v)
+		//num_reorder_frames 0 ue(v)
+		//max_dec_frame_buffering 0 ue(v)
+		//}
+	}
+
+	// parse bits
+	private int getBits(byte[] array, int[] BitPosition, int N)
+	{
+		int Pos, Val;
+		Pos = BitPosition[0]>>>3;
+
+		if (N == 0)
+			return 0;
+
+		if (Pos >= array.length - 4)
+		{
+			BitPosition[0] += N;
+			return -1;
+		}
+
+		Val =   (0xFF & array[Pos])<<24 |
+			(0xFF & array[Pos + 1])<<16 |
+			(0xFF & array[Pos + 2])<<8 |
+			(0xFF & array[Pos + 3]);
+
+		Val <<= BitPosition[0] & 7;
+		Val >>>= 32 - N;
+
+		BitPosition[0] += N;
+
+		return Val;
+	}
 }

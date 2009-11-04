@@ -61,6 +61,8 @@ public class StreamDemultiplexer extends Object {
 	private boolean seqhead = false;
 	private boolean isPTSwritten = false;
 	private boolean isEnabled = true;
+//
+    private boolean isH264 = false;
 
 	private boolean WriteNonVideo;
 	private boolean WriteVideo;
@@ -83,6 +85,7 @@ public class StreamDemultiplexer extends Object {
     private boolean CreateInfoIndex;
     private boolean AppendPidToFileName;
     private boolean AppendLangToFileName;
+    private boolean EnableHDDemux;
 
 	private long AddOffset = 0;
 	private long target_position = 0;
@@ -100,7 +103,7 @@ public class StreamDemultiplexer extends Object {
 	private int lfn = -1;
 	private int buffersize = 1024;
 	private int sourcetype = 0;
-	private int[] MPGVideotype = { 0 }; // 0 =m1v, 1 = m2v, changed at goptest
+	private int[] MPGVideotype = { -1 }; // 0 =m1v, 1 = m2v, 2 = h264  -- changed at goptest
 
 	private int StreamNumber = -1;
 
@@ -108,7 +111,8 @@ public class StreamDemultiplexer extends Object {
 	private String parentname = "";
 	private String[] type = { "ac", "tt", "mp", "mv", "pc", "sp", "vp" };
 	private String[] source = { ".$spes$", ".$ppes$", ".$ts$", ".$pva$" };
-	private String[] videoext = { ".mpv", ".mpv", ".m1v", ".m2v" };
+//	private String[] videoext = { ".mpv", ".mpv", ".m1v", ".m2v" };
+	private String[] videoext = { ".mpv", ".mpv", ".264", ".m1v", ".m2v", ".264" };
 
 	private IDDBufferedOutputStream out;
 	private DataOutputStream pts_log;
@@ -366,6 +370,7 @@ public class StreamDemultiplexer extends Object {
         CreateInfoIndex = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_createInfoIndex);
         AppendPidToFileName = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_appendPidToFileName);
         AppendLangToFileName = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_appendLangToFileName);
+        EnableHDDemux = collection.getSettings().getBooleanProperty(Keys.KEY_enableHDDemux);
 	}
 
 	/**
@@ -846,7 +851,7 @@ public class StreamDemultiplexer extends Object {
 		setFileName();
 
 		es_streamtype = CommonParsing.MPEG_VIDEO;
-		MPGVideotype[0] = 0;
+		MPGVideotype[0] = -1;
 
 		try {
 			out = new IDDBufferedOutputStream(new FileOutputStream(FileName), buffersize);
@@ -879,7 +884,7 @@ public class StreamDemultiplexer extends Object {
 		setFileName();
 
 		first = true;
-		MPGVideotype[0] = 0;
+		MPGVideotype[0] = -1;
 
 		try {
 			out = new IDDBufferedOutputStream(new FileOutputStream(FileName), buffersize);
@@ -933,10 +938,21 @@ public class StreamDemultiplexer extends Object {
 
 			if (AddSequenceEndcode && job_processing.getExportedVideoFrameNumber() > 0)
 			{
-				out.write(Video.getSequenceEndCode());
+				if (MPGVideotype[0] < 2)
+				{
+					out.write(Video.getSequenceEndCode());
 
-				job_processing.countMediaFilesExportLength(+4);
-				job_processing.countAllMediaFilesExportLength(+4);
+					job_processing.countMediaFilesExportLength(+4);
+					job_processing.countAllMediaFilesExportLength(+4);
+				}
+
+				else // h264
+				{
+					out.write(new byte[]{0, 0, 0, 1, 0xA});
+
+					job_processing.countMediaFilesExportLength(+5);
+					job_processing.countAllMediaFilesExportLength(+5);
+				}
 			}
 
 			packet.close();
@@ -966,7 +982,8 @@ public class StreamDemultiplexer extends Object {
 
 			else
 			{ 
-				int ot = (RenameVideo || CreateD2vIndex || SplitProjectFile) ? 0 : 2;
+				//int ot = (RenameVideo || CreateD2vIndex || SplitProjectFile) ? 0 : 2;
+				int ot = (RenameVideo || CreateD2vIndex || SplitProjectFile) ? 0 : 3;
 
 				videofile = parentname;
 
@@ -1194,6 +1211,17 @@ public class StreamDemultiplexer extends Object {
 
 			packet.flush();
 
+/** simple demux
+	byte[] ddd = new byte[pes_payloadlength];
+	System.arraycopy(pes_packet, offset + pes_extensionlength, ddd, 0, pes_payloadlength);
+
+	job_processing.getGop().h264test(job_processing, out, ddd, vptsbytes.toByteArray(), pts_log, parentname, MPGVideotype, CutpointList, ChapterpointList);
+
+			packet.reset();
+
+	if (1 == 1)
+		return;
+**/
 			data = packet.toByteArray();
 
 			packet.reset();
@@ -1201,8 +1229,11 @@ public class StreamDemultiplexer extends Object {
 			boolean gop = false;
 			boolean packetfirstframe = true;
 
+			int nal_unit = 0;
+			int nal_ref = 0;
+
 			packloop:
-			for (int i = 0, j = 0, id, returncode; i < data.length - 3; i++)
+			for (int i = 0, j = 0, k = 0, id, returncode; i < data.length - 3; i++)
 			{
 				if ((returncode = CommonParsing.validateStartcode(data, i)) < 0)
 				{
@@ -1212,11 +1243,96 @@ public class StreamDemultiplexer extends Object {
 
 				id = CommonParsing.getPES_IdField(data, i);
 
+// mpeg4 part
+				//optional deactivator
+				if (!EnableHDDemux)
+					isH264 = false;
+
+				if (isH264)
+				{
+					if (i == 0 || data[i - 1] != 0 || (0x80 & id) != 0)  // not 00 00 00 01 0XXX-XXXX
+						continue packloop;
+
+					i--; // return to startcode
+					nal_ref  = 3 & id>>5;
+					nal_unit = 0x1F & id;
+
+					if (Debug)
+						System.out.println("i " + i + " /NAL ref " + nal_ref + " /unit " + nal_unit);
+
+					switch (nal_unit)
+					{
+					case 1:   // non IDR pic data
+					case 5:   // IDR pic data
+
+						if (!isPTSwritten && pts != -1) 
+						{
+							vpts.writeLong(pts);
+							vpts.writeLong((long) k);
+							vpts.flush();
+
+							isPTSwritten = true;
+						}
+						break;
+
+					case 7:   // sequence param set // 9-7-8-6-1  ; 9-7-6-8-6-1
+
+						vidbuf.write(data, 0, j); // save last data until run-in
+
+						if (!first) 
+							job_processing.getGop().h264test(job_processing, out, vidbuf.toByteArray(), vptsbytes.toByteArray(), pts_log, parentname, MPGVideotype, CutpointList, ChapterpointList);
+
+						vptsbytes.reset();
+						vidbuf.reset(); 
+
+						if (!isPTSwritten && pts != -1) 
+						{
+							vpts.writeLong(pts);
+							vpts.writeLong((long) 0);
+							vpts.flush();
+
+							isPTSwritten = true;
+						}
+
+						first = false;
+						gop = true;
+
+						// save new data from run-in
+						// expects there's no next seq param set
+						vidbuf.write(data, j, data.length - j);
+
+						break;
+
+					case 9:   // run-in
+						j = i;
+						k = vidbuf.size();
+						break;
+					}
+
+					i += 2;
+					continue packloop;
+				}
+//
+
+				// 00 00 00 01 + 0XX0-1001 lead-in, toggle with mpeg1-2, shall be set once
+				else if (MPGVideotype[0] < 0)
+				{
+					isH264 = i > 0 && data[i - 1] == 0 && (0x9F & id) == 9;
+				}
+
+				if (isH264) // last return, never been called after that
+					continue packloop;
+
+
+
 				/**
 				 * new frame at first 
 				 */
 				if (!isPTSwritten && packetfirstframe && id == CommonParsing.PICTURE_START_CODE)
 				{
+					if (MPGVideotype[0] < 0)
+						MPGVideotype[0] = 0;
+
 					if (misshead && i < 3)
 					{ 
 						misshead = false; 
@@ -1237,6 +1353,9 @@ public class StreamDemultiplexer extends Object {
 
 				else if (id == CommonParsing.SEQUENCE_HEADER_CODE || id == CommonParsing.SEQUENCE_END_CODE || id == CommonParsing.GROUP_START_CODE)
 				{
+					if (MPGVideotype[0] < 0)
+						MPGVideotype[0] = 0;
+
 					if (id == CommonParsing.SEQUENCE_HEADER_CODE) 
 						seqhead = true;
 
