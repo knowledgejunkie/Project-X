@@ -3729,7 +3729,7 @@ System.out.println(
 			else
 			{
 				h264_info[3] = "SAR: " + (aspect_ratio_idc < 17 ? aspect_ratio_string_h264[aspect_ratio_idc] : "res.");
-				h264_info[3] += " >> " + (aspect_ratio_idc < 17 ? String.valueOf((int)(Double.parseDouble(h264_info[16]) * aspect_ratio_double_h264[aspect_ratio_idc])) : "res.") + "*" + h264_info[17];
+				h264_info[3] += " >> " + (aspect_ratio_idc < 17 ? String.valueOf(Math.round(Double.parseDouble(h264_info[16]) * aspect_ratio_double_h264[aspect_ratio_idc])) : "res.") + "*" + h264_info[17];
 			}
 
 		}

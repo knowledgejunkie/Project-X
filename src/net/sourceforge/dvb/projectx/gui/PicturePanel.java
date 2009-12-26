@@ -773,7 +773,8 @@ public class PicturePanel extends JPanel {
 			g.drawString("picture decoding not possible", 160, 133);
 		}
 
-		if ((ErrorFlag & 4) != 0) {
+	//	if ((ErrorFlag & 4) != 0) {
+		if ((ErrorFlag & 0xC) == 4) {
 			g.setColor(Color.white);
 			g.fill3DRect(150, 135, 200, 20, true);
 			g.setColor(Color.red);
@@ -797,9 +798,11 @@ public class PicturePanel extends JPanel {
 
 		if ((ErrorFlag & 8) != 0) {
 			g.setColor(Color.white);
-			g.fill3DRect(150, 165, 200, 20, true);
+		//	g.fill3DRect(150, 165, 200, 20, true);
+			g.fill3DRect(150, 135, 200, 20, true);
 			g.setColor(Color.red);
-			g.drawString("data seems to be MPEG-4/H.264", 160, 178);
+		//	g.drawString("data seems to be MPEG-4/H.264", 160, 178);
+			g.drawString("no preview for MPEG-4/H.264", 160, 148);
 		}
 
 		if ((ErrorFlag & 0x20) != 0) {

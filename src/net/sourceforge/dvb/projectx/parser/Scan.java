@@ -1734,6 +1734,7 @@ public class Scan extends Object {
 				case 0x81:  //private data of AC3 in ATSC
 				case 0x82: 
 				case 0x83: 
+				case 0xA0: //user private
 				case 6:
 					getDescriptor(pmt, b+5, (b += 4+ (0xFF & pmt[b+4])), pid, 6);
 					pidlist.add("" + pid); 
@@ -1859,6 +1860,18 @@ public class Scan extends Object {
 					off += (0xFF & check[off]);
 					break;
 
+				case 0xA0:  //user priv descriptor
+					str += "(FOURCC=";
+
+					for (int a=off+2; a<off+6; a++)
+						if ((0xFF & check[a]) > 0)
+							str += (char)(0xFF & check[a]);
+
+					str += ")";
+					off++;
+					off += (0xFF & check[off]);
+					break;
+
 				case 0xC3:  //VBI descriptor
 					off++;
 
@@ -1907,7 +1920,8 @@ public class Scan extends Object {
 						str += (char)(0xFF & check[a]);
 
 					str += ")";
-	
+				//	break;//??
+
 				default:
 					off++;
 					off += (0xFF & check[off]);
