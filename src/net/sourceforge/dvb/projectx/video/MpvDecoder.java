@@ -3486,6 +3486,8 @@ System.out.println(
 	{ 
 		byte[] check = new byte[100];
 		boolean run_in = false;
+		boolean sequ_found = false;
+		int[] temp_values = new int[8];
 
 		int[] BitPosition = { 0 };
 
@@ -3506,7 +3508,13 @@ System.out.println(
 				continue;
 			}
 
-			if (!run_in || zero != 0 || nal_unit != 7)
+			if (!run_in || zero != 0)
+				continue;
+
+			if (sequ_found && (nal_unit == 1 || nal_unit == 5))
+				return slice_wo_partitioning(array, i, nal_unit, temp_values);
+
+			else if (nal_unit != 7)
 				continue;
 
 			//emulation prevention
@@ -3531,6 +3539,8 @@ System.out.println(
 
 			if (zero != 0)
 				continue;
+
+			sequ_found = true;
 
 			level_idc = getBits(check, BitPosition, 8); //0xFF & check[7 + i];
 			flag = getCodeNum(check, BitPosition); // seq_parameter_set_id 0 ue(v)
@@ -3567,13 +3577,13 @@ System.out.println(
 				}
 			}
 
-			flag = getCodeNum(check, BitPosition); // log2_max_frame_num_minus4 0 ue(v)
-			flag = getCodeNum(check, BitPosition); // pic_order_cnt_type 0 ue(v)
+			temp_values[0] = 4 + getCodeNum(check, BitPosition); // log2_max_frame_num_minus4 0 ue(v)
+			temp_values[2] = getCodeNum(check, BitPosition); // pic_order_cnt_type 0 ue(v)
 
-			if (flag == 0)
-				getCodeNum(check, BitPosition); // log2_max_pic_order_cnt_lsb_minus4 0 ue(v)
+			if (temp_values[2] == 0)
+				temp_values[3] = 4 + getCodeNum(check, BitPosition); // log2_max_pic_order_cnt_lsb_minus4 0 ue(v)
 
-			else if (flag == 1)
+			else if (temp_values[2] == 1)
 			{
 				getBits(check, BitPosition, 1); //delta_pic_order_always_zero_flag 0 u(1)
 				getSignedCodeNum(check, BitPosition); //offset_for_non_ref_pic 0 se(v)
@@ -3584,11 +3594,13 @@ System.out.println(
 					getSignedCodeNum(check, BitPosition); //offset_for_ref_frame[ i ] 0 se(v)
 			}
 
-			getCodeNum(check, BitPosition); //num_ref_frames 0 ue(v)
+			flag = getCodeNum(check, BitPosition); //num_ref_frames 0 ue(v)
+
 			getBits(check, BitPosition, 1); //gaps_in_frame_num_value_allowed_flag 0 u(1)
 			hori = 16 * (1 + getCodeNum(check, BitPosition)); //pic_width_in_mbs_minus1 0 ue(v)
 			vert = 16 * (1 + getCodeNum(check, BitPosition)); //pic_height_in_map_units_minus1 0 ue(v)
 			flag = getBits(check, BitPosition, 1); //frame_mbs_only_flag 0 u(1)
+			temp_values[5] = flag;
 
 			info_2 = "MPEG-4/H.264, " + hori + "*" + (flag == 0 ? vert<<1 : vert);
 
@@ -3651,7 +3663,9 @@ System.out.println(
 
 			//rbsp_trailing_bits( ) 0
 
-			return true;
+			continue;
+
+			//return true;
 		} 
 
 		return false;
@@ -3801,6 +3815,53 @@ System.out.println(
 		//num_reorder_frames 0 ue(v)
 		//max_dec_frame_buffering 0 ue(v)
 		//}
+	}
+
+	// 7.3.2.8 + 7.3.3 slice w/o partitioning
+	private boolean slice_wo_partitioning(byte[] check, int offset, int unittype, int[] temp_values)
+	{
+		int flag;
+		int[] BitPosition = { 0 };
+		BitPosition[0] = (5 + offset)<<3;
+
+		flag = getCodeNum(check, BitPosition); //first_mb_in_slice 2 ue(v)
+		flag = getCodeNum(check, BitPosition); //slice_type 2 ue(v)
+		flag = getCodeNum(check, BitPosition); //pic_parameter_set_id 2 ue(v)
+		temp_values[1] = getBits(check, BitPosition, temp_values[0]);//frame_num 2 u(v)
+
+		if (temp_values[5] == 0) //if( !frame_mbs_only_flag )
+		{
+			temp_values[6] = getBits(check, BitPosition, 1); //field_pic_flag 2 u(1)
+
+			if (temp_values[6] == 1) //if( field_pic_flag )
+				temp_values[7] = getBits(check, BitPosition, 1); //bottom_field_flag 2 u(1)
+		}
+
+		if (unittype == 5) //if( nal_unit_type = = 5 )
+			getCodeNum(check, BitPosition); //idr_pic_id 2 ue(v)
+
+		if (temp_values[2] == 0) //if( pic_order_cnt_type = = 0 )
+		{
+			temp_values[4] = getBits(check, BitPosition, temp_values[3]); //pic_order_cnt_lsb 2 u(v)
+			//if( pic_order_present_flag && !field_pic_flag )
+			//delta_pic_order_cnt_bottom 2 se(v)
+		}
+
+		String picture_code1[] = { "I", "P", "B", "SI", "SP", "I", "P", "B" };
+		String unit_code1[] = { "nonIDR", "IDR" }; //1 + 5 pre-filtered
+		mpg_info[11] = "Pic.Type:  " + picture_code1[(7 & check[5 + offset]>>5)] + "-" + progressive_string[1 - temp_values[6]] + "  / " + unit_code1[unittype>>>2];
+
+		String picture_struc[][] = {{ "Frame", "Frame" },{ "Top", "Bottom" }};
+		mpg_info[12] = "Pic.Struct.: " + picture_struc[temp_values[6]][temp_values[7]];
+		mpg_info[13] = "Pic.Ord.: " + temp_values[4] + "  FrNum.: " + temp_values[1];
+
+		//if( pic_order_cnt_type = = 1 && !delta_pic_order_always_zero_flag ) {
+		//delta_pic_order_cnt[ 0 ] 2 se(v)
+		//if( pic_order_present_flag && !field_pic_flag )
+		//delta_pic_order_cnt[ 1 ] 2 se(v)
+		//}
+
+		return true;
 	}
 
 	//

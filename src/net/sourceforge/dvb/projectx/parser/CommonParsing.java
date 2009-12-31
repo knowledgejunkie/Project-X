@@ -948,6 +948,7 @@ public class CommonParsing extends Object {
 
 		if (MPGVideotype[0] > 1) // h264 without modif.
 		{
+			Common.setMessage(Resource.getString("video.msg.bitrate.avg", "" + ((job_processing.getMinBitrate() + job_processing.getMaxBitrate()) / 2 * 400), "" + (job_processing.getMinBitrate() * 400) + "/" + (job_processing.getMaxBitrate() * 400)));
 			Common.setMessage(Resource.getString("msg.newfile") + " " + videofile);
 			return;
 		}

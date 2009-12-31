@@ -162,6 +162,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 	private String str_aif = ".aif";
 	private String str_pcm = ".pcm";
 	private String str_new = ".new";
+	private String str_aac = ".aac";
 
 
 	/**
@@ -340,9 +341,14 @@ public class StreamProcessAudio extends StreamProcessBase {
 		AudioFormat audio = new AudioFormat(es_streamtype);
 
 		/**
-		 * pre-check for toggling ac3<->dts
+		 * pre-check for toggling ac3<->dts, or mpa<->aac
 		 */
-		AudioFormat test_audio = new AudioFormat(CommonParsing.DTS_AUDIO);
+		AudioFormat test_audio;
+
+		if (es_streamtype != CommonParsing.MPEG_AUDIO)
+			test_audio = new AudioFormat(CommonParsing.DTS_AUDIO);
+		else
+			test_audio = new AudioFormat(CommonParsing.AAC_AUDIO);
 
 		try {
 
@@ -1132,7 +1138,7 @@ public class StreamProcessAudio extends StreamProcessBase {
 				 *  MPEG1+2 Audio Layer 1,2,3
 				 */
 				readloop:
-				while (es_streamtype == CommonParsing.MPEG_AUDIO && getFramePosition() < FileLength - 4)
+				while (es_streamtype == CommonParsing.MPEG_AUDIO && getFramePosition() < FileLength - 4) // = 4 mpa header bytes
 				{
 					Common.updateProgressBar(getFramePosition(), FileLength);
 
@@ -1177,28 +1183,32 @@ public class StreamProcessAudio extends StreamProcessBase {
 					}
 
 					/**
-					 * read 4 bytes for headercheck 
+					 * read x bytes for headercheck 
 					 */
-					countFramePosition(readInputStream(pushmpa, 0, 4));
+					countFramePosition(readInputStream(pushmpa, 0, pushmpa.length));
 
 					/**
 					 * parse header 
 					 */
 					if ((ERRORCODE = audio.parseHeader(pushmpa, 0)) < 1)
 					{
-						unreadInputStream(pushmpa, 1, 3);
+						// test for AAC
+						//ERRORCODE = test_audio.parseHeader(pushmpa, 0); 
+						//Common.setMessage("ec " + ERRORCODE + " /pos " + getFramePosition());
+
+						unreadInputStream(pushmpa, 1, pushmpa.length - 1);
 
 						if (Message_2 && !missing_syncword)
 							Common.setMessage(Resource.getString("audio.msg.syncword.lost", " " + (getFramePosition() - 4)) + " " + formatFrameTime(getTimeCounter()));
 
 						missing_syncword = true;
-						countFramePosition(-3);
+						countFramePosition(-(pushmpa.length - 1));
 
 						continue readloop;
 					}
 
 					// prepare to read entire frame, reset to start of frame
-					countFramePosition(-unreadInputStream(pushmpa, 0, 4));
+					countFramePosition(-unreadInputStream(pushmpa, 0, pushmpa.length));
 
 					// read entire frame 
 					if (frame.length != audio.getSize())
@@ -1247,11 +1257,11 @@ public class StreamProcessAudio extends StreamProcessBase {
 					{
 						if (!AllowSpaces)
 						{
-							readInputStream(pushmpa, 0, 4);
+							readInputStream(pushmpa, 0, pushmpa.length);
 
 							ERRORCODE = audio.parseNextHeader(pushmpa, 0);
 
-							unreadInputStream(pushmpa, 0, 4);
+							unreadInputStream(pushmpa, 0, pushmpa.length);
 
 							if (ERRORCODE < 1)
 							{

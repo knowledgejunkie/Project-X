@@ -92,7 +92,7 @@ public class AudioFormat extends Object {
 			break;
 
 		case CommonParsing.AAC_AUDIO:
-			impl = new AudioFormatMPA();
+			impl = new AudioFormatAAC();//
 			break;
 		}
 	}

@@ -30,6 +30,7 @@
 package net.sourceforge.dvb.projectx.audio;
 
 import net.sourceforge.dvb.projectx.audio.AudioFormat;
+import net.sourceforge.dvb.projectx.common.Common;
 
 public class AudioFormatAAC extends AudioFormat {
 
@@ -43,43 +44,33 @@ public class AudioFormatAAC extends AudioFormat {
 	/**
 	 *
 	 */
-	private int[] aac_frequency_index = { 
-		0, 8000, 16000, 32000, 64000, 128000, 
-		11025, 22050, 44100, 88200, 176400,
-		12000, 24000, 48000, 96000, 192000 
+	private int[] frequency_index = { 
+		96000, 88200, 64000, 48000, 44100, 32000,
+		24000, 22050, 16000, 12000, 11025, 8000, 0, 0, 0, 0
 	}; 
+
 	
 	/**
 	 *
 	 */
-	private int[] aac_bitrate_index = { 
+	private int[] bitrate_index = { 
 		32000, 56000, 64000, 96000, 112000, 128000, 
 		192000, 224000, 256000, 320000, 384000, 
 		448000, 512000, 576000, 640000, 768000, 
-		896000, 1024000, 1152000, 1280000, 1344000, 
-		1408000, 1411200, 1472000, 1536000, 1920000, 
-		2048000, 3072000, 3840000, 4096000, 0, 0 
 	}; 
 	 
 	/**
 	 *
 	 */
-	private String[] aac_acmod = { 
-		"1", "DM", "2/0", "2/0", "2/0", "3/0", "2.1/0", "3.1/0", 
-		"2/2", "3/2", "2/2/2", "2/2/2", "3/2/2", "3.1/2/2", "","",
-		"","","","","","","","","","","","","","","","", 
-		"","","","","","","","","","","","","","","","", 
-		"","","","","","","","","","","","","","","","" 
+	private String[] acmod = { 
+		"1", "DM", "2/0", "2/0"
 	}; 
 
 	/**
 	 *
 	 */
-	private int[] aac_channels = { 
+	private int[] channels = { 
 		1,2,2,2, 2,3,3,4, 4,5,6,6, 7,8,0,0, 
-		0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 
-		0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 
-		0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0 
 	}; 
 	 
 	/**
@@ -87,7 +78,49 @@ public class AudioFormatAAC extends AudioFormat {
 	 */ 
 	public int parseHeader(byte[] frame, int pos)
 	{ 
-		return -1;  //empty
+		boolean latm = false;
+		int aac_length = 0;
+
+		// 0x2B7 LATM
+		latm = frame[pos] == 0x56 && (0xE0 & frame[pos + 1]) == 0xE0;
+
+		if (latm)
+		{
+			aac_length = 3 + ((0x1F & frame[pos + 1])<<8 | (0xFF & frame[pos + 2]));
+			pos += 3;
+		}
+
+		if (frame.length == 4) //pushmpa = 4!
+			return (latm && (0xFF & frame[pos]) == 0xFF ? aac_length : -1);
+
+		//syncword ADTS
+		if ((0xFF & frame[pos]) != 0xFF && (0xE0 & frame[pos + 1]) != 0xE0)
+			return -1;
+
+		//ADTS fixed
+		setID(1 & frame[pos + 1]>>>3);
+		setLayer(3 & frame[pos + 1]>>>1);
+		setProtectionBit(1 ^ (1 & frame[pos + 1]));
+		setMode(3 & frame[pos + 2]>>>6); //profile
+		setSamplingFrequency(frequency_index[0xF & frame[pos + 2]>>>2]);
+		setPrivateBit(1 & frame[pos + 2]>>>1);
+		setChannel(7 & frame[pos + 2]<<2 | 3 & frame[pos + 3]>>>6); //see specif.
+		setCopyright(1 & frame[pos + 3]>>>5);
+		setOriginal(1 & frame[pos + 3]>>>4); //home
+		setEmphasis(3 & frame[pos + 3]>>>2);
+	//	setFrameTimeLength(169344000.0 / getSamplingFrequency());
+		setFrameTimeLength(3840);
+		setBitrate(1000); 
+
+		//ADTS variabel
+		//copyright_identification_bit 1 bslbf    pos+3
+		//copyright_identification_start 1 bslbf  pos+3 
+		setSizeBase((0xFF & frame[pos + 4])<<5 | (0x1F & frame[pos + 5]>>3)); //frame_length 13 bslbf
+		setSize(getSizeBase());
+		//adts_buffer_fullness 11 bslbf
+		//number_of_raw_data_blocks_in_frame 2 uimsfb
+
+		return getLayer(); 
 	} 
 	 
 	/**
@@ -95,7 +128,43 @@ public class AudioFormatAAC extends AudioFormat {
 	 */ 
 	public int parseNextHeader(byte[] frame, int pos)
 	{ 
-		return -1; //empty
+		boolean latm = false;
+		int aac_length = 0;
+
+		latm = frame[pos] == 0x56 && (0xE0 & frame[pos + 1]) == 0xE0;
+
+		if (latm)
+		{
+			aac_length = 3 + ((0x1F & frame[pos + 1])<<8 | (0xFF & frame[pos + 2]));
+			pos += 3;
+		}
+
+		if ((0xFF & frame[pos]) != 0xFF && (0xE0 & frame[pos + 1]) != 0xE0)
+			return -1;
+
+		setNextID(1 & frame[pos + 1]>>>3);
+		setNextLayer(3 & frame[pos + 1]>>>1);
+		setNextProtectionBit(1 ^ (1 & frame[pos + 1]));
+		setNextMode(3 & frame[pos + 2]>>>6); //profile
+		setNextSamplingFrequency(frequency_index[0xF & frame[pos + 2]>>>2]);
+		setNextPrivateBit(1 & frame[pos + 2]>>>1);
+		setNextChannel(7 & frame[pos + 2]<<2 | 3 & frame[pos + 3]>>>6); //see specif.
+		setNextCopyright(1 & frame[pos + 3]>>>5);
+		setNextOriginal(1 & frame[pos + 3]>>>4); //home
+		setNextEmphasis(3 & frame[pos + 3]>>>2);
+	//	setNextFrameTimeLength(169344000.0 / getNextSamplingFrequency());
+		setNextFrameTimeLength(3840);
+		setNextBitrate(1000); 
+
+		//ADTS variabel
+		//copyright_identification_bit 1 bslbf    pos+3
+		//copyright_identification_start 1 bslbf  pos+3 
+		setNextSizeBase((0xFF & frame[pos + 4])<<5 | (0x1F & frame[pos + 5]>>3)); //frame_length 13 bslbf
+		setNextSize(getNextSizeBase());
+		//adts_buffer_fullness 11 bslbf
+		//number_of_raw_data_blocks_in_frame 2 uimsfb
+
+		return getNextLayer(); 
 	} 
 	 
 	/**
@@ -133,7 +202,7 @@ public class AudioFormatAAC extends AudioFormat {
 	 */ 
 	public String displayHeader()
 	{ 
-		return ("AAC, " + aac_acmod[getLastMode()] + "(" + aac_channels[getLastMode()] + "), " + getLastSamplingFrequency() + "Hz, " + (getLastBitrate() / 1000.0) + "kbps, " + getLastSize() + "BpF"); 
+		return ("AAC, " + acmod[getLastMode()] + "(" + channels[getLastChannel()] + "), " + getLastSamplingFrequency() + "Hz, " + (getLastBitrate() / 1000.0) + "kbps, " + getLastSize() + "BpF"); 
 	} 
 
 }
