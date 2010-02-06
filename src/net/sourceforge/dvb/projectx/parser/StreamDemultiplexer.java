@@ -511,6 +511,10 @@ public class StreamDemultiplexer extends Object {
 				if (pes_ID == CommonParsing.PRIVATE_STREAM_1_CODE && pes_extensionlength == 0x24 && (0xFF & pes_packet[9 + pes_extensionlength + offset])>>>4 == 1)
 					_es_streamtype = CommonParsing.TELETEXT;
 
+				// workaround uk freesat teletext
+				else if (pes_ID == CommonParsing.PRIVATE_STREAM_1_CODE && pes_extensionlength == 0x24 && (0xFF & pes_packet[9 + pes_extensionlength + offset]) == 0x99)
+					_es_streamtype = CommonParsing.TELETEXT;
+
 				/** 
 				 * no PTS in PES_extension
 				 */
@@ -525,6 +529,10 @@ public class StreamDemultiplexer extends Object {
 
 			es_streamtype = pes_ID == CommonParsing.PRIVATE_STREAM_1_CODE ? _es_streamtype : CommonParsing.MPEG_AUDIO;
 			subid = ((es_streamtype == CommonParsing.AC3_AUDIO || es_streamtype == CommonParsing.DTS_AUDIO || es_streamtype == CommonParsing.TELETEXT) && ((pes_streamtype == CommonParsing.PES_AV_TYPE && (pes_isAligned || es_streamtype == CommonParsing.TELETEXT)) || pes_streamtype == CommonParsing.MPEG2PS_TYPE)) ? (0xFF & pes_packet[9 + (0xFF & pes_packet[8 + pes_packetoffset]) + pes_packetoffset]) : 0;
+
+			// workaround uk freesat teletext
+			if (isTTX())
+				subid &= 0x1F;
 
 			switch (subid>>>4)
 			{

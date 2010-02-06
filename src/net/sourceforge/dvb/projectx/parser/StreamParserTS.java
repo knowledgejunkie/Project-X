@@ -765,6 +765,10 @@ public class StreamParserTS extends StreamParserBase {
 								pes_offset = 13 + ts_adaptionfieldlength + pes_extensionlength;
 								isTeletext = (pes_extensionlength == 0x24 && (0xFF & ts_packet[pes_offset])>>>4 == 1);
 
+								// workaround uk freesat teletext
+								if (!isTeletext)
+									isTeletext = (pes_extensionlength == 0x24 && (0xFF & ts_packet[pes_offset]) == 0x99);
+
 								if (!isTeletext)
 									pes_subID = ((0xFF & ts_packet[pes_offset]) == 0x20 && (0xFF & ts_packet[pes_offset + 1]) == 0 && (0xFF & ts_packet[pes_offset + 2]) == 0xF) ? 0x20 : 0;
 
