@@ -1071,6 +1071,13 @@ public class DVBSubpicture extends Object {
 			region.setError(1);
 		}
 
+		//don't fit into the pixel area
+		if (from_index < 0 || from_index > pixel_data.length || to_index < 0 || to_index > pixel_data.length)
+		{
+			region.setError(1);
+			return;
+		}
+
 		Arrays.fill(pixel_data, from_index, to_index, color);
 	}
 

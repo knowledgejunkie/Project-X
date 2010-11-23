@@ -160,7 +160,7 @@ public  class ColorAreas extends Object {                                       
 		//following gets current switches from gui iff there's some debug value in the ini       //S9 20090122
 		//...it's needed because restarting PjX just to change the switches is a PITA...         //S9 20090122
 		//...and leads to unrealistic test conditions like only one run per instantiation        //S9 20090122
-		String dbgX = Common.getSettings().getProperty("NetPanel.WebServerAccess", "").trim();   //S9 20090122
+		String dbgX = Common.getSettings().getProperty("Subpicture.S9Debug", "").trim();   //dm 20101123
 		if (dbg.length()>0 && dbgX.length()>0) { dbg = dbgX; }   //only if some value in ini     //S9 20090122
 
 		if ((IRD & 1) == 1)                                                 //MC identifier      //dm 20090113
