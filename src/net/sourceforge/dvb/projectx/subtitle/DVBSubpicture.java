@@ -510,6 +510,9 @@ public class DVBSubpicture extends Object {
 
 		flushBits(3);
 
+		int old_w = region.getWidth();
+		int old_h = region.getHeight();
+
 		region.setWidth(getBits(16));
 		region.setHeight(getBits(16));
 		region.setLevelOfCompatibility(getBits(3));
@@ -521,16 +524,23 @@ public class DVBSubpicture extends Object {
 		clut = epoch.setCLUT(CLUT_id); //CLUT_id
 
 		region.setCLUT_id(CLUT_id);
+
+		//background pixel code
 		region.setPixelCode_8bit(getBits(8));
 		region.setPixelCode_4bit(getBits(4));
 		region.setPixelCode_2bit(getBits(2));
 
-		if (!region.isActive() || !region.getFillFlag())      //retain prev obj data     //S9
-			pixel_data = region.getPixel();                   //...for stenographic      //S9
+		if (!region.isActive() || !region.getFillFlag())              //retain prev obj data     //S9
+		{
+			if (old_w == region.getWidth() && old_h == region.getHeight())
+				pixel_data = region.getPixel();                   //...for stenographic      //S9
+			else                                                                             //S9
+				pixel_data = region.initPixel();
+		}
 		else                                                                             //S9
 			pixel_data = region.initPixel();
 
-		if (pixel_data==null)                                 //but during acquisition   //S9
+		if (pixel_data == null)                                 //but during acquisition   //S9
 			pixel_data = region.initPixel();                  //...need dummy previous   //S9
 
 		flushBits(2);
@@ -538,6 +548,7 @@ public class DVBSubpicture extends Object {
 		paintRegionBackground();
 
 		addBigMessage("regcomp: page " + page.getId() + " /reg " + region.getId() + " /rv " + region.getVersionNumber()
+				+ " /rw " + region.getWidth() + " /rh " + region.getHeight() + " /pxl " + pixel_data.length
 				+ " /lv " + region.getCompatibility() + " /clut " + clut.getId()
 				+ " /activ " + region.isActive() + " /fill " + region.getFillFlag());                              //S9
 
