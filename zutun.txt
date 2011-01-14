@@ -429,8 +429,9 @@
 --fix: dvb sub to sup , missing pixel
 --fix: supviewer
 --fix: lang.name appending
-
-
+--fix: teletext identifier (freesat)
+--fix: dvb-sub decoding
+--fix: TS192 file segment combine
 
 
 

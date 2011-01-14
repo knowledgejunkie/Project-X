@@ -521,40 +521,62 @@ public class StreamParserTS extends StreamParserBase {
 
 		 			else if (ts_packet[0] != TS_SyncByte || (GetEnclosedPackets && ts_packet[TS_PacketLength] != TS_SyncByte) )
 					{
-						if (Message_2 && !missing_syncword) 
-							Common.setMessage(Resource.getString("parseTS.missing.sync") + " " + count);
-
-						if (ts_isIncomplete && JoinPackets)
+						//192 segmentation combine
+						if (TSType192 && ts_isIncomplete && JoinPackets) 
 						{
-							Common.setMessage(Resource.getString("parseTS.comp.failed"));
+							inputstream.read(ts_192pre, 0, 4);
 
-							inputstream.unread(ts_packet, 190 - bytes_read, bytes_read - 1);
+							TSType192Skip = ts_192pre[3] == TS_SyncByte;
 
-							ts_isIncomplete = false;
-
-							count++;
-						}
-
-						else
-						{
-							int i = 1;
-
-							while (i < TS_BufferSize)
+							if (TSType192Skip)
 							{
-								if (ts_packet[i] == TS_SyncByte)
-									break;
-
-								i++;
+								ts_packet[TS_PacketLength] = TS_SyncByte;
+								count += 4;
+								Common.setMessage(Resource.getString("parseTS.comp.ok"));
 							}
-							
-							inputstream.unread(ts_packet, i, TS_BufferSize - i);
 
-							count += i;
+							else
+								inputstream.unread(ts_192pre, 0, 4);
 						}
 
-						missing_syncword = true;
+						//default or 192 segmentation combine failed
+						if (!TSType192Skip)
+						{
+							if (Message_2 && !missing_syncword) 
+								Common.setMessage(Resource.getString("parseTS.missing.sync") + " " + count);
 
-						continue loop;
+							if (ts_isIncomplete && JoinPackets)
+							{
+								Common.setMessage(Resource.getString("parseTS.comp.failed"));
+
+								inputstream.unread(ts_packet, 190 - bytes_read, bytes_read - 1);
+
+								ts_isIncomplete = false;
+
+								count++;
+							}
+
+							else
+							{
+								int i = 1;
+
+								while (i < TS_BufferSize)
+								{
+									if (ts_packet[i] == TS_SyncByte)
+										break;
+
+									i++;
+								}
+							
+								inputstream.unread(ts_packet, i, TS_BufferSize - i);
+
+								count += i;
+							}
+
+							missing_syncword = true;
+
+							continue loop;
+						}
 					}
 
 					else if (ts_isIncomplete && JoinPackets)
