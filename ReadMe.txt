@@ -1,7 +1,7 @@
 /==============================================================================/
 
  ProjectX - a free Java based demux utility
- Copyright (C) 2001-2009 dvb.matt, All Rights Reserved
+ Copyright (C) 2001-2011 dvb.matt, All Rights Reserved
 
  By the authors, ProjectX is intended for educational purposes only, 
  as a non-commercial test project.
@@ -114,6 +114,11 @@
 
    the compiling process doesn't take more than about 30 seconds.
 
+/==============================================================================/
+
+ For lazy beginners, a pre-compiled version (ProjectX.jar) suitable to JRE 1.2.2
+ and higher is included. 
+ Possibly, this won't give the best performance with all OS.
 
 /==============================================================================/
 

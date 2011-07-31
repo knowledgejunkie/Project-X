@@ -1,7 +1,7 @@
 /*
  * @(#)Gop
  *
- * Copyright (c) 2005-2009 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2010 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -1507,12 +1507,14 @@ public class Gop extends Object {
 		int[] preceding_fields = new int[2];
 
 		boolean accessunit = false;
+		boolean sequ_head = false;
+		int sequ_head_end = -1;
 		int accessunit_pos = 0;
 		int vpts_pos = 0;
 
 		String[] VBASIC = job_processing.getStatusStrings();
 		String[] vbasics = new String[5];
-		int[] temp_values = new int[10];
+		int[] temp_values = new int[12];
 
 		double[] base_pts = new double[3];
 		byte[] sequ_end = { 0, 0, 0, 1, 10 };
@@ -1543,6 +1545,10 @@ public class Gop extends Object {
 
 				if (Debug)
 					System.out.println("Au " + accessunit + " /Ap " + accessunit_pos + " /U " + s + " /ppt " + (7 & gop[s+5]>>5) + " /ref " + unit_ref + " /typ " + unit_type);
+
+				//save pos for SEI inserting
+				if (sequ_head && sequ_head_end < 0)
+					sequ_head_end = s;
 
 				switch (unit_type)
 				{
@@ -1584,9 +1590,11 @@ public class Gop extends Object {
 					break;
 
 				case 6: //SEI
+					readSEIMessage(gop, s);
 					break;
 
 				case 7: //sequ set
+					sequ_head = true;
 					readH264SequenceParameterSet(gop, s, vbasics, temp_values);
 
 					frametypebuffer.write((byte)0x88);
@@ -1627,10 +1635,12 @@ public class Gop extends Object {
 					break;
 
 				case 10: //seq end
-						Common.setMessage("-> SequenceEndMarker detected at rel. pos " + s);
+					Common.setMessage("-> SequenceEndMarker detected at rel. pos " + s);
+					break;
 
 				case 11: //stream end
-						Common.setMessage("-> StreamEndMarker detected at rel. pos " + s);
+					Common.setMessage("-> StreamEndMarker detected at rel. pos " + s);
+					break;
 
 				case 12: //fill
 					break;
@@ -1869,11 +1879,20 @@ public class Gop extends Object {
 							}
 						}
 
-						//rewrite new gop, adapt framenum ??
+						//rewrite new gop, adapt picorder ??
 						for (int i = 0; i < accessunit_list.size(); i++)
 						{
 							au = (AccessUnit) accessunit_list.get(i);
-							gopbuffer.write(gop, au.getStart(), au.getLength());
+						/**
+							if (i == 0 && job_processing.getExportedVideoFrameNumber() > 0)
+							{
+								gopbuffer.write(gop, au.getStart(), sequ_head_end);
+								gopbuffer.write(setSEIMsg6(au.getFrameNum()));
+								gopbuffer.write(gop, sequ_head_end, au.getLength());
+							}
+							else
+						**/
+								gopbuffer.write(gop, au.getStart(), au.getLength());
 
 							if (Debug)
 								System.out.println("bu " + i + " /au " + au.getCount() + " /fn " + au.getFrameNum() + " /pptau " + au.getPPTAU() + " /ppt " + au.getPPT() + " /st " + au.getStart() + " /en " + au.getEnd());
@@ -2288,7 +2307,7 @@ public class Gop extends Object {
 		BitPosition[0] = (5 + offset)<<3;
 
 		flag = getCodeNum(check, BitPosition); //first_mb_in_slice 2 ue(v)
-		flag = getCodeNum(check, BitPosition); //slice_type 2 ue(v)
+		temp_values[11] = getCodeNum(check, BitPosition); //slice_type 2 ue(v)
 		flag = getCodeNum(check, BitPosition); //pic_parameter_set_id 2 ue(v)
 		temp_values[1] = getBits(check, BitPosition, temp_values[0]);//frame_num 2 u(v)
 
@@ -2305,6 +2324,7 @@ public class Gop extends Object {
 
 		if (temp_values[2] == 0) //if( pic_order_cnt_type = = 0 )
 		{
+			temp_values[10] = BitPosition[0]; //mark position
 			temp_values[4] = getBits(check, BitPosition, temp_values[3]); //pic_order_cnt_lsb 2 u(v)
 			//if( pic_order_present_flag && !field_pic_flag )
 			//delta_pic_order_cnt_bottom 2 se(v)
@@ -2316,6 +2336,101 @@ public class Gop extends Object {
 		//delta_pic_order_cnt[ 1 ] 2 se(v)
 		//}
 	}
+
+	// 7.3.2.3 SEI
+	private void readSEIMessage(byte[] check, int offset)
+	{
+		int val = 0;
+		int[] BitPosition = { 0 };
+		BitPosition[0] = (5 + offset)<<3;
+
+		int payloadType = 0; //payloadType = 0
+
+		while ((val = getBits(check, BitPosition, 8)) == 0xFF) //while( next_bits( 8 ) = = 0xFF )
+		{
+			//ff_byte /* equal to 0xFF */ 5 f(8)
+			payloadType += 255; //payloadType += 255
+		}
+
+		//last_payload_type_byte 5 u(8)
+		payloadType += val; //payloadType += last_payload_type_byte
+
+		int payloadSize = 0; //payloadSize = 0
+
+		while ((val = getBits(check, BitPosition, 8)) == 0xFF)//while( next_bits( 8 ) = = 0xFF ) {
+		{
+			//ff_byte /* equal to 0xFF */ 5 f(8)
+			payloadSize += 255; //payloadSize += 255
+		}
+
+		//last_payload_size_byte 5 u(8)
+		payloadSize += val; //payloadSize += last_payload_size_byte
+
+		if (Debug)
+			System.out.println("SEI pos " + offset + " /pT " + payloadType + " /pS " + payloadSize);
+		//sei_payload( payloadType, payloadSize ) 5
+	}
+
+	// SEI recovery point D2.7
+	private byte[] setSEIMsg6(int framenum)
+	{
+		//00 00 00 01 06 06 01 A4 80 
+		//rec_frmcnt ue(v) = 1 = 0 = framenum-start of gop
+		//exactmatch  1    = 0
+		//brokenlink  1    = 1
+		//chang_slic  2    = 00
+		//endmark    ..    = 100
+
+		int val = 0x00000000; // 01 00 00 00 - 01 length-v
+
+		//exp golomb set ue(v)
+		for (int i = 31, nval = framenum + 1, j = 0; i >= 0; i--)
+		{
+			if ((nval & 1<<i) != 0)
+			{
+				j = 24 - 1 - (i<<1);
+				val |= nval<<j; //framenum
+
+				j -= 4;
+				val |= 4<<j; //exm, bl, chng
+
+				if ((j & 7) != 0)
+				{
+					j -= 1;
+					val |= 1<<j;
+				}
+
+				j >>>= 3;
+				val |= (3 - j)<<24; //len
+
+				j -= 1;
+				val |= 0x80<<(j<<3);
+
+				// 00 00 00 01 06 06 0x aa bb
+				byte[] sei = new byte[10 - j];
+				sei[3] = 1;
+				sei[4] = 6;
+				sei[5] = 6;
+				sei[6] = (byte)(val>>24);
+				sei[7] = (byte)(val>>16);
+				sei[8] = (byte)(val>>8);
+
+				if (sei.length > 9)
+					sei[9] = (byte)val;
+
+				if (Debug)
+				{
+					for (int m = 0; m < sei.length; m++)
+						System.out.println("m " + m + " / " + Integer.toHexString(0xFF & sei[m]));
+				}
+
+				return sei;
+			}
+		}
+
+		return (new byte[0]); // failure
+	}
+
 
 	// parse bits
 	private int getBits(byte[] array, int[] BitPosition, int N)
@@ -2360,6 +2475,8 @@ public class Gop extends Object {
 		int end = -1;
 		int fieldpic = 0;
 		int btmfield = 0;
+		int marker = 0;
+		int slicetype = 0;
 
 		public AccessUnit(int _cnt, int _pptau, int _ppt, int[] _tempval, long _pts, int _unittype, int _unitref, int _start)
 		{
@@ -2370,6 +2487,8 @@ public class Gop extends Object {
 			picorder = _tempval[4];
 			fieldpic = _tempval[6];
 			btmfield = _tempval[7];
+			marker = _tempval[10];
+			slicetype = _tempval[11];
 			pts = _pts;
 			start = _start;
 			unittype = _unittype;
@@ -2441,6 +2560,11 @@ public class Gop extends Object {
 			return end - start;
 		}
 
+		private int getMarker()
+		{
+			return marker;
+		}
+
 		private long getPTS()
 		{
 			return pts;
@@ -2448,7 +2572,7 @@ public class Gop extends Object {
 
 		public String toString()
 		{
-			return ("AU " + cnt + " /frnm " + framenum + " /picord " + picorder + " /pptau " + pptau + " /ppt " + ppt + " /fldpic " + fieldpic + " /btmfld " + btmfield + " /ut " + unittype + " /ur " + unitref + " /pts " + pts + " /st " + start + " /en " + end);
+			return ("AU " + cnt + " /frnm " + framenum + " /picord " + picorder + " /pptau " + pptau + " /ppt " + ppt + " /slicetyp " + slicetype + " /fldpic " + fieldpic + " /btmfld " + btmfield + " /ut " + unittype + " /ur " + unitref + " /pts " + pts + " /st " + start + " /en " + end);
 		}
 
 	}

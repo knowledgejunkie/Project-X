@@ -29,7 +29,7 @@
 /*
  * @(#)MpvDecoder.java - still Picture Decoder
  * 
- * Copyright (c) 2003-2008 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2003-2010 by dvb.matt, All Rights Reserved. 
  *
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -1489,14 +1489,22 @@ private void picture_header(){
 		block_count = ChromaFormat[chroma_format];
 
 		if (picture_coding_type==I_TYPE)
-		{
-			if (pixels.length != Coded_Picture_Width*Coded_Picture_Height)
-				pixels = new int[Coded_Picture_Width*Coded_Picture_Height]; //DM30112003 081.5++ fix
-			else
-				Arrays.fill(pixels, 0);
-		}
+			resizePixels(Coded_Picture_Width, Coded_Picture_Height, horizontal_size, vertical_size);
 	}
 
+	public void resizePixels(int cw, int ch, int hs, int vs)
+	{
+		//value set from outside
+		Coded_Picture_Width = cw;
+		Coded_Picture_Height = ch;
+		horizontal_size = hs;
+		vertical_size = vs;
+
+		if (pixels.length != Coded_Picture_Width * Coded_Picture_Height)
+			pixels = new int[Coded_Picture_Width * Coded_Picture_Height];
+		else
+			Arrays.fill(pixels, 0);
+	}
 
 //public void Decode_Picture(int ref, byte dst, int pitch){
 public void Decode_Picture(){
@@ -3472,6 +3480,11 @@ System.out.println(
 			if (parseH264(buf, buf.length, mpg_info))
 				ERROR4 = true;
 
+//H264Decoder h264 = new H264Decoder();
+//ERROR4 = h264.parseStream(buf, start_position);
+//H264Decoder1 h264 = new H264Decoder1();
+//ERROR4 = h264.parseStream(buf, start_position);
+
 		scale_Picture(ERROR4 ? 2 : 1);
 
 		return 0;
@@ -3487,7 +3500,7 @@ System.out.println(
 		byte[] check = new byte[100];
 		boolean run_in = false;
 		boolean sequ_found = false;
-		int[] temp_values = new int[8];
+		int[] temp_values = new int[12];
 
 		int[] BitPosition = { 0 };
 
@@ -3825,7 +3838,7 @@ System.out.println(
 		BitPosition[0] = (5 + offset)<<3;
 
 		flag = getCodeNum(check, BitPosition); //first_mb_in_slice 2 ue(v)
-		flag = getCodeNum(check, BitPosition); //slice_type 2 ue(v)
+		temp_values[11] = getCodeNum(check, BitPosition); //slice_type 2 ue(v)
 		flag = getCodeNum(check, BitPosition); //pic_parameter_set_id 2 ue(v)
 		temp_values[1] = getBits(check, BitPosition, temp_values[0]);//frame_num 2 u(v)
 
@@ -3837,8 +3850,10 @@ System.out.println(
 				temp_values[7] = getBits(check, BitPosition, 1); //bottom_field_flag 2 u(1)
 		}
 
+		int pic_id = -1;
+
 		if (unittype == 5) //if( nal_unit_type = = 5 )
-			getCodeNum(check, BitPosition); //idr_pic_id 2 ue(v)
+			pic_id = getCodeNum(check, BitPosition); //idr_pic_id 2 ue(v)
 
 		if (temp_values[2] == 0) //if( pic_order_cnt_type = = 0 )
 		{
@@ -3847,13 +3862,16 @@ System.out.println(
 			//delta_pic_order_cnt_bottom 2 se(v)
 		}
 
-		String picture_code1[] = { "I", "P", "B", "SI", "SP", "I", "P", "B" };
-		String unit_code1[] = { "nonIDR", "IDR" }; //1 + 5 pre-filtered
-		mpg_info[11] = "Pic.Type:  " + picture_code1[(7 & check[5 + offset]>>5)] + "-" + progressive_string[1 - temp_values[6]] + "  / " + unit_code1[unittype>>>2];
+		String picture_code1[] = { "P", "B", "I", "SP", "SI", "P", "B", "I", "SP", "SI", "", "", "", "" };
+		String picture_code2[] = { "P", "B", "I", "SP", "SI", "P+", "B+", "I+", "SP+", "SI+", "", "", "", "" };
 
+		String unit_code1[] = { "nonIDR", "IDR" }; //1 + 5 pre-filtered
+		mpg_info[11] = "Pic.Type:  " + picture_code1[temp_values[11]] + "-" + progressive_string[1 - temp_values[6]] + "  / " + unit_code1[unittype>>>2] + (pic_id != - 1 ? " / Id: " + pic_id : "");
 		String picture_struc[][] = {{ "Frame", "Frame" },{ "Top", "Bottom" }};
 		mpg_info[12] = "Pic.Struct.: " + picture_struc[temp_values[6]][temp_values[7]];
 		mpg_info[13] = "Pic.Ord.: " + temp_values[4] + "  FrNum.: " + temp_values[1];
+		mpg_info[14] = "SliceType:  " + picture_code2[temp_values[11]];
+		mpg_info[15] = "Ref.Idx:  " + (7 & check[4 + offset]>>5);
 
 		//if( pic_order_cnt_type = = 1 && !delta_pic_order_always_zero_flag ) {
 		//delta_pic_order_cnt[ 0 ] 2 se(v)

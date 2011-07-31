@@ -104,7 +104,7 @@ public class PreSettings extends JFrame {
 		getContentPane().add(container);
 
 		setTitle(title);
-		setBounds(200, 100, 720, 400);
+		setBounds(200, 100, 720, 480);
 		setResizable(false);
 
 		UIManager.addPropertyChangeListener(new UISwitchListener(getRootPane()));

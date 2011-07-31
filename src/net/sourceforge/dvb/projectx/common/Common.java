@@ -1,7 +1,7 @@
 /*
  * @(#)Common.java - carries various stuff, the center class
  *
- * Copyright (c) 2004-2009 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2004-2011 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -81,8 +81,8 @@ import net.sourceforge.dvb.projectx.net.WebInterface;
 public final class Common extends Object {
 
 	/* main version index */
-	private static String version_name = "ProjectX 0.90.4.00.b32";
-	private static String version_date = "30.12.2009";
+	private static String version_name = "ProjectX 0.91.0.00";
+	private static String version_date = "31.03.2011";
 
 	private static String line_separator = System.getProperty("line.separator");
 

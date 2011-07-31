@@ -4,7 +4,7 @@ rem test if JAVA_HOME is already set in the system environment
 if exist "%JAVA_HOME%\bin\java.exe" goto JAVA_HOME_SET
 
 rem IMPORTANT! Edit the next line and set JAVA_HOME according to your environment.
-set JAVA_HOME=C:\jdk1.2.2
+set JAVA_HOME=C:\programme\jdk122
 
 rem test if JAVA_HOME is set correctly now
 if exist "%JAVA_HOME%\bin\java.exe" goto JAVA_HOME_SET
