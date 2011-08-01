@@ -937,11 +937,16 @@ public class StreamProcessTeletext extends StreamProcessBase {
 											while (picture_String.size() > subpicture.getMaximumLines()) // max. lines as defined
 												picture_String.remove(0);
 
-											subpicture.showPicTTX( picture_String.toArray(), job_processing.getStatusStrings());
-											byte_buffer.write( subpicture.writeRLE( sup_in_time, 0xB4)); // alias duration 1.800 sec if out_time is missing
+											subpicture.createPictureFromTeletext( picture_String.toArray(), job_processing.getStatusStrings());
+											//byte_buffer.write( subpicture.writeRLE( sup_in_time, 0xB4)); // alias duration 1.800 sec if out_time is missing
 
-											if ( write_buffer.containsKey("out_time") )
-												out.write(subpicture.setTime( byte_buffer.toByteArray(), Long.parseLong( write_buffer.get("out_time").toString())));
+											//if ( write_buffer.containsKey("out_time") )
+											//	out.write(subpicture.setTime( byte_buffer.toByteArray(), Long.parseLong( write_buffer.get("out_time").toString())));
+
+											int displaytime = write_buffer.containsKey("out_time") ? subpicture.setTime(sup_in_time, Long.parseLong(write_buffer.get("out_time").toString())) : 0xB4;
+
+											byte_buffer.write( subpicture.writeRLE(sup_in_time, displaytime));
+											out.write(byte_buffer.toByteArray());
 										}
 
 										picture_String.clear();
@@ -1199,10 +1204,14 @@ public class StreamProcessTeletext extends StreamProcessBase {
 								while (picture_String.size() > subpicture.getMaximumLines())
 									picture_String.remove(0);
 
-								subpicture.showPicTTX( picture_String.toArray(), job_processing.getStatusStrings());
-								byte_buffer.write( subpicture.writeRLE( sup_in_time, 0xB4)); // alias duration 2.000 sec if out_time is missing
+								subpicture.createPictureFromTeletext( picture_String.toArray(), job_processing.getStatusStrings());
+							//	byte_buffer.write( subpicture.writeRLE( sup_in_time, 0xB4)); // alias duration 2.000 sec if out_time is missing
+							//	out.write(subpicture.setTime( byte_buffer.toByteArray(), Long.parseLong( write_buffer.get("out_time").toString())));
 
-								out.write(subpicture.setTime( byte_buffer.toByteArray(), Long.parseLong( write_buffer.get("out_time").toString())));
+								int displaytime = subpicture.setTime(sup_in_time, Long.parseLong(write_buffer.get("out_time").toString()));
+
+								byte_buffer.write( subpicture.writeRLE(sup_in_time, displaytime));
+								out.write(byte_buffer.toByteArray());
 							}
 
 							picture_String.clear();

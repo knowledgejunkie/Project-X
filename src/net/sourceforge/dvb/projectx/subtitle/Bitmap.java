@@ -1,7 +1,7 @@
 /*
  * @(#)Bitmap.java - provides a Bitmap buffer from painted subpic 
  *
- * Copyright (c) 2004-2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2004-2011 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -159,15 +159,14 @@ public class Bitmap extends Object {
 
 	public void createColorTable()
 	{
-		for (int a=0; a < pixel.length; a++)
+		for (int i = 0; i < pixel.length; i++)
 		{
-			String pixel_str = "" + pixel[a];
+			String pixel_str = String.valueOf(pixel[i]);
 
 			if (color_table.contains(pixel_str))
 				continue;
 
-			else
-				color_table.add(pixel_str);
+			color_table.add(pixel_str);
 		}
 	}
 
