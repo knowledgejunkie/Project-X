@@ -1,7 +1,7 @@
 /*
  * @(#)Keys.java - static, fixed keys
  *
- * Copyright (c) 2005-2009 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2011 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -32,9 +32,7 @@ public class Keys extends Object {
 
 	public final static String KEY_Tip = ".Tip";
 
-	/**
-	 * General
-	 */
+	// General
 	public final static String[] KEY_Agreement = { "Application.Agreement", "0" }; //rbutton[1]
 	public final static String[] KEY_ActiveDirectory = { "Application.ActiveDirectory", "" }; 
 	public final static String[] KEY_LookAndFeel = { "Application.LookAndFeel", "" };
@@ -51,9 +49,7 @@ public class Keys extends Object {
 	public final static String[] KEY_WindowPositionMain_Width = { "WindowPosition.Main.Width", "852" }; //866
 	public final static String[] KEY_WindowPositionMain_Height = { "WindowPosition.Main.Height", "632" }; //626
 
-	/**
-	 * PostCommands
-	 */
+	// PostCommands
 	public final static String[] KEY_PostCommands_Cmd1 = { "PostCommands.Cmd1", "" }; 
 	public final static String[] KEY_PostCommands_Cmd2 = { "PostCommands.Cmd2", "" }; 
 	public final static String[] KEY_PostCommands_Cmd3 = { "PostCommands.Cmd3", "" }; 
@@ -63,9 +59,7 @@ public class Keys extends Object {
 	public final static String[] KEY_PostCommands_Cmd7 = { "PostCommands.Cmd7", "" }; 
 	public final static String[] KEY_PostCommands_Cmd8 = { "PostCommands.Cmd8", "" }; 
 
-	/**
-	 * MessagePanel
-	 */
+	// MessagePanel
 	public final static String[] KEY_MessagePanel_Msg1 = { "MessagePanel.logSequenceError", "1" }; //cbox[40] sequence error
 	public final static String[] KEY_MessagePanel_Msg2 = { "MessagePanel.logMissingStartcode", "1" }; //cbox[3]  missing startcode
 	public final static String[] KEY_MessagePanel_Msg3 = { "MessagePanel.logESError", "1" }; //cbox[74] pes in es 
@@ -75,9 +69,7 @@ public class Keys extends Object {
 	public final static String[] KEY_MessagePanel_Msg7 = { "MessagePanel.logRDS", "1" }; //RDS
 	public final static String[] KEY_MessagePanel_Msg8 = { "MessagePanel.logErrorMaximum", "1" };
 
-	/**
-	 * MainPanel
-	 */
+	// MainPanel
 	public static Object[] ITEMS_ConversionMode = null;
 
 	public final static String[] KEY_ConversionMode = { "MainPanel.ConversionMode", "0" }; //combox[19], index
@@ -93,15 +85,11 @@ public class Keys extends Object {
 	public final static String[] KEY_PostProcessCompletion = { "MainPanel.PostProcessCompletion", "0" };
 	public final static String[] KEY_useGOPEditor = { "MainPanel.useGOPEditor", "0" };
 
-	/**
-	 * LogWindowPanel
-	 */
+	// LogWindowPanel
 	public final static String[] KEY_showTtxHeader = { "LogwindowPanel.showTtxHeader", "0" }; //cbox[19]
 
 
-	/**
-	 * ExportPanel
-	 */
+	// ExportPanel
 	public final static String[] KEY_SplitSize = { "ExportPanel.SplitSize", "0" }; //cbox[5]
 	public final static String[] KEY_Streamtype_MpgVideo = { "ExportPanel.Streamtype.MpgVideo", "1" }; //cbox[55]
 	public final static String[] KEY_Streamtype_MpgAudio = { "ExportPanel.Streamtype.MpgAudio", "1" }; //cbox[56]
@@ -121,6 +109,7 @@ public class Keys extends Object {
 	public final static String[] KEY_ExportPanel_Overlap_Value = { "ExportPanel.Overlap.Value", "0" }; //combox[25]
 	public final static String[] KEY_ExportPanel_Infoscan_Value = { "ExportPanel.Infoscan.Value", "5" }; //combox[21]
 	public final static String[] KEY_ExportPanel_additionalOffset_Value = { "ExportPanel.additionalOffset.Value", "0" }; //combobox[8], item
+	public final static String[] KEY_LanguageFilter = { "ExportPanel.Language.Filter", "" };
 
 	public static Object[] ITEMS_Export_SplitSize = {
 		"650", "700", "735", "792", "2000", "4700"
@@ -133,9 +122,7 @@ public class Keys extends Object {
 	public static Object[] ITEMS_Infoscan = { "5", "10", "25" };
 
 
-	/**
-	 * OptionPanel
-	 */
+	// OptionPanel
 	public final static String[] KEY_DebugLog = { "OptionPanel.DebugLog", "0" }; //cbox[11]  - group1
 	public final static String[] KEY_NormalLog = { "OptionPanel.NormalLog", "1" }; //cbox[21] -group1
 	public final static String[] KEY_dumpDroppedGop = { "OptionPanel.dumpDroppedGop", "0" }; //cbox[43] 
@@ -149,9 +136,7 @@ public class Keys extends Object {
 	public final static String[] KEY_additionalInputBuffer = { "OptionPanel.additionalInputBuffer", "0" }; //test
 	public final static String[] KEY_enableHDDemux = { "OptionPanel.enableHDDemux", "0" };
 
-	/**
-	 * SpecialPanel
-	 */
+	// SpecialPanel
 	public final static String[] KEY_PVA_FileOverlap = { "SpecialPanel.PVA.FileOverlap", "0" }; //cbox[48]
 	public final static String[] KEY_PVA_Audio = { "SpecialPanel.PVA.Audio", "1" }; //cbox[28], true
 	public final static String[] KEY_VOB_resetPts = { "SpecialPanel.VOB.resetPts", "1" }; //cbox[76], true
@@ -194,9 +179,7 @@ public class Keys extends Object {
 	};
 
 
-	/**
-	 * ExternPanel
-	 */
+	// ExternPanel
 	public final static String[] KEY_ExternPanel_createVdrIndex = { "ExternPanel.createVdrIndex", "0" }; //cbox[54]
 	public final static String[] KEY_ExternPanel_createCellTimes = { "ExternPanel.createCellTimes", "1" }; //cbox[26] !!
 	public final static String[] KEY_ExternPanel_exportPts = { "ExternPanel.exportPts", "0" }; //cbox[64] !!
@@ -221,9 +204,7 @@ public class Keys extends Object {
 	public final static String[] KEY_WebServerAccess = { "NetPanel.WebServerAccess", "" };
 
 
-	/**
-	 * VideoPanel
-	 */
+	// VideoPanel
 	public final static String[] KEY_VideoPanel_addEndcode = { "VideoPanel.addEndcode", "1" }; //cbox[13] 
 	public final static String[] KEY_VideoPanel_insertEndcode = { "VideoPanel.insertEndcode", "0" }; //cbox[75] 
 	public final static String[] KEY_VideoPanel_addSequenceHeader = { "VideoPanel.addSequenceHeader", "0" }; //cbox[27] 

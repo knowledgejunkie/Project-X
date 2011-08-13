@@ -434,8 +434,15 @@
 --fix: TS192 file segment combine
 
 
+
 --> 0.91.0.00  / 31.3.2011
 release,  including all previous betas
+
+0.91.0.01
+--multicolour subpicture for teletext export and simple outline, up to 14 different front colours
+
+0.91.0.02
+--audio language filter from TS files (using PMT data)
 
 
 

@@ -1,7 +1,7 @@
 /*
  * @(#)PreSettings.java
  *
- * Copyright (c) 2005-2009 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2005-2011 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -507,6 +507,16 @@ public class PreSettings extends JFrame {
 
 		for (int i = 5; i < 8; i++)
 			panel_2.add(box[i]);
+
+		JTextField language_code = new JTextField(Common.getSettings().getProperty(Keys.KEY_LanguageFilter));
+		language_code.setPreferredSize(new Dimension(100, 22));
+		language_code.setMaximumSize(new Dimension(100, 22));
+		language_code.setToolTipText(Resource.getString(Keys.KEY_LanguageFilter[0] + Keys.KEY_Tip));
+		language_code.setEditable(true);
+		language_code.setActionCommand(Keys.KEY_LanguageFilter[0]);
+		language_code.addActionListener(_TextFieldListener);
+		language_code.addKeyListener(_TextFieldKeyListener);
+		panel_2.add(language_code);
 
 		idPanel.add(panel_1);
 		idPanel.add(panel_2);

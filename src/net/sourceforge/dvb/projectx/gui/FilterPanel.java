@@ -1,7 +1,7 @@
 /*
  * @(#)Filter.java
  *
- * Copyright (c) 2007 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2007-2011 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -74,22 +74,22 @@ import net.sourceforge.dvb.projectx.common.JobCollection;
  */
 public class FilterPanel extends JPanel {
 
-	private CPComboBoxIndexListener _ComboBoxIndexListener = new CPComboBoxIndexListener();
-	private CPComboBoxItemListener _ComboBoxItemListener = new CPComboBoxItemListener();
-	private CPCheckBoxListener _CheckBoxListener = new CPCheckBoxListener();
-	private CPTextFieldListener _TextFieldListener = new CPTextFieldListener();
-	private CPTextFieldKeyListener _TextFieldKeyListener = new CPTextFieldKeyListener();
+	CPComboBoxIndexListener _ComboBoxIndexListener = new CPComboBoxIndexListener();
+	CPComboBoxItemListener _ComboBoxItemListener = new CPComboBoxItemListener();
+	CPCheckBoxListener _CheckBoxListener = new CPCheckBoxListener();
+	CPTextFieldListener _TextFieldListener = new CPTextFieldListener();
+	CPTextFieldKeyListener _TextFieldKeyListener = new CPTextFieldKeyListener();
 
-	private JobCollection collection;
+	JobCollection collection;
 
-	private JPanel container;
-	private JPanel tabPanel;
-	private JList includeList;
+	JPanel container;
+	JPanel tabPanel;
+	JList includeList;
 
-	private boolean actionDenied = false;
-	private boolean hasChanged = false;
+	boolean actionDenied = false;
+	boolean hasChanged = false;
 
-	private String[][] objects = {
+	String[][] objects = {
 		Keys.KEY_WriteOptions_writeVideo,
 		Keys.KEY_WriteOptions_writeAudio,
 		Keys.KEY_OptionHorizontalResolution,
@@ -104,10 +104,11 @@ public class FilterPanel extends JPanel {
 		Keys.KEY_useAutoPidFilter
 	};
 
-	private JComboBox combobox_34;
-	private JComboBox combobox_24;
+	JComboBox combobox_34;
+	JComboBox combobox_24;
 
-	private JCheckBox[] box;
+	JCheckBox[] box;
+	JTextField language_code;
 
 
 	class Clock implements Runnable {
@@ -341,6 +342,7 @@ public class FilterPanel extends JPanel {
 
 		combobox_34.setSelectedItem(getProperty(Keys.KEY_ExportHorizontalResolution));
 		combobox_24.setSelectedIndex(getIntProperty(Keys.KEY_ExportDAR));
+		language_code.setText(getProperty(Keys.KEY_LanguageFilter));
 
 		actionDenied = false;
 	}
@@ -650,6 +652,16 @@ public class FilterPanel extends JPanel {
 
 		for (int i = 8; i < 11; i++)
 			panel_2.add(box[i]);
+
+		language_code = new JTextField(Common.getSettings().getProperty(Keys.KEY_LanguageFilter));
+		language_code.setPreferredSize(new Dimension(100, 22));
+		language_code.setMaximumSize(new Dimension(100, 22));
+		language_code.setToolTipText(Resource.getString(Keys.KEY_LanguageFilter[0] + Keys.KEY_Tip));
+		language_code.setEditable(true);
+		language_code.setActionCommand(Keys.KEY_LanguageFilter[0]);
+		language_code.addActionListener(_TextFieldListener);
+		language_code.addKeyListener(_TextFieldKeyListener);
+		panel_2.add(language_code);
 
 		idPanel.add(panel_1);
 		idPanel.add(panel_2);

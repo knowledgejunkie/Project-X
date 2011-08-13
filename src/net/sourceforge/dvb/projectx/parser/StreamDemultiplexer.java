@@ -1,7 +1,7 @@
 /*
  * @(#)StreamDemultiplexer
  *
- * Copyright (c) 2005-2009 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2011 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -54,75 +54,77 @@ import net.sourceforge.dvb.projectx.video.Video;
  */
 public class StreamDemultiplexer extends Object {
 
-	private boolean ptsover = false;
-	private boolean misshead = false;
-	private boolean first = true;
-	private boolean overlap = false;
-	private boolean seqhead = false;
-	private boolean isPTSwritten = false;
-	private boolean isEnabled = true;
+	boolean ptsover = false;
+	boolean misshead = false;
+	boolean first = true;
+	boolean overlap = false;
+	boolean seqhead = false;
+	boolean isPTSwritten = false;
+	boolean isEnabled = true;
 //
-    private boolean isH264 = false;
+    boolean isH264 = false;
 
-	private boolean WriteNonVideo;
-	private boolean WriteVideo;
-	private boolean Debug;
-	private boolean DecodeVBI;
-	private boolean RebuildPTS;
-	private boolean RebuildPictPTS;
-	private boolean Streamtype_MpgVideo;
-	private boolean Streamtype_MpgAudio;
-	private boolean Streamtype_Ac3Audio;
-	private boolean Streamtype_PcmAudio;
-	private boolean Streamtype_Teletext;
-	private boolean Streamtype_Subpicture;
-	private boolean AddSequenceEndcode;
-	private boolean RenameVideo;
-	private boolean CreateD2vIndex;
-	private boolean CreateM2sIndex;
-	private boolean SplitProjectFile;
-	private boolean CreateCellTimes;
-    private boolean CreateInfoIndex;
-    private boolean AppendPidToFileName;
-    private boolean AppendLangToFileName;
-    private boolean EnableHDDemux;
+	boolean WriteNonVideo;
+	boolean WriteVideo;
+	boolean Debug;
+	boolean DecodeVBI;
+	boolean RebuildPTS;
+	boolean RebuildPictPTS;
+	boolean Streamtype_MpgVideo_Enabled;
+	boolean Streamtype_MpgAudio_Enabled;
+	boolean Streamtype_Ac3Audio_Enabled;
+	boolean Streamtype_PcmAudio_Enabled;
+	boolean Streamtype_Teletext_Enabled;
+	boolean Streamtype_Subpicture_Enabled;
+	boolean AddSequenceEndcode;
+	boolean RenameVideo;
+	boolean CreateD2vIndex;
+	boolean CreateM2sIndex;
+	boolean SplitProjectFile;
+	boolean CreateCellTimes;
+    boolean CreateInfoIndex;
+    boolean AppendPidToFileName;
+    boolean AppendLangToFileName;
+    boolean EnableHDDemux;
+	String LanguageFilter = "";
+	String language = "";
 
-	private long AddOffset = 0;
-	private long target_position = 0;
-	private long ptsoffset = 0; 
-	private long pts = -1;
-	private long lastPTS = -1;
+	long AddOffset = 0;
+	long target_position = 0;
+	long ptsoffset = 0; 
+	long pts = -1;
+	long lastPTS = -1;
 
-	private int pack = -1;
-	private int pes_ID = 0;
-	private int newID = 0;
-	private int PID = 0;
-	private int es_streamtype = 0;
-	private int subid = 0x1FF;
-	private int pes_streamtype = 0;
-	private int lfn = -1;
-	private int buffersize = 1024;
-	private int sourcetype = 0;
-	private int[] MPGVideotype = { -1 }; // 0 =m1v, 1 = m2v, 2 = h264  -- changed at goptest
+	int pack = -1;
+	int pes_ID = 0;
+	int newID = 0;
+	int PID = 0;
+	int es_streamtype = 0;
+	int subid = 0x1FF;
+	int pes_streamtype = 0;
+	int lfn = -1;
+	int buffersize = 1024;
+	int sourcetype = 0;
+	int[] MPGVideotype = { -1 }; // 0 =m1v, 1 = m2v, 2 = h264  -- changed at goptest
 
-	private int StreamNumber = -1;
+	int StreamNumber = -1;
 
-	private String FileName = "";
-	private String parentname = "";
-	private String[] type = { "ac", "tt", "mp", "mv", "pc", "sp", "vp" };
-	private String[] source = { ".$spes$", ".$ppes$", ".$ts$", ".$pva$" };
-//	private String[] videoext = { ".mpv", ".mpv", ".m1v", ".m2v" };
-	private String[] videoext = { ".mpv", ".mpv", ".264", ".m1v", ".m2v", ".264" };
+	String FileName = "";
+	String parentname = "";
+	String[] type = { "ac", "tt", "mp", "mv", "pc", "sp", "vp" };
+	String[] source = { ".$spes$", ".$ppes$", ".$ts$", ".$pva$" };
+//	String[] videoext = { ".mpv", ".mpv", ".m1v", ".m2v" };
+	String[] videoext = { ".mpv", ".mpv", ".264", ".m1v", ".m2v", ".264" };
 
-	private IDDBufferedOutputStream out;
-	private DataOutputStream pts_log;
-	private ByteArrayOutputStream vidbuf;
-	private ByteArrayOutputStream vptsbytes;
-	private ByteArrayOutputStream packet;
-	private DataOutputStream vpts;
+	IDDBufferedOutputStream out;
+	DataOutputStream pts_log;
+	ByteArrayOutputStream vidbuf;
+	ByteArrayOutputStream vptsbytes;
+	ByteArrayOutputStream packet;
+	DataOutputStream vpts;
 
-	private byte[] subpicture_header = { 0x53, 0x50, 0, 0, 0, 0, 0, 0, 0, 0 };
-	private byte[] lpcm_header = { 0x50, 0x43, 0x4D, 0, 0, 0, 0, 0, 0, 0 }; //'PCM'+5b(pts)+2b(size) 
+	byte[] subpicture_header = { 0x53, 0x50, 0, 0, 0, 0, 0, 0, 0, 0 }; //'SP'+8b(pts)
+	byte[] lpcm_header = { 0x50, 0x43, 0x4D, 0, 0, 0, 0, 0, 0, 0 }; //'PCM'+5b(pts)+2b(size) 
 
 	/**
 	 *
@@ -318,42 +320,52 @@ public class StreamDemultiplexer extends Object {
 		switch(newID>>>4)
 		{
 		case 0xE:  //video
-			return Streamtype_MpgVideo;
+			return Streamtype_MpgVideo_Enabled;
 
 		case 0xC:  //mpa
 		case 0xD:
-			return Streamtype_MpgAudio;
+			return StreamEnabled(Streamtype_MpgAudio_Enabled);
 
 		case 0x8:  //ac3,mpg
-			return Streamtype_Ac3Audio;
+			return StreamEnabled(Streamtype_Ac3Audio_Enabled);
 
 		case 0xA:  //lpcm,mpg
-			return Streamtype_PcmAudio;
+			return StreamEnabled(Streamtype_PcmAudio_Enabled);
 
 		case 0x9:  //ttx
-			return Streamtype_Teletext;
+			return Streamtype_Teletext_Enabled;
 
 		case 0x2:  //subpic
 		case 0x3: 
-			return Streamtype_Subpicture;
+			return Streamtype_Subpicture_Enabled;
 
 		default:
 			return isEnabled;
 		}
 	}
 
+	/**
+	 * stream type preselector
+	 */
+	private boolean StreamEnabled(boolean b)
+	{
+		if (!b || language.length() == 0 || LanguageFilter.length() == 0)
+			return b;
+
+		return (LanguageFilter.indexOf(language) >= 0);
+	}
 
 	/**
 	 *
 	 */
 	private void getSettings(JobCollection collection)
 	{
-		Streamtype_MpgVideo = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_MpgVideo);
-		Streamtype_MpgAudio = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_MpgAudio);
-		Streamtype_Ac3Audio = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_Ac3Audio);
-		Streamtype_PcmAudio = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_PcmAudio);
-		Streamtype_Teletext = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_Teletext);
-		Streamtype_Subpicture = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_Subpicture);
+		Streamtype_MpgVideo_Enabled = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_MpgVideo);
+		Streamtype_MpgAudio_Enabled = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_MpgAudio);
+		Streamtype_Ac3Audio_Enabled = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_Ac3Audio);
+		Streamtype_PcmAudio_Enabled = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_PcmAudio);
+		Streamtype_Teletext_Enabled = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_Teletext);
+		Streamtype_Subpicture_Enabled = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_Subpicture);
 		AddOffset = collection.getSettings().getBooleanProperty(Keys.KEY_additionalOffset) ? 90L * collection.getSettings().getIntProperty(Keys.KEY_ExportPanel_additionalOffset_Value) : 0;    // time offset for data
 		WriteNonVideo = collection.getSettings().getBooleanProperty(Keys.KEY_WriteOptions_writeAudio);
 		WriteVideo = collection.getSettings().getBooleanProperty(Keys.KEY_WriteOptions_writeVideo);
@@ -371,6 +383,7 @@ public class StreamDemultiplexer extends Object {
         AppendPidToFileName = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_appendPidToFileName);
         AppendLangToFileName = collection.getSettings().getBooleanProperty(Keys.KEY_ExternPanel_appendLangToFileName);
         EnableHDDemux = collection.getSettings().getBooleanProperty(Keys.KEY_enableHDDemux);
+		LanguageFilter = collection.getSettings().getProperty(Keys.KEY_LanguageFilter);
 	}
 
 	/**
@@ -393,6 +406,10 @@ public class StreamDemultiplexer extends Object {
 		target_position = 0;
 
 		getSettings(collection);
+
+		language = collection.getJobProcessing().getAudioStreamLanguage(getPID());
+		language = language.replace('_', ' '); //simple hack
+		language = language.trim();
 
 		try {
 			out = new IDDBufferedOutputStream(new FileOutputStream(FileName), buffersize);
