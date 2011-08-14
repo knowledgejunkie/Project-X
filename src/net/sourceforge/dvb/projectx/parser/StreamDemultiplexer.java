@@ -54,77 +54,77 @@ import net.sourceforge.dvb.projectx.video.Video;
  */
 public class StreamDemultiplexer extends Object {
 
-	boolean ptsover = false;
-	boolean misshead = false;
-	boolean first = true;
-	boolean overlap = false;
-	boolean seqhead = false;
-	boolean isPTSwritten = false;
-	boolean isEnabled = true;
+	private boolean ptsover = false;
+	private boolean misshead = false;
+	private boolean first = true;
+	private boolean overlap = false;
+	private boolean seqhead = false;
+	private boolean isPTSwritten = false;
+	private boolean isEnabled = true;
 //
-    boolean isH264 = false;
+    private boolean isH264 = false;
 
-	boolean WriteNonVideo;
-	boolean WriteVideo;
-	boolean Debug;
-	boolean DecodeVBI;
-	boolean RebuildPTS;
-	boolean RebuildPictPTS;
-	boolean Streamtype_MpgVideo_Enabled;
-	boolean Streamtype_MpgAudio_Enabled;
-	boolean Streamtype_Ac3Audio_Enabled;
-	boolean Streamtype_PcmAudio_Enabled;
-	boolean Streamtype_Teletext_Enabled;
-	boolean Streamtype_Subpicture_Enabled;
-	boolean AddSequenceEndcode;
-	boolean RenameVideo;
-	boolean CreateD2vIndex;
-	boolean CreateM2sIndex;
-	boolean SplitProjectFile;
-	boolean CreateCellTimes;
-    boolean CreateInfoIndex;
-    boolean AppendPidToFileName;
-    boolean AppendLangToFileName;
-    boolean EnableHDDemux;
-	String LanguageFilter = "";
-	String language = "";
+	private boolean WriteNonVideo;
+	private boolean WriteVideo;
+	private boolean Debug;
+	private boolean DecodeVBI;
+	private boolean RebuildPTS;
+	private boolean RebuildPictPTS;
+	private boolean Streamtype_MpgVideo_Enabled;
+	private boolean Streamtype_MpgAudio_Enabled;
+	private boolean Streamtype_Ac3Audio_Enabled;
+	private boolean Streamtype_PcmAudio_Enabled;
+	private boolean Streamtype_Teletext_Enabled;
+	private boolean Streamtype_Subpicture_Enabled;
+	private boolean AddSequenceEndcode;
+	private boolean RenameVideo;
+	private boolean CreateD2vIndex;
+	private boolean CreateM2sIndex;
+	private boolean SplitProjectFile;
+	private boolean CreateCellTimes;
+    private boolean CreateInfoIndex;
+    private boolean AppendPidToFileName;
+    private boolean AppendLangToFileName;
+    private boolean EnableHDDemux;
+	private String LanguageFilter = "";
+	private String language = "";
 
-	long AddOffset = 0;
-	long target_position = 0;
-	long ptsoffset = 0; 
-	long pts = -1;
-	long lastPTS = -1;
+	private long AddOffset = 0;
+	private long target_position = 0;
+	private long ptsoffset = 0; 
+	private long pts = -1;
+	private long lastPTS = -1;
 
-	int pack = -1;
-	int pes_ID = 0;
-	int newID = 0;
-	int PID = 0;
-	int es_streamtype = 0;
-	int subid = 0x1FF;
-	int pes_streamtype = 0;
-	int lfn = -1;
-	int buffersize = 1024;
-	int sourcetype = 0;
-	int[] MPGVideotype = { -1 }; // 0 =m1v, 1 = m2v, 2 = h264  -- changed at goptest
+	private int pack = -1;
+	private int pes_ID = 0;
+	private int newID = 0;
+	private int PID = 0;
+	private int es_streamtype = 0;
+	private int subid = 0x1FF;
+	private int pes_streamtype = 0;
+	private int lfn = -1;
+	private int buffersize = 1024;
+	private int sourcetype = 0;
+	private int[] MPGVideotype = { -1 }; // 0 =m1v, 1 = m2v, 2 = h264  -- changed at goptest
 
-	int StreamNumber = -1;
+	private int StreamNumber = -1;
 
-	String FileName = "";
-	String parentname = "";
-	String[] type = { "ac", "tt", "mp", "mv", "pc", "sp", "vp" };
-	String[] source = { ".$spes$", ".$ppes$", ".$ts$", ".$pva$" };
-//	String[] videoext = { ".mpv", ".mpv", ".m1v", ".m2v" };
-	String[] videoext = { ".mpv", ".mpv", ".264", ".m1v", ".m2v", ".264" };
+	private String FileName = "";
+	private String parentname = "";
+	private String[] type = { "ac", "tt", "mp", "mv", "pc", "sp", "vp" };
+	private String[] source = { ".$spes$", ".$ppes$", ".$ts$", ".$pva$" };
+//	private String[] videoext = { ".mpv", ".mpv", ".m1v", ".m2v" };
+	private String[] videoext = { ".mpv", ".mpv", ".264", ".m1v", ".m2v", ".264" };
 
-	IDDBufferedOutputStream out;
-	DataOutputStream pts_log;
-	ByteArrayOutputStream vidbuf;
-	ByteArrayOutputStream vptsbytes;
-	ByteArrayOutputStream packet;
-	DataOutputStream vpts;
+	private IDDBufferedOutputStream out;
+	private DataOutputStream pts_log;
+	private ByteArrayOutputStream vidbuf;
+	private ByteArrayOutputStream vptsbytes;
+	private ByteArrayOutputStream packet;
+	private DataOutputStream vpts;
 
-	byte[] subpicture_header = { 0x53, 0x50, 0, 0, 0, 0, 0, 0, 0, 0 }; //'SP'+8b(pts)
-	byte[] lpcm_header = { 0x50, 0x43, 0x4D, 0, 0, 0, 0, 0, 0, 0 }; //'PCM'+5b(pts)+2b(size) 
+	private byte[] subpicture_header = { 0x53, 0x50, 0, 0, 0, 0, 0, 0, 0, 0 }; //'SP'+8b(pts)
+	private byte[] lpcm_header = { 0x50, 0x43, 0x4D, 0, 0, 0, 0, 0, 0, 0 }; //'PCM'+5b(pts)+2b(size) 
 
 	/**
 	 *

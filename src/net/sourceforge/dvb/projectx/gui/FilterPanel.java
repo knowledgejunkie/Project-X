@@ -74,22 +74,22 @@ import net.sourceforge.dvb.projectx.common.JobCollection;
  */
 public class FilterPanel extends JPanel {
 
-	CPComboBoxIndexListener _ComboBoxIndexListener = new CPComboBoxIndexListener();
-	CPComboBoxItemListener _ComboBoxItemListener = new CPComboBoxItemListener();
-	CPCheckBoxListener _CheckBoxListener = new CPCheckBoxListener();
-	CPTextFieldListener _TextFieldListener = new CPTextFieldListener();
-	CPTextFieldKeyListener _TextFieldKeyListener = new CPTextFieldKeyListener();
+	private CPComboBoxIndexListener _ComboBoxIndexListener = new CPComboBoxIndexListener();
+	private CPComboBoxItemListener _ComboBoxItemListener = new CPComboBoxItemListener();
+	private CPCheckBoxListener _CheckBoxListener = new CPCheckBoxListener();
+	private CPTextFieldListener _TextFieldListener = new CPTextFieldListener();
+	private CPTextFieldKeyListener _TextFieldKeyListener = new CPTextFieldKeyListener();
 
-	JobCollection collection;
+	private JobCollection collection;
 
-	JPanel container;
-	JPanel tabPanel;
-	JList includeList;
+	private JPanel container;
+	private JPanel tabPanel;
+	private JList includeList;
 
-	boolean actionDenied = false;
-	boolean hasChanged = false;
+	private boolean actionDenied = false;
+	private boolean hasChanged = false;
 
-	String[][] objects = {
+	private String[][] objects = {
 		Keys.KEY_WriteOptions_writeVideo,
 		Keys.KEY_WriteOptions_writeAudio,
 		Keys.KEY_OptionHorizontalResolution,
@@ -104,11 +104,11 @@ public class FilterPanel extends JPanel {
 		Keys.KEY_useAutoPidFilter
 	};
 
-	JComboBox combobox_34;
-	JComboBox combobox_24;
+	private JComboBox combobox_34;
+	private JComboBox combobox_24;
 
-	JCheckBox[] box;
-	JTextField language_code;
+	private JCheckBox[] box;
+	private JTextField language_code;
 
 
 	class Clock implements Runnable {
