@@ -442,8 +442,11 @@ release,  including all previous betas
 --multicolour subpicture for teletext export and simple outline, up to 14 different front colours
 
 0.91.0.02
---audio language filter from TS files (using PMT data)
+--audio language filter from TS files (using PMT data) (filter panel) deu,ger,eng,Eng etc. 
 
+0.91.0.03
+--cut point pairs split into new collections with all settings like source collection (old feature re-implemented)
+--2 hints from sf.net bug tracker added, thx
 
 
 

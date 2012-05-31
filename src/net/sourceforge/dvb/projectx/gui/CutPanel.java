@@ -486,6 +486,42 @@ public class CutPanel extends JPanel {
 
 			else if (actName.equals("cut_scan"))
 				restartMatrix();
+
+//+
+			// changes will be saved immediately
+			else if (actName.equals("cut_split"))
+			{
+				try {
+
+					int NumOfPts = 0;
+
+					if ((NumOfPts = cutIndexList.getItemCount()) > 2) //2cutpoints are not enough
+					{
+						for (int b = 2; b < NumOfPts; b += 2)
+						{
+							JobCollection new_collection = Common.addCollection(collection.getNewInstance());
+
+							new_collection.clearCutpoints();
+
+							for (int c = 0; c < 2 && b + c < NumOfPts; c++)
+								new_collection.addCutpoint( collection.removeCutpoint(2));
+
+							new_collection.determinePrimaryFileSegments();
+						}
+
+						entry(Common.getActiveCollection());
+					}
+
+				} catch (Exception e2) {
+
+					Common.setExceptionMessage(e2);
+				}
+
+				action = true;
+
+				return;
+			}
+//+
 		}
 	}
 
@@ -1159,34 +1195,37 @@ public class CutPanel extends JPanel {
 		 * row 4
 		 */
 		JButton cut_loadlist = new JButton(CommonGui.loadIcon("open.gif"));
-		cut_loadlist.setPreferredSize(new Dimension(32, 24));
-		cut_loadlist.setMaximumSize(new Dimension(32, 24));
+		cut_loadlist.setPreferredSize(new Dimension(30, 24));
+		cut_loadlist.setMaximumSize(new Dimension(30, 24));
 		cut_loadlist.setToolTipText(Resource.getString("CollectionPanel.loadCutpointList.Tip")); //DM18022004 081.6 int17 new
 		cut_loadlist.setActionCommand("load_cutlist");
 		cut_loadlist.addActionListener(jumpAction);
 
-	//	JButton cut_savelist = new JButton("save");
 		JButton cut_savelist = new JButton(CommonGui.loadIcon("save.gif"));
-		cut_savelist.setPreferredSize(new Dimension(32, 24));
-		cut_savelist.setMaximumSize(new Dimension(32, 24));
+		cut_savelist.setPreferredSize(new Dimension(30, 24));
+		cut_savelist.setMaximumSize(new Dimension(30, 24));
 		cut_savelist.setActionCommand("save_cutlist");
 		cut_savelist.addActionListener(jumpAction);
 
-		//JButton cut_scan = new JButton("scan");
-	//	JButton cut_scan = new JButton(CommonGui.loadIcon("scan2.gif"));
+		JButton cut_split = new JButton(CommonGui.loadIcon("split.gif"));
+		cut_split.setPreferredSize(new Dimension(30, 24));
+		cut_split.setMaximumSize(new Dimension(30, 24));
+		cut_split.setActionCommand("cut_split");
+		cut_split.addActionListener(jumpAction);
+		cut_split.setEnabled(true);
+
 		JButton cut_scan = new JButton(CommonGui.loadIcon("matrix.gif"));
-		cut_scan.setPreferredSize(new Dimension(50, 24));
-		cut_scan.setMaximumSize(new Dimension(50, 24));
+		cut_scan.setPreferredSize(new Dimension(30, 24));
+		cut_scan.setMaximumSize(new Dimension(30, 24));
 		cut_scan.setActionCommand("cut_scan");
 		cut_scan.addActionListener(jumpAction);
 		cut_scan.setEnabled(true);
-//		cut_scan.setEnabled(false);
 
 		JPanel panel_4 = new JPanel();
 		panel_4.setLayout(new BoxLayout(panel_4, BoxLayout.X_AXIS));
 		panel_4.add(cut_loadlist);
 		panel_4.add(cut_savelist);
-		panel_4.add(Box.createRigidArea(new Dimension(6, 1)));
+		panel_4.add(cut_split);
 		panel_4.add(cut_scan);
 
 

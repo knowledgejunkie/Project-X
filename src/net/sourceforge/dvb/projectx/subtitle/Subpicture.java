@@ -259,7 +259,7 @@ public class Subpicture extends Object {
 		bimg = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 		big = bimg.createGraphics();
 
-		set("Tahoma", ("26;10;32;80;560;720;576;-1;4;3;1"));
+		set("Tahoma", ("26;10;32;80;560;720;576;-1;4;2;1"));
 		frc = big.getFontRenderContext();
 
 		//   big.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);

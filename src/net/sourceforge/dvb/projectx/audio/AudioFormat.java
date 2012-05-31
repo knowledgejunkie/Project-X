@@ -362,7 +362,8 @@ public class AudioFormat extends Object {
 	public void setSizeBase(int val)
 	{
 		if (impl != null)
-			setSizeBase(val);
+			impl.setSizeBase(val); //slackalan 250312
+			//setSizeBase(val);
 
 		Size_base = val;
 	}
