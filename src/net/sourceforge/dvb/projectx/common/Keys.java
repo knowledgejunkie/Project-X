@@ -439,7 +439,7 @@ public class Keys extends Object {
 		this.ITEMS_CutMode = ITEMS_CutMode;
 
 		Object[] ITEMS_SubtitleExportFormat = {
-			Resource.getString("SubtitlePanel.Format.Free"), "SC", "SUB", "SRT", "STL", "SSA", "SON", "SUP", "null"
+			Resource.getString("SubtitlePanel.Format.Free"), "SC", "SUB", "SRT", "STL", "SSA", "SON", "SUP", "SRTC", "W3C", "GPAC", "null"
 		};
 		this.ITEMS_SubtitleExportFormat = ITEMS_SubtitleExportFormat;
 

@@ -22,6 +22,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ *
+ * Support for SRT with font tags, W3C TTML and GPAC TTEXT
+ * added by Simon Liddicott
+ *
  */
 
 package net.sourceforge.dvb.projectx.parser;
@@ -85,6 +89,9 @@ public class StreamProcessTeletext extends StreamProcessBase {
 	private final int EXPORT_SUP  = 6;
 	private final int EXPORT_STL  = 7;
 	private final int EXPORT_SON  = 8;
+	private final int EXPORT_SRTC = 9;
+	private final int EXPORT_W3C  = 10;
+	private final int EXPORT_GPAC = 11;
 
 	private byte tmp_byte_value = -1;
 	private int tmp_int_value = -1;
@@ -259,6 +266,24 @@ public class StreamProcessTeletext extends StreamProcessBase {
 				subtitle_type = EXPORT_SRT;
 			}
 
+			else if (SubtitleExportFormat.equalsIgnoreCase(Keys.ITEMS_SubtitleExportFormat[8].toString())) 
+			{
+				ttxfile = fparent + "[c].srt";
+				subtitle_type = EXPORT_SRTC;
+			}
+
+			else if (SubtitleExportFormat.equalsIgnoreCase(Keys.ITEMS_SubtitleExportFormat[9].toString())) 
+			{
+				ttxfile = fparent + "[W3C].xml";
+				subtitle_type = EXPORT_W3C;
+			}
+
+			else if (SubtitleExportFormat.equalsIgnoreCase(Keys.ITEMS_SubtitleExportFormat[10].toString())) 
+			{
+				ttxfile = fparent + "[GPAC].ttxt";
+				subtitle_type = EXPORT_GPAC;
+			}
+
 			else if (SubtitleExportFormat.equalsIgnoreCase(Keys.ITEMS_SubtitleExportFormat[5].toString())) 
 			{
 				ttxfile = fparent + ".ssa";
@@ -394,6 +419,28 @@ public class StreamProcessTeletext extends StreamProcessBase {
 					byte_buffer.reset();
 					break;
 
+				case EXPORT_W3C:
+					String[] W3Chead = teletext.getW3CHead();
+
+					for (int a = 0; a < W3Chead.length; a++) 
+						print_buffer.println(W3Chead[a]);
+
+					print_buffer.flush();
+					byte_buffer.writeTo(out);
+					byte_buffer.reset();
+					break;
+
+				case EXPORT_GPAC:
+					String[] GPAChead = teletext.getGPACHead();
+
+					for (int a = 0; a < GPAChead.length; a++) 
+						print_buffer.println(GPAChead[a]);
+
+					print_buffer.flush();
+					byte_buffer.writeTo(out);
+					byte_buffer.reset();
+					break;
+
 				case EXPORT_SSA:
 					String[] SSAhead = teletext.getSSAHead();
 
@@ -491,6 +538,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 				String program_title = "";
 				String vps_str = "";
 				String wss_str = "";
+				int character_count = 0;
 
 				readloop:
 				while ( count < size )
@@ -886,10 +934,15 @@ public class StreamProcessTeletext extends StreamProcessBase {
 
 								while (true)
 								{
+									character_count = 0;
+
 									if ( !write_buffer.containsKey("active") )
 										break;
 
 									if ( !write_buffer.containsKey("in_time") )
+										break;
+//start + end equals ?										
+									if ( write_buffer.get("in_time").toString().equals(write_buffer.get("out_time").toString()) )
 										break;
 
 									switch (subtitle_type)
@@ -910,9 +963,18 @@ public class StreamProcessTeletext extends StreamProcessBase {
 										break;
 
 									case EXPORT_SRT:  // SRT
+									case EXPORT_SRTC: // SRT colored
 										print_buffer.println( "" + (seiten + 1));
 										print_buffer.print( timeformat_2.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ));
 										print_buffer.println(" --> " + timeformat_2.format( new Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ));
+										break;
+
+									case EXPORT_W3C:  // W3C Timed-Text
+										print_buffer.print( "<p begin=\"" + timeformat_1.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ) + "\" end=\"" + timeformat_1.format( new Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ) + "\">" );
+										break;
+
+									case EXPORT_GPAC:  // GPAC Timed-Text
+										print_buffer.print( "<TextSample sampleTime=\"" + timeformat_1.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ) + "\" text=\"'" );
 										break;
 
 									case EXPORT_SSA:  // SSA
@@ -965,7 +1027,16 @@ public class StreamProcessTeletext extends StreamProcessBase {
 										{
 										case EXPORT_TEXT:  // free
 										case EXPORT_SRT:  // SRT
+										case EXPORT_SRTC:  // SRTC
 											print_buffer.println(str); 
+											break;
+
+										case EXPORT_W3C:  // W3C Timed Text
+											print_buffer.print( (b > 0 ? "<br />" : "") + str); 
+											break;
+
+										case EXPORT_GPAC:  // GPAC Timed Text
+											print_buffer.print( (b > 0 ? "''" : "") + str);
 											break;
 
 										case EXPORT_SC:  // SC
@@ -982,6 +1053,27 @@ public class StreamProcessTeletext extends StreamProcessBase {
 										}
 
 										b++;
+									}
+
+									if (subtitle_type == EXPORT_W3C)
+									{
+										print_buffer.print("</p>");
+									}
+
+									if (subtitle_type == EXPORT_GPAC)
+									{
+										print_buffer.println("'\">");
+										for (int a = 1; a < 24; a++)
+										{
+											if ( !write_buffer.containsKey("color" + a) )
+												continue;
+
+											StringTokenizer colors = new StringTokenizer(write_buffer.get("color" + a).toString(), "|");
+											while (colors.hasMoreTokens()) {
+												print_buffer.println(colors.nextToken());
+											}
+										}
+										print_buffer.print("</TextSample>");
 									}
 
 									if (subtitle_type != EXPORT_SUP && b > 0)
@@ -1042,6 +1134,11 @@ public class StreamProcessTeletext extends StreamProcessBase {
 
 								rows = true; // non blank page
 								write_buffer.put("" + a, load_buffer.get("" + a));
+
+								if ( !load_buffer.containsKey("color" + a) )
+									continue;
+
+								write_buffer.put("color" + a, load_buffer.get("color" + a));
 							}
 
 							if (rows && write) // if false, in_time has to be set/updated at synccheck above until an exported gop pts area
@@ -1123,6 +1220,21 @@ public class StreamProcessTeletext extends StreamProcessBase {
 						str = teletext.buildString(packet, 6, 40, row, character_set, 0, true, BoxedMode).trim();
 						break;
 
+					case EXPORT_SRTC:
+						str = teletext.buildString(packet, 6, 40, row, character_set, 2, true, BoxedMode).trim();
+						break;
+
+					case EXPORT_W3C:
+						str = teletext.buildString(packet, 6, 40, row, character_set, 3, true, BoxedMode).trim();
+						break;
+
+					case EXPORT_GPAC:
+						str = teletext.buildString(packet, 6, 40, row, character_set, 0, true, BoxedMode).trim();
+						load_buffer.put("color" + row, teletext.buildString(packet, 6, 40, row, character_set, 4, true, BoxedMode, character_count).trim());
+						character_count += str.length();
+						str = escapeXml(str);
+						break;
+
 					case EXPORT_SSA:
 						str = teletext.buildString(packet, 6, 40, row, character_set, 1, true, BoxedMode).trim();
 						break;
@@ -1177,9 +1289,18 @@ public class StreamProcessTeletext extends StreamProcessBase {
 							break;
 
 						case EXPORT_SRT:  // SRT
+						case EXPORT_SRTC: // SRT colored
 							print_buffer.println( "" + (seiten + 1));
 							print_buffer.print( timeformat_2.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ));
 							print_buffer.println(" --> " + timeformat_2.format( new Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ));
+							break;
+
+						case EXPORT_W3C:  // W3C Timed-Text
+							print_buffer.print( "<p begin=\"" + timeformat_1.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ) + "\" end=\"" + timeformat_1.format( new Date( Long.parseLong( write_buffer.get("out_time").toString()) / 90) ) + "\">" );
+							break;
+
+						case EXPORT_GPAC:  // GPAC Timed-Text
+							print_buffer.print( "<TextSample sampleTime=\"" + timeformat_1.format( new Date( Long.parseLong( write_buffer.get("in_time").toString()) / 90) ) + "\" text=\"'" );
 							break;
 
 						case EXPORT_SSA:  // SSA
@@ -1233,6 +1354,18 @@ public class StreamProcessTeletext extends StreamProcessBase {
 								print_buffer.println(str); 
 								break;
 
+							case EXPORT_SRTC:  // SRT colored
+								print_buffer.println(str); 
+								break;
+
+							case EXPORT_W3C:  // W3C Timed Text
+								print_buffer.print( (b > 0 ? "<br />" : "") + str); 
+								break;
+
+							case EXPORT_GPAC:  // GPAC Timed Text
+								print_buffer.print( (b > 0 ? "''" : "") + str);
+								break;
+
 							case EXPORT_SC:  // SC
 								print_buffer.print(str); 
 								break;
@@ -1247,6 +1380,33 @@ public class StreamProcessTeletext extends StreamProcessBase {
 							}
 
 							b++;
+						}
+
+						if (subtitle_type == EXPORT_W3C)
+						{
+							String[] W3Cfoot = teletext.getW3CFoot();
+
+							for (int a = 0; a < W3Cfoot.length; a++) 
+								print_buffer.println(W3Cfoot[a]);
+						}
+
+						if (subtitle_type == EXPORT_GPAC)
+						{
+							print_buffer.println("'\">");
+							for (int a = 1; a < 24; a++)
+							{
+								if ( !write_buffer.containsKey("color" + a) )
+									continue;
+
+								StringTokenizer colors = new StringTokenizer(write_buffer.get("color" + a).toString(), "|");
+								while (colors.hasMoreTokens()) {
+									print_buffer.println(colors.nextToken());
+								}
+							}
+							String[] GPACfoot = teletext.getGPACFoot();
+
+							for (int a = 0; a < GPACfoot.length; a++) 
+								print_buffer.println(GPACfoot[a]);
 						}
 
 						if (subtitle_type != EXPORT_SUP && b > 0)
@@ -1345,6 +1505,38 @@ public class StreamProcessTeletext extends StreamProcessBase {
 		if (ShowSubpictureWindow)
 			Common.getGuiInterface().hideSubpicture();
 
+	}
+
+	/**
+	 * Get String representation of the object.
+	 * 
+	 * @return String representation of the object
+	 */
+	private String escapeXml(String str) {
+
+		str = replaceStringByString(str, "&", "&amp;"); //1st
+		str = replaceStringByString(str, "\"", "&quot;");
+		str = replaceStringByString(str, "'", "&apos;");
+		str = replaceStringByString(str, ">", "&gt;");
+		str = replaceStringByString(str, "<", "&lt;");
+
+		return str;
+	}
+
+	/**
+	 * @return String, checked of arg1 and replaced with arg2 JDK 1.2.2
+	 *         compatibility, replacement of newer String.replaceAll()
+	 */
+	private String replaceStringByString(String name, String arg1, String arg2) {
+
+		if (name == null) return name;
+
+		StringBuffer sb = new StringBuffer(name);
+
+		for (int i = 0; (i = sb.toString().indexOf(arg1, i)) != -1;)
+			sb.replace(i, i + 2, arg2);
+
+		return sb.toString();
 	}
 
 }
