@@ -191,6 +191,7 @@ public class Keys extends Object {
 	public final static String[] KEY_ExternPanel_createM2sIndex = { "ExternPanel.createM2sIndex", "0" }; //cbox[34] 
 	public final static String[] KEY_ExternPanel_createD2vIndex = { "ExternPanel.createD2vIndex", "0" }; //cbox[29] 
 	public final static String[] KEY_ExternPanel_createDgiIndex = { "ExternPanel.createDgiIndex", "0" }; //cbox[82] !!
+	public final static String[] KEY_ExternPanel_D2VOptions = { "ExternPanel.D2VOptions", "iDCT_Algorithm=2|YUVRGB_Scale=1|Luminance=128,0|Picture_Size=0,0,0,0,0,0|Field_Operation=0" };
 	public final static String[] KEY_ExternPanel_splitProjectFile = { "ExternPanel.splitProjectFile", "0" }; //cbox[30] !!
 	public final static String[] KEY_ExternPanel_ProjectFileSplitSize = { "ExternPanel.ProjectFileSplitSize", "2048" }; 
     public final static String[] KEY_ExternPanel_createInfoIndex = { "ExternPanel.createInfoIndex", "0" };
@@ -234,6 +235,7 @@ public class Keys extends Object {
 
 	public final static String[] KEY_SubtitlePanel_decodeMegaradio = { "SubtitlePanel.decodeMegaradio", "0" }; //cbox[17] 
 	public final static String[] KEY_SubtitlePanel_decodeHiddenRows = { "SubtitlePanel.decodeHiddenRows", "0" }; //cbox[22] 
+	public final static String[] KEY_SubtitlePanel_rebuildPTStoggle = { "SubtitlePanel.rebuildPTStoggle", "0" };
 	public final static String[] KEY_SubtitlePanel_rebuildPTS = { "SubtitlePanel.rebuildPTS", "0" }; //cbox[62] !!
 	public final static String[] KEY_SubtitlePanel_rebuildPictPTS = { "SubtitlePanel.rebuildPictPTS", "0" };
 	public final static String[] KEY_SubtitlePanel_keepOriginalTimecode = { "SubtitlePanel.keepOriginalTimecode", "0" }; //cbox[67] 

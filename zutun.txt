@@ -451,6 +451,10 @@ release,  including all previous betas
 0.91.0.04
 --srtc,w3c,gpac subtilte patch from silid added
 
+0.91.0.05
+--PTS re-use from AC3 audio (toggle switch), when teletext or subpicture comes w/o PTS
+--D2V option values editable with separate ini-key (default is: "ExternPanel.D2VOptions=iDCT_Algorithm=2|YUVRGB_Scale=1|Luminance=128,0|Picture_Size=0,0,0,0,0,0|Field_Operation=1")
+
 
 
 

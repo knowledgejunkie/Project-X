@@ -1124,6 +1124,7 @@ public class PreSettings extends JFrame {
 		String[][] objects = {
 			//Keys.KEY_SubtitlePanel_decodeMegaradio,
 			Keys.KEY_SubtitlePanel_decodeHiddenRows,
+			Keys.KEY_SubtitlePanel_rebuildPTStoggle,
 			Keys.KEY_SubtitlePanel_rebuildPTS,
 			Keys.KEY_SubtitlePanel_rebuildPictPTS,
 			Keys.KEY_SubtitlePanel_keepOriginalTimecode,
@@ -1149,7 +1150,7 @@ public class PreSettings extends JFrame {
 			box[i].addActionListener(_CheckBoxListener);
 		}
 
-		for (int i = 0; i < 7; i++)
+		for (int i = 0; i < 8; i++)
 			panel_0.add(box[i]);
 
 		//toggle action
@@ -1175,8 +1176,8 @@ public class PreSettings extends JFrame {
 			}
 		};
 	
-		box[5].addActionListener(al);
 		box[6].addActionListener(al);
+		box[7].addActionListener(al);
 
 
 	//	panel_0.add(Box.createRigidArea(new Dimension(1, 10)));
@@ -1284,8 +1285,8 @@ public class PreSettings extends JFrame {
 
 	//	panel_1.add(new JLabel(Resource.getString("SubtitlePanel.Title.Teletext")));
 
-		panel_1.add(box[7]);
 		panel_1.add(box[8]);
+		panel_1.add(box[9]);
 
 		JPanel panel_1_2 = new JPanel();
 		panel_1_2.setLayout(new BoxLayout(panel_1_2, BoxLayout.X_AXIS));
@@ -1402,8 +1403,8 @@ public class PreSettings extends JFrame {
 		panel_1.add(panel_2_3);
 
 		panel_1.add(Box.createRigidArea(new Dimension(1, 10)));
-		panel_1.add(box[9]);
 		panel_1.add(box[10]);
+		panel_1.add(box[11]);
 
 		teletext.add(panel_1);
 

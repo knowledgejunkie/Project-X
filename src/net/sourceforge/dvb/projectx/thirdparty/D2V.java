@@ -32,8 +32,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.StringTokenizer;
 
 import net.sourceforge.dvb.projectx.common.Resource;
+import net.sourceforge.dvb.projectx.common.Keys;
 import net.sourceforge.dvb.projectx.common.Common;
 import net.sourceforge.dvb.projectx.video.Video;
 
@@ -55,6 +57,8 @@ public class D2V extends Object {
 		"Field_Operation=0" 
 	};
 
+	String d2v_options = "iDCT_Algorithm=2|YUVRGB_Scale=1|Luminance=128,0|Picture_Size=0,0,0,0,0,0|Field_Operation=0";
+
 	public D2V()
 	{}
 
@@ -70,12 +74,15 @@ public class D2V extends Object {
 		d2v.add("" + (fparent.length() + 4) + " " + fparent + ".mpv");
 		d2v.add("");
 		d2v.add("Stream_Type=0,0,0");
-		d2v.add(d2voptions[0]);
-		d2v.add(d2voptions[1]);
-		d2v.add(d2voptions[2]);
-		d2v.add(d2voptions[3]);
-		d2v.add(d2voptions[4]);
-		entry += 9;
+		entry += 4;
+
+		StringTokenizer st = new StringTokenizer(Common.getSettings().getProperty(Keys.KEY_ExternPanel_D2VOptions), "|");
+
+		while (st.hasMoreTokens())
+		{
+			d2v.add(st.nextToken());
+			entry++;
+		}
 	}
 
 	public int getPart()

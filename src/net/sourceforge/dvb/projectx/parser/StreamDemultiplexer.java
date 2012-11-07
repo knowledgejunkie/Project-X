@@ -70,6 +70,7 @@ public class StreamDemultiplexer extends Object {
 	private boolean DecodeVBI;
 	private boolean RebuildPTS;
 	private boolean RebuildPictPTS;
+	private boolean RebuildPTStoggle;
 	private boolean Streamtype_MpgVideo_Enabled;
 	private boolean Streamtype_MpgAudio_Enabled;
 	private boolean Streamtype_Ac3Audio_Enabled;
@@ -371,6 +372,7 @@ public class StreamDemultiplexer extends Object {
 		WriteVideo = collection.getSettings().getBooleanProperty(Keys.KEY_WriteOptions_writeVideo);
 		Debug = collection.getSettings().getBooleanProperty(Keys.KEY_DebugLog);
 		DecodeVBI = collection.getSettings().getBooleanProperty(Keys.KEY_Streamtype_Vbi);
+		RebuildPTStoggle = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_rebuildPTStoggle);
 		RebuildPTS = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_rebuildPTS);
 		RebuildPictPTS = collection.getSettings().getBooleanProperty(Keys.KEY_SubtitlePanel_rebuildPictPTS);
 		AddSequenceEndcode = collection.getSettings().getBooleanProperty(Keys.KEY_VideoPanel_addEndcode);
@@ -692,7 +694,10 @@ public class StreamDemultiplexer extends Object {
 			/**
 			 * save re-build PTS, taken from 1st mpa
 			 */
-			if (newID == 0xC0 && job_processing.getBorrowedPts() != lastPTS)
+			//if (newID == 0xC0 && job_processing.getBorrowedPts() != lastPTS)
+			if (!RebuildPTStoggle && newID == 0xC0 && job_processing.getBorrowedPts() != lastPTS)
+				job_processing.setBorrowedPts(lastPTS);
+			else if (RebuildPTStoggle && newID == 0x80 && job_processing.getBorrowedPts() != lastPTS)
 				job_processing.setBorrowedPts(lastPTS);
 
 			/**
