@@ -1,7 +1,7 @@
 /*
  * @(#)JobProcessing.java - used by a collection when processing it
  *
- * Copyright (c) 2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2005-2013 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -60,6 +60,7 @@ public class JobProcessing extends Object {
 	private Hashtable StreamObjects;
 
 	private Object[] AudioStreamInfo;
+	private Object[] SubpictureStreamInfo;
 //
 	private int[] stream_number;
 	private int[] clv;
@@ -1019,6 +1020,44 @@ public class JobProcessing extends Object {
 		for (int i = 0, j = 0, k = 0; i < AudioStreamInfo.length; i++)
 		{
 			str1 = AudioStreamInfo[i].toString();
+
+			if (str1.indexOf(Common.adaptString(Integer.toHexString(pid).toUpperCase(), 4)) < 0)
+				continue;
+
+			j = str1.indexOf("{");
+			k = str1.indexOf("}");
+
+			if (j > 0 && k > j)
+				str = "_" + str1.substring(j + 1, k);
+
+			break;
+		}
+
+		return str;
+	}
+
+	/**
+	 * 
+	 */
+	public void setSubpictureStreamInfo(Object[] obj)
+	{
+		SubpictureStreamInfo = obj;
+	}
+
+	/**
+	 * 
+	 */
+	public String getSubpictureStreamLanguage(int pid)
+	{
+		String str = "";
+		String str1 = "";
+
+		if (SubpictureStreamInfo == null)
+			return str;
+
+		for (int i = 0, j = 0, k = 0; i < SubpictureStreamInfo.length; i++)
+		{
+			str1 = SubpictureStreamInfo[i].toString();
 
 			if (str1.indexOf(Common.adaptString(Integer.toHexString(pid).toUpperCase(), 4)) < 0)
 				continue;

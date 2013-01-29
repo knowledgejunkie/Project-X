@@ -1,7 +1,7 @@
 /*
  * @(#)Teletext.java - constants/decode of teletext System B
  *
- * Copyright (c) 2001-2009 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2001-2013 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -166,6 +166,21 @@ public class Teletext extends Object {
 		"",
 		"SP_NUMBER\tSTART\t\tEND\t\tFILE_NAME"
 	};
+
+	//
+	private final String[] bdnHeader = {
+		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+		"<BDN Version=\"0.93\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"BD-03-006-0093b BDN File Format.xsd\">",
+		"  <Description>",
+		"    <Name Title=\"BDN Example\" Content=\"\"/>",
+		"    <Language Code=\"eng\"/>",
+		"    <Format VideoFormat=\"576i\" FrameRate=\"25.000\" DropFrame=\"False\"/>",
+		"    <Events Type=\"Graphic\" FirstEventInTC=\"00:00:00:00\" LastEventOutTC=\"01:01:01:01\" NumberofEvents=\"100\"/>",
+		"  </Description>",
+		"  <Events>",
+		"  </Events>",
+		"</BDN>"
+	};
 /**
 	private final String[] colors = {
 		"{\\c&HC0C0C0&}",   // black /gray
@@ -254,6 +269,23 @@ public class Teletext extends Object {
 		sonHeader[5] = "Directory\t" + path;
 
 		return sonHeader;
+	}
+
+	//Sony BDN wrap
+	public String[] getBDNHead(String title, long frame_rate, String[] status, String intc, String outtc, int count)
+	{
+		String[] new_bdnHeader = new String[bdnHeader.length]; //make copy
+		System.arraycopy(bdnHeader, 0, new_bdnHeader, 0, bdnHeader.length);
+
+		String fr = String.valueOf((long)(1000000.0 / (frame_rate / 90.0)));
+		fr = fr.substring(0, fr.length() - 3) + "." + fr.substring(fr.length() - 3);
+		String st = status == null || status[1] == null ? "576" : status[1];
+
+		new_bdnHeader[3] = bdnHeader[3].substring(0, 17) + title + bdnHeader[3].substring(bdnHeader[3].length() - 14);
+		new_bdnHeader[5] = bdnHeader[5].substring(0, 25) + st + bdnHeader[5].substring(28, 42) + fr + bdnHeader[5].substring(bdnHeader[5].length() - 21);
+		new_bdnHeader[6] = bdnHeader[6].substring(0, 43) + intc + bdnHeader[6].substring(54, 72) + outtc + bdnHeader[6].substring(83, 101) + count + "\"/>";
+
+		return new_bdnHeader;
 	}
 
 	/*****************

@@ -1,7 +1,7 @@
 /*
  * @(#)BMP.java - carries BMP stuff, access from 'all sides' 
  *
- * Copyright (c) 2004-2005 by dvb.matt, All Rights Reserved.
+ * Copyright (c) 2004-2013 by dvb.matt, All Rights Reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -152,6 +152,11 @@ public class BMP extends Object {
 
 	public static String buildBMP_palettized(String outfile, Bitmap bitmap, ArrayList color_table_array, int palette) throws IOException
 	{
+		return buildBMP_palettized_ARGB(outfile, bitmap, color_table_array, palette, false);
+	}
+
+	public static String buildBMP_palettized_ARGB(String outfile, Bitmap bitmap, ArrayList color_table_array, int palette, boolean alpha) throws IOException
+	{
 		if (bitmap == null)
 			return "";
 
@@ -191,13 +196,16 @@ public class BMP extends Object {
 		byte base_color_index[] = new byte[4];
 
 		//paletize 256 * 4byte BGR0 indices
-		for (int a=0, color; a < palette; a++)
+		for (int a = 0, color; a < palette; a++)
 		{
 			if (a < color_table.length)
 			{
-				color = 0xFFFFFF & Integer.parseInt(color_table[a].toString());
+				color = Integer.parseInt(color_table[a].toString());
 
-				for (int b=0; b < 3; b++)
+				if (!alpha)
+					color &= 0xFFFFFF;
+
+				for (int b = 0; b < 4; b++)
 					base_color_index[b] = (byte)(0xFF & color>>(b<<3));
 			}
 

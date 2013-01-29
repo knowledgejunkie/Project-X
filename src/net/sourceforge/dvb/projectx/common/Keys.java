@@ -1,7 +1,7 @@
 /*
  * @(#)Keys.java - static, fixed keys
  *
- * Copyright (c) 2005-2011 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2013 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -441,7 +441,7 @@ public class Keys extends Object {
 		this.ITEMS_CutMode = ITEMS_CutMode;
 
 		Object[] ITEMS_SubtitleExportFormat = {
-			Resource.getString("SubtitlePanel.Format.Free"), "SC", "SUB", "SRT", "STL", "SSA", "SON", "SUP", "SRTC", "W3C", "GPAC", "null"
+			Resource.getString("SubtitlePanel.Format.Free"), "SC", "SUB", "SRT", "STL", "SSA", "SON", "SUP", "SRTC", "W3C", "GPAC", "BDN", "null"
 		};
 		this.ITEMS_SubtitleExportFormat = ITEMS_SubtitleExportFormat;
 

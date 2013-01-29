@@ -1,7 +1,7 @@
 /*
  * @(#)SCAN.java - pre-scanning to check supported files
  *
- * Copyright (c) 2002-2009 by dvb.matt, All Rights Reserved. 
+ * Copyright (c) 2002-2013 by dvb.matt, All Rights Reserved. 
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -1693,7 +1693,7 @@ public class Scan extends Object {
 			{
 				r = b;
 
-				if ( (0xe0 & pmt[b+1]) != 0xe0 ) 
+				if ( (0xe0 & pmt[b+1]) != 0xe0 && (0xe0 & pmt[b+1]) != 0) 
 					continue pidsearch;
 
 				int pid = (0x1F & pmt[b+1])<<8 | (0xFF & pmt[b+2]);
@@ -1758,6 +1758,7 @@ public class Scan extends Object {
 	private void getDescriptor(byte check[], int off, int end, int pid, int type)
 	{
 		String str = "";
+		String str2 = "";
 		int chunk_end = 0;
 
 		try
@@ -1773,10 +1774,17 @@ public class Scan extends Object {
 					chunk_end = off + 2 + (0xFF & check[off+1]);
 					str += "(";
 
+
 					for (int a=off+2; a<chunk_end; a+=8)
 					{
 						for (int b=a; b<a+3; b++) //language
-							str += (char)(0xFF & check[b]);
+							str2 += (char)(0xFF & check[b]);
+
+						if (!str2.equals(""))
+						{
+							str += "{" + str2 + "}";
+							str2 = "";
+						}
 
 						int page_type = 0xFF & check[a+3];
 						int comp_page_id = (0xFF & check[a+4])<<16 | (0xFF & check[a+5]);
@@ -1798,7 +1806,13 @@ public class Scan extends Object {
 					for (int a=off+2; a<chunk_end; a+=5)
 					{
 						for (int b=a; b<a+3; b++) //language
-							str += (char)(0xFF & check[b]);
+							str2 += (char)(0xFF & check[b]);
+
+						if (!str2.equals(""))
+						{
+							str += "{" + str2 + "}";
+							str2 = "";
+						}
 
 						int page_type = (0xF8 & check[a+3])>>>3;
 						int page_number = 0xFF & check[a+4];

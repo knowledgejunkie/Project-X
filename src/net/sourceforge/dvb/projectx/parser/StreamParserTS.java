@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParserTS.java
  *
- * Copyright (c) 2005-2009 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2013 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -278,6 +278,7 @@ public class StreamParserTS extends StreamParserBase {
 				}
 
 				job_processing.setAudioStreamInfo(streamInfo.getAudioStreams());
+				job_processing.setSubpictureStreamInfo(streamInfo.getSubpictureStreams());
 			}
 
 			else 

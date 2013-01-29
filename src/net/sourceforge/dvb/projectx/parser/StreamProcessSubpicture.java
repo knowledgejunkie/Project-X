@@ -1,7 +1,7 @@
 /*
  * @(#)StreamParser
  *
- * Copyright (c) 2005-2009 by dvb.matt, All rights reserved.
+ * Copyright (c) 2005-2013 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -117,6 +117,8 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 	private String PageId_Value;
 	private String SubtitleExportFormat;
 	private String FileParent;
+
+	private ArrayList bdn_events = new ArrayList();
 
 	/**
 	 * 
@@ -280,6 +282,11 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 			{
 				subfile = FileParent + ".son";
 				ExportType = 1;
+			}
+			else if (SubtitleExportFormat.equalsIgnoreCase(Keys.ITEMS_SubtitleExportFormat[11].toString()))
+			{
+				subfile = FileParent + ".bdn";
+				ExportType = 2;
 			}
 
 		//	Common.setMessage("");
@@ -551,6 +558,28 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 
 			in.close();
 
+			//completion of BDN
+			if (ExportType == 2)
+			{
+				String firstInTC = bdn_events.get(0).toString();
+				firstInTC = firstInTC.substring(firstInTC.indexOf("InTC=") + 6, firstInTC.indexOf("InTC=") + 17);
+				String lastOutTC = bdn_events.get(bdn_events.size() - 3).toString();
+				lastOutTC = lastOutTC.substring(lastOutTC.indexOf("OutTC=") + 7, lastOutTC.indexOf("OutTC=") + 18);
+
+				String[] BDNhead = Common.getTeletextClass().getBDNHead(new File(subfile).getName(), (long)CommonParsing.getVideoFramerate(), job_processing.getStatusStrings(), firstInTC, lastOutTC, bdn_events.size() / 3);
+
+				for (int i = 0; i < 9; i++) 
+					print_out.println(BDNhead[i]);
+
+				for (int i = 0; i < bdn_events.size(); i++) 
+					print_out.println(bdn_events.get(i).toString());
+
+				for (int i = 9; i < BDNhead.length; i++) 
+					print_out.println(BDNhead[i]);
+
+				bdn_events.clear();
+			}
+
 			print_out.flush();
 			print_out.close();
 
@@ -618,6 +647,7 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 			String key, object_id_str, outfile;
 			int object_id;
 
+			//read out loop
 			for (Enumeration e = BMP.getKeys(); e.hasMoreElements() ; )
 			{
 				key = e.nextElement().toString();
@@ -630,6 +660,26 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 
 				if (ExportType == 0)  //.sup
 					out.write( subpicture.writeRLE(bitmap));
+
+				else if (ExportType == 2)   //.bdn
+				{
+					if (Pictures == 0)
+						bdn_events.clear();
+
+					subpicture.updateUserColorTable(bitmap);
+					outfile = BMP.buildBMP_palettized_ARGB(outfile, bitmap, subpicture.getUserColorTable(), 256, true);
+
+					job_processing.countMediaFilesExportLength(new File(outfile).length());
+
+					//all pgc must be in BMP
+
+					bdn_events.add("    <Event InTC=\"" + Common.formatTime_2(bitmap.getInTime() / 90, (long)CommonParsing.getVideoFramerate()) + "\" OutTC=\"" + Common.formatTime_2((bitmap.getInTime() / 90) + (bitmap.getPlayTime() * 10), (long)CommonParsing.getVideoFramerate()) + "\" Forced=\"False\">");
+					bdn_events.add("      <Graphic Width=\"" + bitmap.getWidth() + "\" Height=\"" + bitmap.getHeight() + "\" X=\"" + bitmap.getX() + "\" Y=\"" + bitmap.getY() + "\">" + (new File(outfile).getName()) + "</Graphic>");
+					bdn_events.add("    </Event>");
+
+					if (debug)
+						System.out.println("-> " + outfile);
+				}
 
 				else    //.son + .bmp
 				{

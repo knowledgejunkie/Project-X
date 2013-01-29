@@ -700,6 +700,8 @@ if (dbgSub(4)) System.out.println("quant return"+d(3,index)+"/ARGB "+X(8,ARGB)
 		if (h>= (hd ? 93 : 61)   && (h/4)*4==h) textrows = 2; else   //...this code fails for rh<=30,          //S9t20090102
 			                         textrows = 1;     //...and note 144->3x48 not 4x36          //S9t20090102
 //
+//		if (h==88 || h==132 || h==176) textrows--;  //new ARD bottom space
+//
 
 		int rh = h/textrows;                           //geometric height of a text row          //S9t20090102
 
