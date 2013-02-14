@@ -1,7 +1,7 @@
 /*
  * @(#)MainProcess
  *
- * Copyright (c) 2001-2008 by dvb.matt, All rights reserved.
+ * Copyright (c) 2001-2013 by dvb.matt, All rights reserved.
  * 
  * This file is part of ProjectX, a free Java based demux utility.
  * By the authors, ProjectX is intended for educational purposes only, 
@@ -936,7 +936,10 @@ public class MainProcess extends Thread {
 		if (action == CommonParsing.ACTION_COPY)
 		{
 			Common.setMessage("-> direct file copy (from selection set)");
+
 			directCopy(collection, job_processing, xInputFile);
+
+			job_processing.setSplitLoopActive(false); // split made already inside
 			break;
 		}
 
@@ -1174,8 +1177,6 @@ Common.setMessage("del " + tempfiles);
 	 */
 	private void directCopy(JobCollection collection, JobProcessing job_processing, XInputFile xinputFile)
 	{
-		boolean append = false; //later
-
 		if (collection.getCutpointCount() > 0 && collection.getSettings().getIntProperty(Keys.KEY_CutMode) != CommonParsing.CUTMODE_BYTE)
 		{
 			Common.setMessage("!> direct copy only at byte pos cut mode; processing cancelled..");
@@ -1186,7 +1187,8 @@ Common.setMessage("del " + tempfiles);
 
 		parser.setFileName(collection, job_processing, xinputFile);
 
-		String newfile = parser.fparent + "[copy]" + parser.fchild.substring(parser.fchild.lastIndexOf("."));
+		String newfile = parser.fparent + "[copy]";
+		String newfile1 = parser.fchild.substring(parser.fchild.lastIndexOf("."));
 
 		List CutpointList = collection.getCutpointList();
 
@@ -1194,8 +1196,6 @@ Common.setMessage("del " + tempfiles);
 
 		if (xinputFile.getStreamInfo().getStreamFullType() == CommonParsing.TS_TYPE_192BYTE)
 			offset = -4;
-
-		long len = xinputFile.length();
 
 		//always multiple of 2
 		long[] cuts = new long[(1 + CutpointList.size()) & ~1];
@@ -1208,18 +1208,16 @@ Common.setMessage("del " + tempfiles);
 		if (CutpointList.size() == 0)
 			cuts = new long[2];
 
-		//file end, no offset
-		if (cuts[cuts.length - 1] == 0)
-			cuts[cuts.length - 1] = len;
-
-
 		try {
+
+			long exported = 0;
+			int number = 0;
 
 			int buf = Integer.parseInt(Common.getSettings().getProperty(Keys.KEY_MainBuffer));
 			Common.setMessage("-> copy buffer size: " + String.valueOf(buf) + " bytes");
 
 			BufferedInputStream hex = new BufferedInputStream(xinputFile.getInputStream(), buf);
-			BufferedOutputStream hex1 = new BufferedOutputStream(new FileOutputStream(newfile, append), buf);
+			BufferedOutputStream hex1 = new BufferedOutputStream(new FileOutputStream(newfile + (job_processing.getSplitSize() > 0 ? Common.adaptString(number, 2) : "") + newfile1), buf);
 
 			byte[] data = new byte[0];
 			int datalen;
@@ -1227,29 +1225,63 @@ Common.setMessage("del " + tempfiles);
 			long startPos = 0;
 			long filePos = 0;
 			long endPos = 0;
+			long diffPos = 0;
+			long len = xinputFile.length();
+			long addoffset = 0;
 
 			export:
 			for (int i = 0; i < cuts.length; i += 2)
 			{
+				//file end, no offset
+				if (cuts[cuts.length - 1] == 0)
+					cuts[cuts.length - 1] = len;
+
 				startPos = cuts[i];
 				endPos = cuts[i + 1];
 
-				if (startPos >= len || startPos >= endPos)
+				//jump to next file, no cut at file boundaries, only valid when 1st file is ignored with no cut area
+				while (startPos >= addoffset + len)
+				{
+					addoffset += len; //move startpoint
+					filePos = 0; //renewed
+
+					// next file
+					if (job_processing.getFileNumber() < collection.getPrimaryInputFileSegments() - 1)
+						xinputFile = (XInputFile) collection.getInputFile(job_processing.countFileNumber(+1));
+					else
+						break export; 
+
+					hex.close();
+					hex = new BufferedInputStream(xinputFile.getInputStream(), buf);  //renewed
+
+					Common.setMessage(Resource.getString("parseTS.switch.to") + " " + xinputFile + " (" + Common.formatNumber(xinputFile.length()) + " bytes) @ " + addoffset);
+
+					len = xinputFile.length(); //renewed
+				}
+
+				//cut behind files ?
+				if ((startPos - addoffset) >= len || startPos >= endPos)
 					break;
 
-				if (endPos > len)
-					endPos = len;
+				//cut export over file boundaries, diffPos is taken from next file
+				if (endPos > (len + addoffset))
+				{
+					diffPos = endPos - (len + addoffset);
+					endPos = len + addoffset;
+				}
 
 				Common.setMessage("-> copying range from " + String.valueOf(cuts[i]) + " to " + String.valueOf(cuts[i + 1]));
 
-				while (filePos < startPos)
-					filePos += hex.skip(startPos - filePos);
+				//file part inside is skip-able
+				while (filePos < startPos - addoffset)
+					filePos += hex.skip(startPos - addoffset - filePos);
 
-				while (filePos < endPos)
+				//export data until stop or file segment end
+				while (filePos < (endPos - addoffset))
 				{
 					while (parser.pause())
 					{}
-
+	
 					if (CommonParsing.isProcessCancelled())
 					{
 						CommonParsing.setProcessCancelled(false);
@@ -1258,7 +1290,8 @@ Common.setMessage("del " + tempfiles);
 						break export; 
 					}
 
-					datalen = (endPos - filePos) < (long) buf ? (int)(endPos - filePos) : buf;
+					//datalen is supposed to be of integer length
+					datalen = (endPos - addoffset - filePos) < (long) buf ? (int)(endPos - addoffset - filePos) : buf;
 
 					if (data.length != datalen)
 						data = new byte[datalen];
@@ -1271,6 +1304,80 @@ Common.setMessage("del " + tempfiles);
 					job_processing.countAllMediaFilesExportLength(datalen);
 
 					Common.updateProgressBar(filePos, len);
+
+					// split size reached 
+					if (job_processing.getSplitSize() > 0 && job_processing.getSplitSize() < job_processing.getAllMediaFilesExportLength() - exported)
+					{
+						hex1.flush();
+						hex1.close();
+						exported = job_processing.getAllMediaFilesExportLength();
+
+						hex1 = new BufferedOutputStream(new FileOutputStream(newfile + Common.adaptString(++number, 2) + newfile1), buf);
+					}
+				}
+
+				//jump to next file and complete cut
+				if (diffPos > 0)
+				{
+					addoffset += len; //move startpoint
+					filePos = 0; //renewed
+					startPos = 0; //renewed
+					endPos = addoffset + diffPos; //renewed
+
+					// next file
+					if (job_processing.getFileNumber() < collection.getPrimaryInputFileSegments() - 1)
+						xinputFile = (XInputFile) collection.getInputFile(job_processing.countFileNumber(+1));
+					else
+						break export; 
+
+					hex.close();
+					hex = new BufferedInputStream(xinputFile.getInputStream(), buf);  //renewed
+
+					Common.setMessage(Resource.getString("parseTS.switch.to") + " " + xinputFile + " (" + Common.formatNumber(xinputFile.length()) + " bytes) @ " + addoffset);
+
+					len = xinputFile.length(); //renewed
+
+					//export data until stop or file segment end
+					while (filePos < (endPos - addoffset))
+					{
+						while (parser.pause())
+						{}
+	
+						if (CommonParsing.isProcessCancelled())
+						{
+							CommonParsing.setProcessCancelled(false);
+							job_processing.setSplitSize(0); 
+
+							break export; 
+						}
+
+						//datalen is supposed to be of integer length, in buf length segments
+						datalen = (endPos - addoffset - filePos) < (long) buf ? (int)(endPos - addoffset - filePos) : buf;
+
+						if (data.length != datalen)
+							data = new byte[datalen];
+
+						datalen = hex.read(data);
+						hex1.write(data, 0, datalen);
+						filePos += datalen;
+
+						job_processing.countMediaFilesExportLength(datalen);
+						job_processing.countAllMediaFilesExportLength(datalen);
+
+						Common.updateProgressBar(filePos, len);
+
+						// split size reached 
+						if (job_processing.getSplitSize() > 0 && job_processing.getSplitSize() < job_processing.getAllMediaFilesExportLength() - exported)
+						{
+							hex1.flush();
+							hex1.close();
+							exported = job_processing.getAllMediaFilesExportLength();
+
+							hex1 = new BufferedOutputStream(new FileOutputStream(newfile + Common.adaptString(++number, 2) + newfile1), buf);
+						}
+					}
+
+					diffPos = 0;
 				}
 			}
 

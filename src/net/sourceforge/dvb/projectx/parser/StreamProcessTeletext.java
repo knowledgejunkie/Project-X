@@ -24,7 +24,7 @@
  *
  *
  * Support for SRT with font tags, W3C TTML and GPAC TTEXT
- * added by Simon Liddicott
+ * added by Simon Liddicott, 2012,2013
  *
  */
 
@@ -1231,7 +1231,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 					case EXPORT_GPAC:
 						str = teletext.buildString(packet, 6, 40, row, character_set, 0, true, BoxedMode).trim();
 						load_buffer.put("color" + row, teletext.buildString(packet, 6, 40, row, character_set, 4, true, BoxedMode, character_count).trim());
-						character_count += str.length();
+						character_count += str.length() + 1;
 						str = escapeXml(str);
 						break;
 
@@ -1384,10 +1384,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 
 						if (subtitle_type == EXPORT_W3C)
 						{
-							String[] W3Cfoot = teletext.getW3CFoot();
-
-							for (int a = 0; a < W3Cfoot.length; a++) 
-								print_buffer.println(W3Cfoot[a]);
+							print_buffer.print("</p>");
 						}
 
 						if (subtitle_type == EXPORT_GPAC)
@@ -1403,10 +1400,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 									print_buffer.println(colors.nextToken());
 								}
 							}
-							String[] GPACfoot = teletext.getGPACFoot();
-
-							for (int a = 0; a < GPACfoot.length; a++) 
-								print_buffer.println(GPACfoot[a]);
+							print_buffer.print("</TextSample>");
 						}
 
 						if (subtitle_type != EXPORT_SUP && b > 0)
@@ -1421,7 +1415,31 @@ public class StreamProcessTeletext extends StreamProcessBase {
 						break;
 					}
 				}
- 
+
+				if (subtitle_type == EXPORT_GPAC)
+				{
+					String[] GPACfoot = teletext.getGPACFoot();
+
+					for (int a = 0; a < GPACfoot.length; a++)
+						print_buffer.println(GPACfoot[a]);
+
+					print_buffer.flush();
+					byte_buffer.writeTo(out);
+					byte_buffer.reset();
+				}
+
+				if (subtitle_type == EXPORT_W3C)
+				{
+					String[] W3Cfoot = teletext.getW3CFoot();
+
+					for (int a = 0; a < W3Cfoot.length; a++)
+						print_buffer.println(W3Cfoot[a]);
+
+					print_buffer.flush();
+					byte_buffer.writeTo(out);
+					byte_buffer.reset();
+				}
+
 				if (debug) 
 					System.out.println();
 
@@ -1534,7 +1552,7 @@ public class StreamProcessTeletext extends StreamProcessBase {
 		StringBuffer sb = new StringBuffer(name);
 
 		for (int i = 0; (i = sb.toString().indexOf(arg1, i)) != -1;)
-			sb.replace(i, i + 2, arg2);
+			sb.replace(i, i + 1, arg2);
 
 		return sb.toString();
 	}

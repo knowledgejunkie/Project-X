@@ -24,7 +24,7 @@
  *
  *
  * Support for SRT with font tags, W3C TTML and GPAC TTEXT
- * added by Simon Liddicott
+ * added by Simon Liddicott, 2012,2013
  * 
  */
 
@@ -66,7 +66,6 @@ public class Teletext extends Object {
 	};
 
 	private final String[] GPACFooter = {
-		"</TextSample>",
 		"</TextStream>"
 	};
 
@@ -85,7 +84,6 @@ public class Teletext extends Object {
 	};
 
 	private final String[] W3CFooter = {
-		"</p>",
 		"</div>",
 		"</body>",
 		"</tt>"
@@ -1062,15 +1060,14 @@ public class Teletext extends Object {
 				for (int i = 0; i < color_list.size(); i++)
 				{
 					ci = (ColorIndex) color_list.get(i);
-					//if (color_list.contains(i+1))
-					if (i < color_list.size() + 1)
+					if (i < color_list.size() - 1)
 					{
-						cip = (ColorIndex) color_list.get(i);
+						cip = (ColorIndex) color_list.get(i+1);
 						color_buffer.append("|<Style fromChar=\""+(ci.getIndexTrim(ltrimCnt, line_buffer.length()) + page_characters)+"\" toChar=\""+(cip.getIndexTrim(ltrimCnt,line_buffer.length()) + page_characters + 1)+"\" color=\""+colors[color][0][ci.getColor()]+"\"/>");
 					}
 					else
 					{
-						color_buffer.append("|<Style fromChar=\""+(ci.getIndexTrim(ltrimCnt, line_buffer.length()) + page_characters)+"\" toChar=\""+((line_buffer.length() +1) + page_characters)+"\" color=\""+colors[color][0][ci.getColor()]+"\"/>");
+						color_buffer.append("|<Style fromChar=\""+(ci.getIndexTrim(ltrimCnt, line_buffer.length()) + page_characters)+"\" toChar=\""+(line_buffer.length() + page_characters)+"\" color=\""+colors[color][0][ci.getColor()]+"\"/>");
 					}
 				}
 			}

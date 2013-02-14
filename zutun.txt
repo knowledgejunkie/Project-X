@@ -455,8 +455,13 @@ release,  including all previous betas
 --PTS re-use from AC3 audio (toggle switch), when teletext or subpicture comes w/o PTS
 --D2V option values editable with separate ini-key (default is: "ExternPanel.D2VOptions=iDCT_Algorithm=2|YUVRGB_Scale=1|Luminance=128,0|Picture_Size=0,0,0,0,0,0|Field_Operation=1")
 
+0.91.0.06
+--test BDN graphic subtitles
+--pmt-scan change
 
-
+0.91.0.07
+--change GPAC,W3C subtitles by silid
+--1:1 copy & cut over multiple file segments
 
 
 
@@ -486,7 +491,7 @@ release,  including all previous betas
 !!id3tag infos anzeigen
 !!hav sektoren prüfen, nur melden
 !!profile hd,mpg reseted,vob, etc ermöglichen?
-!!info .00 sek, :00 frame, ;00 dropframes (semikoloon)
+!!info .00 sek, :00 frame, ;00 dropframes (semikolon)
 !-h264 ? zzt nur info
 !!finepass wrapper,humax wrapper,vcd-svcd-image wrapper etc evtl. übergeordnet?
 !!avi(bmp)film zu .sup
