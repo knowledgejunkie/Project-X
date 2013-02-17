@@ -367,6 +367,10 @@ public class DVBSubpicture extends Object {
 
 //Common.setMessage("!> debug Info : px " + page.getX() + " / py " + page.getY() + " / pw " + page.getWidth() + " / ph " + page.getHeight() + " (VN): " + page.getVersionNumber());
 
+		//reduce pixel size
+		page.reduce_size(preview_pixel_data, width);
+
+
 		if (page.getWidth() <= 0 || page.getHeight() <= 0 || page.getWidth() > width || page.getHeight() > height)
 		{
 			Common.setMessage("!> Page ignored (VN): " + page.getVersionNumber() + "; (size error) " + page.getWidth() + " * " + page.getHeight());
@@ -391,6 +395,7 @@ public class DVBSubpicture extends Object {
 		addBigMessage("time: in " + page.getTimeIn() + " /len " + new_time_out + " /save " + save + " /prev " + preview_visible    //S9dbg
 					+ "                               <<prepare.output>>");                                                        //S9dbg
 	}
+
 
 	private int page_composition()
 	{
@@ -1434,6 +1439,47 @@ public class DVBSubpicture extends Object {
 		private int getHeight()
 		{
 			return (maxY - minY);
+		}
+
+		private void reduce_size(int[] pv_pixel, int pv_width)
+		{
+			int firstpos = getX() + (getY() * pv_width); // up.left
+			int lastpos = getX() + ((getY() + getHeight()) * pv_width); //bot.right
+			int last = preview_pixel_data[lastpos];
+
+			int min = firstpos + (32 * pv_width); //min 32 lines
+			int max = getHeight();
+
+			int split_b = getWidth() > 720 ? 1 : 0; //HD
+			int[][] split = {{ 61, 93, 121 },{ 93, 141, 185 }}; //line split
+
+			//adaption to ColorAreas.java (multicolor)
+			//compare pixel value, reverse
+			for (int i = lastpos; i >= firstpos; i--)
+				if (last != pv_pixel[i] || i < min)
+				{
+					max = (i / pv_width); //may be odd
+					max -= minY;
+//Common.setMessage("A max " + max + " /w " + pv_width + " /pw " + getWidth());
+
+					if (getWidth() > 720)
+						max = max == 97 ? 96 : max == 147 ? 144 : max; //ZDF HD  , 2 / 3
+					else
+						max = max == 97 ? 92 : max == 143 ? 138 : max; //ARD SD ,  2 / 3
+
+					if (max >= split[split_b][1]) //3
+						max = (max / 6) * 6;
+					else if (max >= split[split_b][2]) //4
+						max = (max / 8) * 8;
+					else if (max >= split[split_b][0]) //2
+						max = (max / 4) * 4;
+					else
+						max &= ~1;  //1
+
+					maxY = minY + max;
+//Common.setMessage("B max " + max);
+					return;
+				}
 		}
 	}
 

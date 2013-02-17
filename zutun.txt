@@ -463,6 +463,9 @@ release,  including all previous betas
 --change GPAC,W3C subtitles by silid
 --1:1 copy & cut over multiple file segments
 
+0.91.0.08
+--adaption of dvb-subtitle (ard/zdf at zdfvision(mc) SUP export)
+
 
 
 
