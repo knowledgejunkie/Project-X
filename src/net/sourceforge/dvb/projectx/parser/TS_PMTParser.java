@@ -296,6 +296,12 @@ public class TS_PMTParser extends Object {
 					off += (0xFF & check[off]);
 					break;
 
+				case 0x7A:  //e-ac3 descriptor
+					str += "(E-AC-3)";
+					off++;
+					off += (0xFF & check[off]);
+					break;
+
 				case 0xC3:  //VBI descriptor
 					off++;
 

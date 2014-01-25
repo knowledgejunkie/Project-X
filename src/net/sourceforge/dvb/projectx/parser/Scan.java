@@ -1868,6 +1868,12 @@ public class Scan extends Object {
 					off += (0xFF & check[off]);
 					break;
 
+				case 0x7A:  //E-ac3 descriptor
+					str += "(E-AC-3)";
+					off++;
+					off += (0xFF & check[off]);
+					break;
+
 				case 0x7C:  //aac descriptor
 					str += "(AAC)";
 					off++;

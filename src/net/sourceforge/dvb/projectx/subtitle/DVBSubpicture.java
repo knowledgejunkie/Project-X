@@ -368,7 +368,8 @@ public class DVBSubpicture extends Object {
 //Common.setMessage("!> debug Info : px " + page.getX() + " / py " + page.getY() + " / pw " + page.getWidth() + " / ph " + page.getHeight() + " (VN): " + page.getVersionNumber());
 
 		//reduce pixel size
-		page.reduce_size(preview_pixel_data, width);
+		if ((IRD & 1) == 1)
+			page.reduce_size(preview_pixel_data, width);
 
 
 		if (page.getWidth() <= 0 || page.getHeight() <= 0 || page.getWidth() > width || page.getHeight() > height)
@@ -574,6 +575,9 @@ public class DVBSubpicture extends Object {
 				object.setForegroundCode(getBits(8)); //foreground_pixel_code
 				object.setBackgroundCode(getBits(8)); //background_pixel_code
 			}
+
+			//clear new object area here, if not done before
+			region.clearObjectArea(object.getHorizontalPosition(), object.getVerticalPosition());
 
 			addBigMessage("addobj: reg " + region.getId() + " /obj " + Integer.toHexString(object.getId()).toUpperCase() + " /x " + object.getHorizontalPosition() + " /y " + object.getVerticalPosition());
 		}
@@ -1722,6 +1726,13 @@ public class DVBSubpicture extends Object {
 
 			if (val == 0)
 				error = 0;
+		}
+
+		//remove previous data in rectangle, 25.1.2014
+		private void clearObjectArea(int objectpos_h, int objectpos_v)
+		{
+			for (int yo = objectpos_v; yo < r_height; yo++)
+				Arrays.fill(pixel, (yo * r_width) + objectpos_h, (yo * r_width) + objectpos_h + (r_width - objectpos_h), 0x60);
 		}
 	}
 
