@@ -223,7 +223,10 @@ public class BMP extends Object {
 				out.write(0xFF & getColorIndex(pixels[b + a * width], color_table_array));
 			}
 
-			out.write(new byte[width & 3]); //padding bytes
+			if ((width & 3) == 3)
+				out.write(new byte[1]); //padding bytes
+			else
+				out.write(new byte[width & 3]); //padding bytes
 		}
 
 		out.flush();
