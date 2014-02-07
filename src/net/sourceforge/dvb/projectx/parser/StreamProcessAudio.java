@@ -2392,10 +2392,12 @@ public class StreamProcessAudio extends StreamProcessBase {
 
 		if (returncode > 0)
 		{
+			HasNewFormat = true; //if true, then message
+
 			if (!AllowFormatChanges && (returncode & 0x7) != 0 && FrameExportInfo.getWrittenFrames() > 0)
 				return !accept;
 
-			HasNewFormat = true;
+			//HasNewFormat = true;
 
 			if (es_streamtype == CommonParsing.MPEG_AUDIO && returncode == 0x20)
 			{

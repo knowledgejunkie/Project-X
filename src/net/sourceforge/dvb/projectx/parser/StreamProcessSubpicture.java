@@ -480,6 +480,12 @@ public class StreamProcessSubpicture extends StreamProcessBase {
 							write = true;
 							break rangeloop;
 						}
+						//workaround #71 Remaining subtitles are not saved after a decoding error
+						else if (source_pts > vptsval[vptsval.length - 1])
+						{
+							System.out.println("pts out of range");
+							break rangeloop;
+						}
 
 						v += 2;
 
