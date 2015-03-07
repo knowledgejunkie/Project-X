@@ -4,4 +4,4 @@ test
 *.jar
 tfdisk.img
 *.dll
-
+build/
