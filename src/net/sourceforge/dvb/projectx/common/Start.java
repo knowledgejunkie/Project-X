@@ -209,7 +209,7 @@ public class Start extends Object {
 			/**
 			 * environment
 			 */
-			environment = Common.getJavaEV(Common.getSettings().getInifile());
+			environment = Common.getJavaEV(Common.getSettings().getConfigFile());
 
 			for (int i = 0; i < environment.length; i++)
 				System.out.println(environment[i].toString());

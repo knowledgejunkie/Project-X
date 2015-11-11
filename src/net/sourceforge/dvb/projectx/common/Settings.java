@@ -33,6 +33,7 @@ package net.sourceforge.dvb.projectx.common;
 import java.io.BufferedReader;
 import	java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -55,11 +56,11 @@ import net.sourceforge.dvb.projectx.xinput.XInputDirectory;
  */
 public class Settings extends Object {
 
-	/** the default ini filename */
-	private static final String DEFAULT_INI = "X.ini";
+	/** the default configuration filename */
+	private static final String DEFAULT_CONFIG = "projectx.conf";
 
-	/** the current ini filename */
-	private String inifile = "";
+	/** the current configuration filename */
+	private String configfile = "";
 
 	/** all settings are being hold in this properties object */
 	private Properties props = new Properties();
@@ -75,7 +76,7 @@ public class Settings extends Object {
 	 */
 	public Settings()
 	{
-		this(Resource.workdir + Resource.filesep + DEFAULT_INI);
+		this(Resource.dotfiledir + Resource.filesep + DEFAULT_CONFIG);
 	}
 
 	/**
@@ -85,12 +86,78 @@ public class Settings extends Object {
 	 */
 	public Settings(String filename)
 	{
-		inifile = filename;
+		checkConfigDirectory(Resource.dotfiledir);
+
+		String inifile = System.getProperty("user.home") + Resource.filesep + "X.ini";
+		String rcfile = filename;
+		migrateOldConfigFile(inifile, rcfile);
+
+		configfile = rcfile;
 		load();
 		buildInputDirectories();
 		buildOutputDirectories();
 	}
 
+
+	/**
+	 *
+	 */
+	private void checkConfigDirectory(String configDir)
+	{
+		Boolean dirCreated = false;
+
+		try
+		{
+			dirCreated = new File(configDir).mkdir();
+		}
+		catch (SecurityException se)
+		{
+			System.out.println("Security Manager denied write access to create directory '" + configDir + "'...");
+		}
+
+		if (dirCreated)
+		{
+			System.out.println("Created configuration directory '" + configDir + "'...");
+		}
+	}
+
+	/**
+	 *
+	 */
+	private void migrateOldConfigFile(String ini, String rc)
+	{
+		File inifile = new File(ini);
+		File rcfile = new File(rc);
+		Boolean configMigrated = false;
+
+		if (inifile.exists())
+		{
+			if (!rcfile.exists())
+			{
+				try
+				{
+					configMigrated = inifile.renameTo(rcfile);
+				}
+				catch (SecurityException se)
+				{
+					System.out.println("Security Manager denied write access to migrate config file to '" + rc + "'...");
+				}
+
+				if (configMigrated)
+				{
+					System.out.println("Migrated old configuration file to '" + rc + "'...");
+				}
+				else
+				{
+					System.out.println("Could not migrate old configuration file to '" + rc + "'...");
+				}
+			}
+			else
+			{
+				System.out.println("Not migrating configuration as destination file exists '" + rc + "'...");
+			}
+		}
+	}
 
 	/**
 	 * 
@@ -112,12 +179,12 @@ public class Settings extends Object {
 	}
 
 	/**
-	 * Loads the ini file.
+	 * Loads the configuration file.
 	 */
 	public void load()
 	{
 		try {
-			BufferedReader r = new BufferedReader(new FileReader(inifile));
+			BufferedReader r = new BufferedReader(new FileReader(configfile));
 
 			String line = null;
 
@@ -145,20 +212,20 @@ public class Settings extends Object {
 	}
 	
 	/**
-	 * Saves the ini file.
+	 * Saves the configuration file.
 	 */
 	public void save()
 	{
-		save(inifile);
+		save(configfile);
 	}
 
 	/**
-	 * Saves the ini file (std or extra name)
+	 * Saves the configuration file (std or extra name)
 	 */
 	public void save(String str)
 	{
 		if (str == null)
-			str = inifile;
+			str = configfile;
 
 		try {
 			PrintWriter w = new PrintWriter(new FileWriter(str));
@@ -705,13 +772,13 @@ public class Settings extends Object {
 	}
 
 	/**
-	 * Returns the ini filename.
+	 * Returns the configuration filename.
 	 * 
 	 * @return
 	 */
-	public String getInifile()
+	public String getConfigFile()
 	{
-		return inifile;
+		return configfile;
 	}
 
 }
