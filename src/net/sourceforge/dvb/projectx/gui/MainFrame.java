@@ -1318,7 +1318,7 @@ public class MainFrame extends JPanel {
 		JMenuItem exit = new JMenuItem();
 		CommonGui.localize(exit, "Common.Exit");
 		exit.setActionCommand("exit");
-		exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, ActionEvent.ALT_MASK));
+		exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.CTRL_MASK));
 
 		file.add(add);
 		file.add(url);
@@ -1363,7 +1363,7 @@ public class MainFrame extends JPanel {
 
 		JMenuItem preferences = new JMenuItem();
 		CommonGui.localize(preferences, "Common.Preferences");
-		preferences.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
+		preferences.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK));
 		preferences.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -2159,7 +2159,7 @@ public class MainFrame extends JPanel {
 
 		JMenuItem closemenu = new JMenuItem();
 		CommonGui.localize(closemenu, "Common.Close");
-		closemenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, ActionEvent.ALT_MASK));
+		closemenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK));
 		closemenu.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{

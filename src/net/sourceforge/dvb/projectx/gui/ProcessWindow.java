@@ -256,7 +256,7 @@ public class ProcessWindow extends JFrame {
 
 		JMenuItem kill = new JMenuItem();
 		CommonGui.localize(kill, "Common.KillProcess");
-		kill.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.ALT_MASK));
+		kill.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, ActionEvent.CTRL_MASK));
 		kill.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -269,7 +269,7 @@ public class ProcessWindow extends JFrame {
 
 		JMenuItem save = new JMenuItem();
 		CommonGui.localize(save, "Common.SaveAs");
-		save.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.ALT_MASK));
+		save.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
 		save.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -282,7 +282,7 @@ public class ProcessWindow extends JFrame {
 
 		JMenuItem close = new JMenuItem();
 		CommonGui.localize(close, "Common.Close");
-		close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, ActionEvent.ALT_MASK));
+		close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK));
 		close.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -379,7 +379,7 @@ public class ProcessWindow extends JFrame {
 		CommonGui.localize(preferencesMenu, "Common.Preferences");
 
 		JMenuItem preferences = new JMenuItem();
-		preferences.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
+		preferences.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK));
 		CommonGui.localize(preferences, "Common.Preferences");
 		preferences.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)

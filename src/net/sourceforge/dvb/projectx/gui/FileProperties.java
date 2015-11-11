@@ -175,7 +175,7 @@ public class FileProperties extends JFrame {
 
 		JMenuItem close = new JMenuItem();
 		CommonGui.localize(close, "Common.Close");
-		close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, ActionEvent.ALT_MASK));
+		close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK));
 		close.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{

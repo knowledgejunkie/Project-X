@@ -309,7 +309,7 @@ public class CollectionProperties extends JFrame {
 
 		JMenuItem closeAndRevert = new JMenuItem();
 		CommonGui.localize(closeAndRevert, "Common.CloseAndRevert");
-		closeAndRevert.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.ALT_MASK));
+		closeAndRevert.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
 		closeAndRevert.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -322,7 +322,7 @@ public class CollectionProperties extends JFrame {
 
 		JMenuItem close = new JMenuItem();
 		CommonGui.localize(close, "Common.Close");
-		close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, ActionEvent.ALT_MASK));
+		close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK));
 		close.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{

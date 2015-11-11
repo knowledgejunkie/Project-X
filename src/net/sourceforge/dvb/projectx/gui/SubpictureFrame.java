@@ -144,7 +144,7 @@ public class SubpictureFrame extends JFrame {
 		CommonGui.localize(fileMenu, "Common.File");
 
 		final JCheckBoxMenuItem background = new JCheckBoxMenuItem("use Preview Picture as Background");
-		background.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.CTRL_MASK));
+		background.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.CTRL_MASK));
 		background.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -156,7 +156,7 @@ public class SubpictureFrame extends JFrame {
 		fileMenu.add(background);
 
 		final JCheckBoxMenuItem letterbox = new JCheckBoxMenuItem("use Letterbox");
-		letterbox.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK));
+		letterbox.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.CTRL_MASK));
 		letterbox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -168,7 +168,7 @@ public class SubpictureFrame extends JFrame {
 		fileMenu.add(letterbox);
 
 		final JCheckBoxMenuItem areabox = new JCheckBoxMenuItem("don't show Multiple Areas Boundaries");
-		areabox.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
+		areabox.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, ActionEvent.CTRL_MASK));
 		areabox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -192,7 +192,7 @@ public class SubpictureFrame extends JFrame {
 		fileMenu.add(applyarea);
 
 		final JCheckBoxMenuItem allopaque = new JCheckBoxMenuItem("paint all as Opaque");
-		allopaque.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
+		allopaque.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
 		allopaque.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -207,7 +207,7 @@ public class SubpictureFrame extends JFrame {
 
 		JMenuItem close = new JMenuItem();
 		CommonGui.localize(close, "Common.Close");
-		close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, ActionEvent.ALT_MASK));
+		close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK));
 		close.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
