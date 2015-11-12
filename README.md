@@ -21,7 +21,7 @@ This repository's branches are arranged in the following way:
 -   dev
 
     updates to make ProjectX more to my liking - more 'Linuxy', if
-    you like (e.g. keybindings, rc file location)
+    you will (e.g. keybindings, configuration file location)
 
 Work is carried out in feature branches and merged into dev. *Nothing*
 is merged into master.
@@ -29,25 +29,29 @@ is merged into master.
 
 ## Updates
 
-Nothing yet
-
-
-## TODO
-
-### Configuration file
+### Configuration file location
 
 The default ProjectX configuration file (X.ini) is created in the current
-*working* directory when the jar file is run.
+*working* directory when the ProjectX.jar file is run. Typically the user
+ends up with the configuration file in their home directory.
 
-Instead of polluting my home directory (or any others) when
-running ProjectX, I will add support to detect when ProjectX is being
-run under a Linux environment and instead create the configuration file
-in ~/.projectx called .projectxrc.
-
+Instead of polluting the home directory (or any others) when
+running ProjectX, I have updated the default configuration file to
+~/.projectx/projectx.conf. If an ~/X.ini file is found when running this
+updated version of ProjectX it will be migrated automatically to the new
+location.
 
 ### Keybindings
 
-Some of the default keybindings in ProjectX do not fit nicely with the
-standard keybindings seen in most Linux applications. I therefore want to
-remap several keybindings to more 'normal' keybindings found in most other
-Linux applications I use: (e.g. Ctrl+Q = Quit, Ctrl+W = Close window)
+Many of the default keybindings in ProjectX are not consistent with those seen
+in many graphical Linux applications. To benefit my muscle memory I have
+updated several keybindings to better fit with those I am already
+used to (e.g. Ctrl+Q = Quit, Ctrl+W = Close window, Ctrl+P = Preferences, ...).
+
+### Automatically refresh input file browser
+
+The input file browser list now automatically refreshes whenever it is opened
+to reflect changes in the directory contents it is displaying.
+
+
+## TODO
