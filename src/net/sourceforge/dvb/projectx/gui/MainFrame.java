@@ -2695,15 +2695,15 @@ public class MainFrame extends JPanel {
 
 		DropTarget dropTarget_1 = new DropTarget(textarea, dnd1Listener);
 
-		JPanel panel_2 = new JPanel();
-		panel_2.setLayout(new GridLayout(1,1));
-		panel_2.setBorder(BorderFactory.createLoweredBevelBorder());
-		panel_2.setPreferredSize(new Dimension(120, 138));
-		panel_2.setMaximumSize(new Dimension(120, 138));
-		panel_2.setMinimumSize(new Dimension(120, 138));
-		panel_2.add(textarea);
+		JPanel panel_1 = new JPanel();
+		panel_1.setLayout(new GridLayout(1,1));
+		panel_1.setBorder(BorderFactory.createLoweredBevelBorder());
+		panel_1.setPreferredSize(new Dimension(120, 138));
+		panel_1.setMaximumSize(new Dimension(120, 138));
+		panel_1.setMinimumSize(new Dimension(120, 138));
+		panel_1.add(textarea);
 
-		panel.add(panel_2);
+		panel.add(panel_1);
 
 		/**
 		 *  collection label
@@ -2713,6 +2713,14 @@ public class MainFrame extends JPanel {
 		coll_label.setMaximumSize(new Dimension(60, 24));
 		coll_label.setHorizontalAlignment(SwingConstants.CENTER);
 		coll_label.setToolTipText(Resource.getString("FilePanel.CollectionNumber.Tip"));
+
+		/**
+		 *  blank label
+		 */
+		JLabel blank_label = new JLabel();
+		blank_label.setPreferredSize(new Dimension(60, 24));
+		blank_label.setMaximumSize(new Dimension(60, 24));
+		blank_label.setHorizontalAlignment(SwingConstants.CENTER);
 
 		/**
 		 *  number of act. coll.
@@ -2785,6 +2793,33 @@ public class MainFrame extends JPanel {
 		});
 
 		/**
+		 *  remove all collections
+		 */
+		JButton remove_all_colls = new JButton(CommonGui.loadIcon("remallcolls.gif"));
+		remove_all_colls.setPreferredSize(new Dimension(60, 24));
+		remove_all_colls.setMaximumSize(new Dimension(60, 24));
+		remove_all_colls.setToolTipText(Resource.getString("FilePanel.removeAllCollections.Tip"));
+		remove_all_colls.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				if (Common.isCollectionListEmpty())
+					return;
+
+				// for (int i = 0; i < Common.getCollectionListSize(); i++)
+				for (int i = Common.getCollectionListSize() - 1; i >= 0; i--)
+				{
+					Common.removeCollection(i);
+				}
+
+				if (Common.isCollectionListEmpty())
+					updateCollectionPanel(-1);
+
+				comboBox_0.removeAllItems();
+
+			}
+		});
+
+		/**
 		 *  add collection
 		 */
 		JButton add_coll = new JButton(CommonGui.loadIcon("addcoll.gif"));
@@ -2801,22 +2836,30 @@ public class MainFrame extends JPanel {
 		});
 
 
-		JPanel panel_0 = new JPanel();
-		panel_0.setLayout(new BoxLayout(panel_0, BoxLayout.X_AXIS));
+		JPanel panel_2 = new JPanel();
+		panel_2.setLayout(new BoxLayout(panel_2, BoxLayout.X_AXIS));
 
-		panel_0.add(add_coll);
-		panel_0.add(coll_label);
+		panel_2.add(add_coll);
+		panel_2.add(coll_label);
 
-		panel.add(panel_0);
+		panel.add(panel_2);
 
 
-		JPanel panel_1 = new JPanel();
-		panel_1.setLayout(new BoxLayout(panel_1, BoxLayout.X_AXIS));
+		JPanel panel_3 = new JPanel();
+		panel_3.setLayout(new BoxLayout(panel_3, BoxLayout.X_AXIS));
 
-		panel_1.add(remove_coll);
-		panel_1.add(comboBox_0);
+		panel_3.add(remove_coll);
+		panel_3.add(comboBox_0);
 
-		panel.add(panel_1);
+		panel.add(panel_3);
+
+		JPanel panel_4 = new JPanel();
+		panel_4.setLayout(new BoxLayout(panel_4, BoxLayout.X_AXIS));
+
+		panel_4.add(remove_all_colls);
+		panel_4.add(blank_label);
+
+		panel.add(panel_4);
 
 		/**
 		 * watch on changes
