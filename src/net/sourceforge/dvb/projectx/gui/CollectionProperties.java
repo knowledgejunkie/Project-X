@@ -186,7 +186,7 @@ public class CollectionProperties extends JFrame {
 	 */
 	public void savePreferences()
 	{ 
-		String str = CommonGui.getUserInput(this, "save ini", "save inifile", Common.getSettings().getInifile());
+		String str = CommonGui.getUserInput(this, "save ini", "save inifile", Common.getSettings().getConfigFile());
 
 		if (str != null && str.length() > 0)
 			Common.saveSettings(str);

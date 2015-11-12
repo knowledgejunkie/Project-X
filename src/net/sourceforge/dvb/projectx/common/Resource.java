@@ -63,11 +63,14 @@ public class Resource extends Object {
 	/** the prefix of all pjx resource files */
 	private static final String PJX_RESOURCE_PREFIX = "pjxresources";
 
-	/** current working directory */
+	/** current directory */
 	public static final String workdir = System.getProperty("user.dir");
 	
 	/** os dependent file separator */
 	public static final String filesep = System.getProperty("file.separator");
+
+	/** .projectx directory in user's home directory */
+	public static final String dotfiledir = System.getProperty("user.home") + filesep + ".projectx";
 
 	/** the users locale */
 	private static Locale locale = null;
@@ -353,9 +356,9 @@ public class Resource extends Object {
 						+ "\"*.properties");
 			}
 			
-			// also look into the current working directory for additional resource files
-			File workDirFile = new File(workdir);
-			addAvailableLocalesFromFileSystem(locales, workDirFile);
+			// also look in the configuration directory for additional resource files
+			File configDirFile = new File(dotfiledir);
+			addAvailableLocalesFromFileSystem(locales, configDirFile);
 		} catch (Exception e) {
 			System.out.println(e);
 		}
@@ -443,7 +446,7 @@ public class Resource extends Object {
 	{
 		try
 		{
-			String filename = workdir + filesep + resource;
+			String filename = dotfiledir + filesep + resource;
 			File file = new File(filename);
 			if (file.exists() && file.canRead())
 			{

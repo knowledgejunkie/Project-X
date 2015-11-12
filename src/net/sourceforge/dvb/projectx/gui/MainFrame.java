@@ -3186,7 +3186,7 @@ public class MainFrame extends JPanel {
 
 			Common.setMessage(null, false);
 
-			Object[] obj = Common.getJavaEV(Common.getSettings().getInifile());
+			Object[] obj = Common.getJavaEV(Common.getSettings().getConfigFile());
 
 			Common.setMessage(obj);
 			Common.setMessage("");
