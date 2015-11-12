@@ -1849,6 +1849,7 @@ public class MainFrame extends JPanel {
 		open_autoload.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
+                reloadInputDirectories();
 				autoload.setState(0);
 				autoload.show();
 			}
