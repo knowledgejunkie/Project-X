@@ -53,5 +53,14 @@ used to (e.g. Ctrl+Q = Quit, Ctrl+W = Close window, Ctrl+P = Preferences, ...).
 The input file browser list now automatically refreshes whenever it is opened
 to reflect changes in the directory contents it is displaying.
 
+### Delete all collections
+
+A new button (and icon) has been added to the main GUI to permit all open
+collections to be removed with a single click.
+
 
 ## TODO
+
+- Deprecation warnings during build
+- Unicode warnings
+- Whitespace cleanup
